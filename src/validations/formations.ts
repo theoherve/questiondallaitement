@@ -8,10 +8,12 @@ export const formationSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Le slug ne peut contenir que des lettres minuscules, chiffres et tirets"),
   description: z.string().optional(),
   short_description: z.string().max(200, "Max 200 caractères").optional(),
+  long_description_html: z.string().optional(),
   thumbnail_url: z.string().url().optional().or(z.literal("")),
   price_cents: z.number().int().min(0, "Le prix ne peut pas être négatif"),
   currency: z.string().default("eur"),
   status: z.enum(["draft", "published", "archived"]).default("draft"),
+  consultant_id: z.string().uuid("Consultante requise").optional(),
 });
 
 export const sectionSchema = z.object({

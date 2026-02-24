@@ -82,45 +82,45 @@
 
 ---
 
-## EPIC-03 : Backoffice Admin – Formations 🔴
+## EPIC-03 : Backoffice Admin – Formations ✅
 
 > CRUD complet des formations avec editeur WYSIWYG Novel, depuis `/admin/formations`. (ADR-009, ADR-010)
 
 
 | ID    | Story                                                                                                                                             | Statut | Prio  |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
-| 03-01 | Installer Novel (`pnpm add novel`) et creer composant `<WysiwygEditor>` reutilisable                                                              | ⬜      | 🔴 P0 |
-| 03-02 | Page `/admin/formations` : liste de toutes les formations (toutes consultantes) avec filtres (status, consultante) et recherche                   | ⬜      | 🔴 P0 |
-| 03-03 | Page `/admin/formations/nouveau` : formulaire creation formation (titre, slug auto, description, prix, consultante associee, thumbnail)           | ⬜      | 🔴 P0 |
-| 03-04 | Page `/admin/formations/[id]/edit` : formulaire edition metadata (titre, description courte, description longue WYSIWYG, prix, status, thumbnail) | ⬜      | 🔴 P0 |
-| 03-05 | Editeur sections : ajouter, renommer, reordonner (drag & drop), supprimer une section                                                             | ⬜      | 🔴 P0 |
-| 03-06 | Editeur blocs — type `text` : editeur Novel inline avec output HTML                                                                               | ⬜      | 🔴 P0 |
-| 03-07 | Editeur blocs — type `video` : formulaire (provider vimeo/youtube, video_id, titre)                                                               | ⬜      | 🔴 P0 |
-| 03-08 | Editeur blocs — type `image` : upload Supabase Storage + alt + caption                                                                            | ⬜      | 🔴 P0 |
-| 03-09 | Editeur blocs — type `quiz` : question + N options (texte, is_correct) + explication                                                              | ⬜      | 🔴 P0 |
-| 03-10 | Editeur blocs — type `download` : upload fichier Supabase Storage + filename                                                                      | ⬜      | 🔴 P0 |
-| 03-11 | Reordonnancement blocs (drag & drop) au sein d'une section                                                                                        | ⬜      | 🟠 P1 |
-| 03-12 | Publication / depublication / archivage depuis la page edit + confirmation                                                                        | ⬜      | 🔴 P0 |
-| 03-13 | Preview formation (vue publique en mode preview, non indexee)                                                                                     | ⬜      | 🟡 P2 |
-| 03-14 | Server Actions admin formations : `createFormation`, `updateFormation`, `deleteFormation`, `reorderSections`, `reorderBlocks`                     | ⬜      | 🔴 P0 |
-| 03-15 | Retirer le CRUD formations de l'espace consultante (`/espace-consultante/formations`) — passage en lecture seule (ADR-009)                        | ⬜      | 🟠 P1 |
+| 03-01 | Installer Novel (`pnpm add novel`) + `@dnd-kit` et creer composant `<WysiwygEditor>` reutilisable                                                 | ✅      | —     |
+| 03-02 | Page `/admin/formations` : liste de toutes les formations (toutes consultantes) avec filtres (status, consultante) et recherche                   | ✅      | —     |
+| 03-03 | Page `/admin/formations/nouveau` : formulaire creation formation (titre, slug auto, description, prix, consultante associee, thumbnail)           | ✅      | —     |
+| 03-04 | Page `/admin/formations/[id]/edit` : formulaire edition metadata (titre, description courte, description longue WYSIWYG, prix, status, thumbnail) | ✅      | —     |
+| 03-05 | Editeur sections : ajouter, renommer, reordonner (drag & drop), supprimer une section                                                             | ✅      | —     |
+| 03-06 | Editeur blocs — type `text` : editeur Novel inline avec output HTML                                                                               | ✅      | —     |
+| 03-07 | Editeur blocs — type `video` : formulaire (provider vimeo/youtube, video_id, titre)                                                               | ✅      | —     |
+| 03-08 | Editeur blocs — type `image` : upload Supabase Storage + alt + caption                                                                            | ✅      | —     |
+| 03-09 | Editeur blocs — type `quiz` : question + N options (texte, is_correct) + explication                                                              | ✅      | —     |
+| 03-10 | Editeur blocs — type `download` : upload fichier Supabase Storage + filename                                                                      | ✅      | —     |
+| 03-11 | Reordonnancement blocs (drag & drop @dnd-kit) au sein d'une section                                                                               | ✅      | —     |
+| 03-12 | Publication / depublication / archivage depuis la page edit + confirmation modale                                                                  | ✅      | —     |
+| 03-13 | Preview formation (vue publique en mode preview, non indexee)                                                                                     | ✅      | 🟡 P2 |
+| 03-14 | Server Actions admin formations : `createFormation`, `updateFormation`, `deleteFormation`, `reorderSections`, `reorderBlocks`                     | ✅      | —     |
+| 03-15 | Retirer le CRUD formations de l'espace consultante (`/espace-consultante/formations`) — passage en lecture seule (ADR-009)                        | ✅      | —     |
 
 
 ---
 
-## EPIC-04 : Backoffice Admin – Consultantes
+## EPIC-04 : Backoffice Admin – Consultantes ✅
 
 > Gestion des consultantes depuis `/admin/consultantes`.
 
 
 | ID    | Story                                                                                                                                                      | Statut | Prio  |
 | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
-| 04-01 | Page `/admin/consultantes` : liste consultantes avec colonnes (nom, email, specialites, status Stripe, commission, active)                                 | ⬜      | 🟠 P1 |
-| 04-02 | Creation consultante : formulaire (email, prenom, nom, slug, bio, specialites, commission_rate) → creation profil role `consultant` + entree `consultants` | ⬜      | 🟠 P1 |
-| 04-03 | Edition consultante : modifier commission_rate, bio, specialites, is_active                                                                                | ⬜      | 🟠 P1 |
-| 04-04 | Vue detail consultante : stats (nombre formations, bookings, revenus), status Stripe Connect, formations associees                                         | ⬜      | 🟡 P2 |
-| 04-05 | Activation / desactivation consultante (toggle `is_active`)                                                                                                | ⬜      | 🟠 P1 |
-| 04-06 | Server Actions admin consultantes : `createConsultant`, `updateConsultant`, `toggleActive`                                                                 | ⬜      | 🟠 P1 |
+| 04-01 | Page `/admin/consultantes` : liste consultantes avec colonnes (nom, email, specialites, status Stripe, commission, active)                                 | ✅      | 🟠 P1 |
+| 04-02 | Promotion utilisateur → consultante : recherche user existant + formulaire (slug, bio, specialites, commission_rate) → update role + insert `consultants`  | ✅      | 🟠 P1 |
+| 04-03 | Edition consultante : modifier commission_rate, bio, specialites, is_active, slug                                                                          | ✅      | 🟠 P1 |
+| 04-04 | Vue detail consultante : stats (nombre formations, bookings, revenus), status Stripe Connect, formations associees                                         | ✅      | 🟡 P2 |
+| 04-05 | Activation / desactivation consultante (toggle `is_active`)                                                                                                | ✅      | 🟠 P1 |
+| 04-06 | Server Actions admin consultantes : `promoteToConsultant`, `updateConsultant`, `toggleActive`, `searchUsers`, `getConsultantStats`                         | ✅      | 🟠 P1 |
 
 
 ---
@@ -335,21 +335,21 @@
 
 ---
 
-## EPIC-13 : Supabase Storage
+## EPIC-13 : Supabase Storage ✅
 
 > Configuration buckets, policies, composant upload.
 
 
 | ID    | Story                                                                                       | Statut | Prio  |
 | ----- | ------------------------------------------------------------------------------------------- | ------ | ----- |
-| 13-01 | Creer bucket `avatars` (public read, authenticated write own)                               | ⬜      | 🟠 P1 |
-| 13-02 | Creer bucket `formations` (public read, admin write)                                        | ⬜      | 🔴 P0 |
-| 13-03 | Creer bucket `downloads` (authenticated read enrolled, admin write)                         | ⬜      | 🔴 P0 |
-| 13-04 | Creer bucket `blog` (public read, admin write)                                              | ⬜      | 🟡 P2 |
-| 13-05 | Policies RLS sur chaque bucket                                                              | ⬜      | 🔴 P0 |
-| 13-06 | Composant upload generique : image picker avec preview, drag & drop, validation taille/type | ⬜      | 🔴 P0 |
-| 13-07 | Helper server-side : `uploadFile(bucket, path, file)` + `getSignedUrl(bucket, path)`        | ⬜      | 🔴 P0 |
-| 13-08 | Integration upload dans l'editeur admin formations (thumbnails, images blocs)               | ⬜      | 🔴 P0 |
+| 13-01 | Creer bucket `avatars` (public read, authenticated write own)                               | ✅      | —     |
+| 13-02 | Creer bucket `formations` (public read, admin write)                                        | ✅      | —     |
+| 13-03 | Creer bucket `downloads` (authenticated read enrolled, admin write)                         | ✅      | —     |
+| 13-04 | Creer bucket `blog` (public read, admin write)                                              | ✅      | —     |
+| 13-05 | Policies RLS sur chaque bucket (MIME type validation via allowed_mime_types)                 | ✅      | —     |
+| 13-06 | Composant upload generique (`<FileUpload>`) : image picker, preview, drag & drop, validation | ✅      | —     |
+| 13-07 | Helper server-side : `uploadFile`, `deleteFile`, `getPublicUrl`, `getSignedUrl`              | ✅      | —     |
+| 13-08 | Integration upload dans l'editeur admin formations (thumbnails, images blocs, downloads)    | ✅      | —     |
 
 
 ---
@@ -559,17 +559,18 @@
 
 | Statut            | Nombre   |
 | ----------------- | -------- |
-| ✅ Termine         | ~50      |
-| 🔶 Partiel        | ~11      |
-| ⬜ A faire         | ~106     |
+| ✅ Termine         | ~79      |
+| 🔶 Partiel        | ~10      |
+| ⬜ A faire         | ~78      |
 | **Total stories** | **~167** |
 
 
 ### Prochaines priorites (P0 bloquants MVP)
 
-1. **EPIC-13** : Supabase Storage (prerequis pour l'editeur formations)
-2. **EPIC-03** : Backoffice Admin Formations (CRUD + Novel WYSIWYG)
-3. **EPIC-07** : Booking System (migration DB + page `/reserver` 7 steps)
-4. **EPIC-09** : Lecteur de formation client + flow achat Stripe
-5. **EPIC-11-15** : Brancher les emails dans les webhooks Stripe
+1. ~~**EPIC-13** : Supabase Storage~~ ✅
+2. ~~**EPIC-03** : Backoffice Admin Formations~~ ✅
+3. ~~**EPIC-04** : Backoffice Admin Consultantes~~ ✅
+4. **EPIC-07** : Booking System (migration DB + page `/reserver` 7 steps)
+5. **EPIC-09** : Lecteur de formation client + flow achat Stripe
+6. **EPIC-11-15** : Brancher les emails dans les webhooks Stripe
 
