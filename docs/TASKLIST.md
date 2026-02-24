@@ -309,7 +309,7 @@
 | 11-12 | Handler `account.updated` (status Connect)                                                  | ✅      | —     |
 | 11-13 | Handler `account.application.deauthorized`                                                  | ✅      | —     |
 | 11-14 | Enregistrement dans `payments` (source of truth) + audit log                                | ✅      | —     |
-| 11-15 | Envoi emails transactionnels dans les handlers webhook (Resend) — non connecte actuellement | ⬜      | 🔴 P0 |
+| 11-15 | Envoi emails transactionnels dans les handlers webhook (Resend)                             | ✅      | 🔴 P0 |
 
 
 ---
@@ -324,13 +324,13 @@
 | 12-01 | Client Resend configure (`src/lib/resend/client.ts`)                                                           | ✅      | —     |
 | 12-02 | Templates email en base (booking_confirmation, booking_reminder, booking_cancelled, formation_access, welcome) | ✅      | —     |
 | 12-03 | Fonction d'envoi generique avec remplacement variables (`src/lib/emails/send.ts`)                              | ✅      | —     |
-| 12-04 | Email confirmation inscription (apres signup)                                                                  | ⬜      | 🟠 P1 |
-| 12-05 | Email acces formation (apres achat confirme par webhook)                                                       | ⬜      | 🔴 P0 |
-| 12-06 | Email confirmation booking (apres paiement online ou confirmation on_site)                                     | ⬜      | 🔴 P0 |
-| 12-07 | Email rappel RDV J-1 (via cron)                                                                                | ⬜      | 🟡 P2 |
-| 12-08 | Email annulation booking avec details refund                                                                   | ⬜      | 🟠 P1 |
-| 12-09 | Email notification consultante : nouveau rdv on_site a confirmer                                               | ⬜      | 🟠 P1 |
-| 12-10 | Email guest checkout : "finalisez votre compte" (choisir mot de passe)                                         | ⬜      | 🟠 P1 |
+| 12-04 | Email confirmation inscription (apres signup)                                                                  | ✅      | 🟠 P1 |
+| 12-05 | Email acces formation (apres achat confirme par webhook)                                                       | ✅      | 🔴 P0 |
+| 12-06 | Email confirmation booking (apres paiement online ou confirmation on_site)                                     | ✅      | 🔴 P0 |
+| 12-07 | Email rappel RDV J-1 (via cron)                                                                                | ✅      | 🟡 P2 |
+| 12-08 | Email annulation booking avec details refund                                                                   | ✅      | 🟠 P1 |
+| 12-09 | Email notification consultante : nouveau rdv on_site a confirmer                                               | ✅      | 🟠 P1 |
+| 12-10 | Email guest checkout : "finalisez votre compte" (choisir mot de passe)                                         | ✅      | 🟠 P1 |
 
 
 ---
@@ -559,9 +559,9 @@
 
 | Statut            | Nombre   |
 | ----------------- | -------- |
-| ✅ Termine         | ~147     |
+| ✅ Termine         | ~155     |
 | 🔶 Partiel        | ~2       |
-| ⬜ A faire         | ~18      |
+| ⬜ A faire         | ~10      |
 | **Total stories** | **~167** |
 
 
@@ -576,7 +576,9 @@
 7. ~~**EPIC-08** : Espace Consultante~~ ✅
 8. ~~**EPIC-09** : Espace Client~~ ✅
 9. ~~**EPIC-10** : Pages Publiques~~ ✅
-10. **EPIC-11** : Brancher les emails dans les webhooks Stripe (11-15)
-11. **EPIC-12** : Blog (admin + public)
+10. ~~**EPIC-11** : Stripe & Paiements~~ ✅
+11. ~~**EPIC-12** : Emails Transactionnels~~ ✅
 12. **EPIC-14** : CRM
+13. **EPIC-15** : Blog (admin + public)
+14. **EPIC-16** : Monitoring & Logs
 

@@ -11,7 +11,7 @@ import {
 } from "@/validations/auth";
 import { redirect } from "next/navigation";
 import { randomBytes, randomUUID } from "crypto";
-import { sendPasswordResetEmail } from "@/lib/emails/send";
+import { sendPasswordResetEmail, sendWelcomeEmail } from "@/lib/emails/send";
 import { rateLimit, AUTH_RATE_LIMITS } from "@/lib/rate-limit";
 
 const RESET_TOKEN_EXPIRY_HOURS = 24;
@@ -110,6 +110,14 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
     redirect(
       `${baseUrl()}/inscription?error=${encodeURIComponent("Une erreur est survenue lors de l'inscription.")}`
     );
+  }
+
+  try {
+    await sendWelcomeEmail(email, {
+      client_name: parsed.data.first_name,
+    });
+  } catch {
+    // Non-blocking
   }
 
   redirect(`${baseUrl()}/inscription?success=1`);

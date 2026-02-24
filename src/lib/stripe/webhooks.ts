@@ -1,5 +1,9 @@
 import type Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  sendFormationAccess,
+  sendBookingConfirmation,
+} from "@/lib/emails/send";
 
 const getSupabase = () => createAdminClient();
 
@@ -55,6 +59,8 @@ export const handleCheckoutCompleted = async (
     amount: session.amount_total,
     payment_intent: paymentIntentId,
   });
+
+  await sendCheckoutEmails(type, client_id, consultant_id, reference_id);
 };
 
 export const handlePaymentIntentSucceeded = async (
@@ -160,6 +166,79 @@ const handleEventRegistration = async (
     },
     { onConflict: "event_id,client_id" }
   );
+};
+
+const sendCheckoutEmails = async (
+  type: string,
+  clientId: string,
+  consultantId: string,
+  referenceId: string
+) => {
+  try {
+    const supabase = getSupabase();
+
+    const { data: clientProfile } = await supabase
+      .from("profiles")
+      .select("email, first_name")
+      .eq("id", clientId)
+      .single();
+
+    if (!clientProfile?.email) return;
+
+    const clientName = clientProfile.first_name ?? "";
+
+    if (type === "formation") {
+      const { data: formation } = await supabase
+        .from("formations")
+        .select("title")
+        .eq("id", referenceId)
+        .single();
+
+      if (formation) {
+        await sendFormationAccess(clientProfile.email, {
+          client_name: clientName,
+          formation_title: formation.title,
+        });
+      }
+    }
+
+    if (type === "booking") {
+      const { data: booking } = await supabase
+        .from("bookings")
+        .select(
+          "starts_at, consultants(profiles!consultants_id_fkey(first_name, last_name))"
+        )
+        .eq("id", referenceId)
+        .single();
+
+      if (booking) {
+        const consultant = booking.consultants as unknown as {
+          profiles: { first_name: string | null; last_name: string | null } | null;
+        } | null;
+        const consultantName = consultant?.profiles
+          ? `${consultant.profiles.first_name ?? ""} ${consultant.profiles.last_name ?? ""}`.trim()
+          : "";
+        const startsAt = new Date(booking.starts_at);
+
+        await sendBookingConfirmation(clientProfile.email, {
+          client_name: clientName,
+          consultant_name: consultantName,
+          date: startsAt.toLocaleDateString("fr-FR", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }),
+          time: startsAt.toLocaleTimeString("fr-FR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        });
+      }
+    }
+  } catch {
+    // Non-blocking: email failure should never fail the webhook
+  }
 };
 
 const logAudit = async (
