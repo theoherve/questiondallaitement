@@ -53,10 +53,10 @@ const FormationPreviewPage = async ({ params }: Props) => {
     .select(
       `
       *,
-      consultants (
+      consultants!formations_consultant_id_fkey (
         slug,
         bio,
-        profiles (
+        profiles!consultants_id_fkey (
           first_name,
           last_name,
           avatar_url

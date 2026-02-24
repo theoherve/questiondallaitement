@@ -20,7 +20,7 @@ export const generateMetadata = async ({
   const supabase = await createClient();
   const { data } = await supabase
     .from("consultants")
-    .select("profiles (first_name, last_name)")
+    .select("profiles!consultants_id_fkey (first_name, last_name)")
     .eq("slug", slug)
     .eq("is_active", true)
     .single();
@@ -49,7 +49,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
       slug,
       bio,
       specialties,
-      profiles (
+      profiles!consultants_id_fkey (
         first_name,
         last_name,
         avatar_url

@@ -14,6 +14,8 @@ export const metadata: Metadata = {
     "Participez à nos ateliers, webinaires et événements autour de la parentalité.",
 };
 
+export const dynamic = "force-dynamic";
+
 const EVENT_TYPE_LABELS: Record<string, { label: string; icon: typeof Video }> =
   {
     online: { label: "En ligne", icon: Video },
@@ -32,7 +34,7 @@ const formatPrice = (cents: number, currency: string): string => {
 const EvenementsPage = async () => {
   const supabase = await createClient();
 
-  const { data: events } = await supabase
+  const { data: events, error } = await supabase
     .from("events")
     .select(
       `
@@ -49,7 +51,7 @@ const EvenementsPage = async () => {
       currency,
       consultants (
         slug,
-        profiles (
+        profiles!consultants_id_fkey (
           first_name,
           last_name
         )
@@ -59,6 +61,23 @@ const EvenementsPage = async () => {
     .eq("is_published", true)
     .gte("starts_at", new Date().toISOString())
     .order("starts_at", { ascending: true });
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h1 className="font-serif text-3xl font-bold text-primary-green sm:text-4xl">
+            Événements
+          </h1>
+          <p className="mt-4 text-destructive">
+            Erreur lors du chargement : {error.message}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const list = events ?? [];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -71,9 +90,9 @@ const EvenementsPage = async () => {
         </p>
       </div>
 
-      {events && events.length > 0 ? (
+      {list.length > 0 ? (
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {events.map((event) => {
+          {list.map((event) => {
             const typeInfo =
               EVENT_TYPE_LABELS[event.type] ?? EVENT_TYPE_LABELS.online;
             const Icon = typeInfo.icon;

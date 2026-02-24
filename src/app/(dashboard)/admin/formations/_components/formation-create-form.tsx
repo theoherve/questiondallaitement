@@ -104,7 +104,7 @@ export const AdminFormationCreateForm = ({
               <SelectContent>
                 {consultants.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                    {c.profiles.first_name} {c.profiles.last_name}
+                    {c.profiles?.first_name ?? ""} {c.profiles?.last_name ?? ""}
                   </SelectItem>
                 ))}
               </SelectContent>

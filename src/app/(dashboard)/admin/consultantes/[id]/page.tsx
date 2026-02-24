@@ -35,7 +35,7 @@ export const generateMetadata = async ({
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("consultants")
-    .select("profiles (first_name, last_name)")
+    .select("profiles!consultants_id_fkey (first_name, last_name)")
     .eq("id", id)
     .single();
 
@@ -77,7 +77,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
       stripe_account_status,
       onboarding_completed,
       created_at,
-      profiles (
+      profiles!consultants_id_fkey (
         first_name,
         last_name,
         email,

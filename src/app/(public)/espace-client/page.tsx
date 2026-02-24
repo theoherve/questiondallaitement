@@ -24,7 +24,7 @@ const ClientDashboardPage = async () => {
     supabase
       .from("bookings")
       .select(
-        "id, starts_at, ends_at, status, consultants(profiles(first_name, last_name)), consultation_types(title)"
+        "id, starts_at, ends_at, status, consultants(profiles!consultants_id_fkey(first_name, last_name)), consultation_types(title)"
       )
       .eq("client_id", user.id)
       .gte("starts_at", new Date().toISOString())

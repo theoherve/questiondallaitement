@@ -15,16 +15,21 @@ const AdminNewFormationPage = async () => {
   const supabase = createAdminClient();
   const { data: consultants } = await supabase
     .from("consultants")
-    .select("id, profiles!inner(first_name, last_name)")
-    .eq("is_active", true)
-    .order("profiles(last_name)");
+    .select("id, profiles!consultants_id_fkey(first_name, last_name)")
+    .eq("is_active", true);
 
   type ConsultantOption = {
     id: string;
-    profiles: { first_name: string | null; last_name: string | null };
+    profiles: { first_name: string | null; last_name: string | null } | null;
   };
 
-  const options = (consultants ?? []) as unknown as ConsultantOption[];
+  const options = (
+    (consultants ?? []) as unknown as ConsultantOption[]
+  ).sort((a, b) => {
+    const aName = `${a.profiles?.last_name ?? ""} ${a.profiles?.first_name ?? ""}`.trim();
+    const bName = `${b.profiles?.last_name ?? ""} ${b.profiles?.first_name ?? ""}`.trim();
+    return aName.localeCompare(bName);
+  });
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">

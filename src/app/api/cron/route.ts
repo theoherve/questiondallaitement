@@ -25,7 +25,7 @@ export const GET = async (request: Request) => {
       starts_at,
       status,
       profiles!bookings_client_id_fkey(email, first_name, last_name),
-      consultants!inner(profiles(first_name, last_name))
+      consultants!inner(profiles!consultants_id_fkey(first_name, last_name))
     `
     )
     .eq("status", "confirmed")

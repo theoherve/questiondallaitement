@@ -8,10 +8,12 @@ export const metadata: Metadata = {
     "Découvrez nos formations en ligne en lactation, sommeil et santé maternelle.",
 };
 
+export const dynamic = "force-dynamic";
+
 const FormationsPage = async () => {
   const supabase = await createClient();
 
-  const { data: formations } = await supabase
+  const { data: formations, error } = await supabase
     .from("formations")
     .select(
       `
@@ -23,9 +25,9 @@ const FormationsPage = async () => {
       price_cents,
       currency,
       consultant_id,
-      consultants (
+      consultants!formations_consultant_id_fkey (
         slug,
-        profiles (
+        profiles!consultants_id_fkey (
           first_name,
           last_name
         )
@@ -35,6 +37,23 @@ const FormationsPage = async () => {
     .eq("status", "published")
     .is("deleted_at", null)
     .order("published_at", { ascending: false });
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h1 className="font-serif text-3xl font-bold text-primary-green sm:text-4xl">
+            Nos formations
+          </h1>
+          <p className="mt-4 text-destructive">
+            Erreur lors du chargement : {error.message}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const list = formations ?? [];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -47,9 +66,9 @@ const FormationsPage = async () => {
         </p>
       </div>
 
-      {formations && formations.length > 0 ? (
+      {list.length > 0 ? (
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {formations.map((formation) => (
+          {list.map((formation) => (
             <FormationCard
               key={formation.id}
               formation={formation as unknown as Parameters<typeof FormationCard>[0]["formation"]}

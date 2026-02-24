@@ -36,7 +36,7 @@ const ClientReservationsPage = async () => {
       zoom_join_url,
       notes,
       consultants (
-        profiles (first_name, last_name)
+        profiles!consultants_id_fkey (first_name, last_name)
       ),
       consultation_types (
         title,

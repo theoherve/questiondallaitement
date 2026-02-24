@@ -46,7 +46,7 @@ const ConsultantesPage = async ({
       is_active,
       stripe_account_status,
       created_at,
-      profiles (
+      profiles!consultants_id_fkey (
         first_name,
         last_name,
         email,

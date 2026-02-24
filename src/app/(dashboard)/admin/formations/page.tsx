@@ -65,9 +65,9 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
       created_at,
       published_at,
       consultant_id,
-      consultants!inner (
+      consultants!formations_consultant_id_fkey (
         id,
-        profiles!inner (
+        profiles!consultants_id_fkey (
           first_name,
           last_name
         )
@@ -89,13 +89,12 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
     query = query.ilike("title", `%${params.q}%`);
   }
 
-  const { data: formations } = await query;
+  const { data: formations, error: formationsError } = await query;
 
   const { data: consultants } = await supabase
     .from("consultants")
-    .select("id, profiles!inner(first_name, last_name)")
-    .eq("is_active", true)
-    .order("profiles(last_name)");
+    .select("id, profiles!consultants_id_fkey(first_name, last_name)")
+    .eq("is_active", true);
 
   type FormationRow = {
     id: string;
@@ -108,17 +107,23 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
     consultant_id: string;
     consultants: {
       id: string;
-      profiles: { first_name: string | null; last_name: string | null };
-    };
+      profiles: { first_name: string | null; last_name: string | null } | null;
+    } | null;
   };
 
   type ConsultantOption = {
     id: string;
-    profiles: { first_name: string | null; last_name: string | null };
+    profiles: { first_name: string | null; last_name: string | null } | null;
   };
 
   const rows = (formations ?? []) as unknown as FormationRow[];
-  const consultantOptions = (consultants ?? []) as unknown as ConsultantOption[];
+  const consultantOptions = (
+    (consultants ?? []) as unknown as ConsultantOption[]
+  ).sort((a, b) => {
+    const aName = `${a.profiles?.last_name ?? ""} ${a.profiles?.first_name ?? ""}`.trim();
+    const bName = `${b.profiles?.last_name ?? ""} ${b.profiles?.first_name ?? ""}`.trim();
+    return aName.localeCompare(bName);
+  });
 
   return (
     <div className="space-y-6">
@@ -187,7 +192,7 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
                 <option value="">Toutes</option>
                 {consultantOptions.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.profiles.first_name} {c.profiles.last_name}
+                    {c.profiles?.first_name ?? ""} {c.profiles?.last_name ?? ""}
                   </option>
                 ))}
               </select>
@@ -198,6 +203,12 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
           </form>
         </CardContent>
       </Card>
+
+      {formationsError && (
+        <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          Erreur lors du chargement des formations : {formationsError.message}
+        </p>
+      )}
 
       {/* Table */}
       {rows.length > 0 ? (

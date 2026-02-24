@@ -15,7 +15,7 @@ export const generateMetadata = async ({
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("consultants")
-    .select("profiles (first_name, last_name)")
+    .select("profiles!consultants_id_fkey (first_name, last_name)")
     .eq("id", id)
     .single();
 
@@ -47,7 +47,7 @@ const EditConsultantPage = async ({ params }: Props) => {
       specialties,
       commission_rate,
       is_active,
-      profiles (
+      profiles!consultants_id_fkey (
         first_name,
         last_name,
         email

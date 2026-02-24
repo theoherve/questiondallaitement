@@ -12,10 +12,12 @@ export const metadata: Metadata = {
     "Découvrez nos consultantes certifiées en lactation, sommeil et santé maternelle.",
 };
 
+export const dynamic = "force-dynamic";
+
 const ConsultantesPage = async () => {
   const supabase = await createClient();
 
-  const { data: consultants } = await supabase
+  const { data: consultants, error } = await supabase
     .from("consultants")
     .select(
       `
@@ -23,7 +25,7 @@ const ConsultantesPage = async () => {
       slug,
       bio,
       specialties,
-      profiles (
+      profiles!consultants_id_fkey (
         first_name,
         last_name,
         avatar_url
@@ -32,6 +34,23 @@ const ConsultantesPage = async () => {
     )
     .eq("is_active", true)
     .order("created_at", { ascending: true });
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h1 className="font-serif text-3xl font-bold text-primary-green sm:text-4xl">
+            Nos consultantes
+          </h1>
+          <p className="mt-4 text-destructive">
+            Erreur lors du chargement : {error.message}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const list = consultants ?? [];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -44,9 +63,9 @@ const ConsultantesPage = async () => {
         </p>
       </div>
 
-      {consultants && consultants.length > 0 ? (
+      {list.length > 0 ? (
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {consultants.map((consultant) => {
+          {list.map((consultant) => {
             const profile = consultant.profiles as unknown as {
               first_name: string | null;
               last_name: string | null;
