@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 type Props = {
-  searchParams: Promise<{ redirect?: string; error?: string }>;
+  searchParams: Promise<{ redirect?: string; error?: string; success?: string }>;
 };
 
 const LoginPage = async ({ searchParams }: Props) => {
@@ -26,6 +26,14 @@ const LoginPage = async ({ searchParams }: Props) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {params.success && (
+          <div
+            className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-700"
+            role="status"
+          >
+            {decodeURIComponent(params.success)}
+          </div>
+        )}
         {params.error && (
           <div
             className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600"

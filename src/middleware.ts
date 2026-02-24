@@ -10,7 +10,7 @@ const PUBLIC_ROUTES = [
   "/mentions-legales",
 ];
 
-const AUTH_ROUTES = ["/connexion", "/inscription", "/mot-de-passe-oublie"];
+const AUTH_ROUTES = ["/connexion", "/inscription", "/mot-de-passe-oublie", "/reset-password"];
 
 const ROLE_ROUTE_MAP: Record<string, string[]> = {
   "/espace-client": ["client", "admin"],
