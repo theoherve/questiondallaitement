@@ -125,32 +125,32 @@
 
 ---
 
-## EPIC-05 : Backoffice Admin – Paiements
+## EPIC-05 : Backoffice Admin – Paiements ✅
 
 > Vue consolidee et gestion des paiements depuis `/admin/paiements`.
 
 
 | ID    | Story                                                                                                                                | Statut | Prio  |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------ | ------ | ----- |
-| 05-01 | Page `/admin/paiements` : tableau de tous les paiements avec colonnes (date, client, consultante, montant, commission, type, status) | ⬜      | 🟠 P1 |
-| 05-02 | Filtres : par status (succeeded, refunded...), par type (formation, booking, event), par consultante, par plage de dates             | ⬜      | 🟠 P1 |
-| 05-03 | Detail paiement : vue complete avec metadata, lien Stripe, historique refunds                                                        | ⬜      | 🟡 P2 |
-| 05-04 | Action refund depuis l'admin : refund total ou partiel via Server Action + `stripe.refunds.create()`                                 | ⬜      | 🟠 P1 |
-| 05-05 | Export CSV des paiements filtres                                                                                                     | ⬜      | 🟡 P2 |
+| 05-01 | Page `/admin/paiements` : tableau de tous les paiements avec colonnes (date, client, consultante, montant, commission, type, status) | ✅      | 🟠 P1 |
+| 05-02 | Filtres : par status (succeeded, refunded...), par type (formation, booking, event), par consultante, par plage de dates             | ✅      | 🟠 P1 |
+| 05-03 | Detail paiement : vue complete avec metadata, lien Stripe, historique refunds                                                        | ✅      | 🟡 P2 |
+| 05-04 | Action refund depuis l'admin : refund total ou partiel via Server Action + `stripe.refunds.create()` + confirmation modale           | ✅      | 🟠 P1 |
+| 05-05 | Export CSV des paiements filtres (avec BOM UTF-8 pour compatibilite Excel)                                                           | ✅      | 🟡 P2 |
 
 
 ---
 
-## EPIC-06 : Backoffice Admin – Parametres
+## EPIC-06 : Backoffice Admin – Parametres ✅
 
 > Settings globaux de la plateforme depuis `/admin/parametres`.
 
 
 | ID    | Story                                                                                                                                        | Statut | Prio  |
 | ----- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
-| 06-01 | Page `/admin/parametres` : formulaire edition `platform_settings` (commission par defaut, seuil annulation, taux penalite, mode maintenance) | ⬜      | 🟠 P1 |
-| 06-02 | Server Action `updatePlatformSettings` avec validation Zod                                                                                   | ⬜      | 🟠 P1 |
-| 06-03 | Mode maintenance : si active, les pages publiques affichent un message "site en maintenance" (sauf `/admin`)                                 | ⬜      | 🟡 P2 |
+| 06-01 | Page `/admin/parametres` : formulaire edition `platform_settings` (commission par defaut, seuil annulation, taux penalite, mode maintenance) | ✅      | 🟠 P1 |
+| 06-02 | Server Action `updatePlatformSettings` avec validation Zod + audit log                                                                       | ✅      | 🟠 P1 |
+| 06-03 | Mode maintenance : si active, les pages publiques affichent un message "site en maintenance" (sauf `/admin` et admins connectes)             | ✅      | 🟡 P2 |
 
 
 ---
@@ -559,9 +559,9 @@
 
 | Statut            | Nombre   |
 | ----------------- | -------- |
-| ✅ Termine         | ~79      |
+| ✅ Termine         | ~87      |
 | 🔶 Partiel        | ~10      |
-| ⬜ A faire         | ~78      |
+| ⬜ A faire         | ~70      |
 | **Total stories** | **~167** |
 
 
@@ -570,7 +570,9 @@
 1. ~~**EPIC-13** : Supabase Storage~~ ✅
 2. ~~**EPIC-03** : Backoffice Admin Formations~~ ✅
 3. ~~**EPIC-04** : Backoffice Admin Consultantes~~ ✅
-4. **EPIC-07** : Booking System (migration DB + page `/reserver` 7 steps)
-5. **EPIC-09** : Lecteur de formation client + flow achat Stripe
-6. **EPIC-11-15** : Brancher les emails dans les webhooks Stripe
+4. ~~**EPIC-05** : Backoffice Admin Paiements~~ ✅
+5. ~~**EPIC-06** : Backoffice Admin Parametres~~ ✅
+6. **EPIC-07** : Booking System (migration DB + page `/reserver` 7 steps)
+7. **EPIC-09** : Lecteur de formation client + flow achat Stripe
+8. **EPIC-11-15** : Brancher les emails dans les webhooks Stripe
 

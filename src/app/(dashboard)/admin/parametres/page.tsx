@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
 import { getSessionUser } from "@/lib/auth";
+import { getPlatformSettings } from "./actions";
+import { SettingsForm } from "./_components/settings-form";
 
 export const metadata: Metadata = {
   title: "Paramètres plateforme",
@@ -9,19 +10,22 @@ export const metadata: Metadata = {
 
 const ParametresPage = async () => {
   const user = await getSessionUser();
-  if (user?.role === "marketing_manager") redirect("/admin");
+  if (!user || user.role !== "admin") redirect("/admin");
+
+  const settings = await getPlatformSettings();
+
   return (
-    <div className="space-y-6">
-      <h1 className="font-serif text-2xl font-bold text-primary-green">
-        Paramètres plateforme
-      </h1>
-      <Card>
-        <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">
-            Cette fonctionnalité sera disponible prochainement.
-          </p>
-        </CardContent>
-      </Card>
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div>
+        <h1 className="font-serif text-2xl font-bold text-primary-green">
+          Paramètres plateforme
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Configuration globale de la plateforme. Ces paramètres s&apos;appliquent à
+          toutes les consultantes et tous les clients.
+        </p>
+      </div>
+      <SettingsForm settings={settings} />
     </div>
   );
 };
