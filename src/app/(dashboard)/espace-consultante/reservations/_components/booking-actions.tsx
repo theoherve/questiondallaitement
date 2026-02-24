@@ -143,11 +143,11 @@ export const BookingActions = ({
             <DialogHeader>
               <DialogTitle>Annuler la réservation</DialogTitle>
               <DialogDescription>
-                Un remboursement sera effectué selon la politique d'annulation.
+                Un remboursement sera effectué selon la politique d&apos;annulation.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2">
-              <Label htmlFor="cancel-reason">Raison de l'annulation</Label>
+              <Label htmlFor="cancel-reason">Raison de l&apos;annulation</Label>
               <Textarea
                 id="cancel-reason"
                 value={cancelReason}
@@ -171,7 +171,7 @@ export const BookingActions = ({
                 disabled={isPending || !cancelReason.trim()}
               >
                 {isPending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
-                Confirmer l'annulation
+                Confirmer l&apos;annulation
               </Button>
             </DialogFooter>
           </DialogContent>

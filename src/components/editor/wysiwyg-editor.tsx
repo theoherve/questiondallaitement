@@ -293,7 +293,7 @@ export const WysiwygEditor = ({
         {/* Slash command menu */}
         <EditorCommand
           className="z-50 rounded-lg border bg-white shadow-lg"
-          onKeyDown={handleCommandNavigation}
+          onKeyDown={(e) => handleCommandNavigation(e.nativeEvent)}
         >
           <EditorCommandEmpty className="px-4 py-2 text-sm text-muted-foreground">
             Aucune commande trouvée

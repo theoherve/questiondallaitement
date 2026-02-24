@@ -2,10 +2,7 @@
 
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  platformSettingsSchema,
-  type PlatformSettingsInput,
-} from "@/validations/platform-settings";
+import { platformSettingsSchema } from "@/validations/platform-settings";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/types";
@@ -40,7 +37,7 @@ const parseValue = (key: keyof PlatformSettings, raw: unknown): unknown => {
     case "cancellation_penalty_rate":
       return parseFloat(str);
     case "maintenance_mode":
-      return str === "true" || str === true;
+      return str === "true";
     case "platform_name":
       return str.replace(/^"|"$/g, "");
     default:

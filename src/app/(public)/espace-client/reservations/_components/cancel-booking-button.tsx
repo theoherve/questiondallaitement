@@ -61,11 +61,11 @@ export const CancelBookingButton = ({
           <DialogDescription>
             {isFullRefund
               ? "Vous serez intégralement remboursé·e."
-              : "L'annulation moins de 48h avant le rendez-vous entraîne une retenue de 50%."}
+              : "L&apos;annulation moins de 48h avant le rendez-vous entraîne une retenue de 50%."}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor="client-cancel-reason">Raison de l'annulation</Label>
+          <Label htmlFor="client-cancel-reason">Raison de l&apos;annulation</Label>
           <Textarea
             id="client-cancel-reason"
             value={reason}
@@ -94,7 +94,7 @@ export const CancelBookingButton = ({
             disabled={isPending || !reason.trim()}
           >
             {isPending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
-            Confirmer l'annulation
+            Confirmer l&apos;annulation
           </Button>
         </DialogFooter>
       </DialogContent>

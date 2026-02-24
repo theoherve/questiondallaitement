@@ -36,7 +36,6 @@ export const SortableBlock = ({ block, children }: SortableBlockProps) => {
         type="button"
         className="mt-1 cursor-grab rounded p-0.5 text-muted-foreground/40 hover:text-muted-foreground active:cursor-grabbing"
         aria-label="Réordonner le bloc"
-        tabIndex={0}
         {...attributes}
         {...listeners}
       >

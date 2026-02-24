@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { FormationEditor } from "../../_components/formation-editor";
+import { FormationEditor } from "@/app/(dashboard)/admin/formations/_components/formation-editor";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -47,18 +47,28 @@ const AdminEditFormationPage = async ({ params }: Props) => {
     .select("id, profiles!consultants_id_fkey(first_name, last_name)")
     .eq("is_active", true);
 
-  type ConsultantOption = {
+  type ConsultantRow = {
     id: string;
     profiles: { first_name: string | null; last_name: string | null } | null;
   };
 
+  const defaultProfile = {
+    first_name: null as string | null,
+    last_name: null as string | null,
+  };
+
   const consultantOptions = (
-    (consultants ?? []) as unknown as ConsultantOption[]
-  ).sort((a, b) => {
-    const aName = `${a.profiles?.last_name ?? ""} ${a.profiles?.first_name ?? ""}`.trim();
-    const bName = `${b.profiles?.last_name ?? ""} ${b.profiles?.first_name ?? ""}`.trim();
-    return aName.localeCompare(bName);
-  });
+    (consultants ?? []) as unknown as ConsultantRow[]
+  )
+    .map((c) => ({
+      id: c.id,
+      profiles: c.profiles ?? defaultProfile,
+    }))
+    .sort((a, b) => {
+      const aName = `${a.profiles.last_name ?? ""} ${a.profiles.first_name ?? ""}`.trim();
+      const bName = `${b.profiles.last_name ?? ""} ${b.profiles.first_name ?? ""}`.trim();
+      return aName.localeCompare(bName);
+    });
 
   type SectionData = {
     id: string;
