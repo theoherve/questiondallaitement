@@ -28,6 +28,10 @@ export type PaymentStatus =
 
 export type PaymentType = "formation" | "booking" | "event";
 
+export type ConsultationLocation = "cabinet" | "teleconsultation" | "domicile";
+
+export type BookingPaymentMethod = "online" | "on_site";
+
 export type TextBlockContent = {
   html: string;
 };
@@ -128,6 +132,7 @@ export type ConsultationType = {
   price_cents: number;
   currency: string;
   is_online: boolean;
+  available_locations: ConsultationLocation[];
   buffer_minutes: number;
   is_active: boolean;
   created_at: string;
@@ -141,6 +146,9 @@ export type Booking = {
   starts_at: string;
   ends_at: string;
   status: BookingStatus;
+  location: ConsultationLocation;
+  payment_method: BookingPaymentMethod;
+  reason: string | null;
   zoom_meeting_id: string | null;
   zoom_join_url: string | null;
   zoom_host_url: string | null;
@@ -152,6 +160,20 @@ export type Booking = {
   refund_amount_cents: number | null;
   created_at: string;
   updated_at: string;
+};
+
+export type ConsultantLocation = {
+  id: string;
+  consultant_id: string;
+  location_type: ConsultationLocation;
+  label: string | null;
+  address: string | null;
+  city: string | null;
+  postal_code: string | null;
+  radius_km: number | null;
+  surcharge_cents: number;
+  is_active: boolean;
+  created_at: string;
 };
 
 export type Formation = {

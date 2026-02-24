@@ -100,6 +100,88 @@ export const sendWelcomeEmail = async (
   });
 };
 
+export const sendNewBookingNotification = async (
+  consultantEmail: string,
+  variables: {
+    consultant_name: string;
+    client_name: string;
+    date: string;
+    time: string;
+    reason: string;
+    payment_method: string;
+  }
+) => {
+  const template = await getTemplate("new_booking_notification");
+
+  const subject = template
+    ? renderTemplate(template.subject, variables)
+    : `Nouvelle réservation de ${variables.client_name}`;
+
+  const html = template
+    ? renderTemplate(template.body_html, variables)
+    : `
+      <h1>Nouvelle réservation</h1>
+      <p>Bonjour ${variables.consultant_name},</p>
+      <p>Vous avez une nouvelle réservation :</p>
+      <ul>
+        <li><strong>Client :</strong> ${variables.client_name}</li>
+        <li><strong>Date :</strong> ${variables.date} à ${variables.time}</li>
+        <li><strong>Motif :</strong> ${variables.reason}</li>
+        <li><strong>Paiement :</strong> ${variables.payment_method}</li>
+      </ul>
+      <p>Connectez-vous à votre espace pour gérer cette réservation.</p>
+    `;
+
+  await sendTransactionalEmail({ to: consultantEmail, subject, html });
+};
+
+export const sendGuestAccountEmail = async (
+  clientEmail: string,
+  variables: {
+    client_name: string;
+    setup_url: string;
+  }
+) => {
+  const template = await getTemplate("guest_account_setup");
+
+  const subject = template
+    ? renderTemplate(template.subject, variables)
+    : "Finalisez votre compte — Question d'Allaitement";
+
+  const html = template
+    ? renderTemplate(template.body_html, variables)
+    : `
+      <h1>Bienvenue sur Question d'Allaitement</h1>
+      <p>Bonjour ${variables.client_name},</p>
+      <p>Votre réservation a été enregistrée. Un compte a été créé automatiquement pour vous.</p>
+      <p>Pour accéder à votre espace personnel et suivre vos rendez-vous, définissez votre mot de passe :</p>
+      <p><a href="${variables.setup_url}" style="display:inline-block;padding:12px 24px;background-color:#A0283E;color:#fff;text-decoration:none;border-radius:6px;">Créer mon mot de passe</a></p>
+      <p>Si vous n'avez pas effectué cette réservation, ignorez cet email.</p>
+    `;
+
+  await sendTransactionalEmail({ to: clientEmail, subject, html });
+};
+
+export const sendBookingCancelledToConsultant = async (
+  consultantEmail: string,
+  variables: {
+    consultant_name: string;
+    client_name: string;
+    date: string;
+    reason: string;
+  }
+) => {
+  const subject = `Annulation de rendez-vous — ${variables.client_name}`;
+  const html = `
+    <h1>Rendez-vous annulé</h1>
+    <p>Bonjour ${variables.consultant_name},</p>
+    <p>Le rendez-vous avec ${variables.client_name} prévu le ${variables.date} a été annulé.</p>
+    <p><strong>Raison :</strong> ${variables.reason}</p>
+  `;
+
+  await sendTransactionalEmail({ to: consultantEmail, subject, html });
+};
+
 export const sendPasswordResetEmail = async (
   clientEmail: string,
   variables: {

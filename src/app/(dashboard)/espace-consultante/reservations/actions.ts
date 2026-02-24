@@ -101,8 +101,61 @@ export const cancelBooking = async (
       reason,
       hours_until: hoursUntil,
       refund_amount_cents: refundAmountCents,
+      payment_method: booking.payment_method ?? "online",
     },
   });
+
+  try {
+    const { sendBookingCancelled, sendBookingCancelledToConsultant } = await import("@/lib/emails/send");
+    const { data: client } = await adminClient
+      .from("profiles")
+      .select("email, first_name")
+      .eq("id", booking.client_id)
+      .single();
+
+    const { data: consultant } = await adminClient
+      .from("consultants")
+      .select("profiles (email, first_name, last_name)")
+      .eq("id", booking.consultant_id)
+      .single();
+
+    const consultantProfile = consultant?.profiles as unknown as {
+      email: string;
+      first_name: string | null;
+      last_name: string | null;
+    } | null;
+
+    const { format: fmtDate } = await import("date-fns");
+    const { fr } = await import("date-fns/locale");
+    const dateStr = fmtDate(new Date(booking.starts_at), "EEEE d MMMM yyyy 'à' HH:mm", { locale: fr });
+
+    let refundInfo = "Aucun remboursement.";
+    if (refundAmountCents > 0) {
+      refundInfo = `Remboursement de ${(refundAmountCents / 100).toFixed(2)} € effectué.`;
+    }
+    if (booking.payment_method === "on_site") {
+      refundInfo = "Paiement sur place — aucun remboursement nécessaire.";
+    }
+
+    if (client?.email) {
+      await sendBookingCancelled(client.email, {
+        client_name: client.first_name ?? "",
+        date: dateStr,
+        refund_info: refundInfo,
+      });
+    }
+
+    if (consultantProfile?.email) {
+      await sendBookingCancelledToConsultant(consultantProfile.email, {
+        consultant_name: `${consultantProfile.first_name ?? ""} ${consultantProfile.last_name ?? ""}`.trim(),
+        client_name: client?.first_name ?? "Client",
+        date: dateStr,
+        reason,
+      });
+    }
+  } catch {
+    // Non-blocking
+  }
 
   revalidatePath("/espace-consultante/reservations");
   revalidatePath("/espace-client/reservations");

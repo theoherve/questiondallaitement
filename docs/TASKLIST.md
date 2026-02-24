@@ -155,7 +155,7 @@
 
 ---
 
-## EPIC-07 : Booking System 🔴
+## EPIC-07 : Booking System ✅
 
 > Flow de reservation en 7 etapes avec guest checkout. (ADR-013)
 
@@ -163,36 +163,36 @@
 | ID                          | Story                                                                                                                                                                       | Statut | Prio  |
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
 | **DB & Schema**             |                                                                                                                                                                             |        |       |
-| 07-01                       | Migration 00016 : creer enum `consultation_location` (cabinet, teleconsultation, domicile)                                                                                  | ⬜      | 🔴 P0 |
-| 07-02                       | Migration 00016 : creer enum `booking_payment_method` (online, on_site)                                                                                                     | ⬜      | 🔴 P0 |
-| 07-03                       | Migration 00016 : creer table `consultant_locations` (id, consultant_id, location_type, label, address, city, postal_code, radius_km, surcharge_cents, is_active)           | ⬜      | 🔴 P0 |
-| 07-04                       | Migration 00016 : ajouter `available_locations consultation_location[]` a `consultation_types` + migrer `is_online`                                                         | ⬜      | 🔴 P0 |
-| 07-05                       | Migration 00016 : ajouter `location`, `payment_method`, `reason` a `bookings`                                                                                               | ⬜      | 🔴 P0 |
-| 07-06                       | Migration 00016 : RLS policies pour `consultant_locations` (public read active, consultant write own, admin all)                                                            | ⬜      | 🔴 P0 |
-| 07-07                       | Types TypeScript : `ConsultantLocation`, `ConsultationLocation`, `BookingPaymentMethod` dans `database.ts`                                                                  | ⬜      | 🔴 P0 |
+| 07-01                       | Migration 00020 : creer enum `consultation_location` (cabinet, teleconsultation, domicile)                                                                                  | ✅      | 🔴 P0 |
+| 07-02                       | Migration 00020 : creer enum `booking_payment_method` (online, on_site)                                                                                                     | ✅      | 🔴 P0 |
+| 07-03                       | Migration 00020 : creer table `consultant_locations` (id, consultant_id, location_type, label, address, city, postal_code, radius_km, surcharge_cents, is_active)           | ✅      | 🔴 P0 |
+| 07-04                       | Migration 00020 : ajouter `available_locations consultation_location[]` a `consultation_types` + migrer `is_online`                                                         | ✅      | 🔴 P0 |
+| 07-05                       | Migration 00020 : ajouter `location`, `payment_method`, `reason` a `bookings`                                                                                               | ✅      | 🔴 P0 |
+| 07-06                       | Migration 00020 : RLS policies pour `consultant_locations` (public read active, consultant write own, admin all)                                                            | ✅      | 🔴 P0 |
+| 07-07                       | Types TypeScript : `ConsultantLocation`, `ConsultationLocation`, `BookingPaymentMethod` dans `database.ts`                                                                  | ✅      | 🔴 P0 |
 | 07-08                       | Mettre a jour les seeds pour inclure `consultant_locations` et `available_locations`                                                                                        | ⬜      | 🟠 P1 |
 | **Page publique /reserver** |                                                                                                                                                                             |        |       |
-| 07-09                       | Route publique `/reserver` ajoutee au middleware (pas d'auth requise)                                                                                                       | ⬜      | 🔴 P0 |
-| 07-10                       | Composant multi-step form (state local ou Zustand) avec barre de progression                                                                                                | ⬜      | 🔴 P0 |
-| 07-11                       | Step 1 — Service : dropdown des `consultation_types` actifs, dedupliques par titre                                                                                          | ⬜      | 🔴 P0 |
-| 07-12                       | Step 2 — Lieu : boutons cabinet / teleconsultation / domicile, filtres par `consultant_locations` dispos pour le service choisi                                             | ⬜      | 🔴 P0 |
-| 07-13                       | Step 3 — Consultante : dropdown consultantes qui offrent ce service a ce lieu, avec photo + bio courte                                                                      | ⬜      | 🔴 P0 |
-| 07-14                       | Step 4 — Calendrier : vue semaine/mois Calendly-like, calcul creneaux dispos (cross `availabilities` + `availability_exceptions` + `bookings` existants + `buffer_minutes`) | ⬜      | 🔴 P0 |
-| 07-15                       | Step 5 — Contact : formulaire prenom, nom, telephone, email, motif (validation Zod)                                                                                         | ⬜      | 🔴 P0 |
-| 07-16                       | Step 6 — Paiement : choix Stripe en ligne OU sur place. Afficher prix (base + surcharge domicile si applicable)                                                             | ⬜      | 🔴 P0 |
-| 07-17                       | Step 7 — Confirmation : recapitulatif complet (service, lieu, consultante, creneau, prix, mode paiement)                                                                    | ⬜      | 🔴 P0 |
+| 07-09                       | Route publique `/reserver` ajoutee au middleware (pas d'auth requise)                                                                                                       | ✅      | 🔴 P0 |
+| 07-10                       | Composant multi-step form (state local) avec barre de progression                                                                                                           | ✅      | 🔴 P0 |
+| 07-11                       | Step 1 — Service : cards des `consultation_types` actifs, dedupliques par titre                                                                                             | ✅      | 🔴 P0 |
+| 07-12                       | Step 2 — Lieu : boutons cabinet / teleconsultation / domicile, filtres par `available_locations` du service choisi                                                          | ✅      | 🔴 P0 |
+| 07-13                       | Step 3 — Consultante : liste consultantes qui offrent ce service a ce lieu, avec avatar + bio                                                                               | ✅      | 🔴 P0 |
+| 07-14                       | Step 4 — Calendrier : vue mois Calendly-like, calcul creneaux dispos (cross `availabilities` + `availability_exceptions` + `bookings` existants + `buffer_minutes`)         | ✅      | 🔴 P0 |
+| 07-15                       | Step 5 — Contact : formulaire prenom, nom, telephone, email, motif (validation Zod)                                                                                         | ✅      | 🔴 P0 |
+| 07-16                       | Step 6 — Paiement : choix Stripe en ligne OU sur place. Afficher prix (base + surcharge domicile si applicable)                                                             | ✅      | 🔴 P0 |
+| 07-17                       | Step 7 — Confirmation : recapitulatif complet (service, lieu, consultante, creneau, prix, mode paiement)                                                                    | ✅      | 🔴 P0 |
 | **Backend booking**         |                                                                                                                                                                             |        |       |
-| 07-18                       | Server Action `createBooking` : creation profil guest si nouveau email, creation booking, redirect Stripe ou confirmation directe                                           | ⬜      | 🔴 P0 |
-| 07-19                       | Guest checkout : creation profil auto (`password_hash = null`, role `client`), reutilisation si email existant                                                              | ⬜      | 🔴 P0 |
-| 07-20                       | Si paiement online : creation Stripe Checkout Session (type booking) → redirect                                                                                             | ⬜      | 🔴 P0 |
-| 07-21                       | Si paiement on_site : booking `status = 'pending'`, email notification a la consultante                                                                                     | ⬜      | 🔴 P0 |
-| 07-22                       | Email confirmation au client apres booking (Resend)                                                                                                                         | ⬜      | 🟠 P1 |
-| 07-23                       | Email "finalisez votre compte" au guest (choisir mot de passe)                                                                                                              | ⬜      | 🟠 P1 |
+| 07-18                       | Server Action `createBooking` : creation profil guest si nouveau email, creation booking, redirect Stripe ou confirmation directe                                           | ✅      | 🔴 P0 |
+| 07-19                       | Guest checkout : creation profil auto (`password_hash = null`, role `client`), reutilisation si email existant                                                              | ✅      | 🔴 P0 |
+| 07-20                       | Si paiement online : creation Stripe Checkout Session (type booking) → redirect                                                                                             | ✅      | 🔴 P0 |
+| 07-21                       | Si paiement on_site : booking `status = 'pending'`, email notification a la consultante                                                                                     | ✅      | 🔴 P0 |
+| 07-22                       | Email confirmation au client apres booking (Resend)                                                                                                                         | ✅      | 🟠 P1 |
+| 07-23                       | Email "finalisez votre compte" au guest (choisir mot de passe)                                                                                                              | ✅      | 🟠 P1 |
 | **Annulation**              |                                                                                                                                                                             |        |       |
-| 07-24                       | Logique annulation 48h : calcul si >= 48h avant `starts_at`, refund total ou partiel 50% (online)                                                                           | ⬜      | 🟠 P1 |
-| 07-25                       | Annulation on_site : `status = 'cancelled'`, pas de refund Stripe                                                                                                           | ⬜      | 🟠 P1 |
-| 07-26                       | Server Action `cancelBooking` avec audit log                                                                                                                                | ⬜      | 🟠 P1 |
-| 07-27                       | Email annulation au client et a la consultante avec details refund                                                                                                          | ⬜      | 🟠 P1 |
+| 07-24                       | Logique annulation 48h : calcul si >= 48h avant `starts_at`, refund total ou partiel 50% (online)                                                                           | ✅      | 🟠 P1 |
+| 07-25                       | Annulation on_site : `status = 'cancelled'`, pas de refund Stripe                                                                                                           | ✅      | 🟠 P1 |
+| 07-26                       | Server Action `cancelBooking` avec audit log                                                                                                                                | ✅      | 🟠 P1 |
+| 07-27                       | Email annulation au client et a la consultante avec details refund                                                                                                          | ✅      | 🟠 P1 |
 | **Cron & notifications**    |                                                                                                                                                                             |        |       |
 | 07-28                       | Cron `/api/cron` : email rappel RDV J-1 pour les bookings confirmed de demain                                                                                               | ⬜      | 🟡 P2 |
 
@@ -559,9 +559,9 @@
 
 | Statut            | Nombre   |
 | ----------------- | -------- |
-| ✅ Termine         | ~87      |
+| ✅ Termine         | ~113     |
 | 🔶 Partiel        | ~10      |
-| ⬜ A faire         | ~70      |
+| ⬜ A faire         | ~44      |
 | **Total stories** | **~167** |
 
 
@@ -572,7 +572,8 @@
 3. ~~**EPIC-04** : Backoffice Admin Consultantes~~ ✅
 4. ~~**EPIC-05** : Backoffice Admin Paiements~~ ✅
 5. ~~**EPIC-06** : Backoffice Admin Parametres~~ ✅
-6. **EPIC-07** : Booking System (migration DB + page `/reserver` 7 steps)
-7. **EPIC-09** : Lecteur de formation client + flow achat Stripe
-8. **EPIC-11-15** : Brancher les emails dans les webhooks Stripe
+6. ~~**EPIC-07** : Booking System~~ ✅
+7. **EPIC-08** : Espace Consultante (dashboard, agenda, parametres)
+8. **EPIC-09** : Lecteur de formation client + flow achat Stripe
+9. **EPIC-11-15** : Brancher les emails dans les webhooks Stripe
 

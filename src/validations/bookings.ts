@@ -4,7 +4,18 @@ export const bookingSchema = z.object({
   consultant_id: z.string().uuid(),
   consultation_type_id: z.string().uuid(),
   starts_at: z.string().datetime(),
+  location: z.enum(["cabinet", "teleconsultation", "domicile"]),
+  payment_method: z.enum(["online", "on_site"]),
+  reason: z.string().min(1, "Le motif est requis").max(1000),
   notes: z.string().max(500).optional(),
+});
+
+export const contactSchema = z.object({
+  first_name: z.string().min(1, "Le prénom est requis"),
+  last_name: z.string().min(1, "Le nom est requis"),
+  phone: z.string().min(10, "Numéro de téléphone invalide"),
+  email: z.email("Email invalide"),
+  reason: z.string().min(1, "Le motif est requis").max(1000),
 });
 
 export const cancellationSchema = z.object({
@@ -25,10 +36,14 @@ export const consultationTypeSchema = z.object({
   price_cents: z.number().int().min(0),
   currency: z.string().default("eur"),
   is_online: z.boolean().default(true),
+  available_locations: z
+    .array(z.enum(["cabinet", "teleconsultation", "domicile"]))
+    .default(["teleconsultation"]),
   buffer_minutes: z.number().int().min(0).max(120).default(15),
 });
 
 export type BookingInput = z.infer<typeof bookingSchema>;
+export type ContactInput = z.infer<typeof contactSchema>;
 export type CancellationInput = z.infer<typeof cancellationSchema>;
 export type AvailabilityInput = z.infer<typeof availabilitySchema>;
 export type ConsultationTypeInput = z.infer<typeof consultationTypeSchema>;
