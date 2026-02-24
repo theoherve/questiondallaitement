@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,8 +20,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 };
 
 const ConsultantReservationsPage = async () => {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await getSupabaseAndUser();
 
   const { data: bookings } = await supabase
     .from("bookings")
@@ -30,7 +29,7 @@ const ConsultantReservationsPage = async () => {
       profiles!bookings_client_id_fkey(first_name, last_name, email),
       consultation_types(title, duration_minutes, is_online)
     `)
-    .eq("consultant_id", user!.id)
+    .eq("consultant_id", user.id)
     .order("starts_at", { ascending: false });
 
   const now = new Date();

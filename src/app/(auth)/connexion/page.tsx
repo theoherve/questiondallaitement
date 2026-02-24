@@ -31,7 +31,13 @@ const LoginPage = async ({ searchParams }: Props) => {
             className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600"
             role="alert"
           >
-            {decodeURIComponent(params.error)}
+            {params.error === "link_expired_or_used"
+              ? "Ce lien de confirmation a expiré ou a déjà été utilisé. Connectez-vous si votre compte est actif, ou demandez un nouveau lien depuis l’inscription."
+              : params.error === "missing_code"
+                ? "Lien de confirmation invalide. Utilisez le lien reçu par email ou connectez-vous."
+                : params.error === "auth_failed"
+                  ? "La confirmation a échoué. Réessayez ou connectez-vous."
+                  : decodeURIComponent(params.error)}
           </div>
         )}
         <form action={handleLogin} className="space-y-4">

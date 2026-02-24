@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { AuthRedirectHandler } from "@/components/auth/auth-redirect-handler";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, CalendarDays, Users, Star } from "lucide-react";
@@ -30,9 +32,18 @@ const FEATURES = [
   },
 ];
 
-const HomePage = () => {
+type HomePageProps = { searchParams: Promise<{ code?: string; next?: string }> };
+
+const HomePage = async ({ searchParams }: HomePageProps) => {
+  const params = await searchParams;
+  if (params?.code) {
+    const next = params.next ?? "/espace-client";
+    redirect(`/api/auth/callback?code=${encodeURIComponent(params.code)}&next=${encodeURIComponent(next)}`);
+  }
+
   return (
     <>
+      <AuthRedirectHandler />
       <section className="bg-background-beige px-4 py-20 sm:py-32">
         <div className="mx-auto max-w-4xl text-center">
           <h1 className="font-serif text-4xl font-bold tracking-tight text-primary-green sm:text-5xl lg:text-6xl">

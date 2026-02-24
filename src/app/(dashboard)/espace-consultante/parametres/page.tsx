@@ -1,6 +1,5 @@
 import { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,9 +15,7 @@ export const metadata: Metadata = {
 };
 
 const ConsultantSettingsPage = async () => {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/connexion");
+  const { supabase, user } = await getSupabaseAndUser();
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -34,9 +31,7 @@ const ConsultantSettingsPage = async () => {
 
   const handleUpdateProfile = async (formData: FormData) => {
     "use server";
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const { supabase, user } = await getSupabaseAndUser();
 
     await supabase
       .from("profiles")

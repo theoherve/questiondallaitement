@@ -1,6 +1,5 @@
 import { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,12 +13,7 @@ export const metadata: Metadata = {
 const updateProfile = async (formData: FormData) => {
   "use server";
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/connexion");
+  const { supabase, user } = await getSupabaseAndUser();
 
   await supabase
     .from("profiles")
@@ -34,12 +28,7 @@ const updateProfile = async (formData: FormData) => {
 };
 
 const ProfilePage = async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/connexion");
+  const { supabase, user } = await getSupabaseAndUser();
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -48,7 +37,7 @@ const ProfilePage = async () => {
     .single();
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="font-serif text-2xl font-bold text-primary-green">
         Mon profil
       </h1>

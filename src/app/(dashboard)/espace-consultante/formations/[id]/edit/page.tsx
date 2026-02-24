@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 const EditFormationPage = async ({ params }: Props) => {
   const { id } = await params;
-  const supabase = await createClient();
+  const { supabase, user } = await getSupabaseAndUser();
 
   const { data: formation } = await supabase
     .from("formations")
@@ -43,6 +43,7 @@ const EditFormationPage = async ({ params }: Props) => {
     `
     )
     .eq("id", id)
+    .eq("consultant_id", user.id)
     .single();
 
   if (!formation) notFound();

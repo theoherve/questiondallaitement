@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,16 +12,13 @@ export const metadata: Metadata = {
 };
 
 const ClientDashboardPage = async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getSupabaseAndUser();
 
   const [enrollmentsResult, bookingsResult] = await Promise.all([
     supabase
       .from("formation_enrollments")
       .select("id, enrolled_at, formations(title, slug)")
-      .eq("client_id", user!.id)
+      .eq("client_id", user.id)
       .order("enrolled_at", { ascending: false })
       .limit(5),
     supabase
@@ -29,7 +26,7 @@ const ClientDashboardPage = async () => {
       .select(
         "id, starts_at, ends_at, status, consultants(profiles(first_name, last_name)), consultation_types(title)"
       )
-      .eq("client_id", user!.id)
+      .eq("client_id", user.id)
       .gte("starts_at", new Date().toISOString())
       .order("starts_at", { ascending: true })
       .limit(5),
@@ -41,12 +38,12 @@ const ClientDashboardPage = async () => {
   const { count: totalEnrollments } = await supabase
     .from("formation_enrollments")
     .select("id", { count: "exact", head: true })
-    .eq("client_id", user!.id);
+    .eq("client_id", user.id);
 
   const { count: totalBookings } = await supabase
     .from("bookings")
     .select("id", { count: "exact", head: true })
-    .eq("client_id", user!.id);
+    .eq("client_id", user.id);
 
   const STATUS_LABELS: Record<string, string> = {
     pending: "En attente",
@@ -57,7 +54,7 @@ const ClientDashboardPage = async () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="font-serif text-2xl font-bold text-primary-green">
         Tableau de bord
       </h1>

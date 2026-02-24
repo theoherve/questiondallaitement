@@ -1,5 +1,6 @@
 import { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { StatCard } from "@/components/dashboard/stat-card";
 import {
   Card,
@@ -20,7 +21,11 @@ const formatCurrency = (cents: number): string =>
   }).format(cents / 100);
 
 const AdminDashboardPage = async () => {
-  const supabase = await createClient();
+  const sessionUser = await getSessionUser();
+  if (!sessionUser || sessionUser.role !== "admin") {
+    return null;
+  }
+  const supabase = createAdminClient();
 
   const [
     consultantsResult,

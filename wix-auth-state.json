@@ -1,0 +1,104 @@
+{
+  "cookies": [
+    {
+      "name": "svSession",
+      "value": "4c85dbe21d4a9750c140f72cba80f94c7cd86849f8672fff158a0e2a06971beb31a98c629f960a182dd3522a49d6db3d1e60994d53964e647acf431e4f798bcd067161f36e04a9c4093bc4526ae374e38c8f486e941a29bab51c1295994f261037639342a0b134fe90ff1e2109ec5451835a52e902c2ead36a9b89ed9f8b1951879faf1797944477551f3007e7501e71",
+      "domain": ".www.caroleherve.fr",
+      "path": "/",
+      "expires": 1806487561.302211,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "XSRF-TOKEN",
+      "value": "1771927426|YPcfz1BCIfeN",
+      "domain": ".www.caroleherve.fr",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "server-session-bind",
+      "value": "faac1af2-ec6c-4035-8edd-a198ef066266",
+      "domain": "www.caroleherve.fr",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "hs",
+      "value": "2137011912",
+      "domain": ".www.caroleherve.fr",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "svSession",
+      "value": "4c85dbe21d4a9750c140f72cba80f94c7cd86849f8672fff158a0e2a06971beb31a98c629f960a182dd3522a49d6db3d1e60994d53964e647acf431e4f798bcdc85ed1f3c8b17cea74e38d79a67237023af22611cba35387267b13f6d6a0327b37639342a0b134fe90ff1e2109ec5451835a52e902c2ead36a9b89ed9f8b1951879faf1797944477551f3007e7501e71",
+      "domain": ".caroleherve.fr",
+      "path": "/",
+      "expires": 1806487560.699136,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "smSession",
+      "value": "JWS.eyJraWQiOiJQSXpvZGJiQiIsImFsZyI6IkhTMjU2In0.eyJkYXRhIjoie1wiaWRcIjpcImM1NTI0MjA3LTQzN2EtNGY5My04Zjc2LTFiMjNhZGQxMzA3MlwiLFwiY29sbGVjdGlvbklkXCI6XCJmYzQ3MmU2Ny05YzZmLTRjMWItOTEzNi02ZWYxMGI5MWFiMTJcIixcIm1ldGFTaXRlSWRcIjpcImM4ZTM5MDQ1LTMwZWItNGNiNi1iMzAyLTkwZmQyMWNmNjc1MVwiLFwib3duZXJcIjpmYWxzZSxcImNyZWF0aW9uVGltZVwiOjE3NzE5Mjc1NjAwMjIsXCJleHBpcmVzSW5cIjoxMjA5NjAwMDAwLFwiZXhwaXJhdGlvblRpbWVcIjoxNzczMTM3MTYwMDIyLFwibGFzdFJlZnJlc2hlZFwiOjE3NzE5Mjc1NjA2NDcsXCJhZG1pblwiOmZhbHNlLFwic2Vzc2lvbklkXCI6XCIyMWY0ODc2OC01YzkyLTQyNGEtOTZkZi1jOWZjNDNjNDRkZDBcIixcImNvbnRhY3RJZFwiOlwiYzU1MjQyMDctNDM3YS00ZjkzLThmNzYtMWIyM2FkZDEzMDcyXCJ9IiwiaWF0IjoxNzcxOTI3NTYwfQ.5qT8qsPjh4FckE6OLYg-fNfK6FkjyEeu9L8xVbhSvgY",
+      "domain": ".caroleherve.fr",
+      "path": "/",
+      "expires": 1773137160.699352,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "recent-writes",
+      "value": "CHSxfAAAAZyPHN9c5KhpCgAAAZyPHOFA.100348c",
+      "domain": "www.caroleherve.fr",
+      "path": "/",
+      "expires": 1771927565.699453,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "bSession",
+      "value": "54962b67-d597-42da-b9a8-11ebef12e650|2",
+      "domain": ".www.caroleherve.fr",
+      "path": "/",
+      "expires": 1771929365,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://www.caroleherve.fr",
+      "localStorage": [
+        {
+          "name": "fedops.logger.sessionId",
+          "value": "0fb43974-e09b-4f42-bb5e-bc1c2b4ce0a6"
+        }
+      ]
+    },
+    {
+      "origin": "https://www.google.com",
+      "localStorage": [
+        {
+          "name": "rc::a",
+          "value": "d24xd2xsNHZubGEy"
+        }
+      ]
+    }
+  ]
+}

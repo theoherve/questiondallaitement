@@ -46,3 +46,7 @@
 - `transform-media.ts` - Upload les medias vers Supabase Storage
 - `import-data.ts` - Importe les donnees transformees dans Supabase
 - `verify-redirects.ts` - Verifie que toutes les redirections fonctionnent
+
+## Seed Wix (donnees consultante, formations, evenements)
+
+Le fichier `supabase/seed.sql` contient les donnees issues du site Wix (Carole Herve : profil, consultante, types de consultation, formations en ligne, evenements, pages Livres / Medias / A propos). **Avant d’executer le seed**, il faut creer un utilisateur Auth pour la consultante. Voir [supabase/SEED.md](../supabase/SEED.md) pour les instructions.

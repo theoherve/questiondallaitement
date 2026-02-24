@@ -1,6 +1,6 @@
 import { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
@@ -23,10 +23,7 @@ const STATUS_CONFIG: Record<
 };
 
 const ClientReservationsPage = async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getSupabaseAndUser();
 
   const { data: bookings } = await supabase
     .from("bookings")
@@ -48,7 +45,7 @@ const ClientReservationsPage = async () => {
       )
     `
     )
-    .eq("client_id", user!.id)
+    .eq("client_id", user.id)
     .order("starts_at", { ascending: false });
 
   const now = new Date();
@@ -122,7 +119,7 @@ const ClientReservationsPage = async () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="font-serif text-2xl font-bold text-primary-green">
         Mes réservations
       </h1>

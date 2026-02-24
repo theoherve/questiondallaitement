@@ -1,0 +1,25 @@
+# Config minimale pour supabase link et db push
+# Référence : https://supabase.com/docs/guides/local-development/cli/config
+project_id = "question-d-allaitement"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[db.migrations]
+enabled = true
+schema_paths = []
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[studio]
+enabled = true
+port = 54323

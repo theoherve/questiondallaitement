@@ -1,0 +1,33 @@
+"use client";
+
+import {
+  LayoutDashboard,
+  BookOpen,
+  CalendarDays,
+  CalendarClock,
+  Users,
+  Mail,
+  Zap,
+  BarChart3,
+  Settings,
+  CreditCard,
+  Megaphone,
+  type LucideIcon,
+} from "lucide-react";
+
+export const navIconMap: Record<string, LucideIcon> = {
+  LayoutDashboard,
+  BookOpen,
+  CalendarDays,
+  CalendarClock,
+  Users,
+  Mail,
+  Zap,
+  BarChart3,
+  Settings,
+  CreditCard,
+  Megaphone,
+};
+
+export const getNavIcon = (iconKey: string): LucideIcon =>
+  navIconMap[iconKey] ?? LayoutDashboard;

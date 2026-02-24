@@ -1,12 +1,15 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { hash } from "bcryptjs";
+import { signIn, signOut } from "@/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   loginSchema,
   registerSchema,
   forgotPasswordSchema,
 } from "@/validations/auth";
 import { redirect } from "next/navigation";
+import { randomUUID } from "crypto";
 
 const baseUrl = () =>
   process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -24,13 +27,13 @@ export const handleLogin = async (formData: FormData): Promise<void> => {
     );
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email: parsed.data.email,
+  const result = await signIn("credentials", {
+    email: parsed.data.email.trim().toLowerCase(),
     password: parsed.data.password,
+    redirect: false,
   });
 
-  if (error) {
+  if (result?.error) {
     redirect(
       `${baseUrl()}/connexion?error=${encodeURIComponent("Email ou mot de passe incorrect")}`
     );
@@ -57,25 +60,37 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
     );
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
-    email: parsed.data.email,
-    password: parsed.data.password,
-    options: {
-      data: {
-        first_name: parsed.data.first_name,
-        last_name: parsed.data.last_name,
-        role: "client",
-      },
-      emailRedirectTo: `${baseUrl()}/api/auth/callback`,
-    },
+  const email = parsed.data.email.trim().toLowerCase();
+  const supabase = createAdminClient();
+
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (existing) {
+    redirect(
+      `${baseUrl()}/inscription?error=${encodeURIComponent("Un compte existe déjà avec cette adresse email.")}`
+    );
+  }
+
+  const password_hash = await hash(parsed.data.password, 10);
+  const id = randomUUID();
+
+  const { error } = await supabase.from("profiles").insert({
+    id,
+    email,
+    password_hash,
+    first_name: parsed.data.first_name,
+    last_name: parsed.data.last_name,
+    role: "client",
   });
 
   if (error) {
-    const message = error.message.includes("already registered")
-      ? "Un compte existe déjà avec cette adresse email"
-      : "Une erreur est survenue lors de l'inscription";
-    redirect(`${baseUrl()}/inscription?error=${encodeURIComponent(message)}`);
+    redirect(
+      `${baseUrl()}/inscription?error=${encodeURIComponent("Une erreur est survenue lors de l'inscription.")}`
+    );
   }
 
   redirect(`${baseUrl()}/inscription?success=1`);
@@ -93,25 +108,10 @@ export const handleForgotPassword = async (
     );
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(
-    parsed.data.email,
-    {
-      redirectTo: `${baseUrl()}/api/auth/callback?next=/mot-de-passe-oublie/reset`,
-    }
-  );
-
-  if (error) {
-    redirect(
-      `${baseUrl()}/mot-de-passe-oublie?error=${encodeURIComponent("Une erreur est survenue")}`
-    );
-  }
-
+  // TODO: implement reset flow (send email with token, page to set new password, update password_hash in profiles)
   redirect(`${baseUrl()}/mot-de-passe-oublie?success=1`);
 };
 
 export const handleLogout = async (): Promise<void> => {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/");
+  await signOut({ redirectTo: "/" });
 };

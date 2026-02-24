@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { NavItem } from "@/config/navigation";
+import { getNavIcon } from "@/config/navigation-icons";
 
 type DashboardHeaderProps = {
   title: string;
@@ -58,7 +59,10 @@ export const DashboardHeader = ({ title, items }: DashboardHeaderProps) => {
                       )}
                       tabIndex={0}
                     >
-                      <item.icon className="h-4 w-4" />
+                      {(() => {
+                    const Icon = getNavIcon(item.iconKey);
+                    return <Icon className="h-4 w-4" />;
+                  })()}
                       {item.title}
                     </Link>
                   );

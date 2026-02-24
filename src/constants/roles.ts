@@ -41,3 +41,25 @@ export const CONSULTANT_ROLES: UserRole[] = [
 ];
 
 export const ADMIN_ROLES: UserRole[] = ["admin"];
+
+/** Rôles ayant accès au backoffice (espace consultante ou admin). */
+export const BACKOFFICE_ROLES: UserRole[] = [
+  "consultant",
+  "consultant_limited",
+  "marketing_manager",
+  "admin",
+];
+
+/** URL de redirection vers le backoffice selon le rôle. */
+export const getBackofficeRedirectUrl = (role: string): string => {
+  if (role === "consultant" || role === "consultant_limited") {
+    return "/espace-consultante";
+  }
+  if (role === "marketing_manager" || role === "admin") {
+    return "/admin";
+  }
+  return "/espace-client";
+};
+
+export const canAccessBackoffice = (role: string): boolean =>
+  (BACKOFFICE_ROLES as readonly string[]).includes(role);

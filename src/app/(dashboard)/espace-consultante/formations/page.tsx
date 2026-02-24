@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,15 +25,12 @@ const formatPrice = (cents: number): string =>
   }).format(cents / 100);
 
 const ConsultantFormationsPage = async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getSupabaseAndUser();
 
   const { data: formations } = await supabase
     .from("formations")
     .select("id, title, slug, status, price_cents, created_at, published_at")
-    .eq("consultant_id", user!.id)
+    .eq("consultant_id", user.id)
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 

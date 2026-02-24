@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { updateSession } from "@/lib/supabase/middleware";
+import { auth } from "@/auth";
 
 const PUBLIC_ROUTES = [
   "/",
@@ -15,7 +15,7 @@ const AUTH_ROUTES = ["/connexion", "/inscription", "/mot-de-passe-oublie"];
 const ROLE_ROUTE_MAP: Record<string, string[]> = {
   "/espace-client": ["client", "admin"],
   "/espace-consultante": ["consultant", "consultant_limited", "admin"],
-  "/admin": ["admin"],
+  "/admin": ["admin", "marketing_manager"],
 };
 
 const isPublicRoute = (pathname: string): boolean => {
@@ -33,30 +33,30 @@ const isApiRoute = (pathname: string): boolean => {
   return pathname.startsWith("/api/");
 };
 
-export const middleware = async (request: NextRequest) => {
-  const { pathname } = request.nextUrl;
+export default auth((req) => {
+  const { pathname } = req.nextUrl;
+  const user = req.auth?.user;
+  const role = (user as { role?: string } | undefined)?.role;
 
   if (isApiRoute(pathname) || pathname.startsWith("/_next")) {
     return NextResponse.next();
   }
 
-  const { supabaseResponse, user, profile } = await updateSession(request);
-
   if (isPublicRoute(pathname)) {
-    return supabaseResponse;
+    return NextResponse.next();
   }
 
   if (isAuthRoute(pathname)) {
     if (user) {
-      const url = request.nextUrl.clone();
+      const url = req.nextUrl.clone();
       url.pathname = "/espace-client";
       return NextResponse.redirect(url);
     }
-    return supabaseResponse;
+    return NextResponse.next();
   }
 
   if (!user) {
-    const url = request.nextUrl.clone();
+    const url = req.nextUrl.clone();
     url.pathname = "/connexion";
     url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
@@ -64,8 +64,8 @@ export const middleware = async (request: NextRequest) => {
 
   for (const [routePrefix, allowedRoles] of Object.entries(ROLE_ROUTE_MAP)) {
     if (pathname.startsWith(routePrefix)) {
-      if (!profile || !allowedRoles.includes(profile.role)) {
-        const url = request.nextUrl.clone();
+      if (!role || !allowedRoles.includes(role)) {
+        const url = req.nextUrl.clone();
         url.pathname = "/";
         return NextResponse.redirect(url);
       }
@@ -73,8 +73,8 @@ export const middleware = async (request: NextRequest) => {
     }
   }
 
-  return supabaseResponse;
-};
+  return NextResponse.next();
+});
 
 export const config = {
   matcher: [

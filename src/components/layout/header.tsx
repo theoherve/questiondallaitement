@@ -2,9 +2,23 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { clientNav } from "@/config/navigation";
+import { getNavIcon } from "@/config/navigation-icons";
+import {
+  canAccessBackoffice,
+  getBackofficeRedirectUrl,
+} from "@/constants/roles";
+import type { SessionUser } from "@/lib/auth";
 
 const NAV_LINKS = [
   { href: "/formations", label: "Formations" },
@@ -12,7 +26,12 @@ const NAV_LINKS = [
   { href: "/evenements", label: "Événements" },
 ];
 
-export const Header = () => {
+type HeaderProps = {
+  user: SessionUser | null;
+  onLogout: () => Promise<void>;
+};
+
+export const Header = ({ user, onLogout }: HeaderProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -41,19 +60,79 @@ export const Header = () => {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Button variant="ghost" asChild>
-            <Link href="/connexion" tabIndex={0}>
-              Connexion
-            </Link>
-          </Button>
-          <Button
-            asChild
-            className="bg-primary-red hover:bg-primary-red-dark"
-          >
-            <Link href="/inscription" tabIndex={0}>
-              S&apos;inscrire
-            </Link>
-          </Button>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-2 text-primary-green hover:bg-primary-red/10 hover:text-primary-red"
+                  aria-label="Ouvrir le menu compte"
+                  tabIndex={0}
+                >
+                  <User className="h-4 w-4" />
+                  <span className="max-w-[120px] truncate sm:max-w-[180px]">
+                    {user.email}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {clientNav.map((item) => {
+                  const Icon = getNavIcon(item.iconKey);
+                  return (
+                    <DropdownMenuItem key={item.href} asChild>
+                      <Link href={item.href} className="flex items-center gap-2" tabIndex={0}>
+                        <Icon className="h-4 w-4" />
+                        {item.title}
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
+                {canAccessBackoffice(user.role) && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={getBackofficeRedirectUrl(user.role)}
+                        tabIndex={0}
+                      >
+                        Backoffice
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <form action={onLogout} className="w-full">
+                    <button
+                      type="submit"
+                      className="flex w-full cursor-default items-center gap-2 outline-none"
+                      tabIndex={0}
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Déconnexion
+                    </button>
+                  </form>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Button variant="ghost" asChild>
+                <Link href="/connexion" tabIndex={0}>
+                  Connexion
+                </Link>
+              </Button>
+              <Button
+                asChild
+                className="bg-primary-red hover:bg-primary-red-dark"
+              >
+                <Link href="/inscription" tabIndex={0}>
+                  S&apos;inscrire
+                </Link>
+              </Button>
+            </>
+          )}
         </div>
 
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -84,19 +163,57 @@ export const Header = () => {
                 </Link>
               ))}
               <div className="mt-4 flex flex-col gap-3 border-t pt-4">
-                <Button variant="outline" asChild>
-                  <Link href="/connexion" onClick={() => setIsOpen(false)} tabIndex={0}>
-                    Connexion
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  className="bg-primary-red hover:bg-primary-red-dark"
-                >
-                  <Link href="/inscription" onClick={() => setIsOpen(false)} tabIndex={0}>
-                    S&apos;inscrire
-                  </Link>
-                </Button>
+                {user ? (
+                  <>
+                    {clientNav.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="text-base font-medium text-primary-green hover:text-primary-red"
+                        onClick={() => setIsOpen(false)}
+                        tabIndex={0}
+                      >
+                        {item.title}
+                      </Link>
+                    ))}
+                    {canAccessBackoffice(user.role) && (
+                      <Link
+                        href={getBackofficeRedirectUrl(user.role)}
+                        className="text-base font-medium text-primary-green hover:text-primary-red"
+                        onClick={() => setIsOpen(false)}
+                        tabIndex={0}
+                      >
+                        Backoffice
+                      </Link>
+                    )}
+                    <form action={onLogout} className="pt-2">
+                      <Button
+                        type="submit"
+                        variant="outline"
+                        className="w-full"
+                        tabIndex={0}
+                      >
+                        Déconnexion
+                      </Button>
+                    </form>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="outline" asChild>
+                      <Link href="/connexion" onClick={() => setIsOpen(false)} tabIndex={0}>
+                        Connexion
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      className="bg-primary-red hover:bg-primary-red-dark"
+                    >
+                      <Link href="/inscription" onClick={() => setIsOpen(false)} tabIndex={0}>
+                        S&apos;inscrire
+                      </Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </nav>
           </SheetContent>

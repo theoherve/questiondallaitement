@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,10 +18,7 @@ const formatCurrency = (cents: number): string =>
   }).format(cents / 100);
 
 const ConsultantDashboardPage = async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getSupabaseAndUser();
 
   const now = new Date();
   const monthStart = startOfMonth(now).toISOString();
@@ -32,7 +29,7 @@ const ConsultantDashboardPage = async () => {
       supabase
         .from("payments")
         .select("amount_cents, platform_fee_cents")
-        .eq("consultant_id", user!.id)
+        .eq("consultant_id", user.id)
         .eq("status", "succeeded")
         .gte("created_at", monthStart)
         .lte("created_at", monthEnd),
@@ -41,19 +38,19 @@ const ConsultantDashboardPage = async () => {
         .select(
           "id, starts_at, status, consultation_types(title), profiles!bookings_client_id_fkey(first_name, last_name)"
         )
-        .eq("consultant_id", user!.id)
+        .eq("consultant_id", user.id)
         .gte("starts_at", now.toISOString())
         .order("starts_at", { ascending: true })
         .limit(5),
       supabase
         .from("formations")
         .select("id", { count: "exact", head: true })
-        .eq("consultant_id", user!.id)
+        .eq("consultant_id", user.id)
         .is("deleted_at", null),
       supabase
         .from("bookings")
         .select("client_id")
-        .eq("consultant_id", user!.id),
+        .eq("consultant_id", user.id),
     ]);
 
   const monthlyRevenue = (paymentsResult.data ?? []).reduce(

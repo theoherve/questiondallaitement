@@ -1,20 +1,13 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth";
 
 const DashboardRootLayout = async ({
   children,
 }: {
   children: React.ReactNode;
 }) => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/connexion");
-  }
-
+  const user = await getSessionUser();
+  if (!user) redirect("/connexion");
   return <>{children}</>;
 };
 

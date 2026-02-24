@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createRefund } from "@/lib/stripe/connect";
 import { differenceInHours } from "date-fns";
@@ -11,12 +11,13 @@ import type { ActionResult } from "@/types";
 export const confirmBooking = async (
   bookingId: string
 ): Promise<ActionResult> => {
-  const supabase = await createClient();
+  const { supabase, user } = await getSupabaseAndUser();
 
   const { error } = await supabase
     .from("bookings")
     .update({ status: "confirmed" })
-    .eq("id", bookingId);
+    .eq("id", bookingId)
+    .eq("consultant_id", user.id);
 
   if (error) {
     return { success: false, error: "Erreur lors de la confirmation" };
@@ -31,15 +32,7 @@ export const cancelBooking = async (
   reason: string,
   cancelledBy: "client" | "consultant"
 ): Promise<ActionResult> => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { success: false, error: "Non autorisé" };
-  }
-
+  const { user } = await getSupabaseAndUser();
   const adminClient = createAdminClient();
   const { data: booking } = await adminClient
     .from("bookings")
@@ -119,12 +112,13 @@ export const cancelBooking = async (
 export const completeBooking = async (
   bookingId: string
 ): Promise<ActionResult> => {
-  const supabase = await createClient();
+  const { supabase, user } = await getSupabaseAndUser();
 
   const { error } = await supabase
     .from("bookings")
     .update({ status: "completed" })
-    .eq("id", bookingId);
+    .eq("id", bookingId)
+    .eq("consultant_id", user.id);
 
   if (error) {
     return { success: false, error: "Erreur lors de la complétion" };
@@ -137,12 +131,13 @@ export const completeBooking = async (
 export const markNoShow = async (
   bookingId: string
 ): Promise<ActionResult> => {
-  const supabase = await createClient();
+  const { supabase, user } = await getSupabaseAndUser();
 
   const { error } = await supabase
     .from("bookings")
     .update({ status: "no_show" })
-    .eq("id", bookingId);
+    .eq("id", bookingId)
+    .eq("consultant_id", user.id);
 
   if (error) {
     return { success: false, error: "Erreur lors de la mise à jour" };

@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -11,10 +11,7 @@ export const metadata: Metadata = {
 };
 
 const ClientFormationsPage = async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getSupabaseAndUser();
 
   const { data: enrollments } = await supabase
     .from("formation_enrollments")
@@ -31,11 +28,11 @@ const ClientFormationsPage = async () => {
       )
     `
     )
-    .eq("client_id", user!.id)
+    .eq("client_id", user.id)
     .order("enrolled_at", { ascending: false });
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="font-serif text-2xl font-bold text-primary-green">
         Mes formations
       </h1>

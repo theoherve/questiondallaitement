@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 import { formationSchema, sectionSchema } from "@/validations/formations";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/types";
@@ -13,14 +13,7 @@ export const createFormation = async (
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { success: false, error: "Non autorisé" };
-  }
+  const { supabase, user } = await getSupabaseAndUser();
 
   const { data: formation, error } = await supabase
     .from("formations")
@@ -52,7 +45,7 @@ export const updateFormation = async (
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const supabase = await createClient();
+  const { supabase, user } = await getSupabaseAndUser();
   const { error } = await supabase
     .from("formations")
     .update({
@@ -61,7 +54,8 @@ export const updateFormation = async (
       published_at:
         parsed.data.status === "published" ? new Date().toISOString() : undefined,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("consultant_id", user.id);
 
   if (error) {
     return { success: false, error: "Erreur lors de la mise à jour" };
@@ -73,12 +67,13 @@ export const updateFormation = async (
 };
 
 export const deleteFormation = async (id: string): Promise<ActionResult> => {
-  const supabase = await createClient();
+  const { supabase, user } = await getSupabaseAndUser();
 
   const { error } = await supabase
     .from("formations")
     .update({ deleted_at: new Date().toISOString(), status: "archived" })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("consultant_id", user.id);
 
   if (error) {
     return { success: false, error: "Erreur lors de la suppression" };
@@ -97,7 +92,7 @@ export const createSection = async (
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const supabase = await createClient();
+  const { supabase } = await getSupabaseAndUser();
   const { data: section, error } = await supabase
     .from("formation_sections")
     .insert({
@@ -124,7 +119,7 @@ export const updateSection = async (
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const supabase = await createClient();
+  const { supabase } = await getSupabaseAndUser();
   const { error } = await supabase
     .from("formation_sections")
     .update(parsed.data)
@@ -138,7 +133,7 @@ export const updateSection = async (
 };
 
 export const deleteSection = async (id: string): Promise<ActionResult> => {
-  const supabase = await createClient();
+  const { supabase } = await getSupabaseAndUser();
   const { error } = await supabase
     .from("formation_sections")
     .delete()
@@ -157,7 +152,7 @@ export const createBlock = async (
   content: unknown,
   position: number
 ): Promise<ActionResult<{ id: string }>> => {
-  const supabase = await createClient();
+  const { supabase } = await getSupabaseAndUser();
 
   const { data: block, error } = await supabase
     .from("formation_blocks")
@@ -181,7 +176,7 @@ export const updateBlock = async (
   id: string,
   content: unknown
 ): Promise<ActionResult> => {
-  const supabase = await createClient();
+  const { supabase } = await getSupabaseAndUser();
 
   const { error } = await supabase
     .from("formation_blocks")
@@ -196,7 +191,7 @@ export const updateBlock = async (
 };
 
 export const deleteBlock = async (id: string): Promise<ActionResult> => {
-  const supabase = await createClient();
+  const { supabase } = await getSupabaseAndUser();
   const { error } = await supabase
     .from("formation_blocks")
     .delete()
@@ -214,7 +209,7 @@ export const updateProgress = async (
   blockId: string,
   completed: boolean
 ): Promise<ActionResult> => {
-  const supabase = await createClient();
+  const { supabase } = await getSupabaseAndUser();
 
   const { error } = await supabase.from("formation_progress").upsert(
     {

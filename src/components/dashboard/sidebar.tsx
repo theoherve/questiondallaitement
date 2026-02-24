@@ -7,6 +7,7 @@ import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { NavItem } from "@/config/navigation";
+import { getNavIcon } from "@/config/navigation-icons";
 
 type SidebarProps = {
   items: NavItem[];
@@ -48,7 +49,10 @@ export const Sidebar = ({ items, onLogout }: SidebarProps) => {
                 tabIndex={0}
                 aria-current={isActive ? "page" : undefined}
               >
-                <item.icon className="h-4 w-4" />
+                {(() => {
+            const Icon = getNavIcon(item.iconKey);
+            return <Icon className="h-4 w-4" />;
+          })()}
                 {item.title}
                 {item.badge && (
                   <span className="ml-auto rounded-full bg-primary-red px-2 py-0.5 text-xs text-white">

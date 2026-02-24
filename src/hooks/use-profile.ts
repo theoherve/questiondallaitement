@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types/database";
 
 export const useProfile = () => {
@@ -10,23 +9,14 @@ export const useProfile = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
+      const res = await fetch("/api/me");
+      if (!res.ok) {
+        setProfile(null);
         setIsLoading(false);
         return;
       }
-
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      setProfile(data as Profile | null);
+      const data = (await res.json()) as Profile;
+      setProfile(data);
       setIsLoading(false);
     };
 

@@ -1,49 +1,50 @@
-import {
-  LayoutDashboard,
-  BookOpen,
-  CalendarDays,
-  CalendarClock,
-  Users,
-  Mail,
-  Zap,
-  BarChart3,
-  Settings,
-  CreditCard,
-  Megaphone,
-  type LucideIcon,
-} from "lucide-react";
-
+/**
+ * Serializable nav config: iconKey only (no React components).
+ * Safe to pass from Server Components to Client Components.
+ */
 export type NavItem = {
   title: string;
   href: string;
-  icon: LucideIcon;
+  iconKey: string;
   badge?: string;
 };
 
 export const clientNav: NavItem[] = [
-  { title: "Tableau de bord", href: "/espace-client", icon: LayoutDashboard },
-  { title: "Mes formations", href: "/espace-client/formations", icon: BookOpen },
-  { title: "Mes réservations", href: "/espace-client/reservations", icon: CalendarDays },
-  { title: "Mon profil", href: "/espace-client/profil", icon: Settings },
+  { title: "Tableau de bord", href: "/espace-client", iconKey: "LayoutDashboard" },
+  { title: "Mes formations", href: "/espace-client/formations", iconKey: "BookOpen" },
+  { title: "Mes réservations", href: "/espace-client/reservations", iconKey: "CalendarDays" },
+  { title: "Mon profil", href: "/espace-client/profil", iconKey: "Settings" },
 ];
 
 export const consultantNav: NavItem[] = [
-  { title: "Tableau de bord", href: "/espace-consultante", icon: LayoutDashboard },
-  { title: "Formations", href: "/espace-consultante/formations", icon: BookOpen },
-  { title: "Réservations", href: "/espace-consultante/reservations", icon: CalendarDays },
-  { title: "Événements", href: "/espace-consultante/evenements", icon: CalendarClock },
-  { title: "CRM", href: "/espace-consultante/crm", icon: Users },
-  { title: "Emails", href: "/espace-consultante/emails", icon: Mail },
-  { title: "Automations", href: "/espace-consultante/automations", icon: Zap },
-  { title: "Analytics", href: "/espace-consultante/analytics", icon: BarChart3 },
-  { title: "Paramètres", href: "/espace-consultante/parametres", icon: Settings },
+  { title: "Tableau de bord", href: "/espace-consultante", iconKey: "LayoutDashboard" },
+  { title: "Formations", href: "/espace-consultante/formations", iconKey: "BookOpen" },
+  { title: "Réservations", href: "/espace-consultante/reservations", iconKey: "CalendarDays" },
+  { title: "Événements", href: "/espace-consultante/evenements", iconKey: "CalendarClock" },
+  { title: "CRM", href: "/espace-consultante/crm", iconKey: "Users" },
+  { title: "Emails", href: "/espace-consultante/emails", iconKey: "Mail" },
+  { title: "Automations", href: "/espace-consultante/automations", iconKey: "Zap" },
+  { title: "Analytics", href: "/espace-consultante/analytics", iconKey: "BarChart3" },
+  { title: "Paramètres", href: "/espace-consultante/parametres", iconKey: "Settings" },
 ];
 
 export const adminNav: NavItem[] = [
-  { title: "Tableau de bord", href: "/admin", icon: LayoutDashboard },
-  { title: "Consultantes", href: "/admin/consultantes", icon: Users },
-  { title: "Formations", href: "/admin/formations", icon: BookOpen },
-  { title: "Paiements", href: "/admin/paiements", icon: CreditCard },
-  { title: "Marketing", href: "/admin/marketing", icon: Megaphone },
-  { title: "Paramètres", href: "/admin/parametres", icon: Settings },
+  { title: "Tableau de bord", href: "/admin", iconKey: "LayoutDashboard" },
+  { title: "Consultantes", href: "/admin/consultantes", iconKey: "Users" },
+  { title: "Formations", href: "/admin/formations", iconKey: "BookOpen" },
+  { title: "Paiements", href: "/admin/paiements", iconKey: "CreditCard" },
+  { title: "Marketing", href: "/admin/marketing", iconKey: "Megaphone" },
+  { title: "Paramètres", href: "/admin/parametres", iconKey: "Settings" },
 ];
+
+/** Hrefs accessibles au marketing_manager dans l’admin (dashboard + marketing uniquement). */
+const ADMIN_MARKETING_MANAGER_HREFS = ["/admin", "/admin/marketing"];
+
+export const getAdminNavForRole = (role: string): NavItem[] => {
+  if (role === "marketing_manager") {
+    return adminNav.filter((item) =>
+      ADMIN_MARKETING_MANAGER_HREFS.includes(item.href)
+    );
+  }
+  return adminNav;
+};
