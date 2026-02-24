@@ -18,7 +18,7 @@ export const generateMetadata = async ({
   const supabase = await createClient();
   const { data } = await supabase
     .from("formations")
-    .select("title, short_description")
+    .select("title, short_description, thumbnail_url")
     .eq("slug", slug)
     .eq("status", "published")
     .single();
@@ -28,6 +28,20 @@ export const generateMetadata = async ({
   return {
     title: data.title,
     description: data.short_description ?? undefined,
+    openGraph: {
+      title: data.title,
+      description: data.short_description ?? undefined,
+      type: "article",
+      ...(data.thumbnail_url && {
+        images: [{ url: data.thumbnail_url, alt: data.title }],
+      }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: data.title,
+      description: data.short_description ?? undefined,
+      ...(data.thumbnail_url && { images: [data.thumbnail_url] }),
+    },
   };
 };
 

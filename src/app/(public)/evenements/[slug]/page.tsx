@@ -25,7 +25,15 @@ export const generateMetadata = async ({
     .single();
 
   if (!data) return { title: "Événement introuvable" };
-  return { title: data.title, description: data.description ?? undefined };
+  return {
+    title: data.title,
+    description: data.description ?? undefined,
+    openGraph: {
+      title: data.title,
+      description: data.description ?? undefined,
+      type: "article",
+    },
+  };
 };
 
 const formatPrice = (cents: number, currency: string): string => {

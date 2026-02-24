@@ -20,7 +20,9 @@ export const generateMetadata = async ({
   const supabase = await createClient();
   const { data } = await supabase
     .from("consultants")
-    .select("profiles!consultants_id_fkey (first_name, last_name)")
+    .select(
+      "bio, specialties, profiles!consultants_id_fkey (first_name, last_name, avatar_url)"
+    )
     .eq("slug", slug)
     .eq("is_active", true)
     .single();
@@ -30,10 +32,25 @@ export const generateMetadata = async ({
   const profile = data.profiles as unknown as {
     first_name: string | null;
     last_name: string | null;
+    avatar_url: string | null;
   } | null;
 
+  const name = `${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim();
+  const description = data.bio
+    ? `${name} — ${(data.bio as string).slice(0, 150)}`
+    : `Consultante certifiée sur Question d'Allaitement`;
+
   return {
-    title: `${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim(),
+    title: name,
+    description,
+    openGraph: {
+      title: name,
+      description,
+      type: "profile",
+      ...(profile?.avatar_url && {
+        images: [{ url: profile.avatar_url, alt: name }],
+      }),
+    },
   };
 };
 
@@ -201,7 +218,11 @@ const ConsultantDetailPage = async ({ params }: Props) => {
                     asChild
                     className="mt-4 w-full bg-primary-red hover:bg-primary-red-dark"
                   >
-                    <Link href={`/connexion?redirect=/espace-client/reservations`} tabIndex={0}>
+                    <Link
+                      href={`/reserver?consultant=${consultant.slug}&service=${encodeURIComponent(ct.title)}`}
+                      tabIndex={0}
+                      aria-label={`Réserver ${ct.title}`}
+                    >
                       Réserver
                     </Link>
                   </Button>

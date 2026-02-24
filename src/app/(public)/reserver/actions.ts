@@ -1,5 +1,6 @@
 "use server";
 
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createCheckoutSession } from "@/lib/stripe/connect";
 import { computeAvailableSlots } from "@/lib/booking/slots";
@@ -31,49 +32,43 @@ export type BookingFormData = {
 };
 
 export const getConsultationTypes = async () => {
-  const supabase = createAdminClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("consultation_types")
     .select(
-      `
-      id,
-      consultant_id,
-      title,
-      description,
-      duration_minutes,
-      price_cents,
-      currency,
-      available_locations,
-      buffer_minutes,
-      consultants (
-        id,
-        is_active
-      )
-    `
+      "id, consultant_id, title, description, duration_minutes, price_cents, currency, is_online, buffer_minutes"
     )
     .eq("is_active", true)
     .order("title");
-
-  return (data ?? []).filter((ct) => {
-    const consultant = ct.consultants as unknown as { id: string; is_active: boolean } | null;
-    return consultant?.is_active;
-  });
+  return data ?? [];
 };
 
 export const getConsultantsForService = async (
   consultationTypeTitle: string,
   location: ConsultationLocation
 ) => {
-  const supabase = createAdminClient();
+  const supabase = await createClient();
 
   const { data: types } = await supabase
     .from("consultation_types")
-    .select("consultant_id")
+    .select("consultant_id, is_online")
     .eq("title", consultationTypeTitle)
-    .eq("is_active", true)
-    .contains("available_locations", [location]);
+    .eq("is_active", true);
 
-  const consultantIds = [...new Set((types ?? []).map((t) => t.consultant_id))];
+  type Row = { consultant_id: string; is_online?: boolean | null };
+  const rows = (types ?? []) as Row[];
+  const consultantIds = [
+    ...new Set(
+      rows
+        .filter(
+          (t) =>
+            location === "teleconsultation"
+              ? t.is_online !== false
+              : true
+        )
+        .map((t) => t.consultant_id)
+    ),
+  ];
   if (consultantIds.length === 0) return [];
 
   const { data: locations } = await supabase
@@ -205,17 +200,19 @@ export const getConsultationTypeId = async (
   location: ConsultationLocation
 ): Promise<string | null> => {
   const supabase = createAdminClient();
-  const { data } = await supabase
+  const { data: rows } = await supabase
     .from("consultation_types")
-    .select("id")
+    .select("id, is_online")
     .eq("consultant_id", consultantId)
     .eq("title", serviceTitle)
-    .eq("is_active", true)
-    .contains("available_locations", [location])
-    .limit(1)
-    .single();
+    .eq("is_active", true);
 
-  return data?.id ?? null;
+  const list = (rows ?? []) as { id: string; is_online?: boolean | null }[];
+  const match =
+    location === "teleconsultation"
+      ? list.find((r) => r.is_online !== false)
+      : list[0];
+  return match?.id ?? null;
 };
 
 export const getSurcharge = async (

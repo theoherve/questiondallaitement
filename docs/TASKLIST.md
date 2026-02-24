@@ -271,7 +271,7 @@
 
 | ID    | Story                                                                                            | Statut | Prio  |
 | ----- | ------------------------------------------------------------------------------------------------ | ------ | ----- |
-| 10-01 | Landing page (hero, features, CTA, section temoignages placeholder)                              | ✅      | —     |
+| 10-01 | Landing page (hero, features, CTA, temoignages, consultantes, newsletter)                        | ✅      | —     |
 | 10-02 | Page liste formations (`/formations`) : cards avec thumbnail, titre, prix, consultante           | ✅      | —     |
 | 10-03 | Page detail formation (`/formations/[slug]`) : description, sections, prix, bouton acheter       | ✅      | —     |
 | 10-04 | Page liste consultantes (`/consultantes`) : cards avec photo, nom, specialites                   | ✅      | —     |
@@ -279,11 +279,11 @@
 | 10-06 | Page liste evenements (`/evenements`)                                                            | ✅      | —     |
 | 10-07 | Page detail evenement (`/evenements/[slug]`)                                                     | ✅      | —     |
 | 10-08 | Footer avec liens utiles                                                                         | ✅      | —     |
-| 10-09 | Page mentions legales (`/mentions-legales`) — contenu reel                                       | ⬜      | 🟡 P2 |
-| 10-10 | Page politique de confidentialite (`/politique-de-confidentialite`) — contenu reel               | ⬜      | 🟡 P2 |
-| 10-11 | SEO : meta tags dynamiques par page (title, description, og:image)                               | ⬜      | 🟡 P2 |
-| 10-12 | Bouton "Acheter" sur page detail formation connecte a Stripe Checkout                            | ⬜      | 🔴 P0 |
-| 10-13 | Bouton "Reserver" sur page detail consultante → redirect `/reserver?consultant=slug`             | ⬜      | 🟠 P1 |
+| 10-09 | Page mentions legales (`/mentions-legales`) — contenu placeholder                                | ✅      | 🟡 P2 |
+| 10-10 | Page politique de confidentialite (`/politique-de-confidentialite`) — contenu placeholder        | ✅      | 🟡 P2 |
+| 10-11 | SEO : meta tags dynamiques par page (title, description, og:image, Twitter Cards)                | ✅      | 🟡 P2 |
+| 10-12 | Bouton "Acheter" sur page detail formation connecte a Stripe Checkout                            | ✅      | 🔴 P0 |
+| 10-13 | Bouton "Reserver" sur page detail consultante → redirect `/reserver?consultant=slug`             | ✅      | 🟠 P1 |
 
 
 ---
@@ -559,9 +559,9 @@
 
 | Statut            | Nombre   |
 | ----------------- | -------- |
-| ✅ Termine         | ~142     |
+| ✅ Termine         | ~147     |
 | 🔶 Partiel        | ~2       |
-| ⬜ A faire         | ~23      |
+| ⬜ A faire         | ~18      |
 | **Total stories** | **~167** |
 
 
@@ -575,6 +575,8 @@
 6. ~~**EPIC-07** : Booking System~~ ✅
 7. ~~**EPIC-08** : Espace Consultante~~ ✅
 8. ~~**EPIC-09** : Espace Client~~ ✅
-9. **EPIC-10** : Pages Publiques (landing, catalogue, legal)
-10. **EPIC-11-15** : Brancher les emails dans les webhooks Stripe
+9. ~~**EPIC-10** : Pages Publiques~~ ✅
+10. **EPIC-11** : Brancher les emails dans les webhooks Stripe (11-15)
+11. **EPIC-12** : Blog (admin + public)
+12. **EPIC-14** : CRM
 
