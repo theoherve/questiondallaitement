@@ -3,9 +3,10 @@ import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format } from "date-fns";
+import { CalendarDays, Clock, MapPin, Video } from "lucide-react";
+import { format, differenceInHours } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarDays, Clock, Video, MapPin } from "lucide-react";
+import { CancelBookingButton } from "./_components/cancel-booking-button";
 
 export const metadata: Metadata = {
   title: "Mes réservations",
@@ -22,6 +23,12 @@ const STATUS_CONFIG: Record<
   no_show: { label: "Absent", variant: "destructive" },
 };
 
+const LOCATION_LABELS: Record<string, string> = {
+  cabinet: "Cabinet",
+  teleconsultation: "Téléconsultation",
+  domicile: "Domicile",
+};
+
 const ClientReservationsPage = async () => {
   const { supabase, user } = await getSupabaseAndUser();
 
@@ -33,15 +40,16 @@ const ClientReservationsPage = async () => {
       starts_at,
       ends_at,
       status,
+      location,
+      payment_method,
       zoom_join_url,
-      notes,
+      reason,
       consultants (
         profiles!consultants_id_fkey (first_name, last_name)
       ),
       consultation_types (
         title,
-        duration_minutes,
-        is_online
+        duration_minutes
       )
     `
     )
@@ -50,22 +58,31 @@ const ClientReservationsPage = async () => {
 
   const now = new Date();
   const upcoming = (bookings ?? []).filter(
-    (b) => new Date(b.starts_at) >= now && b.status !== "cancelled"
+    (b) =>
+      new Date(b.starts_at) >= now &&
+      !["cancelled", "completed", "no_show"].includes(b.status)
   );
   const past = (bookings ?? []).filter(
-    (b) => new Date(b.starts_at) < now || b.status === "cancelled"
+    (b) =>
+      new Date(b.starts_at) < now ||
+      ["cancelled", "completed", "no_show"].includes(b.status)
   );
 
-  const renderBooking = (booking: (typeof bookings extends (infer T)[] | null ? T : never)) => {
+  const renderBooking = (
+    booking: NonNullable<typeof bookings>[number]
+  ) => {
     const consultant = booking.consultants as unknown as {
       profiles: { first_name: string | null; last_name: string | null } | null;
     } | null;
     const ct = booking.consultation_types as unknown as {
       title: string;
       duration_minutes: number;
-      is_online: boolean;
     } | null;
     const config = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending;
+    const isFuture = new Date(booking.starts_at) > now;
+    const canCancel =
+      isFuture && !["cancelled", "completed", "no_show"].includes(booking.status);
+    const hoursUntil = differenceInHours(new Date(booking.starts_at), now);
 
     return (
       <Card key={booking.id}>
@@ -93,15 +110,18 @@ const ClientReservationsPage = async () => {
               <Clock className="h-3.5 w-3.5" />
               {format(new Date(booking.starts_at), "HH'h'mm", { locale: fr })}
             </span>
-            <span className="flex items-center gap-1">
-              {ct?.is_online ? (
-                <Video className="h-3.5 w-3.5" />
-              ) : (
-                <MapPin className="h-3.5 w-3.5" />
-              )}
-              {ct?.is_online ? "Visio" : "Présentiel"}
-            </span>
+            {booking.location && (
+              <span className="flex items-center gap-1">
+                {booking.location === "teleconsultation" ? (
+                  <Video className="h-3.5 w-3.5" />
+                ) : (
+                  <MapPin className="h-3.5 w-3.5" />
+                )}
+                {LOCATION_LABELS[booking.location] ?? booking.location}
+              </span>
+            )}
           </div>
+
           {booking.zoom_join_url && booking.status === "confirmed" && (
             <a
               href={booking.zoom_join_url}
@@ -112,6 +132,15 @@ const ClientReservationsPage = async () => {
             >
               Rejoindre la visio
             </a>
+          )}
+
+          {canCancel && (
+            <div className="mt-3">
+              <CancelBookingButton
+                bookingId={booking.id}
+                hoursUntil={hoursUntil}
+              />
+            </div>
           )}
         </CardContent>
       </Card>

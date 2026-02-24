@@ -4,27 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { revalidatePath } from "next/cache";
+import { updateClientProfile } from "./actions";
+import { ChangePasswordForm } from "./_components/change-password-form";
 
 export const metadata: Metadata = {
   title: "Mon profil",
-};
-
-const updateProfile = async (formData: FormData) => {
-  "use server";
-
-  const { supabase, user } = await getSupabaseAndUser();
-
-  await supabase
-    .from("profiles")
-    .update({
-      first_name: formData.get("first_name") as string,
-      last_name: formData.get("last_name") as string,
-      phone: (formData.get("phone") as string) || null,
-    })
-    .eq("id", user.id);
-
-  revalidatePath("/espace-client/profil");
 };
 
 const ProfilePage = async () => {
@@ -49,7 +33,7 @@ const ProfilePage = async () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={updateProfile} className="space-y-4">
+          <form action={updateClientProfile} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="first_name">Prénom</Label>
@@ -101,6 +85,8 @@ const ProfilePage = async () => {
           </form>
         </CardContent>
       </Card>
+
+      <ChangePasswordForm />
     </div>
   );
 };

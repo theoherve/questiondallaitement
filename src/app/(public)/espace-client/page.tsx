@@ -1,9 +1,11 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, CalendarDays, GraduationCap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BookOpen, CalendarDays, GraduationCap, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -17,7 +19,9 @@ const ClientDashboardPage = async () => {
   const [enrollmentsResult, bookingsResult] = await Promise.all([
     supabase
       .from("formation_enrollments")
-      .select("id, enrolled_at, formations(title, slug)")
+      .select(
+        `id, enrolled_at, formations(id, title, slug, formation_sections(formation_blocks(id)))`
+      )
       .eq("client_id", user.id)
       .order("enrolled_at", { ascending: false })
       .limit(5),
@@ -28,6 +32,7 @@ const ClientDashboardPage = async () => {
       )
       .eq("client_id", user.id)
       .gte("starts_at", new Date().toISOString())
+      .in("status", ["pending", "confirmed"])
       .order("starts_at", { ascending: true })
       .limit(5),
   ]);
@@ -45,6 +50,41 @@ const ClientDashboardPage = async () => {
     .select("id", { count: "exact", head: true })
     .eq("client_id", user.id);
 
+  const enrollmentIds = enrollments.map((e) => e.id);
+  const { data: progressData } =
+    enrollmentIds.length > 0
+      ? await supabase
+          .from("formation_progress")
+          .select("enrollment_id, block_id, completed")
+          .in("enrollment_id", enrollmentIds)
+      : { data: [] };
+
+  const completedByEnrollment = new Map<string, Set<string>>();
+  (progressData ?? []).forEach((p) => {
+    if (!p.completed) return;
+    const set = completedByEnrollment.get(p.enrollment_id) ?? new Set();
+    set.add(p.block_id);
+    completedByEnrollment.set(p.enrollment_id, set);
+  });
+
+  let totalBlocks = 0;
+  let totalCompleted = 0;
+  enrollments.forEach((e) => {
+    const formation = e.formations as unknown as {
+      formation_sections: { formation_blocks: { id: string }[] }[];
+    } | null;
+    const blocks =
+      formation?.formation_sections?.reduce(
+        (acc, s) => acc + s.formation_blocks.length,
+        0
+      ) ?? 0;
+    totalBlocks += blocks;
+    totalCompleted += completedByEnrollment.get(e.id)?.size ?? 0;
+  });
+
+  const globalProgress =
+    totalBlocks > 0 ? Math.round((totalCompleted / totalBlocks) * 100) : 0;
+
   const STATUS_LABELS: Record<string, string> = {
     pending: "En attente",
     confirmed: "Confirmée",
@@ -59,7 +99,7 @@ const ClientDashboardPage = async () => {
         Tableau de bord
       </h1>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Mes formations"
           value={totalEnrollments ?? 0}
@@ -75,6 +115,11 @@ const ClientDashboardPage = async () => {
           value={upcomingBookings.length}
           icon={GraduationCap}
         />
+        <StatCard
+          title="Progression globale"
+          value={`${globalProgress}%`}
+          icon={TrendingUp}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -89,35 +134,71 @@ const ClientDashboardPage = async () => {
               <div className="space-y-3">
                 {enrollments.map((enrollment) => {
                   const formation = enrollment.formations as unknown as {
+                    id: string;
                     title: string;
                     slug: string;
+                    formation_sections: {
+                      formation_blocks: { id: string }[];
+                    }[];
                   } | null;
+
+                  if (!formation) return null;
+
+                  const blocks = formation.formation_sections?.reduce(
+                    (acc, s) => acc + s.formation_blocks.length,
+                    0
+                  ) ?? 0;
+                  const done =
+                    completedByEnrollment.get(enrollment.id)?.size ?? 0;
+                  const pct =
+                    blocks > 0 ? Math.round((done / blocks) * 100) : 0;
+
                   return (
-                    <div
+                    <Link
                       key={enrollment.id}
-                      className="flex items-center justify-between rounded-md border p-3"
+                      href={`/espace-client/formations/${formation.id}`}
+                      className="block rounded-md border p-3 transition-colors hover:bg-muted/50"
+                      tabIndex={0}
                     >
-                      <div>
+                      <div className="flex items-center justify-between">
                         <p className="font-medium text-primary-green">
-                          {formation?.title}
+                          {formation.title}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          Inscrit le{" "}
-                          {format(
-                            new Date(enrollment.enrolled_at),
-                            "d MMM yyyy",
-                            { locale: fr }
-                          )}
-                        </p>
+                        <Badge variant="outline" className="text-xs">
+                          {pct}%
+                        </Badge>
                       </div>
-                    </div>
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="h-1.5 flex-1 rounded-full bg-muted">
+                          <div
+                            className="h-1.5 rounded-full bg-primary-red transition-all"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Inscrit le{" "}
+                        {format(
+                          new Date(enrollment.enrolled_at),
+                          "d MMM yyyy",
+                          { locale: fr }
+                        )}
+                      </p>
+                    </Link>
                   );
                 })}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Aucune formation pour le moment
-              </p>
+              <div className="space-y-3 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Aucune formation pour le moment
+                </p>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/formations" tabIndex={0}>
+                    Découvrir les formations
+                  </Link>
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -138,9 +219,10 @@ const ClientDashboardPage = async () => {
                       last_name: string | null;
                     } | null;
                   } | null;
-                  const consultationType = booking.consultation_types as unknown as {
-                    title: string;
-                  } | null;
+                  const consultationType =
+                    booking.consultation_types as unknown as {
+                      title: string;
+                    } | null;
 
                   return (
                     <div
@@ -176,9 +258,16 @@ const ClientDashboardPage = async () => {
                 })}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Aucune réservation à venir
-              </p>
+              <div className="space-y-3 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Aucune réservation à venir
+                </p>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/reserver" tabIndex={0}>
+                    Prendre rendez-vous
+                  </Link>
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>

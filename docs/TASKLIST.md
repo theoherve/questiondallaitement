@@ -199,7 +199,7 @@
 
 ---
 
-## EPIC-08 : Espace Consultante
+## EPIC-08 : Espace Consultante ✅
 
 > Dashboard et gestion propre pour les consultantes.
 
@@ -210,24 +210,24 @@
 | 08-01                          | Layout dashboard consultante avec sidebar + header                                                                                   | ✅      | —     |
 | 08-02                          | Navigation filtree selon role (`consultant` vs `consultant_limited`)                                                                 | ✅      | —     |
 | **Dashboard**                  |                                                                                                                                      |        |       |
-| 08-03                          | Dashboard consultante : prochains RDV (3 prochains bookings confirmed), stats rapides                                                | 🔶     | 🟠 P1 |
+| 08-03                          | Dashboard consultante : prochains RDV (5 prochains bookings), stats rapides (revenus, RDV, formations, clients)                      | ✅      | 🟠 P1 |
 | **Formations (lecture seule)** |                                                                                                                                      |        |       |
-| 08-04                          | Page formations : liste des formations de la consultante en lecture seule (titre, status, prix)                                      | 🔶     | 🟠 P1 |
-| 08-05                          | Retirer bouton "Nouvelle formation" et liens "Modifier" (ADR-009)                                                                    | ⬜      | 🟠 P1 |
-| 08-06                          | Stats par formation : nombre enrollments, revenus generes                                                                            | ⬜      | 🟡 P2 |
+| 08-04                          | Page formations : liste des formations de la consultante en lecture seule (titre, status, prix)                                      | ✅      | 🟠 P1 |
+| 08-05                          | Retirer bouton "Nouvelle formation" et liens "Modifier" (ADR-009) — deja fait                                                        | ✅      | 🟠 P1 |
+| 08-06                          | Stats par formation : nombre enrollments, revenus generes                                                                            | ✅      | 🟡 P2 |
 | **Reservations**               |                                                                                                                                      |        |       |
-| 08-07                          | Page reservations : liste des bookings de la consultante (filtre par status, date)                                                   | 🔶     | 🟠 P1 |
-| 08-08                          | Action confirmer un rdv on_site (`pending` → `confirmed`)                                                                            | ⬜      | 🔴 P0 |
-| 08-09                          | Action annuler un rdv avec raison                                                                                                    | ⬜      | 🟠 P1 |
-| 08-10                          | Vue detail booking : infos client, service, lieu, creneau, mode paiement, notes                                                      | ⬜      | 🟠 P1 |
+| 08-07                          | Page reservations : liste des bookings avec lieu, motif, paiement, boutons d'action + lien detail                                    | ✅      | 🟠 P1 |
+| 08-08                          | Action confirmer un rdv on_site (`pending` → `confirmed`) — bouton + Server Action                                                   | ✅      | 🔴 P0 |
+| 08-09                          | Action annuler un rdv avec raison — dialog + Server Action                                                                           | ✅      | 🟠 P1 |
+| 08-10                          | Vue detail booking : infos client, service, lieu, creneau, mode paiement, notes, paiement, annulation                                | ✅      | 🟠 P1 |
 | **Parametres**                 |                                                                                                                                      |        |       |
-| 08-11                          | Onglet Profil : edition bio, specialites, photo (upload avatar Supabase Storage)                                                     | ⬜      | 🟠 P1 |
-| 08-12                          | Onglet Lieux : configurer cabinet (label, adresse), teleconsultation (actif/inactif), domicile (actif/inactif, rayon km, supplement) | ⬜      | 🔴 P0 |
-| 08-13                          | Onglet Types de consultation : CRUD des `consultation_types` (titre, description, duree, prix, lieux disponibles)                    | ⬜      | 🔴 P0 |
-| 08-14                          | Onglet Disponibilites : creneaux recurrents par jour de semaine (ajout/suppression)                                                  | ⬜      | 🔴 P0 |
-| 08-15                          | Onglet Disponibilites : exceptions (conge, jour ferie, creneau supplementaire)                                                       | ⬜      | 🟠 P1 |
-| 08-16                          | Onglet Stripe Connect : bouton onboarding / status du compte / lien dashboard Stripe                                                 | ⬜      | 🟠 P1 |
-| 08-17                          | Onglet Zoom : bouton connexion OAuth / status connexion                                                                              | ⬜      | 🟡 P2 |
+| 08-11                          | Onglet Profil : edition bio, specialites, photo (upload avatar Supabase Storage)                                                     | ✅      | 🟠 P1 |
+| 08-12                          | Onglet Lieux : configurer cabinet (label, adresse), teleconsultation (actif/inactif), domicile (actif/inactif, rayon km, supplement) | ✅      | 🔴 P0 |
+| 08-13                          | Onglet Types de consultation : CRUD des `consultation_types` (titre, description, duree, prix, lieux disponibles)                    | ✅      | 🔴 P0 |
+| 08-14                          | Onglet Disponibilites : creneaux recurrents par jour de semaine (ajout/suppression)                                                  | ✅      | 🔴 P0 |
+| 08-15                          | Onglet Disponibilites : exceptions (conge, jour ferie, creneau supplementaire)                                                       | ✅      | 🟠 P1 |
+| 08-16                          | Onglet Stripe Connect : bouton onboarding / status du compte / lien dashboard Stripe                                                 | ✅      | 🟠 P1 |
+| 08-17                          | Onglet Zoom : bouton connexion OAuth / status connexion                                                                              | ✅      | 🟡 P2 |
 
 
 ---
@@ -242,24 +242,24 @@
 | **Layout**       |                                                                                                                  |        |       |
 | 09-01            | Layout client avec header auth-aware + tabs navigation                                                           | ✅      | —     |
 | **Dashboard**    |                                                                                                                  |        |       |
-| 09-02            | Dashboard client : prochains RDV, formations en cours, progression globale                                       | 🔶     | 🟠 P1 |
+| 09-02            | Dashboard client : prochains RDV, formations en cours, progression globale                                       | ✅      | 🟠 P1 |
 | **Formations**   |                                                                                                                  |        |       |
-| 09-03            | Page "Mes formations" : liste des formations achetees (via `formation_enrollments`) avec progression             | 🔶     | 🟠 P1 |
-| 09-04            | Lecteur de formation : vue sections + blocs avec navigation section                                              | ⬜      | 🔴 P0 |
-| 09-05            | Rendu bloc `text` : affichage HTML riche                                                                         | ⬜      | 🔴 P0 |
-| 09-06            | Rendu bloc `video` : embed Vimeo ou YouTube responsive                                                           | ⬜      | 🔴 P0 |
-| 09-07            | Rendu bloc `image` : image + alt + caption                                                                       | ⬜      | 🔴 P0 |
-| 09-08            | Rendu bloc `quiz` : question, options cliquables, feedback correct/incorrect, explication                        | ⬜      | 🔴 P0 |
-| 09-09            | Rendu bloc `download` : lien de telechargement fichier (signed URL Supabase Storage)                             | ⬜      | 🔴 P0 |
-| 09-10            | Suivi progression : marquer un bloc comme termine, barre de progression par section et global                    | ⬜      | 🟠 P1 |
+| 09-03            | Page "Mes formations" : liste des formations achetees (via `formation_enrollments`) avec progression             | ✅      | 🟠 P1 |
+| 09-04            | Lecteur de formation : vue sections + blocs avec navigation section                                              | ✅      | 🔴 P0 |
+| 09-05            | Rendu bloc `text` : affichage HTML riche                                                                         | ✅      | 🔴 P0 |
+| 09-06            | Rendu bloc `video` : embed Vimeo ou YouTube responsive                                                           | ✅      | 🔴 P0 |
+| 09-07            | Rendu bloc `image` : image + alt + caption                                                                       | ✅      | 🔴 P0 |
+| 09-08            | Rendu bloc `quiz` : question, options cliquables, feedback correct/incorrect, explication                        | ✅      | 🔴 P0 |
+| 09-09            | Rendu bloc `download` : lien de telechargement fichier (signed URL Supabase Storage)                             | ✅      | 🔴 P0 |
+| 09-10            | Suivi progression : marquer un bloc comme termine, barre de progression par section et global                    | ✅      | 🟠 P1 |
 | **Reservations** |                                                                                                                  |        |       |
-| 09-11            | Page "Mes reservations" : liste des bookings du client (a venir, passes, annules)                                | 🔶     | 🟠 P1 |
-| 09-12            | Action annuler un rdv depuis l'espace client (logique 48h)                                                       | ⬜      | 🟠 P1 |
+| 09-11            | Page "Mes reservations" : liste des bookings du client (a venir, passes, annules)                                | ✅      | 🟠 P1 |
+| 09-12            | Action annuler un rdv depuis l'espace client (logique 48h)                                                       | ✅      | 🟠 P1 |
 | **Profil**       |                                                                                                                  |        |       |
-| 09-13            | Page "Mon profil" : edition prenom, nom, telephone, email, avatar                                                | 🔶     | 🟠 P1 |
-| 09-14            | Changement de mot de passe                                                                                       | ⬜      | 🟠 P1 |
+| 09-13            | Page "Mon profil" : edition prenom, nom, telephone, email, avatar                                                | ✅      | 🟠 P1 |
+| 09-14            | Changement de mot de passe                                                                                       | ✅      | 🟠 P1 |
 | **Achat**        |                                                                                                                  |        |       |
-| 09-15            | Flow achat formation : bouton "Acheter" sur page detail → Stripe Checkout → redirect `/espace-client/formations` | ⬜      | 🔴 P0 |
+| 09-15            | Flow achat formation : bouton "Acheter" sur page detail → Stripe Checkout → redirect `/espace-client/formations` | ✅      | 🔴 P0 |
 
 
 ---
@@ -559,9 +559,9 @@
 
 | Statut            | Nombre   |
 | ----------------- | -------- |
-| ✅ Termine         | ~113     |
-| 🔶 Partiel        | ~10      |
-| ⬜ A faire         | ~44      |
+| ✅ Termine         | ~142     |
+| 🔶 Partiel        | ~2       |
+| ⬜ A faire         | ~23      |
 | **Total stories** | **~167** |
 
 
@@ -573,7 +573,8 @@
 4. ~~**EPIC-05** : Backoffice Admin Paiements~~ ✅
 5. ~~**EPIC-06** : Backoffice Admin Parametres~~ ✅
 6. ~~**EPIC-07** : Booking System~~ ✅
-7. **EPIC-08** : Espace Consultante (dashboard, agenda, parametres)
-8. **EPIC-09** : Lecteur de formation client + flow achat Stripe
-9. **EPIC-11-15** : Brancher les emails dans les webhooks Stripe
+7. ~~**EPIC-08** : Espace Consultante~~ ✅
+8. ~~**EPIC-09** : Espace Client~~ ✅
+9. **EPIC-10** : Pages Publiques (landing, catalogue, legal)
+10. **EPIC-11-15** : Brancher les emails dans les webhooks Stripe
 

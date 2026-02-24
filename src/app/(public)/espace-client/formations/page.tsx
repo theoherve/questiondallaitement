@@ -24,12 +24,34 @@ const ClientFormationsPage = async () => {
         title,
         slug,
         short_description,
-        thumbnail_url
+        thumbnail_url,
+        formation_sections (
+          formation_blocks (
+            id
+          )
+        )
       )
     `
     )
     .eq("client_id", user.id)
     .order("enrolled_at", { ascending: false });
+
+  const enrollmentIds = (enrollments ?? []).map((e) => e.id);
+
+  const { data: progressData } = enrollmentIds.length > 0
+    ? await supabase
+        .from("formation_progress")
+        .select("enrollment_id, block_id, completed")
+        .in("enrollment_id", enrollmentIds)
+    : { data: [] };
+
+  const progressByEnrollment = new Map<string, Set<string>>();
+  (progressData ?? []).forEach((p) => {
+    if (!p.completed) return;
+    const set = progressByEnrollment.get(p.enrollment_id) ?? new Set();
+    set.add(p.block_id);
+    progressByEnrollment.set(p.enrollment_id, set);
+  });
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -46,9 +68,23 @@ const ClientFormationsPage = async () => {
               slug: string;
               short_description: string | null;
               thumbnail_url: string | null;
+              formation_sections: {
+                formation_blocks: { id: string }[];
+              }[];
             } | null;
 
             if (!formation) return null;
+
+            const totalBlocks = formation.formation_sections.reduce(
+              (acc, s) => acc + s.formation_blocks.length,
+              0
+            );
+            const completedBlocks =
+              progressByEnrollment.get(enrollment.id)?.size ?? 0;
+            const progressPercent =
+              totalBlocks > 0
+                ? Math.round((completedBlocks / totalBlocks) * 100)
+                : 0;
 
             return (
               <Card key={enrollment.id} className="overflow-hidden">
@@ -80,9 +116,29 @@ const ClientFormationsPage = async () => {
                       locale: fr,
                     })}
                   </p>
-                  <Button asChild className="mt-3 w-full bg-primary-red hover:bg-primary-red-dark">
-                    <Link href={`/espace-client/formations/${formation.id}`} tabIndex={0}>
-                      Continuer
+
+                  {/* Progress bar */}
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className="h-2 flex-1 rounded-full bg-muted">
+                      <div
+                        className="h-2 rounded-full bg-primary-red transition-all"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {progressPercent}%
+                    </span>
+                  </div>
+
+                  <Button
+                    asChild
+                    className="mt-3 w-full bg-primary-red hover:bg-primary-red-dark"
+                  >
+                    <Link
+                      href={`/espace-client/formations/${formation.id}`}
+                      tabIndex={0}
+                    >
+                      {progressPercent > 0 ? "Continuer" : "Commencer"}
                     </Link>
                   </Button>
                 </CardContent>

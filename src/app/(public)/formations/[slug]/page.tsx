@@ -1,10 +1,11 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Clock, User } from "lucide-react";
+import { getSessionUser } from "@/lib/auth";
+import { PurchaseButton } from "../_components/purchase-button";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -40,6 +41,7 @@ const formatPrice = (cents: number, currency: string): string => {
 const FormationDetailPage = async ({ params }: Props) => {
   const { slug } = await params;
   const supabase = await createClient();
+  const currentUser = await getSessionUser();
 
   const { data: formation } = await supabase
     .from("formations")
@@ -73,6 +75,17 @@ const FormationDetailPage = async ({ params }: Props) => {
     .single();
 
   if (!formation) notFound();
+
+  let isEnrolled = false;
+  if (currentUser) {
+    const { data: enrollment } = await supabase
+      .from("formation_enrollments")
+      .select("id")
+      .eq("client_id", currentUser.id)
+      .eq("formation_id", formation.id)
+      .single();
+    isEnrolled = !!enrollment;
+  }
 
   const sections = (formation.formation_sections ?? []).sort(
     (a: { position: number }, b: { position: number }) => a.position - b.position
@@ -180,9 +193,11 @@ const FormationDetailPage = async ({ params }: Props) => {
                   <span>Par {consultantName}</span>
                 </div>
               </div>
-              <Button className="w-full bg-primary-red hover:bg-primary-red-dark">
-                Acheter la formation
-              </Button>
+              <PurchaseButton
+                formationId={formation.id}
+                isLoggedIn={!!currentUser}
+                isEnrolled={isEnrolled}
+              />
             </CardContent>
           </Card>
         </div>
