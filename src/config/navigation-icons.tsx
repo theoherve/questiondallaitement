@@ -12,6 +12,7 @@ import {
   Settings,
   CreditCard,
   Megaphone,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -27,6 +28,7 @@ export const navIconMap: Record<string, LucideIcon> = {
   Settings,
   CreditCard,
   Megaphone,
+  FileText,
 };
 
 export const getNavIcon = (iconKey: string): LucideIcon =>

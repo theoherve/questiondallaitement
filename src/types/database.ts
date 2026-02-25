@@ -351,3 +351,38 @@ export type AuditLog = {
   ip_address: string | null;
   created_at: string;
 };
+
+// ─── Blog ───────────────────────────────────────────────────
+
+export type BlogStatus = "draft" | "scheduled" | "published" | "archived";
+
+export type BlogCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  position: number;
+  created_at: string;
+};
+
+export type BlogPost = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  body_html: string;
+  thumbnail_url: string | null;
+  category_id: string | null;
+  author_id: string;
+  consultant_id: string | null;
+  status: BlogStatus;
+  meta_title: string | null;
+  meta_description: string | null;
+  og_image_url: string | null;
+  tags: string[];
+  scheduled_at: string | null;
+  published_at: string | null;
+  deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
+};

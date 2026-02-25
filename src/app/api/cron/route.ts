@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendBookingReminder } from "@/lib/emails/send";
 import { format, addDays, startOfDay, endOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
+import { revalidatePath } from "next/cache";
 
 export const GET = async (request: Request) => {
   const authHeader = request.headers.get("authorization");
@@ -13,6 +14,34 @@ export const GET = async (request: Request) => {
   const supabase = createAdminClient();
   const results: Record<string, unknown> = {};
 
+  // ─── Publish Scheduled Blog Posts ─────────────────────────
+  const now = new Date().toISOString();
+  const { data: scheduledPosts } = await supabase
+    .from("blog_posts")
+    .select("id, slug")
+    .eq("status", "scheduled")
+    .lte("scheduled_at", now)
+    .is("deleted_at", null);
+
+  if (scheduledPosts && scheduledPosts.length > 0) {
+    const ids = scheduledPosts.map((p) => p.id);
+    const { error: publishError } = await supabase
+      .from("blog_posts")
+      .update({ status: "published", published_at: now })
+      .in("id", ids);
+
+    if (!publishError) {
+      revalidatePath("/blog");
+      for (const post of scheduledPosts) {
+        revalidatePath(`/blog/${post.slug}`);
+      }
+    }
+    results.blog_posts_published = publishError ? -1 : scheduledPosts.length;
+  } else {
+    results.blog_posts_published = 0;
+  }
+
+  // ─── Booking Reminders ────────────────────────────────────
   const tomorrow = addDays(new Date(), 1);
   const tomorrowStart = startOfDay(tomorrow).toISOString();
   const tomorrowEnd = endOfDay(tomorrow).toISOString();
@@ -26,7 +55,7 @@ export const GET = async (request: Request) => {
       status,
       profiles!bookings_client_id_fkey(email, first_name, last_name),
       consultants!inner(profiles!consultants_id_fkey(first_name, last_name))
-    `
+    `,
     )
     .eq("status", "confirmed")
     .gte("starts_at", tomorrowStart)
@@ -63,7 +92,10 @@ export const GET = async (request: Request) => {
         });
         remindersSent++;
       } catch (err) {
-        console.error(`Failed to send reminder for booking ${booking.id}:`, err);
+        console.error(
+          `Failed to send reminder for booking ${booking.id}:`,
+          err,
+        );
       }
     }
   }
