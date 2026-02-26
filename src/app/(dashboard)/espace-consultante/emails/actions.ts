@@ -65,7 +65,7 @@ export const getMyCampaign = async (id: string) => {
 };
 
 export const createMyCampaign = async (
-  input: unknown
+  input: unknown,
 ): Promise<ActionResult<{ id: string }>> => {
   const user = await requireConsultant();
   const parsed = emailCampaignSchema.safeParse(input);
@@ -80,11 +80,9 @@ export const createMyCampaign = async (
     .select("brevo_list_id")
     .eq("consultant_id", user.id);
 
-  const allowedIds = new Set(
-    (assignedLists ?? []).map((l) => l.brevo_list_id)
-  );
+  const allowedIds = new Set((assignedLists ?? []).map((l) => l.brevo_list_id));
   const unauthorized = parsed.data.recipient_list_ids.filter(
-    (id) => !allowedIds.has(id)
+    (id) => !allowedIds.has(id),
   );
   if (unauthorized.length > 0) {
     return {
@@ -119,7 +117,7 @@ export const createMyCampaign = async (
 
 export const updateMyCampaign = async (
   id: string,
-  input: unknown
+  input: unknown,
 ): Promise<ActionResult> => {
   const user = await requireConsultant();
   const parsed = emailCampaignSchema.safeParse(input);
@@ -149,11 +147,9 @@ export const updateMyCampaign = async (
     .select("brevo_list_id")
     .eq("consultant_id", user.id);
 
-  const allowedIds = new Set(
-    (assignedLists ?? []).map((l) => l.brevo_list_id)
-  );
+  const allowedIds = new Set((assignedLists ?? []).map((l) => l.brevo_list_id));
   const unauthorized = parsed.data.recipient_list_ids.filter(
-    (listId) => !allowedIds.has(listId)
+    (listId) => !allowedIds.has(listId),
   );
   if (unauthorized.length > 0) {
     return {
@@ -180,9 +176,7 @@ export const updateMyCampaign = async (
   return { success: true };
 };
 
-export const sendMyCampaign = async (
-  id: string
-): Promise<ActionResult> => {
+export const sendMyCampaign = async (id: string): Promise<ActionResult> => {
   const user = await requireConsultant();
   const supabase = createAdminClient();
 
@@ -194,7 +188,10 @@ export const sendMyCampaign = async (
     .single();
 
   if (!campaign || campaign.status !== "draft") {
-    return { success: false, error: "Cette campagne ne peut pas être envoyée." };
+    return {
+      success: false,
+      error: "Cette campagne ne peut pas être envoyée.",
+    };
   }
 
   if (!campaign.body_html) {
@@ -208,7 +205,13 @@ export const sendMyCampaign = async (
     .eq("id", user.id)
     .single();
 
-  const profiles = (consultant as unknown as { profiles: { first_name: string; last_name: string; email: string }[] | null })?.profiles;
+  const profiles = (
+    consultant as unknown as {
+      profiles:
+        | { first_name: string; last_name: string; email: string }[]
+        | null;
+    }
+  )?.profiles;
   const profile = profiles?.[0] ?? null;
   const senderName = profile
     ? `${profile.first_name} ${profile.last_name}`
@@ -246,9 +249,7 @@ export const sendMyCampaign = async (
   return { success: true };
 };
 
-export const deleteMyCampaign = async (
-  id: string
-): Promise<ActionResult> => {
+export const deleteMyCampaign = async (id: string): Promise<ActionResult> => {
   const user = await requireConsultant();
   const supabase = createAdminClient();
 
@@ -281,7 +282,7 @@ export const deleteMyCampaign = async (
 };
 
 export const refreshMyCampaignStats = async (
-  id: string
+  id: string,
 ): Promise<ActionResult<CampaignStats>> => {
   const user = await requireConsultant();
   const supabase = createAdminClient();
@@ -305,10 +306,7 @@ export const refreshMyCampaignStats = async (
     };
   }
 
-  await supabase
-    .from("email_campaigns")
-    .update({ stats })
-    .eq("id", id);
+  await supabase.from("email_campaigns").update({ stats }).eq("id", id);
 
   revalidatePath("/espace-consultante/emails");
   return { success: true, data: stats };

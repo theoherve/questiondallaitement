@@ -22,7 +22,7 @@ const profileToBrevoAttributes = (profile: {
 export const syncContactToBrevo = async (
   email: string,
   attributes: Record<string, string>,
-  listIds?: number[]
+  listIds?: number[],
 ) => {
   try {
     await createContact(email, attributes, listIds);
@@ -47,14 +47,11 @@ export const syncOnSignup = async (profile: {
   await syncContactToBrevo(
     profile.email,
     profileToBrevoAttributes(profile),
-    defaultListId ? [defaultListId] : undefined
+    defaultListId ? [defaultListId] : undefined,
   );
 };
 
-export const syncOnPurchase = async (
-  email: string,
-  listId?: number
-) => {
+export const syncOnPurchase = async (email: string, listId?: number) => {
   if (listId) {
     try {
       await addContactToList(email, listId);
@@ -102,13 +99,13 @@ export const syncAllContactsToBrevo = async (): Promise<{
           await createContact(
             profile.email,
             profileToBrevoAttributes(profile),
-            defaultListId ? [defaultListId] : undefined
+            defaultListId ? [defaultListId] : undefined,
           );
           synced++;
         } catch {
           errors++;
         }
-      })
+      }),
     );
 
     // Small delay between batches

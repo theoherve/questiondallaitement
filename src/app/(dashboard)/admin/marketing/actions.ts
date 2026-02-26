@@ -60,7 +60,7 @@ export const getTemplate = async (id: string) => {
 };
 
 export const createTemplate = async (
-  input: unknown
+  input: unknown,
 ): Promise<ActionResult<{ id: string }>> => {
   const user = await requireAdmin();
   const parsed = emailTemplateSchema.safeParse(input);
@@ -85,7 +85,7 @@ export const createTemplate = async (
 
 export const updateTemplate = async (
   id: string,
-  input: unknown
+  input: unknown,
 ): Promise<ActionResult> => {
   await requireAdmin();
   const parsed = emailTemplateSchema.safeParse(input);
@@ -153,7 +153,7 @@ export const getCampaign = async (id: string) => {
 };
 
 export const createCampaign = async (
-  input: unknown
+  input: unknown,
 ): Promise<ActionResult<{ id: string }>> => {
   await requireAdmin();
   const parsed = emailCampaignSchema.safeParse(input);
@@ -178,7 +178,10 @@ export const createCampaign = async (
     .single();
 
   if (error) {
-    return { success: false, error: "Erreur lors de la création de la campagne." };
+    return {
+      success: false,
+      error: "Erreur lors de la création de la campagne.",
+    };
   }
 
   revalidatePath("/admin/marketing");
@@ -187,7 +190,7 @@ export const createCampaign = async (
 
 export const updateCampaign = async (
   id: string,
-  input: unknown
+  input: unknown,
 ): Promise<ActionResult> => {
   await requireAdmin();
   const parsed = emailCampaignSchema.safeParse(input);
@@ -205,7 +208,10 @@ export const updateCampaign = async (
     .single();
 
   if (!campaign || campaign.status !== "draft") {
-    return { success: false, error: "Seules les campagnes brouillon peuvent être modifiées." };
+    return {
+      success: false,
+      error: "Seules les campagnes brouillon peuvent être modifiées.",
+    };
   }
 
   const { error } = await supabase
@@ -237,9 +243,7 @@ export const updateCampaign = async (
   return { success: true };
 };
 
-export const sendCampaign = async (
-  id: string
-): Promise<ActionResult> => {
+export const sendCampaign = async (id: string): Promise<ActionResult> => {
   await requireAdmin();
   const supabase = createAdminClient();
 
@@ -250,15 +254,17 @@ export const sendCampaign = async (
     .single();
 
   if (!campaign || campaign.status !== "draft") {
-    return { success: false, error: "Cette campagne ne peut pas être envoyée." };
+    return {
+      success: false,
+      error: "Cette campagne ne peut pas être envoyée.",
+    };
   }
 
   if (!campaign.body_html) {
     return { success: false, error: "Le contenu de la campagne est vide." };
   }
 
-  const senderName =
-    process.env.BREVO_SENDER_NAME ?? "Question d'Allaitement";
+  const senderName = process.env.BREVO_SENDER_NAME ?? "Question d'Allaitement";
   const senderEmail =
     process.env.BREVO_SENDER_EMAIL ?? "contact@questiondallaitement.com";
 
@@ -297,7 +303,7 @@ export const sendCampaign = async (
 
 export const scheduleCampaign = async (
   id: string,
-  scheduledAt: string
+  scheduledAt: string,
 ): Promise<ActionResult> => {
   await requireAdmin();
   const supabase = createAdminClient();
@@ -309,15 +315,17 @@ export const scheduleCampaign = async (
     .single();
 
   if (!campaign || campaign.status !== "draft") {
-    return { success: false, error: "Cette campagne ne peut pas être programmée." };
+    return {
+      success: false,
+      error: "Cette campagne ne peut pas être programmée.",
+    };
   }
 
   if (!campaign.body_html) {
     return { success: false, error: "Le contenu de la campagne est vide." };
   }
 
-  const senderName =
-    process.env.BREVO_SENDER_NAME ?? "Question d'Allaitement";
+  const senderName = process.env.BREVO_SENDER_NAME ?? "Question d'Allaitement";
   const senderEmail =
     process.env.BREVO_SENDER_EMAIL ?? "contact@questiondallaitement.com";
 
@@ -332,7 +340,10 @@ export const scheduleCampaign = async (
   });
 
   if (!ok || !brevoData) {
-    return { success: false, error: "Erreur lors de la programmation sur Brevo." };
+    return {
+      success: false,
+      error: "Erreur lors de la programmation sur Brevo.",
+    };
   }
 
   await supabase
@@ -358,8 +369,15 @@ export const deleteCampaign = async (id: string): Promise<ActionResult> => {
     .eq("id", id)
     .single();
 
-  if (!campaign || (campaign.status !== "draft" && campaign.status !== "scheduled")) {
-    return { success: false, error: "Seules les campagnes brouillon ou programmées peuvent être supprimées." };
+  if (
+    !campaign ||
+    (campaign.status !== "draft" && campaign.status !== "scheduled")
+  ) {
+    return {
+      success: false,
+      error:
+        "Seules les campagnes brouillon ou programmées peuvent être supprimées.",
+    };
   }
 
   const { error } = await supabase
@@ -376,7 +394,7 @@ export const deleteCampaign = async (id: string): Promise<ActionResult> => {
 };
 
 export const refreshCampaignStats = async (
-  id: string
+  id: string,
 ): Promise<ActionResult<CampaignStats>> => {
   await requireAdmin();
   const supabase = createAdminClient();
@@ -393,13 +411,13 @@ export const refreshCampaignStats = async (
 
   const stats = await getCampaignReport(campaign.brevo_campaign_id);
   if (!stats) {
-    return { success: false, error: "Impossible de récupérer les statistiques." };
+    return {
+      success: false,
+      error: "Impossible de récupérer les statistiques.",
+    };
   }
 
-  await supabase
-    .from("email_campaigns")
-    .update({ stats })
-    .eq("id", id);
+  await supabase.from("email_campaigns").update({ stats }).eq("id", id);
 
   revalidatePath("/admin/marketing");
   return { success: true, data: stats };
@@ -426,7 +444,7 @@ export const getConsultantBrevoLists = async (consultantId: string) => {
 };
 
 export const assignBrevoListToConsultant = async (
-  input: unknown
+  input: unknown,
 ): Promise<ActionResult> => {
   await requireAdmin();
   const parsed = consultantBrevoListSchema.safeParse(input);
@@ -449,7 +467,7 @@ export const assignBrevoListToConsultant = async (
 
 export const removeBrevoListFromConsultant = async (
   consultantId: string,
-  brevoListId: number
+  brevoListId: number,
 ): Promise<ActionResult> => {
   await requireAdmin();
   const supabase = createAdminClient();

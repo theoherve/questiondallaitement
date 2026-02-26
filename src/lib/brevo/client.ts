@@ -12,7 +12,7 @@ const brevoHeaders = () => ({
 
 const brevoFetch = async <T = unknown>(
   path: string,
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<{ ok: boolean; data: T | null; status: number }> => {
   const response = await fetch(`${BREVO_API_BASE}${path}`, {
     ...options,
@@ -36,7 +36,7 @@ const brevoFetch = async <T = unknown>(
 export const createContact = async (
   email: string,
   attributes?: Record<string, string>,
-  listIds?: number[]
+  listIds?: number[],
 ) => {
   return brevoFetch("/contacts", {
     method: "POST",
@@ -52,7 +52,7 @@ export const createContact = async (
 export const updateContact = async (
   email: string,
   attributes: Record<string, string>,
-  listIds?: number[]
+  listIds?: number[],
 ) => {
   return brevoFetch(`/contacts/${encodeURIComponent(email)}`, {
     method: "PUT",
@@ -100,7 +100,7 @@ export const removeContactFromList = async (email: string, listId: number) => {
 
 export const getLists = async (
   limit = 50,
-  offset = 0
+  offset = 0,
 ): Promise<BrevoList[]> => {
   const { data } = await brevoFetch<{
     lists: {
@@ -123,7 +123,7 @@ export const getLists = async (
 
 export const createList = async (
   name: string,
-  folderId: number
+  folderId: number,
 ): Promise<{ id: number } | null> => {
   const { data } = await brevoFetch<{ id: number }>("/contacts/lists", {
     method: "POST",
@@ -135,10 +135,14 @@ export const createList = async (
 export const getListContacts = async (
   listId: number,
   limit = 50,
-  offset = 0
+  offset = 0,
 ) => {
   const { data } = await brevoFetch<{
-    contacts: { email: string; id: number; attributes: Record<string, string> }[];
+    contacts: {
+      email: string;
+      id: number;
+      attributes: Record<string, string>;
+    }[];
     count: number;
   }>(`/contacts/lists/${listId}/contacts?limit=${limit}&offset=${offset}`);
 
@@ -149,7 +153,13 @@ export const getListContacts = async (
 
 export const getFolders = async () => {
   const { data } = await brevoFetch<{
-    folders: { id: number; name: string; totalSubscribers: number; totalBlacklisted: number; uniqueSubscribers: number }[];
+    folders: {
+      id: number;
+      name: string;
+      totalSubscribers: number;
+      totalBlacklisted: number;
+      uniqueSubscribers: number;
+    }[];
   }>("/contacts/folders?limit=50&offset=0");
   return data?.folders ?? [];
 };
@@ -182,7 +192,7 @@ export const updateEmailCampaign = async (
     sender?: { name: string; email: string };
     recipients?: { listIds: number[] };
     scheduledAt?: string;
-  }
+  },
 ) => {
   return brevoFetch(`/emailCampaigns/${campaignId}`, {
     method: "PUT",
@@ -197,7 +207,7 @@ export const sendCampaignNow = async (campaignId: number | string) => {
 };
 
 export const getCampaignReport = async (
-  campaignId: number | string
+  campaignId: number | string,
 ): Promise<CampaignStats | null> => {
   const { data } = await brevoFetch<{
     statistics: {
@@ -233,7 +243,7 @@ export const getCampaignReport = async (
 export const getCampaigns = async (
   status?: "draft" | "sent" | "queued" | "suspended",
   limit = 50,
-  offset = 0
+  offset = 0,
 ) => {
   const params = new URLSearchParams({
     limit: String(limit),
