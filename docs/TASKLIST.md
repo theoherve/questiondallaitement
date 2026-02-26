@@ -447,11 +447,11 @@
 
 | ID    | Story                                                       | Statut | Prio  |
 | ----- | ----------------------------------------------------------- | ------ | ----- |
-| 21-01 | Integration API Brevo : gestion contacts, listes, campagnes | ⬜     | 🟠 P1 |
-| 21-02 | Sync contacts Supabase → Brevo (webhook ou batch)           | ⬜     | 🟠 P1 |
-| 21-03 | Admin / consultante : creer et envoyer des campagnes email  | ⬜     | 🟠 P1 |
-| 21-04 | Templates email marketing editables (WYSIWYG)               | ⬜     | 🟠 P1 |
-| 21-05 | Stats campagnes (opens, clicks) depuis Brevo API            | ⬜     | 🟡 P2 |
+| 21-01 | Integration API Brevo : gestion contacts, listes, campagnes | ✅     | 🟠 P1 |
+| 21-02 | Sync contacts Supabase → Brevo (webhook ou batch)           | ✅     | 🟠 P1 |
+| 21-03 | Admin / consultante : creer et envoyer des campagnes email  | ✅     | 🟠 P1 |
+| 21-04 | Templates email marketing editables (WYSIWYG)               | ✅     | 🟠 P1 |
+| 21-05 | Stats campagnes (opens, clicks) depuis Brevo API            | ✅     | 🟡 P2 |
 
 ---
 

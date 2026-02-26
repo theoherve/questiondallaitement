@@ -12,6 +12,7 @@ import {
 import { redirect } from "next/navigation";
 import { randomBytes, randomUUID } from "crypto";
 import { sendPasswordResetEmail, sendWelcomeEmail } from "@/lib/emails/send";
+import { syncOnSignup } from "@/lib/brevo/sync";
 import { rateLimit, AUTH_RATE_LIMITS } from "@/lib/rate-limit";
 
 const RESET_TOKEN_EXPIRY_HOURS = 24;
@@ -119,6 +120,15 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
   } catch {
     // Non-blocking
   }
+
+  // Sync new contact to Brevo (non-blocking)
+  syncOnSignup({
+    email,
+    first_name: parsed.data.first_name,
+    last_name: parsed.data.last_name,
+    phone: null,
+    role: "client",
+  }).catch(() => {});
 
   redirect(`${baseUrl()}/inscription?success=1`);
 };

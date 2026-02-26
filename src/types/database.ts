@@ -321,12 +321,42 @@ export type EmailCampaign = {
   name: string;
   template_id: string | null;
   subject: string;
+  body_html: string | null;
   status: "draft" | "scheduled" | "sending" | "sent";
   brevo_campaign_id: string | null;
+  recipient_list_ids: number[];
+  recipient_count: number;
   scheduled_at: string | null;
   sent_at: string | null;
   stats: Record<string, unknown>;
   created_at: string;
+  updated_at: string;
+};
+
+export type CampaignStats = {
+  delivered: number;
+  opens: number;
+  unique_opens: number;
+  clicks: number;
+  unique_clicks: number;
+  bounces: number;
+  unsubscribes: number;
+  spam_reports: number;
+};
+
+export type ConsultantBrevoList = {
+  id: string;
+  consultant_id: string;
+  brevo_list_id: number;
+  list_name: string;
+  created_at: string;
+};
+
+export type BrevoList = {
+  id: number;
+  name: string;
+  totalSubscribers: number;
+  totalBlacklisted: number;
 };
 
 export type Automation = {
