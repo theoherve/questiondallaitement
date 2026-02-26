@@ -3,6 +3,7 @@
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formationSchema, sectionSchema } from "@/validations/formations";
+import { formationCollaboratorSchema } from "@/validations/crm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/types";
@@ -24,7 +25,7 @@ const slugify = (text: string): string =>
 // ─── Formations ─────────────────────────────────────────────
 
 export const createFormation = async (
-  data: unknown
+  data: unknown,
 ): Promise<ActionResult<{ id: string; slug: string }>> => {
   await requireAdmin();
   const parsed = formationSchema.safeParse(data);
@@ -55,7 +56,7 @@ export const createFormation = async (
 
 export const updateFormation = async (
   id: string,
-  data: unknown
+  data: unknown,
 ): Promise<ActionResult> => {
   await requireAdmin();
   const parsed = formationSchema.safeParse(data);
@@ -107,7 +108,7 @@ export const deleteFormation = async (id: string): Promise<ActionResult> => {
 
 export const updateFormationStatus = async (
   id: string,
-  status: "draft" | "published" | "archived"
+  status: "draft" | "published" | "archived",
 ): Promise<ActionResult> => {
   await requireAdmin();
   const supabase = createAdminClient();
@@ -135,7 +136,7 @@ export const updateFormationStatus = async (
 
 export const createSection = async (
   formationId: string,
-  data: unknown
+  data: unknown,
 ): Promise<ActionResult<{ id: string }>> => {
   await requireAdmin();
   const parsed = sectionSchema.safeParse(data);
@@ -151,7 +152,10 @@ export const createSection = async (
     .single();
 
   if (error) {
-    return { success: false, error: "Erreur lors de la création de la section" };
+    return {
+      success: false,
+      error: "Erreur lors de la création de la section",
+    };
   }
 
   revalidatePath(`/admin/formations/${formationId}/edit`);
@@ -161,7 +165,7 @@ export const createSection = async (
 export const updateSection = async (
   id: string,
   formationId: string,
-  data: unknown
+  data: unknown,
 ): Promise<ActionResult> => {
   await requireAdmin();
   const parsed = sectionSchema.safeParse(data);
@@ -185,7 +189,7 @@ export const updateSection = async (
 
 export const deleteSection = async (
   id: string,
-  formationId: string
+  formationId: string,
 ): Promise<ActionResult> => {
   await requireAdmin();
   const supabase = createAdminClient();
@@ -204,7 +208,7 @@ export const deleteSection = async (
 
 export const reorderSections = async (
   formationId: string,
-  orderedIds: string[]
+  orderedIds: string[],
 ): Promise<ActionResult> => {
   await requireAdmin();
   const supabase = createAdminClient();
@@ -213,7 +217,7 @@ export const reorderSections = async (
     supabase
       .from("formation_sections")
       .update({ position: index })
-      .eq("id", id)
+      .eq("id", id),
   );
 
   const results = await Promise.all(updates);
@@ -233,7 +237,7 @@ export const createBlock = async (
   formationId: string,
   type: string,
   content: unknown,
-  position: number
+  position: number,
 ): Promise<ActionResult<{ id: string }>> => {
   await requireAdmin();
   const supabase = createAdminClient();
@@ -260,7 +264,7 @@ export const createBlock = async (
 export const updateBlock = async (
   id: string,
   formationId: string,
-  content: unknown
+  content: unknown,
 ): Promise<ActionResult> => {
   await requireAdmin();
   const supabase = createAdminClient();
@@ -280,7 +284,7 @@ export const updateBlock = async (
 
 export const deleteBlock = async (
   id: string,
-  formationId: string
+  formationId: string,
 ): Promise<ActionResult> => {
   await requireAdmin();
   const supabase = createAdminClient();
@@ -300,22 +304,145 @@ export const deleteBlock = async (
 export const reorderBlocks = async (
   sectionId: string,
   formationId: string,
-  orderedIds: string[]
+  orderedIds: string[],
 ): Promise<ActionResult> => {
   await requireAdmin();
   const supabase = createAdminClient();
 
   const updates = orderedIds.map((id, index) =>
-    supabase
-      .from("formation_blocks")
-      .update({ position: index })
-      .eq("id", id)
+    supabase.from("formation_blocks").update({ position: index }).eq("id", id),
   );
 
   const results = await Promise.all(updates);
   const failed = results.find((r) => r.error);
   if (failed?.error) {
     return { success: false, error: "Erreur lors du réordonnancement" };
+  }
+
+  revalidatePath(`/admin/formations/${formationId}/edit`);
+  return { success: true };
+};
+
+// ─── Collaborators ──────────────────────────────────────────
+
+export type FormationCollaboratorRow = {
+  consultant_id: string;
+  revenue_share: number;
+  consultant: {
+    first_name: string | null;
+    last_name: string | null;
+    email: string;
+  };
+};
+
+export const getFormationCollaborators = async (
+  formationId: string,
+): Promise<FormationCollaboratorRow[]> => {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { data } = await supabase
+    .from("formation_collaborators")
+    .select(
+      "consultant_id, revenue_share, profiles!formation_collaborators_consultant_id_fkey(first_name, last_name, email)",
+    )
+    .eq("formation_id", formationId);
+
+  return (data ?? []).map((row) => ({
+    consultant_id: row.consultant_id,
+    revenue_share: Number(row.revenue_share),
+    consultant:
+      row.profiles as unknown as FormationCollaboratorRow["consultant"],
+  }));
+};
+
+export const addCollaborator = async (
+  formationId: string,
+  data: unknown,
+): Promise<ActionResult> => {
+  await requireAdmin();
+  const parsed = formationCollaboratorSchema.safeParse(data);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message };
+  }
+
+  const supabase = createAdminClient();
+
+  // Verify the consultant exists and has consultant role
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, role")
+    .eq("id", parsed.data.consultant_id)
+    .single();
+
+  if (!profile || profile.role !== "consultant") {
+    return { success: false, error: "Ce profil n'est pas une consultante" };
+  }
+
+  const { error } = await supabase.from("formation_collaborators").insert({
+    formation_id: formationId,
+    consultant_id: parsed.data.consultant_id,
+    revenue_share: parsed.data.revenue_share,
+  });
+
+  if (error) {
+    if (error.code === "23505") {
+      return {
+        success: false,
+        error: "Cette consultante est déjà collaboratrice",
+      };
+    }
+    return {
+      success: false,
+      error: "Erreur lors de l'ajout de la collaboratrice",
+    };
+  }
+
+  revalidatePath(`/admin/formations/${formationId}/edit`);
+  return { success: true };
+};
+
+export const updateCollaboratorShare = async (
+  formationId: string,
+  consultantId: string,
+  revenueShare: number,
+): Promise<ActionResult> => {
+  await requireAdmin();
+
+  if (revenueShare < 0 || revenueShare > 100) {
+    return { success: false, error: "Le pourcentage doit être entre 0 et 100" };
+  }
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("formation_collaborators")
+    .update({ revenue_share: revenueShare })
+    .eq("formation_id", formationId)
+    .eq("consultant_id", consultantId);
+
+  if (error) {
+    return { success: false, error: "Erreur lors de la mise à jour" };
+  }
+
+  revalidatePath(`/admin/formations/${formationId}/edit`);
+  return { success: true };
+};
+
+export const removeCollaborator = async (
+  formationId: string,
+  consultantId: string,
+): Promise<ActionResult> => {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("formation_collaborators")
+    .delete()
+    .eq("formation_id", formationId)
+    .eq("consultant_id", consultantId);
+
+  if (error) {
+    return { success: false, error: "Erreur lors de la suppression" };
   }
 
   revalidatePath(`/admin/formations/${formationId}/edit`);

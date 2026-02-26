@@ -404,11 +404,11 @@
 
 | ID    | Story                                                                                                    | Statut | Prio  |
 | ----- | -------------------------------------------------------------------------------------------------------- | ------ | ----- |
-| 18-01 | Page `/espace-consultante/crm` : liste contacts (clients avec bookings ou enrollments de la consultante) | ⬜     | 🟠 P1 |
-| 18-02 | Vue detail contact : historique bookings, formations, notes, tags                                        | ⬜     | 🟠 P1 |
-| 18-03 | Notes CRM : creer, editer, supprimer une note sur un client (privees par consultante, ADR-006)           | ⬜     | 🟠 P1 |
-| 18-04 | Tags CRM : creer tags, assigner a des clients, filtrer par tag                                           | ⬜     | 🟠 P1 |
-| 18-05 | Recherche contacts par nom, email                                                                        | ⬜     | 🟡 P2 |
+| 18-01 | Page `/espace-consultante/crm` : liste contacts (clients avec bookings ou enrollments de la consultante) | ✅     | 🟠 P1 |
+| 18-02 | Vue detail contact : historique bookings, formations, notes, tags                                        | ✅     | 🟠 P1 |
+| 18-03 | Notes CRM : creer, editer, supprimer une note sur un client (privees par consultante, ADR-006)           | ✅     | 🟠 P1 |
+| 18-04 | Tags CRM : creer tags, assigner a des clients, filtrer par tag                                           | ✅     | 🟠 P1 |
+| 18-05 | Recherche contacts par nom, email                                                                        | ✅     | 🟡 P2 |
 
 ---
 
@@ -418,10 +418,10 @@
 
 | ID    | Story                                                                                      | Statut | Prio  |
 | ----- | ------------------------------------------------------------------------------------------ | ------ | ----- |
-| 19-01 | Admin : assigner des collaborateurs (`formation_collaborators`) depuis l'editeur formation | ⬜     | 🟠 P1 |
-| 19-02 | Revenue share configurable par collaborateur (pourcentage)                                 | ⬜     | 🟠 P1 |
-| 19-03 | Stripe transfers automatiques apres paiement (webhook → split entre co-creatrices)         | ⬜     | 🟠 P1 |
-| 19-04 | Consultante : voir formations co-creees dans son espace                                    | ⬜     | 🟡 P2 |
+| 19-01 | Admin : assigner des collaborateurs (`formation_collaborators`) depuis l'editeur formation | ✅     | 🟠 P1 |
+| 19-02 | Revenue share configurable par collaborateur (pourcentage)                                 | ✅     | 🟠 P1 |
+| 19-03 | Stripe transfers automatiques apres paiement (webhook → split entre co-creatrices)         | ✅     | 🟠 P1 |
+| 19-04 | Consultante : voir formations co-creees dans son espace                                    | ✅     | 🟡 P2 |
 
 ---
 

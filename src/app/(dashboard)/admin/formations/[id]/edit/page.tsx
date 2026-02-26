@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { FormationEditor } from "@/app/(dashboard)/admin/formations/_components/formation-editor";
+import { CollaboratorManager } from "@/app/(dashboard)/admin/formations/_components/collaborator-manager";
+import { getFormationCollaborators } from "@/app/(dashboard)/admin/formations/actions";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -93,23 +95,35 @@ const AdminEditFormationPage = async ({ params }: Props) => {
       ),
     }));
 
+  const collaborators = await getFormationCollaborators(id);
+
   return (
-    <FormationEditor
-      formation={{
-        id: formation.id,
-        title: formation.title,
-        slug: formation.slug,
-        description: formation.description,
-        short_description: formation.short_description,
-        long_description_html: (formation as Record<string, unknown>).long_description_html as string | null,
-        thumbnail_url: formation.thumbnail_url,
-        price_cents: formation.price_cents,
-        status: formation.status,
-        consultant_id: formation.consultant_id,
-      }}
-      sections={sections}
-      consultants={consultantOptions}
-    />
+    <>
+      <FormationEditor
+        formation={{
+          id: formation.id,
+          title: formation.title,
+          slug: formation.slug,
+          description: formation.description,
+          short_description: formation.short_description,
+          long_description_html: (formation as Record<string, unknown>).long_description_html as string | null,
+          thumbnail_url: formation.thumbnail_url,
+          price_cents: formation.price_cents,
+          status: formation.status,
+          consultant_id: formation.consultant_id,
+        }}
+        sections={sections}
+        consultants={consultantOptions}
+      />
+      <div className="mx-auto mt-6 max-w-4xl">
+        <CollaboratorManager
+          formationId={formation.id}
+          collaborators={collaborators}
+          consultants={consultantOptions}
+          mainConsultantId={formation.consultant_id}
+        />
+      </div>
+    </>
   );
 };
 

@@ -1,5 +1,6 @@
 import type Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createTransfer } from "@/lib/stripe/connect";
 import {
   sendFormationAccess,
   sendBookingConfirmation,
@@ -8,7 +9,7 @@ import {
 const getSupabase = () => createAdminClient();
 
 export const handleCheckoutCompleted = async (
-  session: Stripe.Checkout.Session
+  session: Stripe.Checkout.Session,
 ) => {
   const metadata = session.metadata;
   if (!metadata) return;
@@ -25,7 +26,7 @@ export const handleCheckoutCompleted = async (
       await handleFormationPurchase(
         client_id,
         reference_id,
-        paymentIntentId ?? null
+        paymentIntentId ?? null,
       );
       break;
     case "booking":
@@ -35,25 +36,27 @@ export const handleCheckoutCompleted = async (
       await handleEventRegistration(
         client_id,
         reference_id,
-        paymentIntentId ?? null
+        paymentIntentId ?? null,
       );
       break;
   }
 
-  await getSupabase().from("payments").upsert(
-    {
-      stripe_payment_intent_id: paymentIntentId,
-      client_id,
-      consultant_id,
-      amount_cents: session.amount_total ?? 0,
-      platform_fee_cents: parseInt(metadata.platform_fee_cents ?? "0"),
-      currency: session.currency ?? "eur",
-      type: type as "formation" | "booking" | "event",
-      reference_id,
-      status: "succeeded",
-    },
-    { onConflict: "stripe_payment_intent_id" }
-  );
+  await getSupabase()
+    .from("payments")
+    .upsert(
+      {
+        stripe_payment_intent_id: paymentIntentId,
+        client_id,
+        consultant_id,
+        amount_cents: session.amount_total ?? 0,
+        platform_fee_cents: parseInt(metadata.platform_fee_cents ?? "0"),
+        currency: session.currency ?? "eur",
+        type: type as "formation" | "booking" | "event",
+        reference_id,
+        status: "succeeded",
+      },
+      { onConflict: "stripe_payment_intent_id" },
+    );
 
   await logAudit(client_id, "payment_completed", type, reference_id, {
     amount: session.amount_total,
@@ -64,7 +67,7 @@ export const handleCheckoutCompleted = async (
 };
 
 export const handlePaymentIntentSucceeded = async (
-  paymentIntent: Stripe.PaymentIntent
+  paymentIntent: Stripe.PaymentIntent,
 ) => {
   await getSupabase()
     .from("payments")
@@ -126,22 +129,128 @@ export const handleAccountDeauthorized = async (account: Stripe.Account) => {
 const handleFormationPurchase = async (
   clientId: string,
   formationId: string,
-  paymentIntentId: string | null
+  paymentIntentId: string | null,
 ) => {
-  await getSupabase().from("formation_enrollments").upsert(
+  const supabase = getSupabase();
+
+  // 1. Create enrollment
+  await supabase.from("formation_enrollments").upsert(
     {
       client_id: clientId,
       formation_id: formationId,
       stripe_payment_intent_id: paymentIntentId,
       enrolled_at: new Date().toISOString(),
     },
-    { onConflict: "client_id,formation_id" }
+    { onConflict: "client_id,formation_id" },
   );
+
+  // 2. Process collaborator revenue splits
+  await processCollaboratorSplits(formationId, paymentIntentId);
+};
+
+/**
+ * After a formation purchase, query collaborators and transfer their revenue share.
+ * The main consultant receives the full payment via checkout transfer_data.destination,
+ * then we create separate transfers from the platform balance to collaborators.
+ *
+ * Revenue share is calculated from the net amount (after platform fee).
+ */
+const processCollaboratorSplits = async (
+  formationId: string,
+  paymentIntentId: string | null,
+) => {
+  const supabase = getSupabase();
+
+  // Get collaborators with their Stripe accounts
+  const { data: collaborators } = await supabase
+    .from("formation_collaborators")
+    .select(
+      "consultant_id, revenue_share, consultants!formation_collaborators_consultant_id_fkey(stripe_account_id, stripe_account_status)",
+    )
+    .eq("formation_id", formationId);
+
+  if (!collaborators?.length) return;
+
+  // Get payment info to compute net amount
+  const { data: payment } = await supabase
+    .from("payments")
+    .select("amount_cents, platform_fee_cents")
+    .eq("stripe_payment_intent_id", paymentIntentId)
+    .single();
+
+  if (!payment) return;
+
+  const netAmountCents = payment.amount_cents - payment.platform_fee_cents;
+
+  for (const collab of collaborators) {
+    const consultant = collab.consultants as unknown as {
+      stripe_account_id: string | null;
+      stripe_account_status: string | null;
+    } | null;
+
+    if (
+      !consultant?.stripe_account_id ||
+      consultant.stripe_account_status !== "active"
+    ) {
+      // Log but don't block — the collaborator hasn't connected Stripe
+      await logAudit(
+        collab.consultant_id,
+        "collaborator_transfer_skipped",
+        "formation",
+        formationId,
+        {
+          reason: "no_active_stripe_account",
+          revenue_share: collab.revenue_share,
+        },
+      );
+      continue;
+    }
+
+    const transferAmountCents = Math.round(
+      netAmountCents * (Number(collab.revenue_share) / 100),
+    );
+
+    if (transferAmountCents <= 0) continue;
+
+    try {
+      await createTransfer(transferAmountCents, consultant.stripe_account_id, {
+        type: "formation_collaborator_split",
+        formation_id: formationId,
+        consultant_id: collab.consultant_id,
+        payment_intent_id: paymentIntentId ?? "",
+        revenue_share: collab.revenue_share.toString(),
+      });
+
+      await logAudit(
+        collab.consultant_id,
+        "collaborator_transfer_completed",
+        "formation",
+        formationId,
+        {
+          amount_cents: transferAmountCents,
+          revenue_share: collab.revenue_share,
+          stripe_account_id: consultant.stripe_account_id,
+        },
+      );
+    } catch (error) {
+      await logAudit(
+        collab.consultant_id,
+        "collaborator_transfer_failed",
+        "formation",
+        formationId,
+        {
+          error: error instanceof Error ? error.message : "Unknown error",
+          amount_cents: transferAmountCents,
+          revenue_share: collab.revenue_share,
+        },
+      );
+    }
+  }
 };
 
 const handleBookingConfirmation = async (
   bookingId: string,
-  paymentIntentId: string | null
+  paymentIntentId: string | null,
 ) => {
   await getSupabase()
     .from("bookings")
@@ -155,7 +264,7 @@ const handleBookingConfirmation = async (
 const handleEventRegistration = async (
   clientId: string,
   eventId: string,
-  paymentIntentId: string | null
+  paymentIntentId: string | null,
 ) => {
   await getSupabase().from("event_registrations").upsert(
     {
@@ -164,7 +273,7 @@ const handleEventRegistration = async (
       stripe_payment_intent_id: paymentIntentId,
       status: "registered",
     },
-    { onConflict: "event_id,client_id" }
+    { onConflict: "event_id,client_id" },
   );
 };
 
@@ -172,7 +281,7 @@ const sendCheckoutEmails = async (
   type: string,
   clientId: string,
   consultantId: string,
-  referenceId: string
+  referenceId: string,
 ) => {
   try {
     const supabase = getSupabase();
@@ -206,14 +315,17 @@ const sendCheckoutEmails = async (
       const { data: booking } = await supabase
         .from("bookings")
         .select(
-          "starts_at, consultants(profiles!consultants_id_fkey(first_name, last_name))"
+          "starts_at, consultants(profiles!consultants_id_fkey(first_name, last_name))",
         )
         .eq("id", referenceId)
         .single();
 
       if (booking) {
         const consultant = booking.consultants as unknown as {
-          profiles: { first_name: string | null; last_name: string | null } | null;
+          profiles: {
+            first_name: string | null;
+            last_name: string | null;
+          } | null;
         } | null;
         const consultantName = consultant?.profiles
           ? `${consultant.profiles.first_name ?? ""} ${consultant.profiles.last_name ?? ""}`.trim()
@@ -246,7 +358,7 @@ const logAudit = async (
   action: string,
   entityType: string,
   entityId: string,
-  metadata: Record<string, unknown>
+  metadata: Record<string, unknown>,
 ) => {
   await getSupabase().from("audit_logs").insert({
     user_id: userId,
