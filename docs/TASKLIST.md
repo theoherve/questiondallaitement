@@ -18,12 +18,12 @@
 
 ## Vue d'ensemble par phase
 
-| Phase    | Epics             | Statut global            |
-| -------- | ----------------- | ------------------------ |
-| **MVP**  | EPIC-01 a EPIC-14 | 🔶 En cours (~40% fait)  |
-| **V1.5** | EPIC-15 a EPIC-20 | 🔶 En cours (EPIC-15 ✅) |
-| **V2**   | EPIC-21 a EPIC-23 | ⬜ Non commence          |
-| **V3**   | EPIC-24           | ⬜ Futur                 |
+| Phase    | Epics             | Statut global           |
+| -------- | ----------------- | ----------------------- |
+| **MVP**  | EPIC-01 a EPIC-14 | 🔶 En cours (~40% fait) |
+| **V1.5** | EPIC-15 a EPIC-20 | ✅ Terminé              |
+| **V2**   | EPIC-21 a EPIC-23 | ⬜ Non commence         |
+| **V3**   | EPIC-24           | ⬜ Futur                |
 
 ---
 
@@ -431,9 +431,9 @@
 
 | ID    | Story                                                                                       | Statut | Prio  |
 | ----- | ------------------------------------------------------------------------------------------- | ------ | ----- |
-| 20-01 | Dashboard consultante : revenus total et par mois, nombre d'enrollments, nombre de bookings | ⬜     | 🟠 P1 |
-| 20-02 | Dashboard admin : revenus plateforme (commissions), top formations, top consultantes        | ⬜     | 🟠 P1 |
-| 20-03 | Graphiques temporels (derniers 30j, 90j, 12 mois) — librairie chart (Recharts ou Chart.js)  | ⬜     | 🟡 P2 |
+| 20-01 | Dashboard consultante : revenus total et par mois, nombre d'enrollments, nombre de bookings | ✅     | 🟠 P1 |
+| 20-02 | Dashboard admin : revenus plateforme (commissions), top formations, top consultantes        | ✅     | 🟠 P1 |
+| 20-03 | Graphiques temporels (derniers 30j, 90j, 12 mois) — librairie chart (Recharts ou Chart.js)  | ✅     | 🟡 P2 |
 
 ---
 
