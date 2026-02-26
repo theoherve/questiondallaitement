@@ -148,7 +148,7 @@ const AdminBlogPage = async ({ searchParams }: Props) => {
 
       {/* Filters */}
       <Card>
-        <CardContent className="py-4">
+        <CardContent>
           <form className="flex flex-wrap items-end gap-4">
             <div className="flex-1 min-w-50">
               <label htmlFor="search" className="mb-1 block text-sm font-medium">

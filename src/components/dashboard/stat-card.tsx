@@ -16,7 +16,7 @@ export const StatCard = ({
 }: StatCardProps) => {
   return (
     <Card>
-      <CardContent className="pt-6">
+      <CardContent>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">{title}</p>

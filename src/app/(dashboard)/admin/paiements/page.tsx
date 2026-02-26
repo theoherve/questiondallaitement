@@ -118,7 +118,7 @@ const PaiementsPage = async ({
       {/* Stats cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
-          <CardContent className="flex items-center gap-4 py-4">
+          <CardContent className="flex items-center gap-4">
             <TrendingUp className="h-5 w-5 text-primary-green" />
             <div>
               <p className="text-sm text-muted-foreground">Total encaissé</p>
@@ -129,7 +129,7 @@ const PaiementsPage = async ({
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-4 py-4">
+          <CardContent className="flex items-center gap-4">
             <DollarSign className="h-5 w-5 text-primary-green" />
             <div>
               <p className="text-sm text-muted-foreground">
@@ -142,7 +142,7 @@ const PaiementsPage = async ({
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-4 py-4">
+          <CardContent className="flex items-center gap-4">
             <ArrowDownRight className="h-5 w-5 text-destructive" />
             <div>
               <p className="text-sm text-muted-foreground">
@@ -158,7 +158,7 @@ const PaiementsPage = async ({
 
       {/* Filters */}
       <Card>
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4 p-0">
           <CardTitle className="flex items-center gap-2 text-primary-green">
             <CreditCard className="h-5 w-5" />
             Filtres
@@ -382,7 +382,7 @@ const PaiementsPage = async ({
         </Card>
       ) : (
         <Card>
-          <CardContent className="py-12 text-center">
+          <CardContent className="text-center">
             <p className="text-muted-foreground">Aucun paiement trouvé.</p>
           </CardContent>
         </Card>

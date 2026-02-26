@@ -18,7 +18,7 @@ export const Sidebar = ({ items, onLogout }: SidebarProps) => {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 flex-shrink-0 border-r border-sidebar-border bg-sidebar lg:block">
+    <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
       <div className="flex h-16 items-center border-b border-sidebar-border px-6">
         <Link
           href="/"
@@ -28,7 +28,7 @@ export const Sidebar = ({ items, onLogout }: SidebarProps) => {
           QdA
         </Link>
       </div>
-      <ScrollArea className="h-[calc(100vh-4rem)]">
+      <ScrollArea className="flex-1">
         <nav className="space-y-1 p-4" aria-label="Dashboard navigation">
           {items.map((item) => {
             const isActive =
@@ -63,19 +63,19 @@ export const Sidebar = ({ items, onLogout }: SidebarProps) => {
             );
           })}
         </nav>
-        <div className="border-t border-sidebar-border p-4">
-          <form action={onLogout}>
-            <Button
-              type="submit"
-              variant="ghost"
-              className="w-full justify-start gap-3 text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-            >
-              <LogOut className="h-4 w-4" />
-              Déconnexion
-            </Button>
-          </form>
-        </div>
       </ScrollArea>
+      <div className="border-t border-sidebar-border p-4">
+        <form action={onLogout}>
+          <Button
+            type="submit"
+            variant="ghost"
+            className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+          >
+            <LogOut className="h-4 w-4" />
+            Déconnexion
+          </Button>
+        </form>
+      </div>
     </aside>
   );
 };

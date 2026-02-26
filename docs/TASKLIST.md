@@ -374,13 +374,13 @@
 
 | ID    | Story                                                                                                                                     | Statut | Prio  |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
-| 16-01 | Admin : page `/admin/evenements` — liste evenements avec filtres (type, date, consultante)                                                | ⬜     | 🟠 P1 |
-| 16-02 | Admin : creation evenement (titre, description, date debut/fin, type online/presentiel/hybrid, lieu, prix, max participants, consultante) | ⬜     | 🟠 P1 |
-| 16-03 | Admin : edition evenement + publication / depublication                                                                                   | ⬜     | 🟠 P1 |
-| 16-04 | Nav admin : ajouter entree "Evenements" dans la sidebar                                                                                   | ⬜     | 🟠 P1 |
-| 16-05 | Inscription evenement : bouton "S'inscrire" sur page publique → Stripe Checkout (si payant) ou inscription directe (si gratuit)           | ⬜     | 🟠 P1 |
-| 16-06 | Gestion places disponibles (max_participants - count registrations)                                                                       | ⬜     | 🟠 P1 |
-| 16-07 | Consultante : vue evenements associes dans son espace (lecture seule)                                                                     | ⬜     | 🟡 P2 |
+| 16-01 | Admin : page `/admin/evenements` — liste evenements avec filtres (type, date, consultante)                                                | ✅     | 🟠 P1 |
+| 16-02 | Admin : creation evenement (titre, description, date debut/fin, type online/presentiel/hybrid, lieu, prix, max participants, consultante) | ✅     | 🟠 P1 |
+| 16-03 | Admin : edition evenement + publication / depublication                                                                                   | ✅     | 🟠 P1 |
+| 16-04 | Nav admin : ajouter entree "Evenements" dans la sidebar                                                                                   | ✅     | 🟠 P1 |
+| 16-05 | Inscription evenement : bouton "S'inscrire" sur page publique → Stripe Checkout (si payant) ou inscription directe (si gratuit)           | ✅     | 🟠 P1 |
+| 16-06 | Gestion places disponibles (max_participants - count registrations)                                                                       | ✅     | 🟠 P1 |
+| 16-07 | Consultante : vue evenements associes dans son espace (lecture seule)                                                                     | ✅     | 🟡 P2 |
 
 ---
 

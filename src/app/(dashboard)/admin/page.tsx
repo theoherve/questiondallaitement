@@ -92,7 +92,7 @@ const AdminDashboardPage = async () => {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="p-0">
           <CardTitle className="font-serif text-lg">
             Vue d&apos;ensemble
           </CardTitle>

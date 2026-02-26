@@ -1,12 +1,14 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getSessionUser } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Clock, MapPin, Video, Users } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { RegisterButton } from "./register-button";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -68,6 +70,36 @@ const EventDetailPage = async ({ params }: Props) => {
     .single();
 
   if (!event) notFound();
+
+  // Fetch registration count and user registration status
+  const adminSupabase = createAdminClient();
+  const user = await getSessionUser();
+
+  const [regCountResult, userRegResult] = await Promise.all([
+    adminSupabase
+      .from("event_registrations")
+      .select("*", { count: "exact", head: true })
+      .eq("event_id", event.id)
+      .eq("status", "registered"),
+    user
+      ? adminSupabase
+          .from("event_registrations")
+          .select("id")
+          .eq("event_id", event.id)
+          .eq("client_id", user.id)
+          .eq("status", "registered")
+          .single()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const registrationsCount = regCountResult.count ?? 0;
+  const isAlreadyRegistered = !!userRegResult.data;
+  const isFullyBooked =
+    !!event.max_participants && registrationsCount >= event.max_participants;
+  const isPast = new Date(event.ends_at) < new Date();
+  const spotsLeft = event.max_participants
+    ? event.max_participants - registrationsCount
+    : null;
 
   const consultant = event.consultants as unknown as {
     slug: string;
@@ -160,13 +192,24 @@ const EventDetailPage = async ({ params }: Props) => {
               {event.max_participants && (
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
-                  <span>{event.max_participants} places max</span>
+                  <span>
+                    {spotsLeft !== null && spotsLeft > 0
+                      ? `${spotsLeft} place${spotsLeft > 1 ? "s" : ""} restante${spotsLeft > 1 ? "s" : ""}`
+                      : spotsLeft === 0
+                        ? "Complet"
+                        : `${event.max_participants} places max`}
+                  </span>
                 </div>
               )}
             </div>
-            <Button className="w-full bg-primary-red hover:bg-primary-red-dark">
-              S&apos;inscrire
-            </Button>
+            <RegisterButton
+              eventId={event.id}
+              isFree={event.price_cents === 0}
+              isFullyBooked={isFullyBooked}
+              isAlreadyRegistered={isAlreadyRegistered}
+              isPast={isPast}
+              isAuthenticated={!!user}
+            />
           </CardContent>
         </Card>
       </div>
