@@ -70,21 +70,44 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
     <>
       <AuthRedirectHandler />
 
-      {/* ─── HERO — Asymétrique ─── */}
-      <section className="bg-background-beige section-padding">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          {/* Text side — mobile first */}
-          <div className="order-1 text-center lg:order-2 lg:text-left">
-            <h1 className="font-serif text-4xl font-bold leading-tight text-primary-green lg:text-7xl">
+      {/* ─── HERO — Plein écran avec image de fond et texte en overlay ─── */}
+      <section
+        className="relative min-h-[calc(100vh-4rem)] w-full overflow-hidden"
+        aria-label="Hero — Accueil"
+      >
+        {/* Image de fond plein écran */}
+        <div className="absolute inset-0">
+          <Image
+            src="/fond_hero_homepage.jpg"
+            alt=""
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
+          />
+        </div>
+        {/* Overlay pour lisibilité du texte (dégradé gauche → droite) */}
+        <div
+          className="absolute inset-0 bg-linear-to-r from-primary-green/90 via-primary-green/50 to-transparent"
+          aria-hidden
+        />
+        {/* Contenu hero */}
+        <div className="relative z-10 flex min-h-[calc(100vh-4rem)] flex-col justify-center px-5 py-24 sm:px-8 lg:px-16">
+          <div className="mx-auto w-full max-w-7xl">
+            <p className="mb-4 flex items-center gap-2 text-sm font-medium uppercase tracking-widest text-white/90 sm:text-base">
+              <span className="h-2 w-2 rounded-full bg-primary-red" aria-hidden />
+              Consultante en lactation IBCLC
+            </p>
+            <h1 className="font-serif text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-7xl">
               L&apos;allaitement,
               <br />
-              <span className="text-primary-red">autrement.</span>
+              <span className="italic">autrement.</span>
             </h1>
-            <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-primary-green/80 lg:mx-0 lg:text-xl">
-              Consultante IBCLC, auteure et formatrice.
-              20+ ans d&apos;expertise au service de votre allaitement.
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/95 sm:text-xl">
+              Consultante IBCLC, auteure et formatrice. 20+ ans
+              d&apos;expertise au service de votre allaitement.
             </p>
-            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row lg:justify-start">
+            <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
               <Button
                 asChild
                 size="lg"
@@ -92,29 +115,26 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
               >
                 <Link href="/formations">
                   Découvrir les accompagnements
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-2 border-white bg-transparent text-white hover:bg-white/10 hover:text-white"
+              >
                 <Link href="/reserver">Prendre rendez-vous</Link>
               </Button>
             </div>
-          </div>
-
-          {/* Photo side */}
-          <div className="order-2 lg:order-1">
-            <div className="relative mx-auto aspect-[3/4] max-w-md overflow-hidden lg:max-w-none">
-              {/* Placeholder — replace with real portrait photo */}
-              <div className="flex h-full w-full items-center justify-center bg-primary-green/5">
-                <Image
-                  src="/carole_herve_portrait.jpg"
-                  alt="Carole Hervé — Consultante IBCLC"
-                  width={400}
-                  height={600}
-                  className="h-full w-full object-contain p-12"
-                  priority
-                />
-              </div>
+            {/* Indicateur de scroll */}
+            <div
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 lg:bottom-8"
+              aria-hidden
+            >
+              <span className="flex h-9 w-5 items-start justify-center rounded-full border-2 border-white/60">
+                <span className="mt-1 h-2 w-2 rounded-full bg-white/70 animate-bounce" />
+              </span>
             </div>
           </div>
         </div>
@@ -295,7 +315,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                   href={`/blog/${blogPosts[0].slug}`}
                   className="group block"
                 >
-                  <div className="relative aspect-[16/10] overflow-hidden">
+                  <div className="relative aspect-16/10 overflow-hidden">
                     {blogPosts[0].thumbnail_url ? (
                       <Image
                         src={blogPosts[0].thumbnail_url}

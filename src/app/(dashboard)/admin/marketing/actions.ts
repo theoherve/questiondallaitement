@@ -86,7 +86,7 @@ export const createTemplate = async (
 export const updateTemplate = async (
   id: string,
   input: unknown,
-): Promise<ActionResult> => {
+): Promise<ActionResult<{ id: string }>> => {
   await requireAdmin();
   const parsed = emailTemplateSchema.safeParse(input);
   if (!parsed.success) {
@@ -104,7 +104,7 @@ export const updateTemplate = async (
   }
 
   revalidatePath("/admin/marketing");
-  return { success: true };
+  return { success: true, data: { id } };
 };
 
 export const deleteTemplate = async (id: string): Promise<ActionResult> => {

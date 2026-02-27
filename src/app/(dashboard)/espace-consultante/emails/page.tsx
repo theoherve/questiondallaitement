@@ -77,10 +77,10 @@ const EmailsPage = async () => {
           <CardContent className="py-12 text-center">
             <Mail className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p className="text-muted-foreground">
-              Aucune liste d'envoi ne vous a été attribuée.
+              Aucune liste d&apos;envoi ne vous a été attribuée.
             </p>
             <p className="text-sm text-muted-foreground">
-              Contactez l'administrateur pour qu'il vous assigne des listes Brevo.
+              Contactez l&apos;administrateur pour qu&apos;il vous assigne des listes Brevo.
             </p>
           </CardContent>
         </Card>

@@ -4,8 +4,6 @@ import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BlogPostForm } from "../_components/blog-post-form";
 
-import type { ConsultantWithProfile } from "@/types";
-
 export const metadata: Metadata = {
   title: "Nouvel article",
 };
@@ -28,6 +26,21 @@ const NewBlogPostPage = async () => {
   ]);
 
   const categories = categoriesResult.data ?? [];
+  type ConsultantRow = {
+    id: string;
+    slug: string;
+    profiles?: { first_name: string | null; last_name: string | null; email?: string; avatar_url?: string | null } | null;
+    bio?: string | null;
+    specialties?: string[] | null;
+    commission_rate?: number | null;
+    is_active?: boolean | null;
+    stripe_account_id?: string | null;
+    stripe_account_status?: string | null;
+    zoom_access_token?: string | null;
+    zoom_refresh_token?: string | null;
+    zoom_token_expires_at?: string | null;
+    onboarding_completed?: boolean | null;
+  };
   const consultants = (consultantsResult.data ?? []).map((c: any) => ({
     id: c.id,
     slug: c.slug,
@@ -50,10 +63,12 @@ const NewBlogPostPage = async () => {
     onboarding_completed: c.onboarding_completed ?? false,
     created_at: c.created_at ?? "",
     updated_at: c.updated_at ?? "",
-    profiles: c.profiles ? {
-      first_name: c.profiles.first_name ?? null,
-      last_name: c.profiles.last_name ?? null,
-    } : null,
+    profiles: c.profiles
+      ? {
+          first_name: c.profiles.first_name ?? null,
+          last_name: c.profiles.last_name ?? null,
+        }
+      : null,
   }));
 
   return (
