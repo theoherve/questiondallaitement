@@ -9,6 +9,28 @@ export type NavItem = {
   badge?: string;
 };
 
+/** Public site navigation — displayed in header, footer, mobile menu. */
+export type PublicNavItem = {
+  title: string;
+  href: string;
+};
+
+export const publicNav: PublicNavItem[] = [
+  { title: "Accompagnements en ligne", href: "/accompagnements" },
+  { title: "Formations", href: "/formations" },
+  { title: "Livres", href: "/livres" },
+  { title: "Médias", href: "/medias" },
+  { title: "Blog", href: "/blog" },
+  { title: "À propos", href: "/a-propos" },
+];
+
+/** Social links — used in footer. */
+export const socialLinks = [
+  { title: "Instagram", href: "https://instagram.com/questiondallaitement", iconKey: "Instagram" },
+  { title: "Facebook", href: "https://facebook.com/questiondallaitement", iconKey: "Facebook" },
+  { title: "LinkedIn", href: "https://linkedin.com/in/carole-herve", iconKey: "Linkedin" },
+] as const;
+
 export const clientNav: NavItem[] = [
   {
     title: "Tableau de bord",

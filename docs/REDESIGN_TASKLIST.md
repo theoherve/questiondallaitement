@@ -20,12 +20,12 @@
 
 | ID   | Tache                                                                 | Statut | Fichiers concernes                     |
 | ---- | --------------------------------------------------------------------- | ------ | -------------------------------------- |
-| R-01 | Passer `--radius` a `0px` dans globals.css                            | ⬜     | `globals.css`                          |
-| R-02 | Mettre a jour l'echelle typographique (H1 4.5rem, H2 3rem, etc.)     | ⬜     | `globals.css`, composants              |
-| R-03 | Augmenter les espacements de section (`py-24`/`py-32`)                | ⬜     | Toutes les pages publiques             |
-| R-04 | Supprimer les ombres par defaut des cards, ajouter border subtile     | ⬜     | `card.tsx`, composants card            |
-| R-05 | Ajouter les utilitaires d'animation scroll reveal (intersection obs.) | ⬜     | Nouveau composant `scroll-reveal.tsx`  |
-| R-06 | Boutons : angles droits, hover states premium                         | ⬜     | `button.tsx`                           |
+| R-01 | Passer `--radius` a `0px` dans globals.css                            | ✅     | `globals.css`                          |
+| R-02 | Mettre a jour l'echelle typographique (H1 4.5rem, H2 3rem, etc.)     | ✅     | `globals.css`, composants              |
+| R-03 | Augmenter les espacements de section (`py-24`/`py-32`)                | ✅     | `globals.css` (utilitaire `section-padding`) |
+| R-04 | Supprimer les ombres par defaut des cards, ajouter border subtile     | ✅     | `card.tsx`                             |
+| R-05 | Ajouter les utilitaires d'animation scroll reveal (intersection obs.) | ✅     | `scroll-reveal.tsx`, `globals.css`     |
+| R-06 | Boutons : angles droits, hover states premium                         | ✅     | `button.tsx`                           |
 
 ---
 
@@ -35,11 +35,11 @@
 
 | ID   | Tache                                                                 | Statut | Fichiers concernes                     |
 | ---- | --------------------------------------------------------------------- | ------ | -------------------------------------- |
-| R-07 | Refonte header desktop : 7 liens + CTA "Prendre RDV" sticky          | ⬜     | `header.tsx`, `navigation.ts`          |
-| R-08 | Refonte header mobile : logo + CTA RDV + hamburger                    | ⬜     | `header.tsx`                           |
-| R-09 | Menu mobile fullscreen overlay (remplacer Sheet)                      | ⬜     | `header.tsx`, nouveau composant        |
-| R-10 | Refonte footer : 3 colonnes, reseaux sociaux, nouveau wording         | ⬜     | `footer.tsx`                           |
-| R-11 | Mise a jour `navigation.ts` avec nouveaux noms et routes              | ⬜     | `navigation.ts`                        |
+| R-07 | Refonte header desktop : 7 liens + CTA "Prendre RDV" sticky          | ✅     | `header.tsx`, `navigation.ts`          |
+| R-08 | Refonte header mobile : logo + CTA RDV + hamburger                    | ✅     | `header.tsx`                           |
+| R-09 | Menu mobile fullscreen overlay (remplacer Sheet)                      | ✅     | `header.tsx` (fullscreen overlay intégré) |
+| R-10 | Refonte footer : 3 colonnes, reseaux sociaux, nouveau wording         | ✅     | `footer.tsx`                           |
+| R-11 | Mise a jour `navigation.ts` avec nouveaux noms et routes              | ✅     | `navigation.ts`                        |
 
 ---
 
@@ -49,16 +49,16 @@
 
 | ID   | Tache                                                                 | Statut | Fichiers concernes                     |
 | ---- | --------------------------------------------------------------------- | ------ | -------------------------------------- |
-| R-12 | Hero asymetrique : photo portrait + titre editorial + CTAs            | ⬜     | `page.tsx` (public)                    |
-| R-13 | Barre de credibilite (trust bar) : chiffres cles, fond green          | ⬜     | `page.tsx`, nouveau composant          |
-| R-14 | Section Accompagnements : grille asymetrique, 3 accompagnements       | ⬜     | `page.tsx`, `formation-card.tsx`       |
-| R-15 | Carousel temoignages : refonte 6-8 temoignages, autoplay, swipe       | ⬜     | `testimonial-carousel.tsx`             |
-| R-16 | Section Expertise/A propos : layout editorial avec photo              | ⬜     | `page.tsx`, nouveau composant          |
-| R-17 | Section Blog/Journal : layout magazine 1 featured + 2 secondaires     | ⬜     | `page.tsx`, nouveau composant          |
-| R-18 | Section Formations Pro (teaser B2B) : fond green, CTA unique          | ⬜     | `page.tsx`                             |
-| R-19 | Section Newsletter : formulaire inline, nouveau style                 | ⬜     | `newsletter-form.tsx`, `page.tsx`      |
-| R-20 | CTA final : section de fermeture sobre                                | ⬜     | `page.tsx`                             |
-| R-21 | Supprimer les sections obsoletes (How it works, Features grid)        | ⬜     | `page.tsx`                             |
+| R-12 | Hero asymetrique : photo portrait + titre editorial + CTAs            | ✅     | `page.tsx` (public)                    |
+| R-13 | Barre de credibilite (trust bar) : chiffres cles, fond green          | ✅     | `page.tsx`                             |
+| R-14 | Section Accompagnements : grille asymetrique, 3 accompagnements       | ✅     | `page.tsx`, `formation-card.tsx`       |
+| R-15 | Carousel temoignages : refonte 6-8 temoignages, autoplay, swipe       | ✅     | `testimonial-carousel.tsx`             |
+| R-16 | Section Expertise/A propos : layout editorial avec photo              | ✅     | `page.tsx`                             |
+| R-17 | Section Blog/Journal : layout magazine 1 featured + 2 secondaires     | ✅     | `page.tsx`                             |
+| R-18 | Section Formations Pro (teaser B2B) : fond green, CTA unique          | ✅     | `page.tsx`                             |
+| R-19 | Section Newsletter : formulaire inline, nouveau style                 | ✅     | `newsletter-form.tsx`, `page.tsx`      |
+| R-20 | CTA final : section de fermeture sobre                                | ✅     | `page.tsx`                             |
+| R-21 | Supprimer les sections obsoletes (How it works, Features grid)        | ✅     | `page.tsx`                             |
 
 ---
 

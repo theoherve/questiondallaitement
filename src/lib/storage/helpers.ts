@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { randomUUID } from "crypto";
 
-export type StorageBucket = "avatars" | "formations" | "downloads" | "blog";
+export type StorageBucket = "avatars" | "formations" | "accompagnements" | "downloads" | "blog";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 

@@ -1,18 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import { Menu, X, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { clientNav } from "@/config/navigation";
+import { publicNav, clientNav } from "@/config/navigation";
 import { getNavIcon } from "@/config/navigation-icons";
 import {
   canAccessBackoffice,
@@ -20,205 +21,261 @@ import {
 } from "@/constants/roles";
 import type { SessionUser } from "@/lib/auth";
 
-const NAV_LINKS = [
-  { href: "/formations", label: "Formations" },
-  { href: "/consultantes", label: "Consultantes" },
-  { href: "/evenements", label: "Événements" },
-];
-
 type HeaderProps = {
   user: SessionUser | null;
   onLogout: () => Promise<void>;
 };
 
 export const Header = ({ user, onLogout }: HeaderProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Close menu on browser back/forward navigation
+  useEffect(() => {
+    const onPopState = () => setMenuOpen(false);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  // Prevent body scroll when menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background-beige/95 backdrop-blur supports-[backdrop-filter]:bg-background-beige/60">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link
-          href="/"
-          className="font-serif text-xl font-bold text-primary-green"
-          aria-label="Accueil Question d'Allaitement"
-          tabIndex={0}
-        >
-          Question d&apos;Allaitement
-        </Link>
+    <>
+      <header className="sticky top-0 z-50 border-b border-border bg-background-beige/95 backdrop-blur supports-backdrop-filter:bg-background-beige/60">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-16">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="flex-shrink-0"
+            aria-label="Accueil Question d'Allaitement"
+          >
+            <Image
+              src="/logo.svg"
+              alt="Question d'Allaitement"
+              width={180}
+              height={48}
+              className="h-10 w-auto lg:h-12"
+              priority
+            />
+          </Link>
 
-        <nav className="hidden items-center gap-6 md:flex" aria-label="Navigation principale">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-primary-green transition-colors hover:text-primary-red"
-              tabIndex={0}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="hidden items-center gap-3 md:flex">
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-2 text-primary-green hover:bg-primary-red/10 hover:text-primary-red"
-                  aria-label="Ouvrir le menu compte"
-                  tabIndex={0}
-                >
-                  <User className="h-4 w-4" />
-                  <span className="max-w-[120px] truncate sm:max-w-[180px]">
-                    {user.email}
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {clientNav.map((item) => {
-                  const Icon = getNavIcon(item.iconKey);
-                  return (
-                    <DropdownMenuItem key={item.href} asChild>
-                      <Link href={item.href} className="flex items-center gap-2" tabIndex={0}>
-                        <Icon className="h-4 w-4" />
-                        {item.title}
-                      </Link>
-                    </DropdownMenuItem>
-                  );
-                })}
-                {canAccessBackoffice(user.role) && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={getBackofficeRedirectUrl(user.role)}
-                        tabIndex={0}
-                      >
-                        Backoffice
-                      </Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <form action={onLogout} className="w-full">
-                    <button
-                      type="submit"
-                      className="flex w-full cursor-default items-center gap-2 outline-none"
-                      tabIndex={0}
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Déconnexion
-                    </button>
-                  </form>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <>
-              <Button variant="ghost" asChild>
-                <Link href="/connexion" tabIndex={0}>
-                  Connexion
-                </Link>
-              </Button>
-              <Button
-                asChild
-                className="bg-primary-red hover:bg-primary-red-dark"
+          {/* Desktop nav — 6 links */}
+          <nav
+            className="hidden items-center gap-8 lg:flex"
+            aria-label="Navigation principale"
+          >
+            {publicNav.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="nav-link relative text-[15px] font-medium text-primary-green transition-colors hover:text-primary-red"
               >
-                <Link href="/inscription" tabIndex={0}>
-                  S&apos;inscrire
-                </Link>
-              </Button>
-            </>
-          )}
-        </div>
+                {link.title}
+              </Link>
+            ))}
+          </nav>
 
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild className="md:hidden">
+          {/* Desktop right — icon-only user + CTA */}
+          <div className="hidden items-center gap-2 lg:flex">
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-primary-green hover:bg-primary-red/10 hover:text-primary-red"
+                    aria-label="Mon compte"
+                  >
+                    <User className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="truncate text-xs font-normal text-muted-foreground">
+                    {user.email}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {clientNav.map((item) => {
+                    const Icon = getNavIcon(item.iconKey);
+                    return (
+                      <DropdownMenuItem key={item.href} asChild>
+                        <Link
+                          href={item.href}
+                          className="flex items-center gap-2"
+                        >
+                          <Icon className="h-4 w-4" />
+                          {item.title}
+                        </Link>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                  {canAccessBackoffice(user.role) && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href={getBackofficeRedirectUrl(user.role)}>
+                          Backoffice
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <form action={onLogout} className="w-full">
+                      <button
+                        type="submit"
+                        className="flex w-full cursor-default items-center gap-2 outline-none"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Déconnexion
+                      </button>
+                    </form>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
+            <Button
+              asChild
+              className="bg-primary-red px-6 hover:bg-primary-red-dark"
+            >
+              <Link href="/reserver">Prendre RDV</Link>
+            </Button>
+          </div>
+
+          {/* Mobile right — CTA RDV + hamburger (always visible) */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <Button
+              asChild
+              size="sm"
+              className="bg-primary-red hover:bg-primary-red-dark"
+            >
+              <Link href="/reserver">RDV</Link>
+            </Button>
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Ouvrir le menu"
-              tabIndex={0}
+              aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+              onClick={() => setMenuOpen((v) => !v)}
             >
-              {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {menuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
             </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-72">
-            <SheetTitle className="font-serif text-lg text-primary-green">
-              Menu
-            </SheetTitle>
-            <nav className="mt-6 flex flex-col gap-4" aria-label="Navigation mobile">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-base font-medium text-primary-green hover:text-primary-red"
-                  onClick={() => setIsOpen(false)}
-                  tabIndex={0}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <div className="mt-4 flex flex-col gap-3 border-t pt-4">
-                {user ? (
-                  <>
-                    {clientNav.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className="text-base font-medium text-primary-green hover:text-primary-red"
-                        onClick={() => setIsOpen(false)}
-                        tabIndex={0}
-                      >
-                        {item.title}
-                      </Link>
-                    ))}
-                    {canAccessBackoffice(user.role) && (
-                      <Link
-                        href={getBackofficeRedirectUrl(user.role)}
-                        className="text-base font-medium text-primary-green hover:text-primary-red"
-                        onClick={() => setIsOpen(false)}
-                        tabIndex={0}
-                      >
-                        Backoffice
-                      </Link>
-                    )}
-                    <form action={onLogout} className="pt-2">
-                      <Button
-                        type="submit"
-                        variant="outline"
-                        className="w-full"
-                        tabIndex={0}
-                      >
-                        Déconnexion
-                      </Button>
-                    </form>
-                  </>
-                ) : (
-                  <>
-                    <Button variant="outline" asChild>
-                      <Link href="/connexion" onClick={() => setIsOpen(false)} tabIndex={0}>
-                        Connexion
-                      </Link>
-                    </Button>
-                    <Button
-                      asChild
-                      className="bg-primary-red hover:bg-primary-red-dark"
-                    >
-                      <Link href="/inscription" onClick={() => setIsOpen(false)} tabIndex={0}>
-                        S&apos;inscrire
-                      </Link>
-                    </Button>
-                  </>
+          </div>
+        </div>
+      </header>
+
+      {/* ─── MOBILE FULLSCREEN OVERLAY ─── */}
+      {menuOpen && (
+        <div
+          className="fixed inset-0 z-40 flex flex-col bg-background-beige lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu de navigation"
+        >
+          {/* Top bar mirrors header height for alignment */}
+          <div className="flex h-16 items-center justify-end px-5">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Fermer le menu"
+              onClick={() => setMenuOpen(false)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* Nav links */}
+          <nav
+            className="flex flex-1 flex-col gap-1 px-8 pt-4"
+            aria-label="Navigation mobile"
+          >
+            {publicNav.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="py-3 font-serif text-2xl font-semibold text-primary-green transition-colors hover:text-primary-red"
+                onClick={() => setMenuOpen(false)}
+              >
+                {link.title}
+              </Link>
+            ))}
+
+            <div className="my-6 border-t border-border" />
+
+            {/* Auth section */}
+            {user ? (
+              <>
+                {clientNav.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="py-2 text-base font-medium text-primary-green/70 transition-colors hover:text-primary-red"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {item.title}
+                  </Link>
+                ))}
+                {canAccessBackoffice(user.role) && (
+                  <Link
+                    href={getBackofficeRedirectUrl(user.role)}
+                    className="py-2 text-base font-medium text-primary-green/70 transition-colors hover:text-primary-red"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Backoffice
+                  </Link>
                 )}
-              </div>
-            </nav>
-          </SheetContent>
-        </Sheet>
-      </div>
-    </header>
+                <form action={onLogout} className="mt-4">
+                  <Button type="submit" variant="outline" className="w-full">
+                    Déconnexion
+                  </Button>
+                </form>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/connexion"
+                  className="py-2 text-base font-medium text-primary-green/70 transition-colors hover:text-primary-red"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Connexion
+                </Link>
+                <div className="mt-4 flex flex-col gap-3">
+                  <Button
+                    asChild
+                    className="w-full bg-primary-red hover:bg-primary-red-dark"
+                  >
+                    <Link
+                      href="/reserver"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Prendre rendez-vous
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link
+                      href="/inscription"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      Créer mon compte
+                    </Link>
+                  </Button>
+                </div>
+              </>
+            )}
+          </nav>
+        </div>
+      )}
+    </>
   );
 };
