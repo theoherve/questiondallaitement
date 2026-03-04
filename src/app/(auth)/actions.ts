@@ -19,7 +19,9 @@ const RESET_TOKEN_EXPIRY_HOURS = 24;
 
 const baseUrl = () =>
   process.env.NEXT_PUBLIC_APP_URL ??
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+  (process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000");
 
 export const handleLogin = async (formData: FormData): Promise<void> => {
   const rl = await rateLimit(AUTH_RATE_LIMITS.login);
