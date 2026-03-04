@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Noto_Serif } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -86,6 +87,7 @@ const RootLayout = ({
       >
         {children}
         <Toaster />
+        <SpeedInsights />
       </body>
     </html>
   );
