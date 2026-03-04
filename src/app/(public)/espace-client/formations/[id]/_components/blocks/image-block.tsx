@@ -10,6 +10,7 @@ type ImageBlockProps = {
 
 export const ImageBlock = ({ content }: ImageBlockProps) => (
   <figure className="space-y-2">
+    {/* eslint-disable-next-line @next/next/no-img-element */}
     <img
       src={content.url}
       alt={content.alt}

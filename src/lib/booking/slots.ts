@@ -1,9 +1,7 @@
 import {
   addMinutes,
   format,
-  parse,
   startOfDay,
-  endOfDay,
   eachDayOfInterval,
   getDay,
   isBefore,
@@ -78,7 +76,7 @@ export const computeAvailableSlots = ({
 
   if (rawWindows.length === 0 && !exception) {
     const dayAvails = availabilities.filter(
-      (a) => a.day_of_week === dayOfWeek && a.is_active
+      (a) => a.day_of_week === dayOfWeek && a.is_active,
     );
     rawWindows = dayAvails.map((a) => ({
       start: parseTime(a.start_time, date),
@@ -117,8 +115,8 @@ export const computeAvailableSlots = ({
       const hasConflict = bookedIntervals.some((booked) =>
         areIntervalsOverlapping(
           { start: cursor, end: slotWithBuffer.end },
-          { start: booked.start, end: booked.end }
-        )
+          { start: booked.start, end: booked.end },
+        ),
       );
 
       if (!hasConflict) {
@@ -153,7 +151,7 @@ export const getAvailableDates = ({
     if (exception) return exception.is_available;
 
     return availabilities.some(
-      (a) => a.day_of_week === dayOfWeek && a.is_active
+      (a) => a.day_of_week === dayOfWeek && a.is_active,
     );
   });
 };

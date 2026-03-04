@@ -98,6 +98,7 @@ export const FileUpload = ({
       <div className="relative">
         {previewType === "image" ? (
           <div className="relative aspect-video w-full overflow-hidden rounded-lg border bg-background-beige-dark">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={value}
               alt="Preview"

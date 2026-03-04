@@ -145,6 +145,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-4">
           {profile.avatar_url ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={profile.avatar_url}
               alt={fullName}

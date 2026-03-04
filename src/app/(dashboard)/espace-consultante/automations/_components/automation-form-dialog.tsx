@@ -79,6 +79,7 @@ export const AutomationFormDialog = ({
 
   useEffect(() => {
     if (open) {
+      /* eslint-disable react-hooks/set-state-in-effect -- Batch form reset on dialog open */
       setName(automation?.name ?? "");
       const tt = automation?.trigger_type ?? "formation_purchased";
       setTriggerType(tt);
@@ -95,6 +96,7 @@ export const AutomationFormDialog = ({
       );
       setIsActive(automation?.is_active ?? false);
       setError(null);
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [open, automation]);
 
@@ -254,7 +256,7 @@ export const AutomationFormDialog = ({
               <div className="space-y-2">
                 {triggerType === "delay_after_event" && (
                   <div>
-                    <Label htmlFor="delay_days">Nombre de jours après l'événement</Label>
+                    <Label htmlFor="delay_days">Nombre de jours après l&apos;événement</Label>
                     <Input
                       id="delay_days"
                       type="number"
@@ -421,7 +423,7 @@ export const AutomationFormDialog = ({
               checked={isActive}
               onCheckedChange={setIsActive}
             />
-            <Label htmlFor="is_active">Activer l'automation</Label>
+            <Label htmlFor="is_active">Activer l&apos;automation</Label>
           </div>
 
           {error && (

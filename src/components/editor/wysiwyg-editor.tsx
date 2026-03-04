@@ -14,7 +14,6 @@ import {
   type EditorInstance,
   handleCommandNavigation,
   createSuggestionItems,
-  renderItems,
   StarterKit,
   Placeholder,
   TiptapLink,

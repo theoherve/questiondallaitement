@@ -90,6 +90,7 @@ const ClientFormationsPage = async () => {
               <Card key={enrollment.id} className="overflow-hidden">
                 <div className="aspect-video bg-background-beige-dark">
                   {formation.thumbnail_url ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={formation.thumbnail_url}
                       alt={formation.title}

@@ -26,21 +26,7 @@ const NewBlogPostPage = async () => {
   ]);
 
   const categories = categoriesResult.data ?? [];
-  type ConsultantRow = {
-    id: string;
-    slug: string;
-    profiles?: { first_name: string | null; last_name: string | null; email?: string; avatar_url?: string | null } | null;
-    bio?: string | null;
-    specialties?: string[] | null;
-    commission_rate?: number | null;
-    is_active?: boolean | null;
-    stripe_account_id?: string | null;
-    stripe_account_status?: string | null;
-    zoom_access_token?: string | null;
-    zoom_refresh_token?: string | null;
-    zoom_token_expires_at?: string | null;
-    onboarding_completed?: boolean | null;
-  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const consultants = (consultantsResult.data ?? []).map((c: any) => ({
     id: c.id,
     slug: c.slug,

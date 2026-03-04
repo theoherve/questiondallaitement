@@ -38,7 +38,6 @@ export const FormationReader = ({
   enrollmentId,
   completedBlockIds: initialCompleted,
   totalBlocks,
-  completedCount: initialCompletedCount,
 }: FormationReaderProps) => {
   const [activeSection, setActiveSection] = useState(0);
   const [completedIds, setCompletedIds] = useState(new Set(initialCompleted));

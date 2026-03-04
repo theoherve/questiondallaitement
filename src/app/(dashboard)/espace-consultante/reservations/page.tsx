@@ -73,7 +73,6 @@ const ConsultantReservationsPage = async () => {
 
   const renderBooking = (
     booking: NonNullable<typeof bookings>[number],
-    isPastSection: boolean
   ) => {
     const client = booking.profiles as unknown as {
       first_name: string | null;
@@ -177,7 +176,7 @@ const ConsultantReservationsPage = async () => {
         </TabsList>
         <TabsContent value="upcoming" className="mt-4 space-y-4">
           {upcoming.length > 0 ? (
-            upcoming.map((b) => renderBooking(b, false))
+            upcoming.map((b) => renderBooking(b))
           ) : (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
@@ -188,7 +187,7 @@ const ConsultantReservationsPage = async () => {
         </TabsContent>
         <TabsContent value="past" className="mt-4 space-y-4">
           {past.length > 0 ? (
-            past.map((b) => renderBooking(b, true))
+            past.map((b) => renderBooking(b))
           ) : (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">

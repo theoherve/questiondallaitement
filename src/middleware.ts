@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 
 const PUBLIC_ROUTES = [
@@ -11,7 +11,12 @@ const PUBLIC_ROUTES = [
   "/mentions-legales",
 ];
 
-const AUTH_ROUTES = ["/connexion", "/inscription", "/mot-de-passe-oublie", "/reset-password"];
+const AUTH_ROUTES = [
+  "/connexion",
+  "/inscription",
+  "/mot-de-passe-oublie",
+  "/reset-password",
+];
 
 const ROLE_ROUTE_MAP: Record<string, string[]> = {
   "/espace-client": ["client", "admin"],
@@ -22,7 +27,7 @@ const ROLE_ROUTE_MAP: Record<string, string[]> = {
 const isPublicRoute = (pathname: string): boolean => {
   if (PUBLIC_ROUTES.includes(pathname)) return true;
   return PUBLIC_ROUTES.some(
-    (route) => route !== "/" && pathname.startsWith(route + "/")
+    (route) => route !== "/" && pathname.startsWith(route + "/"),
   );
 };
 

@@ -18,13 +18,14 @@ import { rateLimit, AUTH_RATE_LIMITS } from "@/lib/rate-limit";
 const RESET_TOKEN_EXPIRY_HOURS = 24;
 
 const baseUrl = () =>
-  process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  process.env.NEXT_PUBLIC_APP_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
 export const handleLogin = async (formData: FormData): Promise<void> => {
   const rl = await rateLimit(AUTH_RATE_LIMITS.login);
   if (!rl.success) {
     redirect(
-      `${baseUrl()}/connexion?error=${encodeURIComponent("Trop de tentatives. Réessayez dans quelques minutes.")}`,
+      `/connexion?error=${encodeURIComponent("Trop de tentatives. Réessayez dans quelques minutes.")}`,
     );
   }
 
@@ -36,7 +37,7 @@ export const handleLogin = async (formData: FormData): Promise<void> => {
   const parsed = loginSchema.safeParse(raw);
   if (!parsed.success) {
     redirect(
-      `${baseUrl()}/connexion?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Données invalides")}`,
+      `/connexion?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Données invalides")}`,
     );
   }
 
@@ -48,7 +49,7 @@ export const handleLogin = async (formData: FormData): Promise<void> => {
 
   if (result?.error) {
     redirect(
-      `${baseUrl()}/connexion?error=${encodeURIComponent("Email ou mot de passe incorrect")}`,
+      `/connexion?error=${encodeURIComponent("Email ou mot de passe incorrect")}`,
     );
   }
 
@@ -61,7 +62,7 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
   const rl = await rateLimit(AUTH_RATE_LIMITS.register);
   if (!rl.success) {
     redirect(
-      `${baseUrl()}/inscription?error=${encodeURIComponent("Trop de tentatives. Réessayez dans quelques minutes.")}`,
+      `/inscription?error=${encodeURIComponent("Trop de tentatives. Réessayez dans quelques minutes.")}`,
     );
   }
 
@@ -77,7 +78,7 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
   const parsed = registerSchema.safeParse(raw);
   if (!parsed.success) {
     redirect(
-      `${baseUrl()}/inscription?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Données invalides")}`,
+      `/inscription?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Données invalides")}`,
     );
   }
 
@@ -92,7 +93,7 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
 
   if (existing) {
     redirect(
-      `${baseUrl()}/inscription?error=${encodeURIComponent("Un compte existe déjà avec cette adresse email.")}`,
+      `/inscription?error=${encodeURIComponent("Un compte existe déjà avec cette adresse email.")}`,
     );
   }
 
@@ -110,7 +111,7 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
 
   if (error) {
     redirect(
-      `${baseUrl()}/inscription?error=${encodeURIComponent("Une erreur est survenue lors de l'inscription.")}`,
+      `/inscription?error=${encodeURIComponent("Une erreur est survenue lors de l'inscription.")}`,
     );
   }
 
@@ -131,7 +132,7 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
     role: "client",
   }).catch(() => {});
 
-  redirect(`${baseUrl()}/inscription?success=1`);
+  redirect(`/inscription?success=1`);
 };
 
 export const handleForgotPassword = async (
@@ -140,7 +141,7 @@ export const handleForgotPassword = async (
   const rl = await rateLimit(AUTH_RATE_LIMITS.forgotPassword);
   if (!rl.success) {
     redirect(
-      `${baseUrl()}/mot-de-passe-oublie?error=${encodeURIComponent("Trop de tentatives. Réessayez dans quelques minutes.")}`,
+      `/mot-de-passe-oublie?error=${encodeURIComponent("Trop de tentatives. Réessayez dans quelques minutes.")}`,
     );
   }
 
@@ -149,7 +150,7 @@ export const handleForgotPassword = async (
   const parsed = forgotPasswordSchema.safeParse(raw);
   if (!parsed.success) {
     redirect(
-      `${baseUrl()}/mot-de-passe-oublie?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Données invalides")}`,
+      `/mot-de-passe-oublie?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Données invalides")}`,
     );
   }
 
@@ -165,7 +166,7 @@ export const handleForgotPassword = async (
 
   // Always redirect with success to prevent email enumeration
   if (!profile) {
-    redirect(`${baseUrl()}/mot-de-passe-oublie?success=1`);
+    redirect(`/mot-de-passe-oublie?success=1`);
   }
 
   const token = randomBytes(32).toString("hex");
@@ -188,7 +189,7 @@ export const handleForgotPassword = async (
     reset_url: resetUrl,
   });
 
-  redirect(`${baseUrl()}/mot-de-passe-oublie?success=1`);
+  redirect(`/mot-de-passe-oublie?success=1`);
 };
 
 export const handleResetPassword = async (
@@ -197,7 +198,7 @@ export const handleResetPassword = async (
   const rl = await rateLimit(AUTH_RATE_LIMITS.resetPassword);
   if (!rl.success) {
     redirect(
-      `${baseUrl()}/reset-password?error=${encodeURIComponent("Trop de tentatives. Réessayez dans quelques minutes.")}`,
+      `/reset-password?error=${encodeURIComponent("Trop de tentatives. Réessayez dans quelques minutes.")}`,
     );
   }
 
@@ -209,14 +210,14 @@ export const handleResetPassword = async (
 
   if (!token) {
     redirect(
-      `${baseUrl()}/reset-password?error=${encodeURIComponent("Lien de réinitialisation invalide.")}`,
+      `/reset-password?error=${encodeURIComponent("Lien de réinitialisation invalide.")}`,
     );
   }
 
   const parsed = resetPasswordSchema.safeParse(raw);
   if (!parsed.success) {
     redirect(
-      `${baseUrl()}/reset-password?token=${token}&error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Données invalides")}`,
+      `/reset-password?token=${token}&error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Données invalides")}`,
     );
   }
 
@@ -231,7 +232,7 @@ export const handleResetPassword = async (
 
   if (!profile) {
     redirect(
-      `${baseUrl()}/reset-password?error=${encodeURIComponent("Ce lien de réinitialisation est invalide ou a déjà été utilisé.")}`,
+      `/reset-password?error=${encodeURIComponent("Ce lien de réinitialisation est invalide ou a déjà été utilisé.")}`,
     );
   }
 
@@ -240,7 +241,7 @@ export const handleResetPassword = async (
     new Date(profile.password_reset_expires) < new Date()
   ) {
     redirect(
-      `${baseUrl()}/reset-password?error=${encodeURIComponent("Ce lien de réinitialisation a expiré. Veuillez en demander un nouveau.")}`,
+      `/reset-password?error=${encodeURIComponent("Ce lien de réinitialisation a expiré. Veuillez en demander un nouveau.")}`,
     );
   }
 
@@ -256,7 +257,7 @@ export const handleResetPassword = async (
     .eq("id", profile.id);
 
   redirect(
-    `${baseUrl()}/connexion?success=${encodeURIComponent("Mot de passe réinitialisé avec succès. Vous pouvez vous connecter.")}`,
+    `/connexion?success=${encodeURIComponent("Mot de passe réinitialisé avec succès. Vous pouvez vous connecter.")}`,
   );
 };
 

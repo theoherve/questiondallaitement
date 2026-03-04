@@ -79,6 +79,7 @@ export const ProfileTab = ({ profile, consultant }: ProfileTabProps) => {
       <CardContent>
         <div className="mb-6 flex items-center gap-4">
           {avatarUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={avatarUrl}
               alt="Avatar"

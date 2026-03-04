@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
 import { Clock, CreditCard } from "lucide-react";
 
 type ServiceOption = {

@@ -207,6 +207,7 @@ const FormationPreviewPage = async ({ params }: Props) => {
             <Card className="sticky top-24">
               <CardContent className="space-y-6 pt-6">
                 {formation.thumbnail_url && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={formation.thumbnail_url}
                     alt={formation.title}

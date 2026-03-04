@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 import { StepService } from "./step-service";
 import { StepLocation } from "./step-location";
 import { StepConsultant } from "./step-consultant";

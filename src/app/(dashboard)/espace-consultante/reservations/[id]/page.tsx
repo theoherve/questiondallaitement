@@ -18,7 +18,6 @@ import {
   Mail,
   MapPin,
   Phone,
-  User,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -192,6 +191,7 @@ const BookingDetailPage = async ({ params }: Props) => {
         <CardContent className="space-y-3">
           <div className="flex items-center gap-3">
             {client?.avatar_url ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={client.avatar_url}
                 alt={clientName}

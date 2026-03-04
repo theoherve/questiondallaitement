@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AUTOMATION_TRIGGER_TYPES, AUTOMATION_ACTION_TYPES } from "@/lib/automations/types";
+import { AUTOMATION_TRIGGER_TYPES } from "@/lib/automations/types";
 
 const sendEmailActionSchema = z.object({
   type: z.literal("send_email"),
@@ -26,13 +26,12 @@ export const automationActionSchema = z.discriminatedUnion("type", [
 
 export const automationSchema = z
   .object({
-    name: z
-      .string()
-      .min(2, "Nom trop court")
-      .max(100, "Nom trop long"),
+    name: z.string().min(2, "Nom trop court").max(100, "Nom trop long"),
     trigger_type: z.enum(AUTOMATION_TRIGGER_TYPES),
     trigger_config: z.record(z.string(), z.unknown()).default({}),
-    actions: z.array(automationActionSchema).min(1, "Au moins une action requise"),
+    actions: z
+      .array(automationActionSchema)
+      .min(1, "Au moins une action requise"),
     is_active: z.boolean().default(false),
   })
   .refine(
@@ -43,7 +42,10 @@ export const automationSchema = z
       }
       return true;
     },
-    { message: "Indiquez le nombre de jours pour delay_after_event", path: ["trigger_config"] }
+    {
+      message: "Indiquez le nombre de jours pour delay_after_event",
+      path: ["trigger_config"],
+    },
   );
 
 export type AutomationInput = z.infer<typeof automationSchema>;
