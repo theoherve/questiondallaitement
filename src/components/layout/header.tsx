@@ -137,7 +137,19 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : null}
+            ) : (
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                className="text-primary-green hover:bg-primary-red/10 hover:text-primary-red"
+                aria-label="Se connecter"
+              >
+                <Link href="/connexion">
+                  <User className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
             <Button
               asChild
               className="bg-primary-red px-6 hover:bg-primary-red-dark"

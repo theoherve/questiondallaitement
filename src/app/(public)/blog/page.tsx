@@ -67,7 +67,7 @@ const BlogPage = async ({ searchParams }: Props) => {
       consultants (
         id,
         slug,
-        profiles (
+        profiles!consultants_id_fkey (
           first_name,
           last_name,
           avatar_url

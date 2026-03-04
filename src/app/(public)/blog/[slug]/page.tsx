@@ -75,7 +75,7 @@ const BlogPostPage = async ({ params }: Props) => {
         id,
         slug,
         bio,
-        profiles (
+        profiles!consultants_id_fkey (
           first_name,
           last_name,
           avatar_url

@@ -11,7 +11,8 @@ import {
 } from "lucide-react";
 import { format, eachDayOfInterval, eachMonthOfInterval } from "date-fns";
 import { fr } from "date-fns/locale";
-import { PeriodSelector, getDateRange } from "@/components/dashboard/period-selector";
+import { PeriodSelector } from "@/components/dashboard/period-selector";
+import { getDateRange } from "@/lib/date-range";
 import { RevenueChart } from "@/components/dashboard/revenue-chart";
 
 export const metadata: Metadata = {

@@ -72,7 +72,7 @@ const AdminBlogPage = async ({ searchParams }: Props) => {
       ),
       consultants (
         id,
-        profiles (
+        profiles!consultants_id_fkey (
           first_name,
           last_name
         )

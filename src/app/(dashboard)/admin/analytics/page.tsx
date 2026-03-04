@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 import { format, eachDayOfInterval, eachMonthOfInterval } from "date-fns";
 import { fr } from "date-fns/locale";
-import { PeriodSelector, getDateRange } from "@/components/dashboard/period-selector";
+import { PeriodSelector } from "@/components/dashboard/period-selector";
+import { getDateRange } from "@/lib/date-range";
 import { RevenueChart } from "@/components/dashboard/revenue-chart";
 import { RankingChart } from "@/components/dashboard/ranking-chart";
 
@@ -309,7 +310,7 @@ const AdminAnalyticsPage = async ({
           <CardContent>
             <RankingChart
               data={topFormationsData}
-              formatValue={formatCurrency}
+              format="currency"
               label="CA brut"
             />
           </CardContent>
@@ -325,7 +326,7 @@ const AdminAnalyticsPage = async ({
           <CardContent>
             <RankingChart
               data={topConsultantsData}
-              formatValue={formatCurrency}
+              format="currency"
               label="Revenus nets"
             />
           </CardContent>

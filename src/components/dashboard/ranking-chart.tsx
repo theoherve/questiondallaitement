@@ -11,17 +11,24 @@ import {
   Cell,
 } from "recharts";
 
+const formatCurrency = (cents: number): string =>
+  new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+  }).format(cents / 100);
+
 type RankingChartProps = {
   data: { name: string; value: number }[];
-  formatValue?: (value: number) => string;
+  format?: "currency" | "number";
   label?: string;
 };
 
 export const RankingChart = ({
   data,
-  formatValue = (v) => v.toString(),
+  format = "number",
   label = "Valeur",
 }: RankingChartProps) => {
+  const formatValue = format === "currency" ? formatCurrency : (v: number) => v.toString();
   if (data.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
