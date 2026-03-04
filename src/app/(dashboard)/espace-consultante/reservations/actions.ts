@@ -6,6 +6,7 @@ import { createRefund } from "@/lib/stripe/connect";
 import { differenceInHours } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { siteConfig } from "@/config/site";
+import { runAutomations } from "@/lib/automations/engine";
 import type { ActionResult } from "@/types";
 
 export const confirmBooking = async (
@@ -21,6 +22,35 @@ export const confirmBooking = async (
 
   if (error) {
     return { success: false, error: "Erreur lors de la confirmation" };
+  }
+
+  try {
+    const { data: booking } = await supabase
+      .from("bookings")
+      .select("client_id, consultation_type_id, consultation_types(title)")
+      .eq("id", bookingId)
+      .single();
+
+    if (booking) {
+      const { data: client } = await supabase
+        .from("profiles")
+        .select("email, first_name")
+        .eq("id", booking.client_id)
+        .single();
+
+      const ctRaw = booking.consultation_types as { title: string } | { title: string }[] | null;
+      const ct = Array.isArray(ctRaw) ? ctRaw[0] : ctRaw;
+      await runAutomations("booking_confirmed", user.id, {
+        client_id: booking.client_id,
+        client_email: client?.email,
+        client_name: client?.first_name ?? "",
+        booking_id: bookingId,
+        consultation_type_id: booking.consultation_type_id,
+        consultation_type_title: ct?.title,
+      });
+    }
+  } catch {
+    // Non-blocking
   }
 
   revalidatePath("/espace-consultante/reservations");

@@ -31,7 +31,7 @@ export const PurchaseButton = ({
   if (!isLoggedIn) {
     return (
       <Button asChild className="w-full bg-primary-red hover:bg-primary-red-dark">
-        <a href={`/connexion?redirect=/formations/${formationId}`} tabIndex={0}>
+        <a href={`/connexion?redirect=/accompagnements/${formationId}`} tabIndex={0}>
           <ShoppingCart className="mr-2 h-4 w-4" />
           Se connecter pour acheter
         </a>

@@ -88,7 +88,7 @@ export const FormationCard = ({ formation, featured }: FormationCardProps) => {
       </CardContent>
       <CardFooter>
         <Button asChild className="w-full bg-primary-red hover:bg-primary-red-dark">
-          <Link href={`/formations/${formation.slug}`}>
+          <Link href={`/accompagnements/${formation.slug}`}>
             Découvrir
           </Link>
         </Button>

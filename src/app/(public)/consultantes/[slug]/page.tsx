@@ -257,8 +257,8 @@ const ConsultantDetailPage = async ({ params }: Props) => {
                     </p>
                   )}
                   <Button asChild variant="outline" className="mt-4 w-full">
-                    <Link href={`/formations/${formation.slug}`} tabIndex={0}>
-                      Voir la formation
+                    <Link href={`/accompagnements/${formation.slug}`} tabIndex={0}>
+                      Voir l&apos;accompagnement
                     </Link>
                   </Button>
                 </CardContent>

@@ -113,7 +113,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                 size="lg"
                 className="bg-primary-red px-8 hover:bg-primary-red-dark"
               >
-                <Link href="/formations">
+                <Link href="/accompagnements">
                   Découvrir les accompagnements
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                 </Link>
@@ -175,7 +175,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                   </p>
                 </div>
                 <Button asChild variant="ghost" className="hidden sm:flex">
-                  <Link href="/formations">
+                  <Link href="/accompagnements">
                     Voir tous les accompagnements
                     <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
@@ -217,7 +217,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
 
             <div className="mt-10 text-center sm:hidden">
               <Button asChild variant="outline">
-                <Link href="/formations">
+                <Link href="/accompagnements">
                   Voir tous les accompagnements
                 </Link>
               </Button>
@@ -464,7 +464,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                 size="lg"
                 className="bg-primary-red px-8 hover:bg-primary-red-dark"
               >
-                <Link href="/formations">
+                <Link href="/accompagnements">
                   Découvrir les accompagnements
                 </Link>
               </Button>

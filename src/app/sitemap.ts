@@ -17,7 +17,7 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
       priority: 1,
     },
     {
-      url: `${BASE_URL}/formations`,
+      url: `${BASE_URL}/accompagnements`,
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.9,
@@ -29,7 +29,7 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
       priority: 0.9,
     },
     {
-      url: `${BASE_URL}/evenements`,
+      url: `${BASE_URL}/formations`,
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.8,
@@ -39,6 +39,24 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.9,
+    },
+    {
+      url: `${BASE_URL}/livres`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/medias`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_URL}/a-propos`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7,
     },
     {
       url: `${BASE_URL}/reserver`,
@@ -74,7 +92,7 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
     .is("deleted_at", null);
 
   const formationPages: MetadataRoute.Sitemap = (formations ?? []).map((f) => ({
-    url: `${BASE_URL}/formations/${f.slug}`,
+    url: `${BASE_URL}/accompagnements/${f.slug}`,
     lastModified: f.updated_at,
     changeFrequency: "weekly" as const,
     priority: 0.8,
@@ -102,7 +120,7 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
     .eq("is_published", true);
 
   const eventPages: MetadataRoute.Sitemap = (events ?? []).map((e) => ({
-    url: `${BASE_URL}/evenements/${e.slug}`,
+    url: `${BASE_URL}/formations/${e.slug}`,
     lastModified: e.updated_at,
     changeFrequency: "weekly" as const,
     priority: 0.7,

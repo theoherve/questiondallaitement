@@ -28,8 +28,17 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // Wix migration redirects will go here
-      // { source: "/old-wix-path", destination: "/new-path", permanent: true },
+      // Route renaming: /evenements → /formations (B2B pro)
+      {
+        source: "/evenements",
+        destination: "/formations",
+        permanent: true,
+      },
+      {
+        source: "/evenements/:slug",
+        destination: "/formations/:slug",
+        permanent: true,
+      },
     ];
   },
 };

@@ -5,6 +5,7 @@ import {
   sendFormationAccess,
   sendBookingConfirmation,
 } from "@/lib/emails/send";
+import { runAutomations } from "@/lib/automations/engine";
 
 const getSupabase = () => createAdminClient();
 
@@ -64,6 +65,7 @@ export const handleCheckoutCompleted = async (
   });
 
   await sendCheckoutEmails(type, client_id, consultant_id, reference_id);
+  await fireCheckoutAutomations(type, client_id, consultant_id, reference_id);
 };
 
 export const handlePaymentIntentSucceeded = async (
@@ -350,6 +352,69 @@ const sendCheckoutEmails = async (
     }
   } catch {
     // Non-blocking: email failure should never fail the webhook
+  }
+};
+
+const fireCheckoutAutomations = async (
+  type: string,
+  clientId: string,
+  consultantId: string,
+  referenceId: string,
+) => {
+  try {
+    const supabase = getSupabase();
+    const { data: client } = await supabase
+      .from("profiles")
+      .select("email, first_name")
+      .eq("id", clientId)
+      .single();
+
+    const triggerData = {
+      client_id: clientId,
+      client_email: client?.email,
+      client_name: client?.first_name ?? "",
+    };
+
+    if (type === "formation") {
+      const { data: formation } = await supabase
+        .from("formations")
+        .select("title")
+        .eq("id", referenceId)
+        .single();
+      await runAutomations("formation_purchased", consultantId, {
+        ...triggerData,
+        formation_id: referenceId,
+        formation_title: formation?.title,
+      });
+    } else if (type === "booking") {
+      const { data: booking } = await supabase
+        .from("bookings")
+        .select("consultation_type_id, consultation_types(title)")
+        .eq("id", referenceId)
+        .single();
+      const ctRaw = booking?.consultation_types as { title: string } | { title: string }[] | null | undefined;
+      const ct = Array.isArray(ctRaw) ? ctRaw[0] : ctRaw ?? null;
+      await runAutomations("booking_confirmed", consultantId, {
+        ...triggerData,
+        booking_id: referenceId,
+        consultation_type_id: (booking as { consultation_type_id?: string })?.consultation_type_id,
+        consultation_type_title: ct?.title,
+      });
+    } else if (type === "event") {
+      const { data: event } = await supabase
+        .from("events")
+        .select("title, starts_at")
+        .eq("id", referenceId)
+        .single();
+      await runAutomations("event_registered", consultantId, {
+        ...triggerData,
+        event_id: referenceId,
+        event_title: event?.title,
+        event_starts_at: event?.starts_at,
+      });
+    }
+  } catch {
+    // Non-blocking
   }
 };
 

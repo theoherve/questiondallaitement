@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendBookingReminder } from "@/lib/emails/send";
-import { format, addDays, startOfDay, endOfDay } from "date-fns";
+import { format, addDays, startOfDay, endOfDay, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { revalidatePath } from "next/cache";
+import { runAutomations } from "@/lib/automations/engine";
 
 export const GET = async (request: Request) => {
   const authHeader = request.headers.get("authorization");
@@ -101,6 +102,61 @@ export const GET = async (request: Request) => {
   }
 
   results.reminders_sent = remindersSent;
+
+  // ─── Delay-after-event automations ─────────────────────────
+  const { data: delayAutomations } = await supabase
+    .from("automations")
+    .select("id, consultant_id, trigger_config")
+    .eq("trigger_type", "delay_after_event")
+    .eq("is_active", true);
+
+  let delayRuns = 0;
+  for (const auto of delayAutomations ?? []) {
+    const config = auto.trigger_config as { delay_days?: number; event_ids?: string[] };
+    const delayDays = config.delay_days ?? 1;
+    const targetDate = subDays(new Date(), delayDays);
+    const targetStart = startOfDay(targetDate).toISOString();
+    const targetEnd = endOfDay(targetDate).toISOString();
+
+    const { data: events } = await supabase
+      .from("events")
+      .select("id, title, starts_at")
+      .eq("consultant_id", auto.consultant_id)
+      .gte("ends_at", targetStart)
+      .lte("ends_at", targetEnd);
+
+    for (const event of events ?? []) {
+      if (config.event_ids?.length && !config.event_ids.includes(event.id)) continue;
+
+      const { data: regs } = await supabase
+        .from("event_registrations")
+        .select("client_id")
+        .eq("event_id", event.id);
+
+      for (const reg of regs ?? []) {
+        const { data: client } = await supabase
+          .from("profiles")
+          .select("email, first_name")
+          .eq("id", reg.client_id)
+          .single();
+
+        try {
+          await runAutomations("delay_after_event", auto.consultant_id, {
+            client_id: reg.client_id,
+            client_email: client?.email,
+            client_name: client?.first_name ?? "",
+            event_id: event.id,
+            event_title: event.title,
+            event_starts_at: event.starts_at,
+          });
+          delayRuns++;
+        } catch {
+          // continue
+        }
+      }
+    }
+  }
+  results.delay_automations_run = delayRuns;
 
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);

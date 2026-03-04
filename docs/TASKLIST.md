@@ -455,17 +455,17 @@
 
 ---
 
-## EPIC-22 : Automations
+## EPIC-22 : Automations ✅
 
 > Triggers, actions automatiques, sequences.
 
 | ID    | Story                                                                              | Statut | Prio  |
 | ----- | ---------------------------------------------------------------------------------- | ------ | ----- |
-| 22-01 | Moteur d'automations : trigger → condition → action                                | ⬜     | 🟠 P1 |
-| 22-02 | Triggers : post-achat formation, post-inscription, post-booking, delai apres event | ⬜     | 🟠 P1 |
-| 22-03 | Actions : envoyer email (Resend/Brevo), ajouter tag CRM, webhook externe           | ⬜     | 🟠 P1 |
-| 22-04 | UI consultante : creer / activer / desactiver des automations                      | ⬜     | 🟠 P1 |
-| 22-05 | Logs d'execution (`automation_logs`) consultables                                  | ⬜     | 🟡 P2 |
+| 22-01 | Moteur d'automations : trigger → condition → action                                | ✅     | 🟠 P1 |
+| 22-02 | Triggers : post-achat formation, post-inscription, post-booking, delai apres event | ✅     | 🟠 P1 |
+| 22-03 | Actions : envoyer email (Resend/Brevo), ajouter tag CRM, webhook externe           | ✅     | 🟠 P1 |
+| 22-04 | UI consultante : creer / activer / desactiver des automations                      | ✅     | 🟠 P1 |
+| 22-05 | Logs d'execution (`automation_logs`) consultables                                  | ✅     | 🟡 P2 |
 
 ---
 

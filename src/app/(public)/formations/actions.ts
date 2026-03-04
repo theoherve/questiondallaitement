@@ -6,69 +6,116 @@ import { createCheckoutSession } from "@/lib/stripe/connect";
 import { siteConfig } from "@/config/site";
 import type { ActionResult } from "@/types";
 
-export const purchaseFormation = async (
-  formationId: string
-): Promise<ActionResult<{ redirect_url: string }>> => {
+export const registerForEvent = async (
+  eventId: string,
+): Promise<ActionResult<{ redirect_url?: string }>> => {
   const user = await getSessionUser();
   if (!user) {
-    return { success: false, error: "Vous devez être connecté pour acheter" };
+    return {
+      success: false,
+      error: "Vous devez être connecté pour vous inscrire",
+    };
   }
 
   const supabase = createAdminClient();
 
+  // Check if already registered
   const { data: existing } = await supabase
-    .from("formation_enrollments")
+    .from("event_registrations")
     .select("id")
     .eq("client_id", user.id)
-    .eq("formation_id", formationId)
+    .eq("event_id", eventId)
+    .eq("status", "registered")
     .single();
 
   if (existing) {
-    return { success: false, error: "Vous êtes déjà inscrit à cette formation" };
+    return {
+      success: false,
+      error: "Vous êtes déjà inscrit(e) à cet événement",
+    };
   }
 
-  const { data: formation } = await supabase
-    .from("formations")
-    .select("id, title, short_description, price_cents, currency, consultant_id, status")
-    .eq("id", formationId)
-    .eq("status", "published")
-    .is("deleted_at", null)
+  // Load event
+  const { data: event } = await supabase
+    .from("events")
+    .select(
+      "id, title, description, price_cents, currency, consultant_id, is_published, max_participants, slug",
+    )
+    .eq("id", eventId)
+    .eq("is_published", true)
     .single();
 
-  if (!formation) {
-    return { success: false, error: "Formation introuvable" };
+  if (!event) {
+    return { success: false, error: "Événement introuvable ou non publié" };
   }
 
+  // Check available spots (16-06)
+  if (event.max_participants) {
+    const { count } = await supabase
+      .from("event_registrations")
+      .select("*", { count: "exact", head: true })
+      .eq("event_id", eventId)
+      .eq("status", "registered");
+
+    if ((count ?? 0) >= event.max_participants) {
+      return { success: false, error: "Il n'y a plus de places disponibles" };
+    }
+  }
+
+  // Free event → direct registration
+  if (event.price_cents === 0) {
+    const { error } = await supabase.from("event_registrations").upsert(
+      {
+        client_id: user.id,
+        event_id: eventId,
+        stripe_payment_intent_id: null,
+        status: "registered",
+      },
+      { onConflict: "event_id,client_id" },
+    );
+
+    if (error) {
+      console.error("Free event registration error:", error);
+      return { success: false, error: "Erreur lors de l'inscription" };
+    }
+
+    return { success: true };
+  }
+
+  // Paid event → Stripe Checkout
   const { data: consultant } = await supabase
     .from("consultants")
     .select("stripe_account_id, commission_rate")
-    .eq("id", formation.consultant_id)
+    .eq("id", event.consultant_id)
     .single();
 
   if (!consultant?.stripe_account_id) {
-    return { success: false, error: "Le paiement n'est pas disponible pour cette formation" };
+    return {
+      success: false,
+      error: "Le paiement n'est pas disponible pour cet événement",
+    };
   }
 
   try {
     const session = await createCheckoutSession({
       consultantStripeAccountId: consultant.stripe_account_id,
       commissionRate: consultant.commission_rate,
-      priceInCents: formation.price_cents,
-      currency: formation.currency,
-      productName: formation.title,
-      productDescription: formation.short_description ?? undefined,
+      priceInCents: event.price_cents,
+      currency: event.currency,
+      productName: event.title,
+      productDescription: event.description ?? undefined,
       customerEmail: user.email,
       metadata: {
-        type: "formation",
-        reference_id: formation.id,
+        type: "event",
+        reference_id: event.id,
         client_id: user.id,
-        consultant_id: formation.consultant_id,
+        consultant_id: event.consultant_id,
         platform_fee_cents: Math.round(
-          formation.price_cents * (consultant.commission_rate / 100)
+          event.price_cents * (consultant.commission_rate / 100),
         ).toString(),
       },
-      successUrl: `${siteConfig.url}/espace-client/formations?purchased=${formation.id}`,
-      cancelUrl: `${siteConfig.url}/formations/${formationId}?cancelled=true`,
+      successUrl: `${siteConfig.url}/formations/${event.slug}?registered=true`,
+      cancelUrl: `${siteConfig.url}/formations/${event.slug}?cancelled=true`,
     });
 
     return {

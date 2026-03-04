@@ -128,16 +128,12 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
                     </>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <form action={onLogout} className="w-full">
-                      <button
-                        type="submit"
-                        className="flex w-full cursor-default items-center gap-2 outline-none"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Déconnexion
-                      </button>
-                    </form>
+                  <DropdownMenuItem
+                    onClick={() => void onLogout()}
+                    className="cursor-pointer text-primary-red focus:bg-primary-red/10 focus:text-primary-red"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Déconnexion
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -235,11 +231,15 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
                     Backoffice
                   </Link>
                 )}
-                <form action={onLogout} className="mt-4">
-                  <Button type="submit" variant="outline" className="w-full">
-                    Déconnexion
-                  </Button>
-                </form>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-4 w-full border-primary-red text-primary-red hover:bg-primary-red/10 hover:text-primary-red"
+                  onClick={() => void onLogout()}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Déconnexion
+                </Button>
               </>
             ) : (
               <>
