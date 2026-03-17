@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,21 +14,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Pencil, Eye } from "lucide-react";
+import { Plus, Pencil, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { FormationStatusToggle } from "./_components/formation-status-toggle";
 
 export const metadata: Metadata = {
   title: "Gestion des formations",
-};
-
-const STATUS_CONFIG: Record<
-  string,
-  { label: string; variant: "default" | "secondary" | "outline" | "destructive" }
-> = {
-  draft: { label: "Brouillon", variant: "secondary" },
-  published: { label: "Publiée", variant: "default" },
-  archived: { label: "Archivée", variant: "outline" },
 };
 
 const formatPrice = (cents: number): string =>
@@ -71,6 +62,10 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
           first_name,
           last_name
         )
+      ),
+      formation_sections (
+        id,
+        formation_blocks ( id )
       )
     `
     )
@@ -109,6 +104,7 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
       id: string;
       profiles: { first_name: string | null; last_name: string | null } | null;
     } | null;
+    formation_sections: { id: string; formation_blocks: { id: string }[] }[];
   };
 
   type ConsultantOption = {
@@ -143,7 +139,7 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
       <Card>
         <CardContent>
           <form className="flex flex-wrap items-end gap-4">
-            <div className="flex-1 min-w-[200px]">
+            <div className="flex-1 min-w-50">
               <label
                 htmlFor="search"
                 className="mb-1 block text-sm font-medium"
@@ -218,19 +214,25 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
               <TableRow>
                 <TableHead>Titre</TableHead>
                 <TableHead>Consultante</TableHead>
+                <TableHead>Contenu</TableHead>
                 <TableHead>Prix</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead className="w-[80px]">Actions</TableHead>
+                <TableHead className="w-25">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((formation) => {
-                const config =
-                  STATUS_CONFIG[formation.status] ?? STATUS_CONFIG.draft;
                 const consultantName = formation.consultants?.profiles
                   ? `${formation.consultants.profiles.first_name ?? ""} ${formation.consultants.profiles.last_name ?? ""}`.trim()
                   : "—";
+
+                const sectionCount = formation.formation_sections?.length ?? 0;
+                const blockCount =
+                  formation.formation_sections?.reduce(
+                    (acc, s) => acc + (s.formation_blocks?.length ?? 0),
+                    0
+                  ) ?? 0;
 
                 return (
                   <TableRow key={formation.id}>
@@ -246,26 +248,42 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
                     <TableCell className="text-sm text-muted-foreground">
                       {consultantName}
                     </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {sectionCount > 0 || blockCount > 0 ? (
+                        <span>
+                          {sectionCount} sec. · {blockCount} leç.
+                        </span>
+                      ) : (
+                        <span className="italic text-muted-foreground/60">
+                          Vide
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>{formatPrice(formation.price_cents)}</TableCell>
                     <TableCell>
-                      <Badge variant={config.variant}>{config.label}</Badge>
+                      <FormationStatusToggle
+                        formationId={formation.id}
+                        currentStatus={
+                          (formation.status as "draft" | "published" | "archived") ??
+                          "draft"
+                        }
+                      />
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {format(
-                        new Date(formation.created_at),
-                        "d MMM yyyy",
-                        { locale: fr }
-                      )}
+                      {format(new Date(formation.created_at), "d MMM yyyy", {
+                        locale: fr,
+                      })}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Button asChild variant="ghost" size="icon">
                           <Link
-                            href={`/admin/formations/${formation.id}/preview`}
+                            href={`/accompagnements/${formation.slug}`}
+                            target="_blank"
                             tabIndex={0}
-                            aria-label={`Preview ${formation.title}`}
+                            aria-label={`Voir ${formation.title} sur le site`}
                           >
-                            <Eye className="h-4 w-4" />
+                            <ExternalLink className="h-4 w-4" />
                           </Link>
                         </Button>
                         <Button asChild variant="ghost" size="icon">
