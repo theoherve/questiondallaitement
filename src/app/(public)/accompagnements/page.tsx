@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { FormationCard } from "@/components/formations/formation-card";
+// import { FormationCard } from "@/components/formations/formation-card";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

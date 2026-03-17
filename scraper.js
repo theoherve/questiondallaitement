@@ -1,5 +1,5 @@
-const puppeteer = require('puppeteer');
-const fs = require('fs');
+import puppeteer from 'puppeteer';
+import fs from 'fs';
 
 // ─── Les 7 formations (+ 2 à ajouter quand tu as les URLs) ────────────────
 const FORMATIONS = [
@@ -23,7 +23,7 @@ async function navigateAndWait(page, url) {
   // Attendre que le réseau soit calme (max 10s)
   try {
     await page.waitForNetworkIdle({ idleTime: 1500, timeout: 10000 });
-  } catch (_) { /* pas grave si ça timeout */ }
+  } catch { /* pas grave si ça timeout */ }
 
   // Attendre que le sélecteur Wix principal soit présent
   await page.waitForSelector(
@@ -100,7 +100,7 @@ const PAGE_SCRIPT = () => {
               });
               return;
             }
-          } catch(_) {}
+          } catch {}
           const img = wi.querySelector('img');
           if (img?.src && !img.src.startsWith('data:'))
             images.push({ src: img.src, alt: img.alt || '' });
