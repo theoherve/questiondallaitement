@@ -23,7 +23,7 @@ import type { SessionUser } from "@/lib/auth";
 
 type HeaderProps = {
   user: SessionUser | null;
-  onLogout: () => Promise<void>;
+  onLogout: (formData: FormData) => void | Promise<void>;
 };
 
 export const Header = ({ user, onLogout }: HeaderProps) => {
@@ -128,13 +128,20 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
                     </>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => void onLogout()}
-                    className="cursor-pointer text-primary-red focus:bg-primary-red/10 focus:text-primary-red"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Déconnexion
-                  </DropdownMenuItem>
+                  <form action={onLogout}>
+                    <DropdownMenuItem
+                      asChild
+                      className="text-primary-red focus:bg-primary-red/10 focus:text-primary-red"
+                    >
+                      <button
+                        type="submit"
+                        className="flex w-full cursor-pointer items-center gap-2"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Déconnexion
+                      </button>
+                    </DropdownMenuItem>
+                  </form>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
@@ -243,15 +250,16 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
                     Backoffice
                   </Link>
                 )}
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="mt-4 w-full border-primary-red text-primary-red hover:bg-primary-red/10 hover:text-primary-red"
-                  onClick={() => void onLogout()}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Déconnexion
-                </Button>
+                <form action={onLogout} className="mt-4">
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    className="w-full border-primary-red text-primary-red hover:bg-primary-red/10 hover:text-primary-red"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Déconnexion
+                  </Button>
+                </form>
               </>
             ) : (
               <>

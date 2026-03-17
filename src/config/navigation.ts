@@ -26,9 +26,21 @@ export const publicNav: PublicNavItem[] = [
 
 /** Social links — used in footer. */
 export const socialLinks = [
-  { title: "Instagram", href: "https://instagram.com/questiondallaitement", iconKey: "Instagram" },
-  { title: "Facebook", href: "https://facebook.com/questiondallaitement", iconKey: "Facebook" },
-  { title: "LinkedIn", href: "https://linkedin.com/in/carole-herve", iconKey: "Linkedin" },
+  {
+    title: "Instagram",
+    href: "https://instagram.com/questiondallaitement",
+    iconKey: "Instagram",
+  },
+  {
+    title: "Facebook",
+    href: "https://facebook.com/questiondallaitement",
+    iconKey: "Facebook",
+  },
+  {
+    title: "LinkedIn",
+    href: "https://linkedin.com/in/carole-herve",
+    iconKey: "Linkedin",
+  },
 ] as const;
 
 export const clientNav: NavItem[] = [
@@ -92,6 +104,7 @@ export const consultantNav: NavItem[] = [
 
 export const adminNav: NavItem[] = [
   { title: "Tableau de bord", href: "/admin", iconKey: "LayoutDashboard" },
+  { title: "Utilisateurs", href: "/admin/utilisateurs", iconKey: "Users" },
   { title: "Consultantes", href: "/admin/consultantes", iconKey: "Users" },
   { title: "Formations", href: "/admin/formations", iconKey: "BookOpen" },
   { title: "Blog", href: "/admin/blog", iconKey: "FileText" },
