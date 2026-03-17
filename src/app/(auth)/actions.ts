@@ -113,6 +113,7 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
     .from("profiles")
     .select("id")
     .eq("email", email)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (existing) {
