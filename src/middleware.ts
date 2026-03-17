@@ -16,6 +16,7 @@ const AUTH_ROUTES = [
   "/inscription",
   "/mot-de-passe-oublie",
   "/reset-password",
+  "/verification-email",
 ];
 
 const ROLE_ROUTE_MAP: Record<string, string[]> = {

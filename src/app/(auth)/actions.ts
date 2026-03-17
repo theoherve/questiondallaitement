@@ -11,11 +11,16 @@ import {
 } from "@/validations/auth";
 import { redirect } from "next/navigation";
 import { randomBytes, randomUUID } from "crypto";
-import { sendPasswordResetEmail, sendWelcomeEmail } from "@/lib/emails/send";
+import {
+  sendPasswordResetEmail,
+  sendVerificationEmail,
+  sendWelcomeEmail,
+} from "@/lib/emails/send";
 import { syncOnSignup } from "@/lib/brevo/sync";
 import { rateLimit, AUTH_RATE_LIMITS } from "@/lib/rate-limit";
 
 const RESET_TOKEN_EXPIRY_HOURS = 24;
+const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
 
 const baseUrl = () =>
   process.env.NEXT_PUBLIC_APP_URL ??
@@ -43,8 +48,25 @@ export const handleLogin = async (formData: FormData): Promise<void> => {
     );
   }
 
+  const email = parsed.data.email.trim().toLowerCase();
+
+  // Check email verification before attempting sign-in
+  const supabase = createAdminClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("email_verified")
+    .eq("email", email)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (profile && !profile.email_verified) {
+    redirect(
+      `/connexion?error=${encodeURIComponent("Veuillez confirmer votre adresse email avant de vous connecter. Vérifiez votre boîte de réception.")}&unverified_email=${encodeURIComponent(email)}`,
+    );
+  }
+
   const result = await signIn("credentials", {
-    email: parsed.data.email.trim().toLowerCase(),
+    email,
     password: parsed.data.password,
     redirect: false,
   });
@@ -101,6 +123,10 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
 
   const password_hash = await hash(parsed.data.password, 10);
   const id = randomUUID();
+  const verificationToken = randomBytes(32).toString("hex");
+  const verificationExpires = new Date(
+    Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000,
+  ).toISOString();
 
   const { error } = await supabase.from("profiles").insert({
     id,
@@ -109,6 +135,9 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
     first_name: parsed.data.first_name,
     last_name: parsed.data.last_name,
     role: "client",
+    email_verified: false,
+    email_verification_token: verificationToken,
+    email_verification_expires: verificationExpires,
   });
 
   if (error) {
@@ -117,12 +146,15 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
     );
   }
 
+  const verificationUrl = `${baseUrl()}/verification-email?token=${verificationToken}`;
+
   try {
-    await sendWelcomeEmail(email, {
+    await sendVerificationEmail(email, {
       client_name: parsed.data.first_name,
+      verification_url: verificationUrl,
     });
-  } catch {
-    // Non-blocking
+  } catch (err) {
+    console.error("[handleRegister] sendVerificationEmail failed:", err);
   }
 
   // Sync new contact to Brevo (non-blocking)
@@ -265,4 +297,124 @@ export const handleResetPassword = async (
 
 export const handleLogout = async (): Promise<void> => {
   await signOut({ redirectTo: "/" });
+};
+
+export const handleVerifyEmail = async (token: string): Promise<void> => {
+  if (!token) {
+    redirect(
+      `/connexion?error=${encodeURIComponent("Lien de vérification invalide.")}`,
+    );
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, first_name, email, email_verification_expires, email_verified")
+    .eq("email_verification_token", token)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (!profile) {
+    redirect(
+      `/connexion?error=${encodeURIComponent("Ce lien de vérification est invalide ou a déjà été utilisé.")}`,
+    );
+  }
+
+  if (profile.email_verified) {
+    redirect(
+      `/connexion?success=${encodeURIComponent("Votre email est déjà confirmé. Vous pouvez vous connecter.")}`,
+    );
+  }
+
+  if (
+    !profile.email_verification_expires ||
+    new Date(profile.email_verification_expires) < new Date()
+  ) {
+    redirect(
+      `/connexion?error=${encodeURIComponent("Ce lien de vérification a expiré. Connectez-vous pour recevoir un nouveau lien.")}&unverified_email=${encodeURIComponent(profile.email)}`,
+    );
+  }
+
+  await supabase
+    .from("profiles")
+    .update({
+      email_verified: true,
+      email_verification_token: null,
+      email_verification_expires: null,
+    })
+    .eq("id", profile.id);
+
+  // Send welcome email now that the account is verified
+  try {
+    await sendWelcomeEmail(profile.email, {
+      client_name: profile.first_name ?? "Utilisateur",
+    });
+  } catch {
+    // Non-blocking
+  }
+
+  redirect(
+    `/connexion?success=${encodeURIComponent("Email confirmé avec succès ! Vous pouvez maintenant vous connecter.")}`,
+  );
+};
+
+export const handleResendVerification = async (
+  formData: FormData,
+): Promise<void> => {
+  const rl = await rateLimit(AUTH_RATE_LIMITS.resendVerification);
+  if (!rl.success) {
+    redirect(
+      `/connexion?error=${encodeURIComponent("Trop de tentatives. Réessayez dans quelques minutes.")}`,
+    );
+  }
+
+  const email = (formData.get("email") as string)?.trim().toLowerCase();
+  if (!email) {
+    redirect(`/connexion?error=${encodeURIComponent("Email manquant.")}`);
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, first_name, email_verified")
+    .eq("email", email)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  // Always redirect with success to prevent email enumeration
+  if (!profile || profile.email_verified) {
+    redirect(
+      `/connexion?success=${encodeURIComponent("Si un compte non vérifié existe avec cette adresse, un nouvel email de vérification a été envoyé.")}`,
+    );
+  }
+
+  const verificationToken = randomBytes(32).toString("hex");
+  const verificationExpires = new Date(
+    Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000,
+  ).toISOString();
+
+  await supabase
+    .from("profiles")
+    .update({
+      email_verification_token: verificationToken,
+      email_verification_expires: verificationExpires,
+    })
+    .eq("id", profile.id);
+
+  const verificationUrl = `${baseUrl()}/verification-email?token=${verificationToken}`;
+
+  try {
+    await sendVerificationEmail(email, {
+      client_name: profile.first_name ?? "Utilisateur",
+      verification_url: verificationUrl,
+    });
+  } catch {
+    // Non-blocking
+  }
+
+  redirect(
+    `/connexion?success=${encodeURIComponent("Si un compte non vérifié existe avec cette adresse, un nouvel email de vérification a été envoyé.")}`,
+  );
 };

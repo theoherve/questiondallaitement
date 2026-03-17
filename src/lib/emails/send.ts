@@ -19,7 +19,7 @@ export const sendBookingConfirmation = async (
     consultant_name: string;
     date: string;
     time: string;
-  }
+  },
 ) => {
   const template = await getTemplate("booking_confirmation");
   if (!template) return;
@@ -37,7 +37,7 @@ export const sendBookingReminder = async (
     client_name: string;
     consultant_name: string;
     time: string;
-  }
+  },
 ) => {
   const template = await getTemplate("booking_reminder");
   if (!template) return;
@@ -55,7 +55,7 @@ export const sendBookingCancelled = async (
     client_name: string;
     date: string;
     refund_info: string;
-  }
+  },
 ) => {
   const template = await getTemplate("booking_cancelled");
   if (!template) return;
@@ -72,7 +72,7 @@ export const sendFormationAccess = async (
   variables: {
     client_name: string;
     formation_title: string;
-  }
+  },
 ) => {
   const template = await getTemplate("formation_access");
   if (!template) return;
@@ -88,7 +88,7 @@ export const sendWelcomeEmail = async (
   clientEmail: string,
   variables: {
     client_name: string;
-  }
+  },
 ) => {
   const template = await getTemplate("welcome");
   if (!template) return;
@@ -109,7 +109,7 @@ export const sendNewBookingNotification = async (
     time: string;
     reason: string;
     payment_method: string;
-  }
+  },
 ) => {
   const template = await getTemplate("new_booking_notification");
 
@@ -140,7 +140,7 @@ export const sendGuestAccountEmail = async (
   variables: {
     client_name: string;
     setup_url: string;
-  }
+  },
 ) => {
   const template = await getTemplate("guest_account_setup");
 
@@ -169,7 +169,7 @@ export const sendBookingCancelledToConsultant = async (
     client_name: string;
     date: string;
     reason: string;
-  }
+  },
 ) => {
   const subject = `Annulation de rendez-vous — ${variables.client_name}`;
   const html = `
@@ -182,12 +182,45 @@ export const sendBookingCancelledToConsultant = async (
   await sendTransactionalEmail({ to: consultantEmail, subject, html });
 };
 
+export const sendVerificationEmail = async (
+  clientEmail: string,
+  variables: {
+    client_name: string;
+    verification_url: string;
+  },
+) => {
+  const template = await getTemplate("email_verification");
+
+  if (template) {
+    await sendTransactionalEmail({
+      to: clientEmail,
+      subject: renderTemplate(template.subject, variables),
+      html: renderTemplate(template.body_html, variables),
+    });
+    return;
+  }
+
+  await sendTransactionalEmail({
+    to: clientEmail,
+    subject: "Confirmez votre adresse email",
+    html: `
+      <h1>Confirmez votre adresse email</h1>
+      <p>Bonjour ${variables.client_name},</p>
+      <p>Merci de vous être inscrit(e) sur Question d'Allaitement.</p>
+      <p>Pour activer votre compte, veuillez confirmer votre adresse email en cliquant sur le bouton ci-dessous :</p>
+      <p><a href="${variables.verification_url}" style="display:inline-block;padding:12px 24px;background-color:#A0283E;color:#fff;text-decoration:none;border-radius:6px;">Confirmer mon email</a></p>
+      <p>Ce lien est valide pendant 24 heures.</p>
+      <p>Si vous n'avez pas créé de compte, ignorez cet email.</p>
+    `,
+  });
+};
+
 export const sendPasswordResetEmail = async (
   clientEmail: string,
   variables: {
     client_name: string;
     reset_url: string;
-  }
+  },
 ) => {
   const template = await getTemplate("password_reset");
 

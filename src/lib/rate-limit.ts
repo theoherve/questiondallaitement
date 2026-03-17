@@ -35,7 +35,7 @@ type RateLimitResult = {
 };
 
 export const rateLimit = async (
-  config: RateLimitConfig
+  config: RateLimitConfig,
 ): Promise<RateLimitResult> => {
   cleanup();
 
@@ -73,4 +73,9 @@ export const AUTH_RATE_LIMITS = {
   register: { prefix: "register", limit: 3, windowSeconds: 600 },
   forgotPassword: { prefix: "forgot-password", limit: 3, windowSeconds: 600 },
   resetPassword: { prefix: "reset-password", limit: 5, windowSeconds: 600 },
+  resendVerification: {
+    prefix: "resend-verification",
+    limit: 3,
+    windowSeconds: 600,
+  },
 } as const satisfies Record<string, RateLimitConfig>;
