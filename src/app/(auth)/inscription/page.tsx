@@ -39,7 +39,7 @@ const RegisterPage = async ({ searchParams }: RegisterPageProps) => {
             className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-700"
             role="status"
           >
-            Compte créé. Vérifiez votre email pour confirmer votre inscription.
+            Compte créé ! Un email de vérification vous a été envoyé. Cliquez sur le lien dans l&apos;email pour activer votre compte.
           </div>
         )}
         <form action={handleRegister} className="space-y-4">

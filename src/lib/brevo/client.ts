@@ -1,6 +1,8 @@
 import type { BrevoList, CampaignStats } from "@/types/database";
 
 const BREVO_API_BASE = "https://api.brevo.com/v3";
+let hasWarnedMissingBrevoKey = false;
+let hasWarnedUnauthorizedBrevo = false;
 
 const brevoHeaders = () => ({
   "api-key": process.env.BREVO_API_KEY!,
@@ -14,6 +16,15 @@ const brevoFetch = async <T = unknown>(
   path: string,
   options?: RequestInit,
 ): Promise<{ ok: boolean; data: T | null; status: number }> => {
+  const apiKey = process.env.BREVO_API_KEY?.trim();
+  if (!apiKey) {
+    if (!hasWarnedMissingBrevoKey) {
+      console.warn("Brevo sync skipped: BREVO_API_KEY is not configured.");
+      hasWarnedMissingBrevoKey = true;
+    }
+    return { ok: false, data: null, status: 0 };
+  }
+
   const response = await fetch(`${BREVO_API_BASE}${path}`, {
     ...options,
     headers: { ...brevoHeaders(), ...options?.headers },
@@ -21,7 +32,16 @@ const brevoFetch = async <T = unknown>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    console.error(`Brevo API error [${response.status}] ${path}:`, error);
+    if (response.status === 401) {
+      if (!hasWarnedUnauthorizedBrevo) {
+        console.warn(
+          "Brevo sync skipped: BREVO_API_KEY is invalid or revoked (401).",
+        );
+        hasWarnedUnauthorizedBrevo = true;
+      }
+    } else {
+      console.error(`Brevo API error [${response.status}] ${path}:`, error);
+    }
     return { ok: false, data: null, status: response.status };
   }
 

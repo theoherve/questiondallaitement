@@ -4,14 +4,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { handleLogin } from "../actions";
+import { handleLogin, handleResendVerification } from "../actions";
 
 export const metadata: Metadata = {
   title: "Connexion",
 };
 
 type Props = {
-  searchParams: Promise<{ redirect?: string; error?: string; success?: string }>;
+  searchParams: Promise<{ redirect?: string; error?: string; success?: string; unverified_email?: string }>;
 };
 
 const LoginPage = async ({ searchParams }: Props) => {
@@ -40,13 +40,25 @@ const LoginPage = async ({ searchParams }: Props) => {
             role="alert"
           >
             {params.error === "link_expired_or_used"
-              ? "Ce lien de confirmation a expiré ou a déjà été utilisé. Connectez-vous si votre compte est actif, ou demandez un nouveau lien depuis l’inscription."
+              ? "Ce lien de confirmation a expiré ou a déjà été utilisé. Connectez-vous si votre compte est actif, ou demandez un nouveau lien depuis l'inscription."
               : params.error === "missing_code"
                 ? "Lien de confirmation invalide. Utilisez le lien reçu par email ou connectez-vous."
                 : params.error === "auth_failed"
                   ? "La confirmation a échoué. Réessayez ou connectez-vous."
                   : decodeURIComponent(params.error)}
           </div>
+        )}
+        {params.unverified_email && (
+          <form action={handleResendVerification} className="mb-4">
+            <input type="hidden" name="email" value={decodeURIComponent(params.unverified_email)} />
+            <Button
+              type="submit"
+              variant="outline"
+              className="w-full text-sm"
+            >
+              Renvoyer l&apos;email de vérification
+            </Button>
+          </form>
         )}
         <form action={handleLogin} className="space-y-4">
           {params.redirect && (
