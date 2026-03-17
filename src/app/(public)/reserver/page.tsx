@@ -26,13 +26,14 @@ const ReserverPage = async () => {
   };
 
   let list: ConsultationTypeRow[] = [];
+  let activeLocationsData: { consultant_id: string; location_type: string }[] = [];
 
   try {
     const supabase = await createClient();
     const { data: consultationTypes, error } = await supabase
       .from("consultation_types")
       .select(
-        "id, consultant_id, title, description, duration_minutes, price_cents, currency, is_online, buffer_minutes"
+        "id, consultant_id, title, description, duration_minutes, price_cents, currency, is_online, available_locations, buffer_minutes"
       )
       .eq("is_active", true)
       .order("title");
@@ -55,7 +56,7 @@ const ReserverPage = async () => {
         const { data } = await admin
           .from("consultation_types")
           .select(
-            "id, consultant_id, title, description, duration_minutes, price_cents, currency, is_online, buffer_minutes"
+            "id, consultant_id, title, description, duration_minutes, price_cents, currency, is_online, available_locations, buffer_minutes"
           )
           .eq("is_active", true)
           .in("consultant_id", ids)
@@ -64,6 +65,40 @@ const ReserverPage = async () => {
       }
     } catch {
       // Admin client not available or query failed
+    }
+  }
+
+  // Fetch active locations from consultant_locations — source of truth for cabinet/domicile
+  if (list.length > 0) {
+    try {
+      const supabase = await createClient();
+      const consultantIds = [...new Set(list.map((ct) => ct.consultant_id))];
+      const { data } = await supabase
+        .from("consultant_locations")
+        .select("consultant_id, location_type")
+        .eq("is_active", true)
+        .in("consultant_id", consultantIds);
+      activeLocationsData = data ?? [];
+    } catch {
+      // Non-blocking
+    }
+  }
+
+  // Build a map: consultant_id -> Set of active location types
+  const consultantLocMap = new Map<string, Set<string>>();
+  for (const loc of activeLocationsData) {
+    if (!consultantLocMap.has(loc.consultant_id)) {
+      consultantLocMap.set(loc.consultant_id, new Set());
+    }
+    consultantLocMap.get(loc.consultant_id)!.add(loc.location_type);
+  }
+  // Teleconsultation doesn't require a consultant_locations entry — driven by is_online on the type
+  for (const ct of list) {
+    if (ct.is_online !== false) {
+      if (!consultantLocMap.has(ct.consultant_id)) {
+        consultantLocMap.set(ct.consultant_id, new Set());
+      }
+      consultantLocMap.get(ct.consultant_id)!.add("teleconsultation");
     }
   }
 
@@ -77,15 +112,15 @@ const ReserverPage = async () => {
           duration_minutes: ct.duration_minutes,
           price_cents: ct.price_cents,
           currency: ct.currency,
+          // Derive available locations from what consultants actually have configured,
+          // consistent with the filtering logic in getConsultantsForService
           available_locations: [
             ...new Set(
               list
                 .filter((t) => t.title === ct.title)
-                .flatMap((t) =>
-                  t.available_locations?.length
-                    ? (t.available_locations as string[])
-                    : [t.is_online !== false ? "teleconsultation" : "cabinet"]
-                )
+                .flatMap((t) => [
+                  ...(consultantLocMap.get(t.consultant_id) ?? []),
+                ])
             ),
           ],
         },

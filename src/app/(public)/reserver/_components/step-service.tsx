@@ -40,7 +40,7 @@ export const StepService = ({ services, selected, onSelect }: StepServiceProps) 
               service.duration_minutes
             )
           }
-          className={`rounded-lg border-2 p-4 text-left transition-all hover:border-primary-red hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red/50 ${
+          className={`cursor-pointer rounded-lg border-2 p-4 text-left transition-all hover:border-primary-red hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red/50 ${
             selected === service.title
               ? "border-primary-red bg-primary-red/5"
               : "border-muted"

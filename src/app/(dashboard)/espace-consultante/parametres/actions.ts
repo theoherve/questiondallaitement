@@ -184,6 +184,7 @@ export const createConsultationType = async (
     duration_minutes: formData.duration_minutes,
     price_cents: formData.price_cents,
     available_locations: formData.available_locations,
+    is_online: formData.available_locations.includes("teleconsultation"),
     buffer_minutes: formData.buffer_minutes,
     is_active: true,
   });
@@ -208,6 +209,7 @@ export const updateConsultationType = async (
       duration_minutes: formData.duration_minutes,
       price_cents: formData.price_cents,
       available_locations: formData.available_locations,
+      is_online: formData.available_locations.includes("teleconsultation"),
       buffer_minutes: formData.buffer_minutes,
     })
     .eq("id", id)

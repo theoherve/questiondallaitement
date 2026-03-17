@@ -137,7 +137,7 @@ export const StepCalendar = ({
                       ? "bg-primary-red font-bold text-white"
                       : isDisabled
                         ? "cursor-not-allowed text-muted-foreground/30"
-                        : "font-medium text-primary-green hover:bg-primary-red/10"
+                        : "cursor-pointer font-medium text-primary-green hover:bg-primary-red/10"
                   }`}
                   tabIndex={isDisabled ? -1 : 0}
                   aria-label={format(day, "EEEE d MMMM", { locale: fr })}
@@ -175,7 +175,7 @@ export const StepCalendar = ({
                       key={slot.start}
                       type="button"
                       onClick={() => onSelect(slot)}
-                      className="rounded-lg border-2 border-muted px-3 py-2 text-sm font-medium text-primary-green transition-all hover:border-primary-red hover:bg-primary-red/5 focus:outline-none focus:ring-2 focus:ring-primary-red/50"
+                      className="cursor-pointer rounded-lg border-2 border-muted px-3 py-2 text-sm font-medium text-primary-green transition-all hover:border-primary-red hover:bg-primary-red/5 focus:outline-none focus:ring-2 focus:ring-primary-red/50"
                       tabIndex={0}
                       aria-label={`Créneau à ${slot.label}`}
                     >

@@ -56,7 +56,7 @@ export const StepPayment = ({
           key={option.value}
           type="button"
           onClick={() => onSelect(option.value)}
-          className={`flex flex-col items-center gap-3 rounded-lg border-2 p-6 text-center transition-all hover:border-primary-red hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red/50 ${
+          className={`cursor-pointer flex flex-col items-center gap-3 rounded-lg border-2 p-6 text-center transition-all hover:border-primary-red hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red/50 ${
             selected === option.value
               ? "border-primary-red bg-primary-red/5"
               : "border-muted"

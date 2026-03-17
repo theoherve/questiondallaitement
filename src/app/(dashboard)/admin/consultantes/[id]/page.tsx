@@ -23,6 +23,10 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { ConsultantActiveToggle } from "../_components/consultant-active-toggle";
+import { AdminConsultationTypes } from "../_components/admin-consultation-types";
+import { AdminLocations } from "../_components/admin-locations";
+import { AdminAvailabilities } from "../_components/admin-availabilities";
+import { adminGetConsultationTypes, adminGetLocations, adminGetAvailabilities } from "./actions";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -103,7 +107,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
     `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim() ||
     "Sans nom";
 
-  const [formationsRes, bookingsRes, paymentsRes] = await Promise.all([
+  const [formationsRes, bookingsRes, paymentsRes, consultationTypes, consultantLocations, availabilities] = await Promise.all([
     supabase
       .from("formations")
       .select("id, title, slug, status, price_cents, currency")
@@ -121,6 +125,9 @@ const ConsultantDetailPage = async ({ params }: Props) => {
       .select("amount_cents")
       .eq("consultant_id", id)
       .eq("status", "succeeded"),
+    adminGetConsultationTypes(id),
+    adminGetLocations(id),
+    adminGetAvailabilities(id),
   ]);
 
   const formations = formationsRes.data ?? [];
@@ -340,6 +347,34 @@ const ConsultantDetailPage = async ({ params }: Props) => {
         </CardContent>
       </Card>
 
+      {/* Configuration du flow de réservation */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardContent>
+            <AdminConsultationTypes
+              consultantId={id}
+              types={consultationTypes as Parameters<typeof AdminConsultationTypes>[0]["types"]}
+            />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent>
+            <AdminLocations
+              consultantId={id}
+              locations={consultantLocations as Parameters<typeof AdminLocations>[0]["locations"]}
+            />
+          </CardContent>
+        </Card>
+      </div>
+      <Card>
+        <CardContent>
+          <AdminAvailabilities
+            consultantId={id}
+            availabilities={availabilities as Parameters<typeof AdminAvailabilities>[0]["availabilities"]}
+          />
+        </CardContent>
+      </Card>
+
       {/* Dernières réservations */}
       <Card>
         <CardHeader>
@@ -396,7 +431,7 @@ const StatCard = ({
   value: string;
 }) => (
   <Card>
-    <CardContent className="flex items-center gap-4 pt-6">
+    <CardContent className="flex items-center gap-4">
       {icon}
       <div>
         <p className="text-sm text-muted-foreground">{label}</p>
