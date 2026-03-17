@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const TESTIMONIALS = [
@@ -56,27 +56,40 @@ export const TestimonialCarousel = () => {
     return () => clearInterval(interval);
   }, [next]);
 
-  // Get the 3 testimonials for the current page
   const startIdx = page * 3;
   const visible = TESTIMONIALS.slice(startIdx, startIdx + 3);
 
   return (
     <div className="py-12 lg:py-16">
-      {/* Grid of testimonials */}
-      <div className="grid gap-8 md:grid-cols-3">
+      {/* Grid of testimonial cards */}
+      <div className="grid gap-5 md:grid-cols-3">
         {visible.map((t) => (
           <blockquote
             key={t.name}
-            className="flex flex-col border-t border-primary-green/10 pt-6"
+            className="flex flex-col bg-white p-7 shadow-sm"
           >
-            <p className="flex-1 font-serif text-lg leading-relaxed text-primary-green/90 italic">
+            {/* Stars */}
+            <div className="flex gap-0.5" aria-label="5 étoiles sur 5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className="h-4 w-4 fill-primary-red text-primary-red"
+                  aria-hidden
+                />
+              ))}
+            </div>
+
+            {/* Quote */}
+            <p className="mt-4 flex-1 font-serif text-base leading-relaxed text-primary-green/90 italic">
               &ldquo;{t.text}&rdquo;
             </p>
-            <footer className="mt-6">
-              <p className="font-sans text-sm font-medium text-primary-green">
+
+            {/* Attribution */}
+            <footer className="mt-6 border-t border-primary-green/10 pt-4">
+              <p className="font-sans text-sm font-semibold text-primary-green">
                 {t.name}
               </p>
-              <p className="font-sans text-xs text-primary-green/50">
+              <p className="mt-0.5 font-sans text-xs text-primary-green/50">
                 {t.context}
               </p>
             </footer>

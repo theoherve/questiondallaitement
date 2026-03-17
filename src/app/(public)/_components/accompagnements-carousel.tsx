@@ -24,8 +24,10 @@ type Formation = {
 
 export const AccompagnementsCarousel = ({
   formations,
+  label = "Tous les accompagnements",
 }: {
   formations: Formation[];
+  label?: string;
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -51,52 +53,53 @@ export const AccompagnementsCarousel = ({
     if (!el) return;
     const cardWidth = el.querySelector("[data-card]")?.clientWidth ?? 300;
     el.scrollBy({
-      left: direction === "left" ? -cardWidth - 24 : cardWidth + 24,
+      left: direction === "left" ? -(cardWidth + 24) : cardWidth + 24,
       behavior: "smooth",
     });
   };
 
   return (
-    <div className="relative">
-      {/* Scroll container */}
-      <div
-        ref={scrollRef}
-        className="-mx-5 flex gap-6 overflow-x-auto px-5 pb-4 scrollbar-none sm:-mx-8 sm:px-8 lg:-mx-0 lg:px-0"
-      >
-        {formations.map((formation) => (
-          <div
-            key={formation.id}
-            data-card
-            className="w-72 shrink-0 sm:w-80"
-          >
-            <FormationCard formation={formation} />
-          </div>
-        ))}
-      </div>
+    <div>
+      {/* Label */}
+      <p className="mb-6 font-sans text-xs font-medium uppercase tracking-widest text-primary-green/40">
+        {label}
+      </p>
 
-      {/* Navigation arrows — desktop only */}
-      {canScrollLeft && (
+      {/* Scroll container + floating arrows */}
+      <div className="relative">
+        <div
+          ref={scrollRef}
+          className="-mx-5 flex gap-6 overflow-x-auto px-5 pb-4 scrollbar-none sm:-mx-8 sm:px-8 lg:-mx-0 lg:px-0"
+        >
+          {formations.map((formation) => (
+            <div key={formation.id} data-card className="w-72 shrink-0 sm:w-80">
+              <FormationCard formation={formation} />
+            </div>
+          ))}
+        </div>
+
+        {/* Floating arrows — desktop only */}
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
           onClick={() => scroll("left")}
-          className="absolute -left-4 top-1/2 hidden -translate-y-1/2 bg-white/80 text-primary-green shadow-md backdrop-blur-sm hover:bg-white lg:flex"
+          disabled={!canScrollLeft}
           aria-label="Défiler vers la gauche"
+          className="absolute left-0 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 bg-white shadow-md hover:shadow-lg disabled:opacity-0 lg:flex"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-4 w-4" />
         </Button>
-      )}
-      {canScrollRight && (
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
           onClick={() => scroll("right")}
-          className="absolute -right-4 top-1/2 hidden -translate-y-1/2 bg-white/80 text-primary-green shadow-md backdrop-blur-sm hover:bg-white lg:flex"
+          disabled={!canScrollRight}
           aria-label="Défiler vers la droite"
+          className="absolute right-0 top-1/2 hidden translate-x-1/2 -translate-y-1/2 bg-white shadow-md hover:shadow-lg disabled:opacity-0 lg:flex"
         >
-          <ChevronRight className="h-5 w-5" />
+          <ChevronRight className="h-4 w-4" />
         </Button>
-      )}
+      </div>
     </div>
   );
 };
