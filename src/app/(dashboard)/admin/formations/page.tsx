@@ -197,7 +197,7 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
                 ))}
               </select>
             </div>
-            <Button type="submit" variant="outline" size="sm">
+            <Button type="submit" variant="outline">
               Filtrer
             </Button>
           </form>

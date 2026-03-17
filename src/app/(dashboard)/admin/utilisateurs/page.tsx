@@ -113,7 +113,7 @@ const UtilisateursPage = async ({
                   </option>
                 ))}
               </select>
-              <Button type="submit" variant="outline" size="sm">
+              <Button type="submit" variant="outline">
                 Filtrer
               </Button>
             </form>
