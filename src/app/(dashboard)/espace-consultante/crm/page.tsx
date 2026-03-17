@@ -83,7 +83,7 @@ const CrmPage = async ({
                 ))}
               </select>
             </div>
-            <Button type="submit" size="sm">
+            <Button type="submit">
               Filtrer
             </Button>
           </form>

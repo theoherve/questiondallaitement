@@ -95,7 +95,7 @@ export const getConsultantsForService = async (
       slug,
       bio,
       specialties,
-      profiles (
+      profiles!consultants_id_fkey (
         first_name,
         last_name,
         avatar_url

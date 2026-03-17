@@ -49,7 +49,7 @@ export const StepLocation = ({
               key={loc}
               type="button"
               onClick={() => onSelect(loc)}
-              className={`flex flex-col items-center gap-3 rounded-lg border-2 p-6 text-center transition-all hover:border-primary-red hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red/50 ${
+              className={`cursor-pointer flex flex-col items-center gap-3 rounded-lg border-2 p-6 text-center transition-all hover:border-primary-red hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red/50 ${
                 selected === loc
                   ? "border-primary-red bg-primary-red/5"
                   : "border-muted"

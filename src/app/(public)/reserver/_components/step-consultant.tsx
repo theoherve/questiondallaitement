@@ -95,7 +95,7 @@ export const StepConsultant = ({
               key={consultant.id}
               type="button"
               onClick={() => handleSelect(consultant)}
-              className="flex w-full items-start gap-4 rounded-lg border-2 border-muted p-4 text-left transition-all hover:border-primary-red hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red/50"
+              className="cursor-pointer flex w-full items-start gap-4 rounded-lg border-2 border-muted p-4 text-left transition-all hover:border-primary-red hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red/50"
               tabIndex={0}
               aria-label={`Sélectionner ${name}`}
             >

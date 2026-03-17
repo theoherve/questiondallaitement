@@ -1,11 +1,21 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-// import { FormationCard } from "@/components/formations/formation-card";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Package, Layers } from "lucide-react";
+import {
+  BookOpen,
+  Package,
+  Layers,
+  Clock,
+  Smartphone,
+  BadgeCheck,
+  ShieldCheck,
+  Check,
+  Users,
+} from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Accompagnements en ligne",
@@ -37,6 +47,16 @@ const formatPrice = (cents: number, currency: string): string =>
   );
 
 const PACK_SLUG = "pack-essentiel-allaitement";
+
+const BENEFITS = [
+  { icon: Clock, label: "À votre rythme" },
+  { icon: Smartphone, label: "Accessible partout" },
+  { icon: BadgeCheck, label: "Accès à vie" },
+  { icon: ShieldCheck, label: "Experts certifiés IBCLC" },
+];
+
+// TODO: Replace with real enrollment counts fetched from formation_enrollments table
+const MOCK_ENROLLMENT_COUNTS = [47, 23, 61, 18, 34, 52, 29, 41];
 
 const AccompagnementsPage = async () => {
   const supabase = await createClient();
@@ -96,6 +116,13 @@ const AccompagnementsPage = async () => {
       0
     ) ?? 0;
 
+  const totalModulesPrice = modules.reduce((sum, m) => sum + m.price_cents, 0);
+  const packSavings = pack ? totalModulesPrice - pack.price_cents : 0;
+  const packSavingsPercent =
+    totalModulesPrice > 0 && packSavings > 0
+      ? Math.round((packSavings / totalModulesPrice) * 100)
+      : 0;
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       {/* Header */}
@@ -113,6 +140,21 @@ const AccompagnementsPage = async () => {
           Des parcours complets pour vous accompagner dans votre allaitement et
           votre parentalité — à votre rythme, où que vous soyez.
         </p>
+      </div>
+
+      {/* Benefits strip */}
+      <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {BENEFITS.map(({ icon: Icon, label }) => (
+          <div
+            key={label}
+            className="flex items-center gap-3 bg-background-beige-dark px-4 py-3"
+          >
+            <Icon className="h-5 w-5 shrink-0 text-primary-red" />
+            <span className="text-sm font-medium text-primary-green">
+              {label}
+            </span>
+          </div>
+        ))}
       </div>
 
       {rows.length === 0 && (
@@ -133,10 +175,36 @@ const AccompagnementsPage = async () => {
             </h2>
           </div>
           <Card className="overflow-hidden border-primary-red/30 bg-background-beige shadow-md">
+            {/* Mobile: image at top */}
+            {pack.thumbnail_url && (
+              <div className="relative aspect-video w-full overflow-hidden lg:hidden">
+                <Image
+                  src={pack.thumbnail_url}
+                  alt={pack.title}
+                  fill
+                  className="object-cover"
+                  sizes="100vw"
+                />
+              </div>
+            )}
+
             <div className="grid gap-0 lg:grid-cols-5">
+              {/* Content */}
               <div className="flex flex-col justify-between p-8 lg:col-span-3">
                 <div>
-                  <Badge className="bg-primary-red text-white">Meilleure valeur</Badge>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge className="bg-primary-red text-white">
+                      Meilleure valeur
+                    </Badge>
+                    {packSavingsPercent > 0 && (
+                      <Badge
+                        variant="outline"
+                        className="border-primary-green/30 text-primary-green"
+                      >
+                        Économisez {packSavingsPercent}%
+                      </Badge>
+                    )}
+                  </div>
                   <h3 className="mt-3 font-serif text-2xl font-bold text-primary-green lg:text-3xl">
                     {pack.title}
                   </h3>
@@ -165,11 +233,34 @@ const AccompagnementsPage = async () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Module list on mobile */}
+                  {modules.length > 0 && (
+                    <ul className="mt-6 space-y-2 lg:hidden">
+                      {modules.map((m) => (
+                        <li
+                          key={m.id}
+                          className="flex items-start gap-2 text-sm text-primary-green/70"
+                        >
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary-red" />
+                          <span>{m.title}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-                <div className="mt-8 flex items-center gap-4">
-                  <p className="font-serif text-3xl font-bold text-primary-green">
-                    {formatPrice(pack.price_cents, pack.currency)}
-                  </p>
+
+                <div className="mt-8 flex flex-wrap items-center gap-4">
+                  <div className="flex items-baseline gap-2">
+                    <p className="font-serif text-3xl font-bold text-primary-green">
+                      {formatPrice(pack.price_cents, pack.currency)}
+                    </p>
+                    {packSavingsPercent > 0 && (
+                      <p className="text-base text-primary-green/40 line-through">
+                        {formatPrice(totalModulesPrice, pack.currency)}
+                      </p>
+                    )}
+                  </div>
                   <Button
                     asChild
                     size="lg"
@@ -181,18 +272,36 @@ const AccompagnementsPage = async () => {
                   </Button>
                 </div>
               </div>
-              <div className="hidden bg-primary-green/5 lg:col-span-2 lg:flex lg:items-center lg:justify-center p-8">
+
+              {/* Desktop: image + module list */}
+              <div className="hidden bg-primary-green/5 lg:col-span-2 lg:flex lg:flex-col lg:gap-4 p-8">
                 {pack.thumbnail_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={pack.thumbnail_url}
-                    alt={pack.title}
-                    className="rounded-lg object-cover max-h-64 w-full"
-                  />
+                  <div className="relative aspect-video w-full overflow-hidden">
+                    <Image
+                      src={pack.thumbnail_url}
+                      alt={pack.title}
+                      fill
+                      className="object-cover"
+                      sizes="(min-width: 1024px) 40vw, 100vw"
+                    />
+                  </div>
                 ) : (
-                  <div className="flex h-48 w-full items-center justify-center rounded-lg border-2 border-dashed border-primary-green/20">
+                  <div className="flex aspect-video w-full items-center justify-center border-2 border-dashed border-primary-green/20">
                     <Package className="h-16 w-16 text-primary-green/20" />
                   </div>
+                )}
+                {modules.length > 0 && (
+                  <ul className="space-y-2">
+                    {modules.map((m) => (
+                      <li
+                        key={m.id}
+                        className="flex items-start gap-2 text-sm text-primary-green/70"
+                      >
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary-red" />
+                        <span>{m.title}</span>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
             </div>
@@ -213,30 +322,32 @@ const AccompagnementsPage = async () => {
             Accédez à un module précis selon votre besoin du moment.
           </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {modules.map((formation) => {
+            {modules.map((formation, index) => {
               const sectionCount = formation.formation_sections.length;
               const blockCount = formation.formation_sections.reduce(
                 (acc, s) => acc + (s.formation_blocks?.length ?? 0),
                 0
               );
+              // TODO: Replace with real enrollment count from formation_enrollments table
+              const enrollmentCount =
+                MOCK_ENROLLMENT_COUNTS[index % MOCK_ENROLLMENT_COUNTS.length];
               return (
                 <Card
                   key={formation.id}
-                  className="flex h-full flex-col overflow-hidden"
+                  className="group flex h-full flex-col overflow-hidden transition-shadow duration-200 hover:shadow-md"
                 >
                   <div className="relative aspect-video overflow-hidden bg-background-beige-dark">
                     {formation.thumbnail_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={formation.thumbnail_url}
                         alt={formation.title}
-                        className="h-full w-full object-cover"
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                        sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center">
-                        <span className="font-serif text-sm text-primary-green/30">
-                          Module
-                        </span>
+                        <BookOpen className="h-10 w-10 text-primary-green/20" />
                       </div>
                     )}
                   </div>
@@ -260,20 +371,25 @@ const AccompagnementsPage = async () => {
                         {formation.short_description}
                       </p>
                     )}
-                    {(sectionCount > 0 || blockCount > 0) && (
-                      <div className="mt-3 flex gap-3 text-xs text-primary-green/50">
-                        {sectionCount > 0 && (
-                          <span>
-                            {sectionCount} section{sectionCount > 1 ? "s" : ""}
-                          </span>
-                        )}
-                        {blockCount > 0 && (
-                          <span>
-                            {blockCount} leçon{blockCount > 1 ? "s" : ""}
-                          </span>
-                        )}
-                      </div>
-                    )}
+                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-primary-green/50">
+                      {sectionCount > 0 && (
+                        <span>
+                          {sectionCount} section{sectionCount > 1 ? "s" : ""}
+                        </span>
+                      )}
+                      {blockCount > 0 && (
+                        <span>
+                          {blockCount} leçon{blockCount > 1 ? "s" : ""}
+                        </span>
+                      )}
+                      {(sectionCount > 0 || blockCount > 0) && (
+                        <span aria-hidden>·</span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {enrollmentCount} inscrits
+                      </span>
+                    </div>
                   </CardContent>
                   <CardFooter>
                     <Button
