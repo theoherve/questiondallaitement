@@ -3,7 +3,7 @@
 > Suivi projet structure en **Epics** et **Stories**.
 > Reference : [PLATFORM_ARCHITECTURE.md](./PLATFORM_ARCHITECTURE.md) | [roadmap.md](./roadmap.md)
 >
-> Derniere mise a jour : 2026-02-24
+> Derniere mise a jour : 2026-03-17
 
 ## Legende
 
@@ -18,12 +18,12 @@
 
 ## Vue d'ensemble par phase
 
-| Phase    | Epics             | Statut global           |
-| -------- | ----------------- | ----------------------- |
-| **MVP**  | EPIC-01 a EPIC-14 | 🔶 En cours (~40% fait) |
-| **V1.5** | EPIC-15 a EPIC-20 | ✅ Terminé              |
-| **V2**   | EPIC-21 a EPIC-23 | ⬜ Non commence         |
-| **V3**   | EPIC-24           | ⬜ Futur                |
+| Phase    | Epics             | Statut global                             |
+| -------- | ----------------- | ----------------------------------------- |
+| **MVP**  | EPIC-01 a EPIC-14 | 🔶 En cours (~95% — tests seuls restants) |
+| **V1.5** | EPIC-15 a EPIC-20 | ✅ Terminé                                |
+| **V2**   | EPIC-21 a EPIC-23 | 🔶 Partiel (EPIC-21-22 ✅, EPIC-23 ⬜)    |
+| **V3**   | EPIC-24           | ⬜ Futur                                  |
 
 ---
 
@@ -177,7 +177,7 @@
 | 07-26                       | Server Action `cancelBooking` avec audit log                                                                                                                        | ✅     | 🟠 P1 |
 | 07-27                       | Email annulation au client et a la consultante avec details refund                                                                                                  | ✅     | 🟠 P1 |
 | **Cron & notifications**    |                                                                                                                                                                     |        |       |
-| 07-28                       | Cron `/api/cron` : email rappel RDV J-1 pour les bookings confirmed de demain                                                                                       | ⬜     | 🟡 P2 |
+| 07-28                       | Cron `/api/cron` : email rappel RDV J-1 pour les bookings confirmed de demain                                                                                       | ✅     | 🟡 P2 |
 
 ---
 
@@ -506,24 +506,14 @@
 
 | Statut            | Nombre   |
 | ----------------- | -------- |
-| ✅ Termine        | ~155     |
+| ✅ Termine        | ~157     |
 | 🔶 Partiel        | ~2       |
-| ⬜ A faire        | ~10      |
+| ⬜ A faire        | ~8       |
 | **Total stories** | **~167** |
 
-### Prochaines priorites (P0 bloquants MVP)
+### Prochaines priorites
 
-1. ~~**EPIC-13** : Supabase Storage~~ ✅
-2. ~~**EPIC-03** : Backoffice Admin Formations~~ ✅
-3. ~~**EPIC-04** : Backoffice Admin Consultantes~~ ✅
-4. ~~**EPIC-05** : Backoffice Admin Paiements~~ ✅
-5. ~~**EPIC-06** : Backoffice Admin Parametres~~ ✅
-6. ~~**EPIC-07** : Booking System~~ ✅
-7. ~~**EPIC-08** : Espace Consultante~~ ✅
-8. ~~**EPIC-09** : Espace Client~~ ✅
-9. ~~**EPIC-10** : Pages Publiques~~ ✅
-10. ~~**EPIC-11** : Stripe & Paiements~~ ✅
-11. ~~**EPIC-12** : Emails Transactionnels~~ ✅
-12. **EPIC-14** : CRM
-13. **EPIC-15** : Blog (admin + public)
-14. **EPIC-16** : Monitoring & Logs
+1. **EPIC-14** : Tests MVP — validation end-to-end des flows critiques
+2. **EPIC-17** : Zoom OAuth — creation automatique meetings teleconsultation (17-02 a 17-05)
+3. **07-08** : Seeds `consultant_locations` manquantes dans `seed.sql`
+4. **EPIC-23** : RGPD & Compliance (cookie banner, export, droit effacement)
