@@ -6,19 +6,62 @@ import { AuthRedirectHandler } from "@/components/auth/auth-redirect-handler";
 import { Button } from "@/components/ui/button";
 import { FormationCard } from "@/components/formations/formation-card";
 import { AccompagnementsCarousel } from "./_components/accompagnements-carousel";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Video, MapPin, BookOpen, GraduationCap } from "lucide-react";
 import { TestimonialCarousel } from "./_components/testimonial-carousel";
 import { NewsletterForm } from "./_components/newsletter-form";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-/* ─── Trust bar stats ─── */
-const TRUST_STATS = [
+/* ─── Static data ─── */
+
+const SERVICES = [
+  {
+    icon: MapPin,
+    label: "Cabinet",
+    title: "Consultation en cabinet",
+    description:
+      "Un rendez-vous d'une heure à Paris pour un accompagnement personnalisé et adapté à votre situation.",
+    price: "85 €",
+    href: "/reserver",
+    cta: "Réserver un créneau",
+  },
+  {
+    icon: Video,
+    label: "En ligne",
+    title: "Téléconsultation",
+    description:
+      "La même qualité d'accompagnement depuis chez vous. Idéal quelle que soit votre localisation.",
+    price: "85 €",
+    href: "/reserver",
+    cta: "Réserver un créneau",
+  },
+  {
+    icon: BookOpen,
+    label: "Formation",
+    title: "Formations en ligne",
+    description:
+      "Des parcours complets pour vous accompagner à chaque étape de votre allaitement, à votre rythme.",
+    price: null,
+    href: "/accompagnements",
+    cta: "Découvrir",
+  },
+  {
+    icon: GraduationCap,
+    label: "Pro",
+    title: "Formations Pro",
+    description:
+      "Formations, ateliers et webinaires pour les professionnels de santé souhaitant développer leur expertise.",
+    price: "Sur devis",
+    href: "/formations",
+    cta: "En savoir plus",
+  },
+];
+
+const BIO_STATS = [
   { value: "20+", label: "ans d'expérience" },
   { value: "5 000+", label: "consultations" },
   { value: "3", label: "livres publiés" },
   { value: "IBCLC", label: "certifiée" },
-  { value: "Formatrice", label: "agréée" },
-  { value: "Conférences", label: "internationales" },
 ];
 
 type HomePageProps = {
@@ -36,7 +79,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
 
   const supabase = await createClient();
 
-  const [formationsRes, blogRes] = await Promise.all([
+  const [formationsRes, blogRes, consultantsRes] = await Promise.all([
     supabase
       .from("formations")
       .select(
@@ -55,6 +98,15 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .limit(3),
+    supabase
+      .from("consultants")
+      .select(
+        `id, slug, bio, specialties,
+        profiles!consultants_id_fkey (first_name, last_name, avatar_url)`
+      )
+      .eq("is_active", true)
+      .order("created_at", { ascending: true })
+      .limit(3),
   ]);
 
   const allFormations = formationsRes.data ?? [];
@@ -65,48 +117,58 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
     (f) => f.slug !== "pack-essentiel-allaitement"
   );
   const blogPosts = blogRes.data ?? [];
+  const consultants = consultantsRes.data ?? [];
 
   return (
     <>
       <AuthRedirectHandler />
 
-      {/* ─── HERO — Plein écran avec image de fond et texte en overlay ─── */}
+      {/* ─── HERO ─── */}
       <section
         className="relative min-h-[calc(100vh-4rem)] w-full overflow-hidden"
         aria-label="Hero — Accueil"
       >
-        {/* Image de fond plein écran */}
+        {/* Background image */}
         <div className="absolute inset-0">
           <Image
             src="/fond_hero_homepage.jpg"
             alt=""
             fill
-            className="object-cover"
+            className="object-cover object-center"
             priority
             sizes="100vw"
           />
         </div>
-        {/* Overlay pour lisibilité du texte (dégradé gauche → droite) */}
+        {/* Gradient overlay — left heavy, fades right */}
         <div
-          className="absolute inset-0 bg-linear-to-r from-primary-green/90 via-primary-green/50 to-transparent"
+          className="absolute inset-0 bg-linear-to-r from-primary-green/95 via-primary-green/65 to-primary-green/15"
           aria-hidden
         />
-        {/* Contenu hero */}
+
+        {/* Hero content */}
         <div className="relative z-10 flex min-h-[calc(100vh-4rem)] flex-col justify-center px-5 py-24 sm:px-8 lg:px-16">
           <div className="mx-auto w-full max-w-7xl">
-            <p className="mb-4 flex items-center gap-2 text-sm font-medium uppercase tracking-widest text-white/90 sm:text-base">
-              <span className="h-2 w-2 rounded-full bg-primary-red" aria-hidden />
-              Consultante en lactation IBCLC
-            </p>
-            <h1 className="font-serif text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-7xl">
+            {/* Pill badge */}
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-sm">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary-red" aria-hidden />
+              <p className="font-sans text-xs font-medium uppercase tracking-widest text-white/90">
+                Consultante en lactation IBCLC
+              </p>
+            </div>
+
+            <h1 className="font-serif text-5xl font-bold leading-tight text-white sm:text-6xl lg:text-7xl">
               L&apos;allaitement,
               <br />
-              <span className="italic">autrement.</span>
+              <em className="font-serif italic text-background-beige">
+                autrement.
+              </em>
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/95 sm:text-xl">
-              Consultante IBCLC, auteure et formatrice. 20+ ans
-              d&apos;expertise au service de votre allaitement.
+
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/85 sm:text-xl">
+              Consultante IBCLC, auteure et formatrice.
+              20+ ans d&apos;expertise au service de votre allaitement.
             </p>
+
             <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
               <Button
                 asChild
@@ -127,45 +189,123 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                 <Link href="/reserver">Prendre rendez-vous</Link>
               </Button>
             </div>
-            {/* Indicateur de scroll */}
+
+            {/* Floating trust card — desktop only */}
             <div
-              className="absolute bottom-6 left-1/2 -translate-x-1/2 lg:bottom-8"
+              className="absolute bottom-12 right-8 hidden items-center gap-5 rounded-2xl border border-white/15 bg-primary-green/80 px-6 py-4 backdrop-blur-sm lg:flex"
               aria-hidden
             >
-              <span className="flex h-9 w-5 items-start justify-center rounded-full border-2 border-white/60">
-                <span className="mt-1 h-2 w-2 rounded-full bg-white/70 animate-bounce" />
-              </span>
+              {[
+                { value: "20+", label: "ans d'exp." },
+                { value: "5k+", label: "consultations" },
+                { value: "IBCLC", label: "certifiée" },
+              ].map((item, i) => (
+                <div key={item.label} className="flex items-center gap-5">
+                  {i > 0 && <div className="h-8 w-px bg-background-beige/20" />}
+                  <div className="text-center">
+                    <p className="font-serif text-xl font-bold text-background-beige">
+                      {item.value}
+                    </p>
+                    <p className="font-sans text-[10px] uppercase tracking-wider text-background-beige/55">
+                      {item.label}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
+          </div>
+
+          {/* Scroll indicator */}
+          <div
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 lg:bottom-8"
+            aria-hidden
+          >
+            <span className="flex h-9 w-5 items-start justify-center rounded-full border-2 border-white/40">
+              <span className="mt-1 h-2 w-2 animate-bounce rounded-full bg-white/60" />
+            </span>
           </div>
         </div>
       </section>
 
-      {/* ─── TRUST BAR — Chiffres clés ─── */}
-      <section className="bg-primary-green px-5 py-12 sm:px-8 lg:px-16 lg:py-16">
+      {/* ─── SERVICES — Comment puis-je vous aider ? ─── */}
+      <section className="section-padding">
         <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-6">
-            {TRUST_STATS.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="font-serif text-3xl font-bold text-background-beige lg:text-4xl">
-                  {stat.value}
-                </p>
-                <p className="mt-1 font-sans text-xs font-medium uppercase tracking-widest text-background-beige/60">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
+          <ScrollReveal>
+            <div className="text-center">
+              <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
+                Services
+              </p>
+              <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-5xl">
+                Un accompagnement{" "}
+                <em className="font-serif italic">sur mesure</em>
+              </h2>
+              <p className="mx-auto mt-4 max-w-xl text-primary-green/70 lg:text-lg">
+                Chaque parcours d&apos;allaitement est unique. Choisissez la
+                formule qui correspond le mieux à vos besoins.
+              </p>
+            </div>
+          </ScrollReveal>
+
+          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {SERVICES.map((service, i) => {
+              const Icon = service.icon;
+              return (
+                <ScrollReveal key={service.title} delay={i * 80}>
+                  <div className="group flex h-full flex-col border border-border bg-background-beige p-7 transition-shadow hover:shadow-md">
+                    {/* Icon */}
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-red/10">
+                      <Icon className="h-5 w-5 text-primary-red" aria-hidden />
+                    </div>
+
+                    {/* Label */}
+                    <p className="mt-5 font-sans text-xs font-medium uppercase tracking-widest text-primary-green/40">
+                      {service.label}
+                    </p>
+
+                    {/* Title */}
+                    <h3 className="mt-1 font-serif text-lg font-semibold text-primary-green">
+                      {service.title}
+                    </h3>
+
+                    {/* Description */}
+                    <p className="mt-3 flex-1 text-sm leading-relaxed text-primary-green/70">
+                      {service.description}
+                    </p>
+
+                    {/* Price */}
+                    {service.price && (
+                      <p className="mt-5 font-serif text-2xl font-bold text-primary-green">
+                        {service.price}
+                      </p>
+                    )}
+
+                    {/* CTA link */}
+                    <Link
+                      href={service.href}
+                      className="mt-4 flex items-center gap-1 text-sm font-medium text-primary-red transition-colors hover:text-primary-red-dark"
+                    >
+                      {service.cta}
+                      <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" />
+                    </Link>
+                  </div>
+                </ScrollReveal>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* ─── ACCOMPAGNEMENTS EN LIGNE ─── */}
       {allFormations.length > 0 && (
-        <section className="section-padding">
+        <section className="bg-background-beige-dark section-padding">
           <div className="mx-auto max-w-7xl">
             <ScrollReveal>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <h2 className="font-serif text-3xl font-bold text-primary-green lg:text-5xl">
+                  <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
+                    Formations
+                  </p>
+                  <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-5xl">
                     Accompagnements
                     <br className="hidden sm:block" /> en ligne
                   </h2>
@@ -183,7 +323,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
               </div>
             </ScrollReveal>
 
-            {/* Hero card — Pack L'essentiel */}
+            {/* Featured accompagnement */}
             {featuredFormation && (
               <ScrollReveal>
                 <div className="mt-12">
@@ -199,13 +339,11 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
               </ScrollReveal>
             )}
 
-            {/* Other accompagnements — horizontal carousel */}
+            {/* Carousel */}
             {otherFormations.length > 0 && (
               <div className="mt-10">
-                <h3 className="mb-6 font-sans text-xs font-medium uppercase tracking-widest text-primary-green/40">
-                  Tous les accompagnements
-                </h3>
                 <AccompagnementsCarousel
+                  label="Tous les accompagnements"
                   formations={
                     otherFormations as unknown as Parameters<
                       typeof AccompagnementsCarousel
@@ -226,12 +364,92 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
         </section>
       )}
 
+      {/* ─── PORTRAIT / BIO ─── */}
+      <section className="section-padding overflow-hidden">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+            {/* Photo — left on desktop */}
+            <ScrollReveal>
+              <div className="relative">
+                <div className="relative aspect-3/4 overflow-hidden">
+                  <Image
+                    src="/en_consultation.jpg"
+                    alt="Carole Hervé, consultante IBCLC"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                {/* Floating IBCLC badge */}
+                <div className="absolute bottom-6 right-6 flex items-center gap-2 rounded-full bg-primary-green px-5 py-2.5 shadow-lg">
+                  <span className="font-serif text-sm font-bold text-background-beige">
+                    IBCLC
+                  </span>
+                  <span className="text-background-beige/40">·</span>
+                  <span className="font-sans text-xs text-background-beige/75">
+                    Certifiée internationale
+                  </span>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* Text — right on desktop */}
+            <ScrollReveal delay={150}>
+              <div>
+                <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
+                  À propos
+                </p>
+                <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-5xl">
+                  Plus de 20 ans
+                  <br />à vos côtés
+                </h2>
+                <blockquote className="mt-6 border-l-2 border-primary-red/30 pl-5 font-serif text-lg italic leading-relaxed text-primary-green/80">
+                  &ldquo;Chaque parcours d&apos;allaitement est unique — je suis là pour vous accompagner avec bienveillance et rigueur scientifique.&rdquo;
+                </blockquote>
+                <p className="mt-5 leading-relaxed text-primary-green/70 lg:text-lg">
+                  Consultante IBCLC depuis plus de 20 ans, Carole Hervé
+                  accompagne les familles dans leur allaitement. Auteure de 3
+                  ouvrages de référence, formatrice et conférencière
+                  internationale.
+                </p>
+
+                {/* Stats */}
+                <div className="mt-8 grid grid-cols-2 gap-4 xl:grid-cols-4">
+                  {BIO_STATS.map((stat) => (
+                    <div
+                      key={stat.label}
+                      className="border-t-2 border-primary-red/20 pt-3"
+                    >
+                      <p className="font-serif text-2xl font-bold text-primary-green">
+                        {stat.value}
+                      </p>
+                      <p className="mt-0.5 font-sans text-xs text-primary-green/50">
+                        {stat.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <Button asChild variant="ghost" className="-ml-3 mt-8">
+                  <Link href="/a-propos">
+                    En savoir plus
+                    <ArrowRight className="ml-1 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </ScrollReveal>
+          </div>
+        </div>
+      </section>
+
       {/* ─── TÉMOIGNAGES ─── */}
       <section className="bg-background-beige-dark section-padding">
         <div className="mx-auto max-w-6xl">
           <ScrollReveal>
             <div className="text-center">
-              <h2 className="font-serif text-3xl font-bold text-primary-green lg:text-5xl">
+              <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
+                Témoignages
+              </p>
+              <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-5xl">
                 Et la parentalité devient plus douce...
               </h2>
               <p className="mt-4 text-primary-green/60">
@@ -243,45 +461,101 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
         </div>
       </section>
 
-      {/* ─── EXPERTISE / À PROPOS ─── */}
-      <section className="section-padding">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          {/* Text side */}
-          <ScrollReveal>
-            <div>
-              <h2 className="font-serif text-3xl font-bold text-primary-green lg:text-5xl">
-                Une expertise
-                <br />
-                reconnue.
-              </h2>
-              <p className="mt-6 text-lg leading-relaxed text-primary-green/80 lg:text-xl">
-                Consultante IBCLC depuis plus de 20 ans, Carole Hervé
-                accompagne les familles dans leur allaitement avec bienveillance
-                et rigueur scientifique. Auteure de 3 ouvrages de référence,
-                formatrice et conférencière internationale.
-              </p>
-              <Button asChild variant="ghost" className="mt-8">
-                <Link href="/a-propos">
-                  En savoir plus
-                  <ArrowRight className="ml-1 h-4 w-4" />
+      {/* ─── CONSULTANTES — Teaser ─── */}
+      {consultants.length > 0 && (
+        <section className="section-padding">
+          <div className="mx-auto max-w-7xl">
+            <ScrollReveal>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
+                    Notre équipe
+                  </p>
+                  <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-5xl">
+                    Des consultantes
+                    <br />à votre écoute
+                  </h2>
+                  <p className="mt-4 max-w-lg text-primary-green/70 lg:text-lg">
+                    Des professionnelles certifiées pour un accompagnement humain et bienveillant.
+                  </p>
+                </div>
+                <Button asChild variant="ghost" className="hidden sm:flex">
+                  <Link href="/consultantes">
+                    Voir toutes les consultantes
+                    <ArrowRight className="ml-1 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </ScrollReveal>
+
+            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {consultants.map((consultant, i) => {
+                const profile = consultant.profiles as unknown as {
+                  first_name: string | null;
+                  last_name: string | null;
+                  avatar_url: string | null;
+                } | null;
+                const fullName = profile
+                  ? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
+                  : "Consultante";
+                const initials = profile
+                  ? `${(profile.first_name ?? "")[0] ?? ""}${(profile.last_name ?? "")[0] ?? ""}`
+                  : "C";
+
+                return (
+                  <ScrollReveal key={consultant.id} delay={i * 100}>
+                    <Link
+                      href={`/consultantes/${consultant.slug}`}
+                      className="group block border border-border bg-background-beige p-6 transition-shadow hover:shadow-md"
+                    >
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-16 w-16 shrink-0">
+                          <AvatarImage
+                            src={profile?.avatar_url ?? undefined}
+                            alt={fullName}
+                          />
+                          <AvatarFallback className="bg-primary-red/10 font-serif text-lg font-semibold text-primary-red">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-serif text-lg font-semibold text-primary-green transition-colors group-hover:text-primary-red">
+                            {fullName}
+                          </h3>
+                          {(consultant.specialties as string[]).length > 0 && (
+                            <p className="mt-1 text-xs text-primary-green/50">
+                              {(consultant.specialties as string[])
+                                .slice(0, 2)
+                                .join(" · ")}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {consultant.bio && (
+                        <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-primary-green/70">
+                          {consultant.bio}
+                        </p>
+                      )}
+                      <p className="mt-4 flex items-center gap-1 text-sm font-medium text-primary-red">
+                        Voir le profil
+                        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" />
+                      </p>
+                    </Link>
+                  </ScrollReveal>
+                );
+              })}
+            </div>
+
+            <div className="mt-8 text-center sm:hidden">
+              <Button asChild variant="outline">
+                <Link href="/consultantes">
+                  Voir toutes les consultantes
                 </Link>
               </Button>
             </div>
-          </ScrollReveal>
-
-          {/* Photo side */}
-          <ScrollReveal delay={150}>
-            <div className="relative aspect-4/3 overflow-hidden">
-              <Image
-                src="/en_consultation.jpg"
-                alt="Carole Hervé en consultation d'allaitement"
-                fill
-                className="object-cover"
-              />
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       {/* ─── BLOG / LE JOURNAL ─── */}
       {blogPosts.length > 0 && (
@@ -290,7 +564,10 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
             <ScrollReveal>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <h2 className="font-serif text-3xl font-bold text-primary-green lg:text-5xl">
+                  <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
+                    Articles & Ressources
+                  </p>
+                  <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-5xl">
                     Le Journal
                   </h2>
                   <p className="mt-4 text-primary-green/70 lg:text-lg">
@@ -332,7 +609,13 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                   <div className="mt-4">
                     {blogPosts[0].blog_categories && (
                       <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
-                        {(blogPosts[0].blog_categories as unknown as { name: string }).name}
+                        {
+                          (
+                            blogPosts[0].blog_categories as unknown as {
+                              name: string;
+                            }
+                          ).name
+                        }
                       </p>
                     )}
                     <h3 className="mt-2 font-serif text-xl font-semibold text-primary-green transition-colors group-hover:text-primary-red lg:text-2xl">
@@ -380,7 +663,13 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                       <div className="flex flex-col justify-center">
                         {post.blog_categories && (
                           <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
-                            {(post.blog_categories as unknown as { name: string }).name}
+                            {
+                              (
+                                post.blog_categories as unknown as {
+                                  name: string;
+                                }
+                              ).name
+                            }
                           </p>
                         )}
                         <h3 className="mt-1 font-serif text-lg font-semibold text-primary-green transition-colors group-hover:text-primary-red">
@@ -408,11 +697,14 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
         </section>
       )}
 
-      {/* ─── FORMATIONS PRO — Teaser B2B ─── */}
+      {/* ─── FORMATIONS PRO ─── */}
       <section className="bg-primary-green section-padding">
         <div className="mx-auto max-w-4xl text-center">
           <ScrollReveal>
-            <h2 className="font-serif text-3xl font-bold text-background-beige lg:text-5xl">
+            <p className="font-sans text-xs font-medium uppercase tracking-widest text-background-beige/40">
+              Professionnels de santé
+            </p>
+            <h2 className="mt-3 font-serif text-3xl font-bold text-background-beige lg:text-5xl">
               Vous êtes
               <br />
               professionnel de santé ?
@@ -436,10 +728,13 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       </section>
 
       {/* ─── NEWSLETTER ─── */}
-      <section className="bg-background-beige-dark section-padding">
+      <section className="section-padding">
         <div className="mx-auto max-w-2xl text-center">
           <ScrollReveal>
-            <h2 className="font-serif text-3xl font-bold text-primary-green lg:text-5xl">
+            <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
+              Newsletter
+            </p>
+            <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-5xl">
               Restez informée
             </h2>
             <p className="mt-4 text-primary-green/70 lg:text-lg">
@@ -451,25 +746,36 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
         </div>
       </section>
 
-      {/* ─── CTA FINAL ─── */}
-      <section className="section-padding">
+      {/* ─── CTA FINAL — Dark banner ─── */}
+      <section className="bg-primary-green section-padding">
         <div className="mx-auto max-w-4xl text-center">
           <ScrollReveal>
-            <h2 className="font-serif text-3xl font-bold text-primary-green lg:text-5xl">
-              Prête à commencer ?
+            <h2 className="font-serif text-3xl font-bold text-background-beige lg:text-5xl">
+              Chaque allaitement{" "}
+              <em className="italic">mérite</em>{" "}
+              d&apos;être accompagné.
             </h2>
+            <p className="mx-auto mt-6 max-w-xl text-lg text-background-beige/70">
+              Prenez rendez-vous pour une consultation personnalisée, ou
+              explorez nos formations à votre rythme.
+            </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Button
                 asChild
                 size="lg"
                 className="bg-primary-red px-8 hover:bg-primary-red-dark"
               >
-                <Link href="/accompagnements">
-                  Découvrir les accompagnements
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
                 <Link href="/reserver">Prendre rendez-vous</Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-2 border-background-beige/30 bg-transparent text-background-beige hover:bg-background-beige/10 hover:text-background-beige"
+              >
+                <Link href="/accompagnements">
+                  Découvrir les formations
+                </Link>
               </Button>
             </div>
           </ScrollReveal>
