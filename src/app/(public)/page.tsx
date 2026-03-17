@@ -1,8 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AuthRedirectHandler } from "@/components/auth/auth-redirect-handler";
 import { Button } from "@/components/ui/button";
 import { FormationCard } from "@/components/formations/formation-card";
 import { AccompagnementsCarousel } from "./_components/accompagnements-carousel";
@@ -65,18 +63,11 @@ const BIO_STATS = [
 ];
 
 type HomePageProps = {
-  searchParams: Promise<{ code?: string; next?: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 };
 
 const HomePage = async ({ searchParams }: HomePageProps) => {
-  const params = await searchParams;
-  if (params?.code) {
-    const next = params.next ?? "/espace-client";
-    redirect(
-      `/api/auth/callback?code=${encodeURIComponent(params.code)}&next=${encodeURIComponent(next)}`
-    );
-  }
-
+  await searchParams; // consume the promise
   const supabase = await createClient();
 
   const [formationsRes, blogRes, consultantsRes] = await Promise.all([
@@ -121,7 +112,6 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
 
   return (
     <>
-      <AuthRedirectHandler />
 
       {/* ─── HERO ─── */}
       <section
