@@ -129,7 +129,7 @@ const ConsultantesPage = async ({
                   <option value="active">Actives</option>
                   <option value="inactive">Inactives</option>
                 </select>
-                <Button type="submit" variant="outline" size="sm">
+                <Button type="submit" variant="outline">
                   Filtrer
                 </Button>
               </form>

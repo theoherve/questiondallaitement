@@ -164,7 +164,7 @@ const PaiementsPage = async ({
             Filtres
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Button type="submit" form="paiements-filters-form" variant="outline" size="sm">
+            <Button type="submit" form="paiements-filters-form" variant="outline">
               Filtrer
             </Button>
             <Button variant="default" size="sm" asChild>
