@@ -1,218 +1,264 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  ExternalLink,
-  Tv,
-  Mic,
   Newspaper,
-  Presentation,
+  Headphones,
+  Info,
+  BookOpen,
+  ArrowRight,
+  ShoppingBag,
+  ExternalLink,
 } from "lucide-react";
+import { PressSection } from "./_components/press-section";
+import { MediaSection } from "./_components/media-section";
+import { PRESS_ARTICLES } from "./_data/press-articles";
+import { PODCASTS, VIDEOS, PRESS_HASHTAGS } from "./_data/media-items";
 
 export const metadata: Metadata = {
   title: "Médias & Conférences",
   description:
-    "Retrouvez les apparitions médias, podcasts, articles de presse et conférences de Carole Hervé.",
+    "Retrouvez les interventions de Carole Hervé dans la presse, podcasts et émissions TV. Plus de 100 contributions médias sur l'allaitement et la lactation.",
 };
 
-type MediaType = "tv" | "podcast" | "press" | "conference";
-
-type MediaItem = {
-  type: MediaType;
-  title: string;
-  outlet: string;
-  date: string;
-  description: string;
-  href: string | null;
-};
-
-const MEDIA_TYPE_CONFIG: Record<
-  MediaType,
-  { label: string; icon: typeof Tv; color: string }
-> = {
-  tv: {
-    label: "TV",
-    icon: Tv,
-    color: "bg-blue-100 text-blue-800",
-  },
-  podcast: {
-    label: "Podcast",
-    icon: Mic,
-    color: "bg-purple-100 text-purple-800",
-  },
-  press: {
-    label: "Presse",
-    icon: Newspaper,
-    color: "bg-amber-100 text-amber-800",
-  },
-  conference: {
-    label: "Conférence",
-    icon: Presentation,
-    color: "bg-emerald-100 text-emerald-800",
-  },
-};
-
-const MEDIA_ITEMS: MediaItem[] = [
-  {
-    type: "tv",
-    title: "L'allaitement maternel : les clés pour réussir",
-    outlet: "France 5 — La Maison des Maternelles",
-    date: "2024-03-15",
-    description:
-      "Intervention sur les premiers jours d'allaitement et les erreurs courantes à éviter.",
-    href: "#",
-  },
-  {
-    type: "podcast",
-    title: "Allaiter sans pression",
-    outlet: "Bliss Stories — Podcast",
-    date: "2024-01-22",
-    description:
-      "Échange sur l'accompagnement bienveillant de l'allaitement et la place du co-parent.",
-    href: "#",
-  },
-  {
-    type: "press",
-    title: "Allaitement : les nouvelles recommandations décryptées",
-    outlet: "Le Monde — Supplément Santé",
-    date: "2023-11-10",
-    description:
-      "Article citant l'expertise de Carole Hervé sur les recommandations OMS et leur application concrète.",
-    href: "#",
-  },
-  {
-    type: "conference",
-    title: "Allaitement et retour au travail : accompagner les mères",
-    outlet: "Congrès IBCLC Europe — Bruxelles",
-    date: "2023-09-05",
-    description:
-      "Conférence sur les stratégies d'accompagnement des mères allaitantes lors de la reprise professionnelle.",
-    href: null,
-  },
-  {
-    type: "podcast",
-    title: "Les mythes de l'allaitement",
-    outlet: "Parents avant tout — Podcast",
-    date: "2023-06-18",
-    description:
-      "Déconstruction des idées reçues autour de l'allaitement avec une approche scientifique et accessible.",
-    href: "#",
-  },
-  {
-    type: "tv",
-    title: "Semaine mondiale de l'allaitement",
-    outlet: "BFM TV",
-    date: "2023-10-02",
-    description:
-      "Plateau lors de la semaine mondiale de l'allaitement sur les enjeux de santé publique.",
-    href: "#",
-  },
-  {
-    type: "press",
-    title: "Portrait : Carole Hervé, 20 ans au service de l'allaitement",
-    outlet: "Marie Claire",
-    date: "2023-05-14",
-    description:
-      "Portrait de carrière retraçant le parcours de Carole Hervé, de consultante IBCLC à auteure de référence.",
-    href: "#",
-  },
-  {
-    type: "conference",
-    title: "Lactation et santé maternelle : données récentes",
-    outlet: "Journées Nationales de la Sage-Femme — Paris",
-    date: "2024-02-20",
-    description:
-      "Présentation des dernières études sur les bénéfices de l'allaitement pour la santé maternelle à long terme.",
-    href: null,
-  },
-];
-
-const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-};
+/* ─── Page ─── */
 
 const MediasPage = () => {
+  const totalMedia = PRESS_ARTICLES.length + PODCASTS.length + VIDEOS.length;
+
   return (
     <>
-      {/* Hero */}
-      <section className="section-padding">
-        <div className="mx-auto max-w-7xl">
+      {/* ─── HERO ─── */}
+      <section className="relative overflow-hidden bg-background-beige-dark">
+        <div className="section-padding">
+          <div className="mx-auto max-w-7xl">
+            <ScrollReveal>
+              <div className="max-w-3xl">
+                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary-red/20 bg-primary-red/5 px-4 py-1.5">
+                  <Newspaper
+                    className="h-3.5 w-3.5 text-primary-red"
+                    aria-hidden
+                  />
+                  <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
+                    Médias & Conférences
+                  </p>
+                </div>
+
+                <h1 className="font-serif text-4xl font-bold leading-tight text-primary-green sm:text-5xl lg:text-6xl">
+                  Une voix de référence sur{" "}
+                  <em className="font-serif italic">l&apos;allaitement</em>
+                </h1>
+
+                <p className="mt-6 max-w-2xl text-lg leading-relaxed text-primary-green/70 lg:text-xl">
+                  Presse, podcasts, émissions TV et conférences — Carole Hervé
+                  partage son expertise dans les médias français de référence
+                  en parentalité et santé pour informer, rassurer et
+                  accompagner les familles.
+                </p>
+
+                {/* Stats */}
+                <div className="mt-8 flex flex-wrap gap-8 border-t border-primary-green/10 pt-6">
+                  <div>
+                    <p className="font-serif text-3xl font-bold text-primary-green">
+                      {PRESS_ARTICLES.length}+
+                    </p>
+                    <p className="font-sans text-xs text-primary-green/50">
+                      articles de presse
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-serif text-3xl font-bold text-primary-green">
+                      {PODCASTS.length}
+                    </p>
+                    <p className="font-sans text-xs text-primary-green/50">
+                      podcasts
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-serif text-3xl font-bold text-primary-green">
+                      {VIDEOS.length}
+                    </p>
+                    <p className="font-sans text-xs text-primary-green/50">
+                      vidéos & TV
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-serif text-3xl font-bold text-primary-green">
+                      {totalMedia}+
+                    </p>
+                    <p className="font-sans text-xs text-primary-green/50">
+                      interventions média
+                    </p>
+                  </div>
+                </div>
+
+                {/* Hashtags */}
+                <div className="mt-6 flex flex-wrap gap-x-3 gap-y-1">
+                  {PRESS_HASHTAGS.map((tag) => (
+                    <span
+                      key={tag}
+                      className="font-sans text-xs text-primary-red/50"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </ScrollReveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── REVUE DE PRESSE ─── */}
+      <section className="scroll-mt-20 section-padding">
+        <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-16">
           <ScrollReveal>
-            <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
-              Médias & Conférences
-            </p>
-            <h1 className="mt-4 font-serif text-4xl font-bold text-primary-green sm:text-5xl lg:text-6xl">
-              Dans les médias
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg text-primary-green/70 lg:text-xl">
-              Télévision, podcasts, presse et conférences — retrouvez les
-              interventions de Carole Hervé sur l&apos;allaitement et la
-              lactation.
-            </p>
+            <div className="mb-10">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary-red/20 bg-primary-red/5 px-4 py-1.5">
+                <Newspaper
+                  className="h-3.5 w-3.5 text-primary-red"
+                  aria-hidden
+                />
+                <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
+                  Revue de presse
+                </p>
+              </div>
+              <h2 className="font-serif text-3xl font-bold text-primary-green lg:text-4xl">
+                Dans la presse
+              </h2>
+              <p className="mt-4 max-w-2xl text-primary-green/70 lg:text-lg">
+                Plus de {PRESS_ARTICLES.length} articles dans les médias
+                français de référence : Doctissimo, Parents.fr, Magic Maman,
+                Journal des Femmes, Santé Magazine, Elle, aufeminin...
+              </p>
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal delay={100}>
+            <PressSection />
           </ScrollReveal>
         </div>
       </section>
 
-      {/* Media grid */}
-      <section className="pb-24 lg:pb-32">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-16">
-          <div className="grid gap-6 sm:grid-cols-2">
-            {MEDIA_ITEMS.map((item, index) => {
-              const config = MEDIA_TYPE_CONFIG[item.type];
-              const Icon = config.icon;
+      {/* ─── PODCASTS & VIDÉOS ─── */}
+      <section className="scroll-mt-20 bg-primary-green section-padding">
+        <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-16">
+          <ScrollReveal>
+            <div className="mb-10">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-background-beige/15 bg-background-beige/5 px-4 py-1.5">
+                <Headphones
+                  className="h-3.5 w-3.5 text-background-beige/60"
+                  aria-hidden
+                />
+                <p className="font-sans text-xs font-medium uppercase tracking-widest text-background-beige/60">
+                  Podcasts & Vidéos
+                </p>
+              </div>
+              <h2 className="font-serif text-3xl font-bold text-background-beige lg:text-4xl">
+                Écouter & regarder
+              </h2>
+              <p className="mt-4 max-w-2xl text-background-beige/60 lg:text-lg">
+                Retrouvez Carole Hervé dans des podcasts, émissions TV et
+                vidéos sur l&apos;allaitement : La Maison des Maternelles,
+                Europe 1, France Bleu, Milkshaker, et bien d&apos;autres.
+              </p>
+            </div>
+          </ScrollReveal>
 
-              return (
-                <ScrollReveal key={`${item.title}-${index}`} delay={index * 50}>
-                  <article className="group flex h-full flex-col border border-border p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
-                    <div className="flex items-start justify-between gap-4">
-                      <Badge className={`${config.color} gap-1`}>
-                        <Icon className="h-3 w-3" />
-                        {config.label}
-                      </Badge>
-                      <time className="shrink-0 text-xs text-primary-green/40">
-                        {formatDate(item.date)}
-                      </time>
-                    </div>
+          <ScrollReveal delay={100}>
+            <MediaSection />
+          </ScrollReveal>
+        </div>
+      </section>
 
-                    <h2 className="mt-4 font-serif text-lg font-semibold text-primary-green lg:text-xl">
-                      {item.title}
-                    </h2>
-                    <p className="mt-1 text-sm font-medium text-primary-red">
-                      {item.outlet}
+      {/* ─── DISCLAIMER ─── */}
+      <section className="scroll-mt-20 section-padding">
+        <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-16">
+          <ScrollReveal>
+            <div className="mx-auto max-w-3xl border border-primary-green/10 bg-primary-green/3 p-8 sm:p-10">
+              <div className="flex items-start gap-4">
+                <Info
+                  className="mt-0.5 h-5 w-5 shrink-0 text-primary-green/40"
+                  aria-hidden
+                />
+                <div>
+                  <h3 className="font-serif text-lg font-semibold text-primary-green">
+                    Précisions
+                  </h3>
+                  <div className="mt-4 space-y-4 text-sm leading-relaxed text-primary-green/65">
+                    <p>
+                      Je ne reçois aucune forme de rémunération pour mes
+                      contributions à des interviews ou des articles de presse.
                     </p>
-                    <p className="mt-3 flex-1 text-sm text-primary-green/70">
-                      {item.description}
+                    <p>
+                      À ce titre, je ne suis en aucun cas responsable de la
+                      ligne éditoriale du magazine ni des choix concernant les
+                      annonceurs.
                     </p>
+                    <p>
+                      Je regrette profondément que certains acteurs ne
+                      respectent pas le Code de l&apos;OMS relatif à la
+                      commercialisation des substituts du lait maternel, et je
+                      maintiens fermement mon engagement à défendre
+                      l&apos;allaitement maternel conformément à ces
+                      recommandations.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
 
-                    {item.href && (
-                      <div className="mt-6">
-                        <Button
-                          asChild
-                          variant="ghost"
-                          size="sm"
-                          className="gap-2 px-0"
-                        >
-                          <a
-                            href={item.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Voir
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
-                        </Button>
-                      </div>
-                    )}
-                  </article>
-                </ScrollReveal>
-              );
-            })}
-          </div>
+      {/* ─── CTA LIVRES ─── */}
+      <section className="bg-primary-green section-padding">
+        <div className="mx-auto max-w-4xl text-center">
+          <ScrollReveal>
+            <BookOpen
+              className="mx-auto h-10 w-10 text-background-beige/30"
+              aria-hidden
+            />
+            <h2 className="mt-6 font-serif text-3xl font-bold text-background-beige lg:text-5xl">
+              Retrouvez cette expertise dans{" "}
+              <em className="italic">ses livres</em>
+            </h2>
+            <p className="mx-auto mt-6 max-w-xl text-lg text-background-beige/70">
+              3 ouvrages de référence sur l&apos;allaitement, disponibles dans
+              toutes les librairies et sur les principales plateformes en
+              ligne.
+            </p>
+            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+              <Button
+                asChild
+                size="lg"
+                className="bg-primary-red px-8 hover:bg-primary-red-dark"
+              >
+                <Link href="/livres">
+                  <BookOpen className="h-4 w-4" aria-hidden />
+                  Découvrir les livres
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-2 border-background-beige/30 bg-transparent text-background-beige hover:bg-background-beige/10 hover:text-background-beige"
+              >
+                <a
+                  href="https://www.amazon.fr/Lallaitement-pour-Nuls-grand-format/dp/2412089841"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ShoppingBag className="h-4 w-4" aria-hidden />
+                  Acheter sur Amazon
+                  <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                </a>
+              </Button>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
     </>
