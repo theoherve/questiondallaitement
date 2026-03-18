@@ -382,4 +382,6 @@ WHERE NOT EXISTS (
     WHERE e.name = v.name
   );
 -- 8. Detailed formation content (sections + blocks) generated from Wix export
-\ i./ supabase / seed_formations_content.sql
+\i ./supabase/seed_formations_content.sql
+-- 9. Blog posts (generated from wix-blog.json via scripts/generate-blog-seed.mjs)
+\i ./supabase/seed_blog.sql

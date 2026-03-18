@@ -199,7 +199,7 @@ const BlogPage = async ({ searchParams }: Props) => {
                       </div>
                     )}
                   </Link>
-                  <CardContent className="p-4">
+                  <CardContent>
                     {post.blog_categories && (
                       <Link href={`/blog?category=${post.blog_categories.slug}`}>
                         <Badge
