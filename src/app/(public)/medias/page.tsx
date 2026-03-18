@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { Button } from "@/components/ui/button";
@@ -33,79 +34,90 @@ const MediasPage = () => {
       <section className="relative overflow-hidden bg-background-beige-dark">
         <div className="section-padding">
           <div className="mx-auto max-w-7xl">
-            <ScrollReveal>
-              <div className="max-w-3xl">
-                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary-red/20 bg-primary-red/5 px-4 py-1.5">
-                  <Newspaper
-                    className="h-3.5 w-3.5 text-primary-red"
-                    aria-hidden
-                  />
-                  <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
-                    Médias & Conférences
+            <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+              {/* Text */}
+              <ScrollReveal>
+                <div>
+                  <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary-red/20 bg-primary-red/5 px-4 py-1.5">
+                    <Newspaper
+                      className="h-3.5 w-3.5 text-primary-red"
+                      aria-hidden
+                    />
+                    <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
+                      Médias & Conférences
+                    </p>
+                  </div>
+
+                  <h1 className="font-serif text-4xl font-bold leading-tight text-primary-green sm:text-5xl lg:text-6xl">
+                    Une voix de référence sur{" "}
+                    <em className="font-serif italic">l&apos;allaitement</em>
+                  </h1>
+
+                  <p className="mt-6 max-w-lg text-lg leading-relaxed text-primary-green/70 lg:text-xl">
+                    Presse, podcasts, émissions TV et conférences — Carole
+                    Hervé partage son expertise dans les médias français de
+                    référence en parentalité et santé pour informer, rassurer
+                    et accompagner les familles.
                   </p>
-                </div>
 
-                <h1 className="font-serif text-4xl font-bold leading-tight text-primary-green sm:text-5xl lg:text-6xl">
-                  Une voix de référence sur{" "}
-                  <em className="font-serif italic">l&apos;allaitement</em>
-                </h1>
+                  {/* Stats */}
+                  <div className="mt-8 flex flex-wrap gap-6 border-t border-primary-green/10 pt-6">
+                    <div>
+                      <p className="font-serif text-2xl font-bold text-primary-green">
+                        {PRESS_ARTICLES.length}+
+                      </p>
+                      <p className="font-sans text-xs text-primary-green/50">
+                        articles de presse
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-serif text-2xl font-bold text-primary-green">
+                        {PODCASTS.length}
+                      </p>
+                      <p className="font-sans text-xs text-primary-green/50">
+                        podcasts
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-serif text-2xl font-bold text-primary-green">
+                        {VIDEOS.length}
+                      </p>
+                      <p className="font-sans text-xs text-primary-green/50">
+                        vidéos & TV
+                      </p>
+                    </div>
+                  </div>
 
-                <p className="mt-6 max-w-2xl text-lg leading-relaxed text-primary-green/70 lg:text-xl">
-                  Presse, podcasts, émissions TV et conférences — Carole Hervé
-                  partage son expertise dans les médias français de référence
-                  en parentalité et santé pour informer, rassurer et
-                  accompagner les familles.
-                </p>
-
-                {/* Stats */}
-                <div className="mt-8 flex flex-wrap gap-8 border-t border-primary-green/10 pt-6">
-                  <div>
-                    <p className="font-serif text-3xl font-bold text-primary-green">
-                      {PRESS_ARTICLES.length}+
-                    </p>
-                    <p className="font-sans text-xs text-primary-green/50">
-                      articles de presse
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-serif text-3xl font-bold text-primary-green">
-                      {PODCASTS.length}
-                    </p>
-                    <p className="font-sans text-xs text-primary-green/50">
-                      podcasts
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-serif text-3xl font-bold text-primary-green">
-                      {VIDEOS.length}
-                    </p>
-                    <p className="font-sans text-xs text-primary-green/50">
-                      vidéos & TV
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-serif text-3xl font-bold text-primary-green">
-                      {totalMedia}+
-                    </p>
-                    <p className="font-sans text-xs text-primary-green/50">
-                      interventions média
-                    </p>
+                  {/* Hashtags */}
+                  <div className="mt-6 flex flex-wrap gap-x-3 gap-y-1">
+                    {PRESS_HASHTAGS.map((tag) => (
+                      <span
+                        key={tag}
+                        className="font-sans text-xs text-primary-red/50"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
                   </div>
                 </div>
+              </ScrollReveal>
 
-                {/* Hashtags */}
-                <div className="mt-6 flex flex-wrap gap-x-3 gap-y-1">
-                  {PRESS_HASHTAGS.map((tag) => (
-                    <span
-                      key={tag}
-                      className="font-sans text-xs text-primary-red/50"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
+              {/* Photo */}
+              <ScrollReveal delay={150}>
+                <div className="relative mx-auto max-w-sm lg:max-w-none">
+                  <div className="relative aspect-3/4 overflow-hidden shadow-2xl">
+                    <Image
+                      src="/livres/carole_presente_nuls.jpg"
+                      alt="Carole Hervé lors d'une intervention média"
+                      fill
+                      className="object-cover"
+                      priority
+                      sizes="(max-width: 1024px) 384px, 50vw"
+                    />
+                  </div>
                 </div>
-              </div>
-            </ScrollReveal>
+              </ScrollReveal>
+            </div>
           </div>
         </div>
       </section>
