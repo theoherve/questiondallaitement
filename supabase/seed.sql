@@ -219,73 +219,8 @@ WHERE NOT EXISTS (
     WHERE fs.formation_id = 'f0000001-0001-4000-8000-000000000001'::uuid
       AND fs.title = s.title
   );
--- 5. Events (formations pro — placeholder dates, online)
-INSERT INTO events (
-    consultant_id,
-    title,
-    slug,
-    description,
-    type,
-    starts_at,
-    ends_at,
-    location,
-    price_cents,
-    currency,
-    is_published
-  )
-SELECT c.id,
-  e.title,
-  e.slug,
-  e.description,
-  'online',
-  e.starts_at,
-  e.ends_at,
-  e.location,
-  0,
-  'eur',
-  true
-FROM consultants c
-  CROSS JOIN (
-    VALUES (
-        'Formation : le sommeil du tout petit et du jeune enfant',
-        'formation-sommeil-tout-petit',
-        'Formation professionnelle sur le sommeil du nourrisson et du jeune enfant.',
-        '2026-02-24 09:00:00+01'::timestamptz,
-        '2026-02-25 18:00:00+01'::timestamptz,
-        'Visio - Zoom'
-      ),
-      (
-        'EDBN - Allaitement : les indispensables',
-        'edbn-allaitement-indispensables',
-        'Formation École du Bien Naître - Les indispensables de l''allaitement.',
-        '2026-02-26 09:00:00+01'::timestamptz,
-        '2026-02-27 18:00:00+01'::timestamptz,
-        'Visio | Réduction MILKPOWER'
-      ),
-      (
-        'EDBN - Animer un atelier d''allaitement',
-        'edbn-animer-atelier-allaitement',
-        'Formation pour animer un atelier d''allaitement.',
-        '2026-03-06 09:00:00+01'::timestamptz,
-        '2026-03-06 18:00:00+01'::timestamptz,
-        'Visio | Réduction MILKPOWER'
-      )
-  ) AS e(
-    title,
-    slug,
-    description,
-    starts_at,
-    ends_at,
-    location
-  )
-WHERE c.slug = 'carole-herve' ON CONFLICT (slug) DO
-UPDATE
-SET title = EXCLUDED.title,
-  description = EXCLUDED.description,
-  starts_at = EXCLUDED.starts_at,
-  ends_at = EXCLUDED.ends_at,
-  location = EXCLUDED.location,
-  updated_at = now();
+-- 5. Events (formations pro — scraped from Wix)
+\i ./supabase/seed_formations_pro.sql
 -- 6. Platform settings (about, books, media_conferences)
 INSERT INTO platform_settings (key, value, updated_at)
 VALUES (
