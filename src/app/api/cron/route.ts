@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendBookingReminder } from "@/lib/emails/send";
+import { sendBookingReminder, sendBlogPostPublishedNotification } from "@/lib/emails/send";
 import { format, addDays, startOfDay, endOfDay, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { revalidatePath } from "next/cache";
@@ -35,6 +35,28 @@ export const GET = async (request: Request) => {
       revalidatePath("/blog");
       for (const post of scheduledPosts) {
         revalidatePath(`/blog/${post.slug}`);
+      }
+
+      // Notify admins
+      const { data: admins } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("role", "admin")
+        .not("email", "is", null);
+
+      if (admins && admins.length > 0) {
+        const { data: publishedDetails } = await supabase
+          .from("blog_posts")
+          .select("title")
+          .in("id", ids);
+
+        await sendBlogPostPublishedNotification(
+          admins.map((a) => a.email!),
+          {
+            post_titles: publishedDetails?.map((p) => p.title) ?? [],
+            post_count: scheduledPosts.length,
+          },
+        );
       }
     }
     results.blog_posts_published = publishError ? -1 : scheduledPosts.length;
