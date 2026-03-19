@@ -78,10 +78,12 @@ export const computeAvailableSlots = ({
     const dayAvails = availabilities.filter(
       (a) => a.day_of_week === dayOfWeek && a.is_active,
     );
-    rawWindows = dayAvails.map((a) => ({
-      start: parseTime(a.start_time, date),
-      end: parseTime(a.end_time, date),
-    }));
+    rawWindows = dayAvails
+      .map((a) => ({
+        start: parseTime(a.start_time, date),
+        end: parseTime(a.end_time, date),
+      }))
+      .sort((a, b) => a.start.getTime() - b.start.getTime());
   }
 
   if (rawWindows.length === 0) return [];

@@ -13,6 +13,14 @@ const requireAdmin = async () => {
   return user;
 };
 
+const slugify = (text: string): string =>
+  text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
 // ─── Categories ─────────────────────────────────────────────
 
 export const getCategories = async () => {
@@ -112,6 +120,7 @@ export const createBlogPost = async (
 
   const insertData: Record<string, unknown> = {
     ...parsed.data,
+    slug: slugify(parsed.data.slug),
     author_id: user.id,
     thumbnail_url: parsed.data.thumbnail_url || null,
     og_image_url: parsed.data.og_image_url || null,
@@ -164,6 +173,7 @@ export const updateBlogPost = async (
 
   const updateData: Record<string, unknown> = {
     ...parsed.data,
+    slug: slugify(parsed.data.slug),
     thumbnail_url: parsed.data.thumbnail_url || null,
     og_image_url: parsed.data.og_image_url || null,
     category_id: parsed.data.category_id || null,
@@ -191,10 +201,11 @@ export const updateBlogPost = async (
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 
+  const newSlug = slugify(parsed.data.slug);
   revalidatePath("/admin/blog");
   revalidatePath(`/admin/blog/${id}/edit`);
-  revalidatePath(`/blog/${parsed.data.slug}`);
-  if (currentPost?.slug && currentPost.slug !== parsed.data.slug) {
+  revalidatePath(`/blog/${newSlug}`);
+  if (currentPost?.slug && currentPost.slug !== newSlug) {
     revalidatePath(`/blog/${currentPost.slug}`);
   }
   revalidatePath("/blog");

@@ -222,7 +222,7 @@ const BlogPostPage = async ({ params }: Props) => {
       {post.tags && post.tags.length > 0 && (
         <div className="mt-8 pt-8 border-t">
           <div className="flex flex-wrap gap-2">
-            {post.tags.map((tag: string) => (
+            {[...new Set(post.tags)].map((tag: string) => (
               <Badge key={tag} variant="outline">
                 {tag}
               </Badge>

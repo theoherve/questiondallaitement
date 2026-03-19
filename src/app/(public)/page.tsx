@@ -12,49 +12,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 /* ─── Static data ─── */
 
-const SERVICES = [
-  {
-    icon: MapPin,
-    label: "Cabinet",
-    title: "Consultation en cabinet",
-    description:
-      "Un rendez-vous d'une heure à Paris pour un accompagnement personnalisé et adapté à votre situation.",
-    price: "85 €",
-    href: "/reserver",
-    cta: "Réserver un créneau",
-  },
-  {
-    icon: Video,
-    label: "En ligne",
-    title: "Téléconsultation",
-    description:
-      "La même qualité d'accompagnement depuis chez vous. Idéal quelle que soit votre localisation.",
-    price: "85 €",
-    href: "/reserver",
-    cta: "Réserver un créneau",
-  },
-  {
-    icon: BookOpen,
-    label: "Formation",
-    title: "Formations en ligne",
-    description:
-      "Des parcours complets pour vous accompagner à chaque étape de votre allaitement, à votre rythme.",
-    price: null,
-    href: "/accompagnements",
-    cta: "Découvrir",
-  },
-  {
-    icon: GraduationCap,
-    label: "Pro",
-    title: "Formations Pro",
-    description:
-      "Formations, ateliers et webinaires pour les professionnels de santé souhaitant développer leur expertise.",
-    price: "Sur devis",
-    href: "/formations",
-    cta: "En savoir plus",
-  },
-];
-
 const BIO_STATS = [
   { value: "20+", label: "ans d'expérience" },
   { value: "5 000+", label: "consultations" },
@@ -70,7 +27,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
   await searchParams; // consume the promise
   const supabase = await createClient();
 
-  const [formationsRes, blogRes, consultantsRes] = await Promise.all([
+  const [formationsRes, blogRes, consultantsRes, consultationTypesRes] = await Promise.all([
     supabase
       .from("formations")
       .select(
@@ -98,9 +55,91 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       .eq("is_active", true)
       .order("created_at", { ascending: true })
       .limit(3),
+    supabase
+      .from("consultation_types")
+      .select("title, description, price_cents, duration_minutes, available_locations")
+      .eq("is_active", true)
+      .order("price_cents", { ascending: true }),
   ]);
 
   const allFormations = formationsRes.data ?? [];
+  const consultationTypes = consultationTypesRes.data ?? [];
+
+  // Build price display helper
+  const formatPrice = (cents: number) => `${Math.round(cents / 100)} €`;
+
+  // Group consultation types by location type
+  const cabinetTypes = consultationTypes.filter(
+    (ct) => (ct.available_locations as string[])?.includes("cabinet")
+  );
+  const teleTypes = consultationTypes.filter(
+    (ct) => (ct.available_locations as string[])?.includes("teleconsultation")
+  );
+
+  // Get price range for a list of consultation types
+  const getPriceLabel = (types: typeof consultationTypes) => {
+    if (types.length === 0) return null;
+    const prices = types.map((t) => t.price_cents);
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    return min === max ? formatPrice(min) : `Dès ${formatPrice(min)}`;
+  };
+
+  // Formation price range
+  const formationPrices = allFormations
+    .map((f) => f.price_cents)
+    .filter((p): p is number => p != null && p > 0);
+  const formationPriceLabel =
+    formationPrices.length > 0
+      ? `Dès ${formatPrice(Math.min(...formationPrices))}`
+      : null;
+
+  const SERVICES = [
+    {
+      icon: MapPin,
+      label: "Cabinet",
+      title: cabinetTypes.length === 1 ? cabinetTypes[0].title : "Consultation en cabinet",
+      description:
+        cabinetTypes.length === 1 && cabinetTypes[0].description
+          ? cabinetTypes[0].description
+          : "Un rendez-vous à Paris pour un accompagnement personnalisé et adapté à votre situation.",
+      price: getPriceLabel(cabinetTypes),
+      href: "/reserver",
+      cta: "Réserver un créneau",
+    },
+    {
+      icon: Video,
+      label: "En ligne",
+      title: teleTypes.length === 1 ? teleTypes[0].title : "Téléconsultation",
+      description:
+        teleTypes.length === 1 && teleTypes[0].description
+          ? teleTypes[0].description
+          : "La même qualité d'accompagnement depuis chez vous. Idéal quelle que soit votre localisation.",
+      price: getPriceLabel(teleTypes),
+      href: "/reserver",
+      cta: "Réserver un créneau",
+    },
+    {
+      icon: BookOpen,
+      label: "Accompagnement en ligne",
+      title: "Formations en ligne",
+      description:
+        "Des parcours complets pour vous accompagner à chaque étape de votre allaitement, à votre rythme.",
+      price: formationPriceLabel,
+      href: "/accompagnements",
+      cta: "Découvrir",
+    },
+    {
+      icon: GraduationCap,
+      label: "Pro",
+      title: "Formations Pro",
+      description:
+        "Formations, ateliers et webinaires pour les professionnels de santé souhaitant développer leur expertise.",
+      price: "Sur devis",
+      href: "/formations",
+      cta: "En savoir plus",
+    },
+  ];
   const featuredFormation = allFormations.find(
     (f) => f.slug === "pack-essentiel-allaitement"
   );

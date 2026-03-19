@@ -177,11 +177,8 @@ const BlogPage = async ({ searchParams }: Props) => {
                 : null;
 
               return (
-                <Card
-                  key={post.id}
-                  className="overflow-hidden hover:shadow-lg transition-shadow"
-                >
-                  <Link href={`/blog/${post.slug}`}>
+                <Link key={post.id} href={`/blog/${post.slug}`} className="group">
+                  <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">
                     {post.thumbnail_url ? (
                       <div className="relative aspect-video">
                         <Image
@@ -198,60 +195,53 @@ const BlogPage = async ({ searchParams }: Props) => {
                         </span>
                       </div>
                     )}
-                  </Link>
-                  <CardContent>
-                    {post.blog_categories && (
-                      <Link href={`/blog?category=${post.blog_categories.slug}`}>
+                    <CardContent>
+                      {post.blog_categories && (
                         <Badge
                           variant="secondary"
-                          className="mb-2 text-xs hover:bg-primary-red/10"
+                          className="mb-2 text-xs"
                         >
                           {post.blog_categories.name}
                         </Badge>
-                      </Link>
-                    )}
-                    <Link href={`/blog/${post.slug}`}>
-                      <h2 className="font-serif text-lg font-semibold text-primary-green line-clamp-2 hover:text-primary-red transition-colors">
+                      )}
+                      <h2 className="font-serif text-lg font-semibold text-primary-green line-clamp-2 group-hover:text-primary-red transition-colors">
                         {post.title}
                       </h2>
-                    </Link>
-                    {post.excerpt && (
-                      <p className="mt-2 text-sm text-primary-green/70 line-clamp-2">
-                        {post.excerpt}
-                      </p>
-                    )}
-                    <div className="mt-4 flex items-center justify-between text-xs text-primary-green/60">
-                      {consultantName ? (
-                        <Link
-                          href={`/consultantes/${post.consultants?.slug}`}
-                          className="flex items-center gap-1 hover:text-primary-red"
-                        >
-                          {post.consultants?.profiles?.avatar_url ? (
-                            <Image
-                              src={post.consultants.profiles.avatar_url}
-                              alt={consultantName}
-                              width={20}
-                              height={20}
-                              className="rounded-full"
-                            />
-                          ) : (
-                            <User className="h-4 w-4" />
-                          )}
-                          <span>{consultantName}</span>
-                        </Link>
-                      ) : (
-                        <span />
+                      {post.excerpt && (
+                        <p className="mt-2 text-sm text-primary-green/70 line-clamp-2">
+                          {post.excerpt}
+                        </p>
                       )}
-                      {post.published_at && (
-                        <time>
-                          {format(new Date(post.published_at), "d MMM yyyy", {
-                            locale: fr,
-                          })}
-                        </time>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                      <div className="mt-4 flex items-center justify-between text-xs text-primary-green/60">
+                        {consultantName ? (
+                          <div className="flex items-center gap-1">
+                            {post.consultants?.profiles?.avatar_url ? (
+                              <Image
+                                src={post.consultants.profiles.avatar_url}
+                                alt={consultantName}
+                                width={20}
+                                height={20}
+                                className="rounded-full"
+                              />
+                            ) : (
+                              <User className="h-4 w-4" />
+                            )}
+                            <span>{consultantName}</span>
+                          </div>
+                        ) : (
+                          <span />
+                        )}
+                        {post.published_at && (
+                          <time>
+                            {format(new Date(post.published_at), "d MMM yyyy", {
+                              locale: fr,
+                            })}
+                          </time>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               );
             })}
           </div>

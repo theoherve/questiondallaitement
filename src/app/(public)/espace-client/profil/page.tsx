@@ -34,9 +34,7 @@ const ProfilePage = async () => {
         </CardHeader>
         <CardContent>
           <form
-            action={async (formData: FormData) => {
-              await updateClientProfile(formData);
-            }}
+            action={updateClientProfile}
             className="space-y-4"
           >
             <div className="grid grid-cols-2 gap-4">
