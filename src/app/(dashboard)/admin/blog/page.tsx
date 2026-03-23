@@ -205,11 +205,11 @@ const AdminBlogPage = async ({ searchParams }: Props) => {
 
       {/* Table */}
       <Card>
-        <CardContent className="p-0">
-          <Table>
+        <CardContent className="p-0 overflow-hidden">
+          <Table className="table-fixed w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-75">Titre</TableHead>
+                <TableHead className="w-[45%]">Titre</TableHead>
                 <TableHead>Catégorie</TableHead>
                 <TableHead>Consultante</TableHead>
                 <TableHead>Statut</TableHead>
@@ -255,14 +255,18 @@ const AdminBlogPage = async ({ searchParams }: Props) => {
                               <Folder className="h-4 w-4 text-muted-foreground" />
                             </div>
                           )}
-                          <div>
-                            <p className="font-medium">{post.title}</p>
-                            <p className="text-xs text-muted-foreground">/blog/{post.slug}</p>
+                          <div className="min-w-0">
+                            <p className="font-medium truncate" title={post.title}>{post.title}</p>
+                            <p className="text-xs text-muted-foreground truncate" title={`/blog/${post.slug}`}>/blog/{post.slug}</p>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        {post.blog_categories?.name ?? (
+                        {post.blog_categories?.name ? (
+                          <span className="block truncate" title={post.blog_categories.name}>
+                            {post.blog_categories.name}
+                          </span>
+                        ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
