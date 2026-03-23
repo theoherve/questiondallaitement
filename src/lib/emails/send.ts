@@ -215,6 +215,38 @@ export const sendVerificationEmail = async (
   });
 };
 
+export const sendBlogPostPublishedNotification = async (
+  adminEmails: string[],
+  variables: {
+    post_titles: string[];
+    post_count: number;
+  },
+) => {
+  const postList = variables.post_titles
+    .map((t) => `<li>${t}</li>`)
+    .join("");
+
+  const subject =
+    variables.post_count === 1
+      ? `Article publié automatiquement : ${variables.post_titles[0]}`
+      : `${variables.post_count} articles publiés automatiquement`;
+
+  const html = `
+    <h1>Publication automatique</h1>
+    <p>Les articles suivants viennent d'être publiés automatiquement :</p>
+    <ul>${postList}</ul>
+    <p>Connectez-vous à l'espace admin pour les consulter.</p>
+  `;
+
+  for (const email of adminEmails) {
+    try {
+      await sendTransactionalEmail({ to: email, subject, html });
+    } catch (err) {
+      console.error(`Failed to notify admin ${email}:`, err);
+    }
+  }
+};
+
 export const sendPasswordResetEmail = async (
   clientEmail: string,
   variables: {

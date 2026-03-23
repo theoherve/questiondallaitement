@@ -71,7 +71,7 @@ export const changePassword = async (
 
 export const updateClientProfile = async (
   formData: FormData
-): Promise<ActionResult> => {
+): Promise<void> => {
   const { supabase, user } = await getSupabaseAndUser();
 
   const { error } = await supabase
@@ -84,9 +84,8 @@ export const updateClientProfile = async (
     .eq("id", user.id);
 
   if (error) {
-    return { success: false, error: "Erreur lors de la mise à jour" };
+    throw new Error("Erreur lors de la mise à jour");
   }
 
   revalidatePath("/espace-client/profil");
-  return { success: true };
 };

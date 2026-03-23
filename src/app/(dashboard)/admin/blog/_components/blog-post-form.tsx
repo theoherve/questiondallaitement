@@ -67,6 +67,15 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (
+      formData.status === "scheduled" &&
+      formData.scheduled_at &&
+      new Date(formData.scheduled_at) <= new Date()
+    ) {
+      toast.error("La date de publication programmée doit être dans le futur");
+      return;
+    }
+
     const payload = {
       ...formData,
       category_id: formData.category_id || null,
@@ -353,6 +362,7 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
                     id="scheduled_at"
                     type="datetime-local"
                     value={formData.scheduled_at}
+                    min={new Date().toISOString().slice(0, 16)}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
@@ -361,6 +371,9 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
                     }
                     required={formData.status === "scheduled"}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    La date doit être dans le futur
+                  </p>
                 </div>
               )}
 
