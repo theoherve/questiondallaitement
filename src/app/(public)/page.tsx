@@ -36,7 +36,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       )
       .eq("status", "published")
       .is("deleted_at", null)
-      .order("published_at", { ascending: false }),
+      .order("price_cents", { ascending: true }),
     supabase
       .from("blog_posts")
       .select(
@@ -82,7 +82,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
     const prices = types.map((t) => t.price_cents);
     const min = Math.min(...prices);
     const max = Math.max(...prices);
-    return min === max ? formatPrice(min) : `Dès ${formatPrice(min)}`;
+    return min === max ? formatPrice(min) : `À partir de ${formatPrice(min)}`;
   };
 
   // Formation price range
@@ -91,7 +91,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
     .filter((p): p is number => p != null && p > 0);
   const formationPriceLabel =
     formationPrices.length > 0
-      ? `Dès ${formatPrice(Math.min(...formationPrices))}`
+      ? `À partir de ${formatPrice(Math.min(...formationPrices))}`
       : null;
 
   const SERVICES = [
@@ -122,7 +122,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
     {
       icon: BookOpen,
       label: "Accompagnement en ligne",
-      title: "Formations en ligne",
+      title: "Modules autonomes",
       description:
         "Des parcours complets pour vous accompagner à chaque étape de votre allaitement, à votre rythme.",
       price: formationPriceLabel,
