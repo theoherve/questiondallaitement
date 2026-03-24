@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StepService } from "./step-service";
+import { StepDuration } from "./step-duration";
 import { StepLocation } from "./step-location";
 import { StepConsultant } from "./step-consultant";
 import { StepCalendar } from "./step-calendar";
 import { StepContact } from "./step-contact";
 import { StepPayment } from "./step-payment";
 import { StepConfirmation } from "./step-confirmation";
-import { createBooking, type BookingFormData } from "../actions";
+import { createBooking, computeSlotPrice, type BookingFormData } from "../actions";
 import type { ConsultationLocation, BookingPaymentMethod } from "@/types/database";
 
 type ServiceOption = {
@@ -29,6 +30,7 @@ type BookingWizardProps = {
 
 const STEPS = [
   "Service",
+  "Durée",
   "Lieu",
   "Consultante",
   "Créneau",
@@ -39,6 +41,9 @@ const STEPS = [
 
 export type BookingState = {
   serviceTitle: string | null;
+  durationMinutes: number;
+  durationOptionId: string | null;
+  isWeekendOrHoliday: boolean;
   location: ConsultationLocation | null;
   consultantId: string | null;
   consultantName: string | null;
@@ -55,11 +60,13 @@ export type BookingState = {
   priceCents: number;
   surchargeCents: number;
   currency: string;
-  durationMinutes: number;
 };
 
 const initialState: BookingState = {
   serviceTitle: null,
+  durationMinutes: 0,
+  durationOptionId: null,
+  isWeekendOrHoliday: false,
   location: null,
   consultantId: null,
   consultantName: null,
@@ -70,7 +77,6 @@ const initialState: BookingState = {
   priceCents: 0,
   surchargeCents: 0,
   currency: "eur",
-  durationMinutes: 0,
 };
 
 export const BookingWizard = ({ services }: BookingWizardProps) => {
@@ -89,6 +95,7 @@ export const BookingWizard = ({ services }: BookingWizardProps) => {
     if (
       !state.consultationTypeId ||
       !state.consultantId ||
+      !state.durationOptionId ||
       !state.selectedSlot ||
       !state.contact ||
       !state.paymentMethod ||
@@ -103,6 +110,7 @@ export const BookingWizard = ({ services }: BookingWizardProps) => {
       const formData: BookingFormData = {
         consultation_type_id: state.consultationTypeId!,
         consultant_id: state.consultantId!,
+        duration_option_id: state.durationOptionId!,
         location: state.location!,
         starts_at: state.selectedSlot!.start,
         contact: state.contact!,
@@ -128,7 +136,7 @@ export const BookingWizard = ({ services }: BookingWizardProps) => {
   return (
     <div className="space-y-6">
       {/* Progress bar */}
-      <div className="flex items-center gap-1" role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={7}>
+      <div className="flex items-center gap-1" role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={8}>
         {STEPS.map((label, i) => (
           <div key={label} className="flex flex-1 flex-col items-center gap-1">
             <div
@@ -150,29 +158,53 @@ export const BookingWizard = ({ services }: BookingWizardProps) => {
       </div>
 
       <p className="text-center text-sm font-medium text-primary-green sm:hidden">
-        Étape {step + 1}/7 — {STEPS[step]}
+        Étape {step + 1}/{STEPS.length} — {STEPS[step]}
       </p>
 
       <Card>
         <CardContent className="pt-6">
+          {/* Step 0: Service */}
           {step === 0 && (
             <StepService
               services={services}
               selected={state.serviceTitle}
-              onSelect={(title, price, currency, duration) => {
+              onSelect={(title) => {
                 setState({
-                  ...state,
+                  ...initialState,
                   serviceTitle: title,
-                  priceCents: price,
-                  currency,
-                  durationMinutes: duration,
+                  durationMinutes: 60,
                 });
                 setStep(1);
               }}
             />
           )}
 
-          {step === 1 && (
+          {/* Step 1: Duration */}
+          {step === 1 && state.serviceTitle && (
+            <StepDuration
+              serviceTitle={state.serviceTitle}
+              selectedDuration={state.durationMinutes || null}
+              onSelect={(durationMinutes) => {
+                setState({
+                  ...state,
+                  durationMinutes,
+                  // Reset downstream state
+                  location: null,
+                  consultantId: null,
+                  consultantName: null,
+                  consultationTypeId: null,
+                  durationOptionId: null,
+                  selectedSlot: null,
+                  surchargeCents: 0,
+                  priceCents: 0,
+                });
+                setStep(2);
+              }}
+            />
+          )}
+
+          {/* Step 2: Location */}
+          {step === 2 && (
             <StepLocation
               availableLocations={
                 services.find((s) => s.title === state.serviceTitle)
@@ -180,64 +212,100 @@ export const BookingWizard = ({ services }: BookingWizardProps) => {
               }
               selected={state.location}
               onSelect={(loc) => {
-                setState({ ...state, location: loc, consultantId: null, consultantName: null, consultationTypeId: null, selectedSlot: null, surchargeCents: 0 });
-                setStep(2);
-              }}
-            />
-          )}
-
-          {step === 2 && state.serviceTitle && state.location && (
-            <StepConsultant
-              serviceTitle={state.serviceTitle}
-              location={state.location}
-              onSelect={(consultantId, consultantName, consultationTypeId, surcharge) => {
                 setState({
                   ...state,
-                  consultantId,
-                  consultantName,
-                  consultationTypeId,
-                  surchargeCents: surcharge,
+                  location: loc,
+                  consultantId: null,
+                  consultantName: null,
+                  consultationTypeId: null,
+                  durationOptionId: null,
                   selectedSlot: null,
+                  surchargeCents: 0,
                 });
                 setStep(3);
               }}
             />
           )}
 
-          {step === 3 && state.consultantId && state.consultationTypeId && (
-            <StepCalendar
-              consultantId={state.consultantId}
-              consultationTypeId={state.consultationTypeId}
-              onSelect={(slot) => {
-                setState({ ...state, selectedSlot: slot });
+          {/* Step 3: Consultant */}
+          {step === 3 && state.serviceTitle && state.location && (
+            <StepConsultant
+              serviceTitle={state.serviceTitle}
+              location={state.location}
+              durationMinutes={state.durationMinutes}
+              onSelect={(consultantId, consultantName, consultationTypeId, surcharge, durationOptionId) => {
+                setState({
+                  ...state,
+                  consultantId,
+                  consultantName,
+                  consultationTypeId,
+                  durationOptionId,
+                  surchargeCents: surcharge,
+                  selectedSlot: null,
+                });
                 setStep(4);
               }}
             />
           )}
 
-          {step === 4 && (
-            <StepContact
-              initialValues={state.contact}
-              onSubmit={(contact) => {
-                setState({ ...state, contact });
-                setStep(5);
+          {/* Step 4: Calendar */}
+          {step === 4 && state.consultantId && state.consultationTypeId && (
+            <StepCalendar
+              consultantId={state.consultantId}
+              consultationTypeId={state.consultationTypeId}
+              durationMinutes={state.durationMinutes}
+              onSelect={(slot) => {
+                // Compute final price after slot selection (weekend/holiday detection)
+                startTransition(async () => {
+                  if (state.durationOptionId && state.consultantId && state.location) {
+                    const price = await computeSlotPrice(
+                      state.durationOptionId,
+                      slot.start,
+                      state.consultantId,
+                      state.location
+                    );
+                    setState({
+                      ...state,
+                      selectedSlot: slot,
+                      priceCents: price?.basePriceCents ?? 0,
+                      surchargeCents: price?.surchargeCents ?? 0,
+                      isWeekendOrHoliday: price?.isWeekendOrHoliday ?? false,
+                    });
+                  } else {
+                    setState({ ...state, selectedSlot: slot });
+                  }
+                  setStep(5);
+                });
               }}
             />
           )}
 
+          {/* Step 5: Contact */}
           {step === 5 && (
+            <StepContact
+              initialValues={state.contact}
+              onSubmit={(contact) => {
+                setState({ ...state, contact });
+                setStep(6);
+              }}
+            />
+          )}
+
+          {/* Step 6: Payment */}
+          {step === 6 && (
             <StepPayment
               priceCents={state.priceCents + state.surchargeCents}
               currency={state.currency}
               selected={state.paymentMethod}
               onSelect={(method) => {
                 setState({ ...state, paymentMethod: method });
-                setStep(6);
+                setStep(7);
               }}
             />
           )}
 
-          {step === 6 && (
+          {/* Step 7: Confirmation */}
+          {step === 7 && (
             <StepConfirmation
               state={state}
               services={services}
@@ -254,7 +322,7 @@ export const BookingWizard = ({ services }: BookingWizardProps) => {
         </p>
       )}
 
-      {step > 0 && step < 6 && (
+      {step > 0 && step < 7 && (
         <div className="flex justify-start">
           <Button variant="ghost" onClick={handleBack}>
             ← Retour

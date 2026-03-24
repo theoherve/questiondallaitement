@@ -3,6 +3,7 @@ import { z } from "zod/v4";
 export const bookingSchema = z.object({
   consultant_id: z.string().uuid(),
   consultation_type_id: z.string().uuid(),
+  duration_option_id: z.string().uuid(),
   starts_at: z.string().datetime(),
   location: z.enum(["cabinet", "teleconsultation", "domicile"]),
   payment_method: z.enum(["online", "on_site"]),
@@ -42,8 +43,16 @@ export const consultationTypeSchema = z.object({
   buffer_minutes: z.number().int().min(0).max(120).default(15),
 });
 
+export const durationOptionSchema = z.object({
+  duration_minutes: z.number().int().min(15).max(480),
+  price_cents: z.number().int().min(0),
+  weekend_price_cents: z.number().int().min(0).nullable(),
+  is_default: z.boolean(),
+});
+
 export type BookingInput = z.infer<typeof bookingSchema>;
 export type ContactInput = z.infer<typeof contactSchema>;
 export type CancellationInput = z.infer<typeof cancellationSchema>;
 export type AvailabilityInput = z.infer<typeof availabilitySchema>;
 export type ConsultationTypeInput = z.infer<typeof consultationTypeSchema>;
+export type DurationOptionInput = z.infer<typeof durationOptionSchema>;

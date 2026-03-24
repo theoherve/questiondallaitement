@@ -138,6 +138,17 @@ export type ConsultationType = {
   created_at: string;
 };
 
+export type ConsultationTypeDuration = {
+  id: string;
+  consultation_type_id: string;
+  duration_minutes: number;
+  price_cents: number;
+  weekend_price_cents: number | null;
+  is_default: boolean;
+  position: number;
+  created_at: string;
+};
+
 export type Booking = {
   id: string;
   client_id: string;
@@ -158,6 +169,7 @@ export type Booking = {
   cancelled_by: string | null;
   stripe_payment_intent_id: string | null;
   refund_amount_cents: number | null;
+  duration_option_id: string | null;
   created_at: string;
   updated_at: string;
 };

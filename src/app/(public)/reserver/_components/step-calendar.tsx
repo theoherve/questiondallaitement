@@ -21,6 +21,7 @@ import { getConsultantAvailableDays, getAvailableSlots } from "../actions";
 type StepCalendarProps = {
   consultantId: string;
   consultationTypeId: string;
+  durationMinutes?: number;
   onSelect: (slot: { start: string; end: string; label: string }) => void;
 };
 
@@ -31,6 +32,7 @@ const WEEKDAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 export const StepCalendar = ({
   consultantId,
   consultationTypeId,
+  durationMinutes,
   onSelect,
 }: StepCalendarProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -60,12 +62,13 @@ export const StepCalendar = ({
       const result = await getAvailableSlots(
         consultantId,
         consultationTypeId,
-        dateStr
+        dateStr,
+        durationMinutes
       );
       setSlots(result);
       setIsLoadingSlots(false);
     },
-    [consultantId, consultationTypeId]
+    [consultantId, consultationTypeId, durationMinutes]
   );
 
   const monthStart = startOfMonth(currentMonth);

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
-import { getConsultantsForService, getConsultationTypeId, getSurcharge } from "../actions";
+import { getConsultantsForService, getConsultationTypeId, getSurcharge, getDurationOptionForConsultant } from "../actions";
 import type { ConsultationLocation } from "@/types/database";
 
 type Consultant = {
@@ -21,17 +21,20 @@ type Consultant = {
 type StepConsultantProps = {
   serviceTitle: string;
   location: ConsultationLocation;
+  durationMinutes: number;
   onSelect: (
     consultantId: string,
     consultantName: string,
     consultationTypeId: string,
-    surchargeCents: number
+    surchargeCents: number,
+    durationOptionId: string
   ) => void;
 };
 
 export const StepConsultant = ({
   serviceTitle,
   location,
+  durationMinutes,
   onSelect,
 }: StepConsultantProps) => {
   const [consultants, setConsultants] = useState<Consultant[]>([]);
@@ -40,7 +43,7 @@ export const StepConsultant = ({
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
-      const data = await getConsultantsForService(serviceTitle, location);
+      const data = await getConsultantsForService(serviceTitle, location, durationMinutes);
       setConsultants(
         (data ?? []).map((c) => ({
           id: c.id,
@@ -53,7 +56,7 @@ export const StepConsultant = ({
       setIsLoading(false);
     };
     load();
-  }, [serviceTitle, location]);
+  }, [serviceTitle, location, durationMinutes]);
 
   const handleSelect = async (consultant: Consultant) => {
     const profile = consultant.profiles;
@@ -61,13 +64,14 @@ export const StepConsultant = ({
       ? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
       : "Consultante";
 
-    const [typeId, surcharge] = await Promise.all([
+    const [typeId, surcharge, durationOption] = await Promise.all([
       getConsultationTypeId(consultant.id, serviceTitle, location),
       getSurcharge(consultant.id, location),
+      getDurationOptionForConsultant(consultant.id, serviceTitle, durationMinutes),
     ]);
 
-    if (!typeId) return;
-    onSelect(consultant.id, name, typeId, surcharge);
+    if (!typeId || !durationOption) return;
+    onSelect(consultant.id, name, typeId, surcharge, durationOption.id);
   };
 
   if (isLoading) {
