@@ -56,6 +56,10 @@ const MILESTONES = [
     year: "2024",
     text: "L'équipe compte 7 IBCLC. Un troisième livre, collaboratif et encore plus complet. Plus de 5 000 familles accompagnées et des conférences internationales.",
   },
+  {
+    year: "2025",
+    text: "J'enregistre ma formation sur les troubles alimentaires pédiatriques en anglais pour LER.",
+  },
 ];
 
 const AProposPage = () => {
