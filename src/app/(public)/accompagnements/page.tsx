@@ -48,6 +48,18 @@ const formatPrice = (cents: number, currency: string): string =>
 
 const PACK_SLUG = "pack-essentiel-allaitement";
 
+/** Desired display order for individual modules (by slug) */
+const MODULE_ORDER = [
+  "je-me-prepare-a-allaiter",
+  "mon-allaitement-des-premiers-jours",
+  "mon-allaitement-au-fil-des-mois",
+  "je-reprends-une-activite-professionnelle",
+  "la-diversification-de-mon-bebe-allaite",
+  "je-souhaite-sevrer-mon-bebe",
+  "mon-bebe-ne-fait-pas-ses-nuits",
+  "les-urgences-allaitement",
+];
+
 const BENEFITS = [
   { icon: Clock, label: "À votre rythme" },
   { icon: Smartphone, label: "Accessible partout" },
@@ -107,7 +119,13 @@ const AccompagnementsPage = async () => {
 
   const rows = (formations ?? []) as unknown as FormationRow[];
   const pack = rows.find((f) => f.slug === PACK_SLUG);
-  const modules = rows.filter((f) => f.slug !== PACK_SLUG);
+  const modules = rows
+    .filter((f) => f.slug !== PACK_SLUG)
+    .sort((a, b) => {
+      const ia = MODULE_ORDER.indexOf(a.slug);
+      const ib = MODULE_ORDER.indexOf(b.slug);
+      return (ia === -1 ? Infinity : ia) - (ib === -1 ? Infinity : ib);
+    });
 
   const packSectionsCount = pack?.formation_sections.length ?? 0;
   const packBlocksCount =
