@@ -154,10 +154,15 @@ export const upsertLocation = async (
 export type ConsultationTypeFormData = {
   title: string;
   description: string;
-  duration_minutes: number;
-  price_cents: number;
   available_locations: ConsultationLocation[];
   buffer_minutes: number;
+};
+
+export type DurationOptionFormData = {
+  duration_minutes: number;
+  price_cents: number;
+  weekend_price_cents: number | null;
+  is_default: boolean;
 };
 
 export const getConsultationTypes = async () => {
@@ -177,19 +182,35 @@ export const createConsultationType = async (
 ): Promise<ActionResult> => {
   const { supabase, user } = await getSupabaseAndUser();
 
-  const { error } = await supabase.from("consultation_types").insert({
-    consultant_id: user.id,
-    title: formData.title,
-    description: formData.description || null,
-    duration_minutes: formData.duration_minutes,
-    price_cents: formData.price_cents,
-    available_locations: formData.available_locations,
-    is_online: formData.available_locations.includes("teleconsultation"),
-    buffer_minutes: formData.buffer_minutes,
-    is_active: true,
-  });
+  const { data: created, error } = await supabase
+    .from("consultation_types")
+    .insert({
+      consultant_id: user.id,
+      title: formData.title,
+      description: formData.description || null,
+      duration_minutes: 60, // default, actual durations stored in consultation_type_durations
+      price_cents: 9000, // default, actual prices stored in consultation_type_durations
+      available_locations: formData.available_locations,
+      is_online: formData.available_locations.includes("teleconsultation"),
+      buffer_minutes: formData.buffer_minutes,
+      is_active: true,
+    })
+    .select("id")
+    .single();
 
-  if (error) return { success: false, error: "Erreur création du type" };
+  if (error || !created) return { success: false, error: "Erreur création du type" };
+
+  // Seed default duration options
+  const { DEFAULT_DURATION_OPTIONS } = await import("@/lib/booking/pricing");
+  const durationRows = DEFAULT_DURATION_OPTIONS.map((d) => ({
+    consultation_type_id: created.id,
+    duration_minutes: d.duration_minutes,
+    price_cents: d.price_cents,
+    is_default: "is_default" in d ? d.is_default : false,
+    position: d.position,
+  }));
+
+  await supabase.from("consultation_type_durations").insert(durationRows);
 
   revalidatePath(REVALIDATE_PATH);
   return { success: true };
@@ -206,8 +227,6 @@ export const updateConsultationType = async (
     .update({
       title: formData.title,
       description: formData.description || null,
-      duration_minutes: formData.duration_minutes,
-      price_cents: formData.price_cents,
       available_locations: formData.available_locations,
       is_online: formData.available_locations.includes("teleconsultation"),
       buffer_minutes: formData.buffer_minutes,
@@ -233,6 +252,75 @@ export const deleteConsultationType = async (
     .eq("consultant_id", user.id);
 
   if (error) return { success: false, error: "Erreur suppression" };
+
+  revalidatePath(REVALIDATE_PATH);
+  return { success: true };
+};
+
+// ---- Duration Options ----
+
+export const getDurationOptions = async (consultationTypeId: string) => {
+  const { supabase } = await getSupabaseAndUser();
+  const { data } = await supabase
+    .from("consultation_type_durations")
+    .select("*")
+    .eq("consultation_type_id", consultationTypeId)
+    .order("position");
+
+  return data ?? [];
+};
+
+export const saveDurationOptions = async (
+  consultationTypeId: string,
+  options: DurationOptionFormData[]
+): Promise<ActionResult> => {
+  const { supabase, user } = await getSupabaseAndUser();
+
+  // Verify ownership
+  const { data: ct } = await supabase
+    .from("consultation_types")
+    .select("id")
+    .eq("id", consultationTypeId)
+    .eq("consultant_id", user.id)
+    .single();
+
+  if (!ct) return { success: false, error: "Type de consultation introuvable" };
+
+  // Delete existing durations and re-insert
+  await supabase
+    .from("consultation_type_durations")
+    .delete()
+    .eq("consultation_type_id", consultationTypeId);
+
+  if (options.length === 0) {
+    revalidatePath(REVALIDATE_PATH);
+    return { success: true };
+  }
+
+  const rows = options.map((opt, i) => ({
+    consultation_type_id: consultationTypeId,
+    duration_minutes: opt.duration_minutes,
+    price_cents: opt.price_cents,
+    weekend_price_cents: opt.weekend_price_cents,
+    is_default: opt.is_default,
+    position: i,
+  }));
+
+  const { error } = await supabase
+    .from("consultation_type_durations")
+    .insert(rows);
+
+  if (error) return { success: false, error: "Erreur sauvegarde des durées" };
+
+  // Sync the parent row with the default duration for backward compatibility
+  const defaultOpt = options.find((o) => o.is_default) ?? options[0];
+  await supabase
+    .from("consultation_types")
+    .update({
+      duration_minutes: defaultOpt.duration_minutes,
+      price_cents: defaultOpt.price_cents,
+    })
+    .eq("id", consultationTypeId);
 
   revalidatePath(REVALIDATE_PATH);
   return { success: true };

@@ -26,6 +26,14 @@ const formatPrice = (cents: number, currency: string): string =>
     cents / 100
   );
 
+const formatDuration = (minutes: number): string => {
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (m === 0) return `${h}h`;
+  return `${h}h${m.toString().padStart(2, "0")}`;
+};
+
 const LOCATION_LABELS: Record<string, string> = {
   cabinet: "Au cabinet",
   teleconsultation: "Téléconsultation",
@@ -60,6 +68,11 @@ export const StepConfirmation = ({
           value={state.serviceTitle ?? ""}
         />
         <SummaryRow
+          icon={<Clock className="h-4 w-4" />}
+          label="Durée"
+          value={formatDuration(state.durationMinutes)}
+        />
+        <SummaryRow
           icon={<MapPin className="h-4 w-4" />}
           label="Lieu"
           value={LOCATION_LABELS[state.location ?? ""] ?? ""}
@@ -79,7 +92,7 @@ export const StepConfirmation = ({
             <SummaryRow
               icon={<Clock className="h-4 w-4" />}
               label="Heure"
-              value={`${format(slotDate, "HH:mm")} (${state.durationMinutes} min)`}
+              value={format(slotDate, "HH:mm")}
             />
           </>
         )}
@@ -103,6 +116,11 @@ export const StepConfirmation = ({
               {formatPrice(totalPrice, state.currency)}
             </span>
           </div>
+          {state.isWeekendOrHoliday && (
+            <p className="mt-1 text-xs text-amber-600 font-medium">
+              Tarif week-end / jour férié appliqué
+            </p>
+          )}
           {state.surchargeCents > 0 && (
             <p className="mt-1 text-xs text-muted-foreground">
               Dont supplément domicile :{" "}
