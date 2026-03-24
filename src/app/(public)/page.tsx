@@ -135,7 +135,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       title: "Formations Pro",
       description:
         "Formations, ateliers et webinaires pour les professionnels de santé souhaitant développer leur expertise.",
-      price: "Sur devis",
+      price: "À partir de 200 €",
       href: "/formations",
       cta: "En savoir plus",
     },
@@ -143,9 +143,23 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
   const featuredFormation = allFormations.find(
     (f) => f.slug === "pack-essentiel-allaitement"
   );
-  const otherFormations = allFormations.filter(
-    (f) => f.slug !== "pack-essentiel-allaitement"
-  );
+  const MODULE_ORDER = [
+    "je-me-prepare-a-allaiter",
+    "mon-allaitement-des-premiers-jours",
+    "mon-allaitement-au-fil-des-mois",
+    "je-reprends-une-activite-professionnelle",
+    "la-diversification-de-mon-bebe-allaite",
+    "je-souhaite-sevrer-mon-bebe",
+    "mon-bebe-ne-fait-pas-ses-nuits",
+    "les-urgences-allaitement",
+  ];
+  const otherFormations = allFormations
+    .filter((f) => f.slug !== "pack-essentiel-allaitement")
+    .sort((a, b) => {
+      const ia = MODULE_ORDER.indexOf(a.slug);
+      const ib = MODULE_ORDER.indexOf(b.slug);
+      return (ia === -1 ? Infinity : ia) - (ib === -1 ? Infinity : ib);
+    });
   const blogPosts = blogRes.data ?? [];
   const consultants = consultantsRes.data ?? [];
 
@@ -415,7 +429,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                   </span>
                   <span className="text-background-beige/40">·</span>
                   <span className="font-sans text-xs text-background-beige/75">
-                    Certifiée internationale
+                    Certification internationale
                   </span>
                 </div>
               </div>
@@ -435,10 +449,11 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                   &ldquo;Chaque parcours d&apos;allaitement est unique — je suis là pour vous accompagner avec bienveillance et rigueur scientifique.&rdquo;
                 </blockquote>
                 <p className="mt-5 leading-relaxed text-primary-green/70 lg:text-lg">
-                  Consultante IBCLC depuis plus de 20 ans, Carole Hervé
-                  accompagne les familles dans leur allaitement. Auteure de 3
-                  ouvrages de référence, formatrice et conférencière
-                  internationale.
+                  Investie auprès des familles depuis plus de 20 ans, je vous
+                  accompagne dans votre allaitement et le sommeil de votre tout
+                  petit. Auteure de 3 ouvrages de référence, je forme également
+                  les professionnels, je suis conférencière internationale et
+                  experte auprès de la presse.
                 </p>
 
                 {/* Stats */}
@@ -498,7 +513,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
-                    Notre équipe
+                    Mon équipe
                   </p>
                   <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-5xl">
                     Des consultantes
@@ -597,7 +612,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                     Articles & Ressources
                   </p>
                   <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-5xl">
-                    Le Journal
+                    Le blog
                   </h2>
                   <p className="mt-4 text-primary-green/70 lg:text-lg">
                     Articles, réflexions et ressources autour de
@@ -606,7 +621,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                 </div>
                 <Button asChild variant="ghost" className="hidden sm:flex">
                   <Link href="/blog">
-                    Lire le journal
+                    Lire le blog
                     <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
@@ -719,7 +734,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
 
             <div className="mt-10 text-center sm:hidden">
               <Button asChild variant="outline">
-                <Link href="/blog">Lire le journal</Link>
+                <Link href="/blog">Lire le blog</Link>
               </Button>
             </div>
           </div>
@@ -736,7 +751,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
             <h2 className="mt-3 font-serif text-3xl font-bold text-background-beige lg:text-5xl">
               Vous êtes
               <br />
-              professionnel de santé ?
+              professionnel.le de santé ?
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-background-beige/70">
               Formations, ateliers et webinaires pour développer votre expertise
@@ -803,7 +818,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                 className="border-2 border-background-beige/30 bg-transparent text-background-beige hover:bg-background-beige/10 hover:text-background-beige"
               >
                 <Link href="/accompagnements">
-                  Découvrir les formations
+                  Découvrir les accompagnements
                 </Link>
               </Button>
             </div>
