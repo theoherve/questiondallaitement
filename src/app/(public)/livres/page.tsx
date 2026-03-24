@@ -498,7 +498,6 @@ const LivresPage = () => {
               </div>
             </div>
           </section>
-
           {/* ─── CONTRIBUTIONS ─── */}
           <section
             id="contributions"
@@ -517,11 +516,11 @@ const LivresPage = () => {
                     </p>
                   </div>
                   <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-4xl">
-                    Carole a aussi contribué à...
+                    Mes contributions
                   </h2>
                   <p className="mx-auto mt-4 max-w-xl text-primary-green/70 lg:text-lg">
-                    Des ouvrages auxquels Carole Hervé a apporté son expertise
-                    en allaitement et lactation.
+                    Des ouvrages auxquels j&apos;ai apporté mon expertise en
+                    allaitement et lactation (en français et en anglais).
                   </p>
                 </div>
               </ScrollReveal>
