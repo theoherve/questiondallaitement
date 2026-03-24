@@ -122,37 +122,6 @@ const MediasPage = () => {
         </div>
       </section>
 
-      {/* ─── REVUE DE PRESSE ─── */}
-      <section className="scroll-mt-20 section-padding">
-        <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-16">
-          <ScrollReveal>
-            <div className="mb-10">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary-red/20 bg-primary-red/5 px-4 py-1.5">
-                <Newspaper
-                  className="h-3.5 w-3.5 text-primary-red"
-                  aria-hidden
-                />
-                <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
-                  Revue de presse
-                </p>
-              </div>
-              <h2 className="font-serif text-3xl font-bold text-primary-green lg:text-4xl">
-                Dans la presse
-              </h2>
-              <p className="mt-4 max-w-2xl text-primary-green/70 lg:text-lg">
-                Plus de {PRESS_ARTICLES.length} articles dans les médias
-                français de référence : Doctissimo, Parents.fr, Magic Maman,
-                Journal des Femmes, Santé Magazine, Elle, aufeminin...
-              </p>
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal delay={100}>
-            <PressSection />
-          </ScrollReveal>
-        </div>
-      </section>
-
       {/* ─── PODCASTS & VIDÉOS ─── */}
       <section className="scroll-mt-20 bg-primary-green section-padding">
         <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-16">
@@ -180,6 +149,38 @@ const MediasPage = () => {
 
           <ScrollReveal delay={100}>
             <MediaSection />
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ─── REVUE DE PRESSE ─── */}
+      <section className="scroll-mt-20 section-padding">
+        <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-16">
+          <ScrollReveal>
+            <div className="mb-10">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary-red/20 bg-primary-red/5 px-4 py-1.5">
+                <Newspaper
+                  className="h-3.5 w-3.5 text-primary-red"
+                  aria-hidden
+                />
+                <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
+                  Revue de presse
+                </p>
+              </div>
+              <h2 className="font-serif text-3xl font-bold text-primary-green lg:text-4xl">
+                Dans la presse
+              </h2>
+              <p className="mt-4 max-w-2xl text-primary-green/70 lg:text-lg">
+                Près de 100 articles dans les médias français de référence :
+                Doctissimo, Parents.fr, Magic Maman, Journal des Femmes, Santé
+                Magazine, Elle, aufeminin... Affichez-les tous ou bien
+                sélectionnez la rubrique qui vous intéresse le plus
+              </p>
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal delay={100}>
+            <PressSection />
           </ScrollReveal>
         </div>
       </section>
