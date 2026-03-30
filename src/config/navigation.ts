@@ -28,17 +28,17 @@ export const publicNav: PublicNavItem[] = [
 export const socialLinks = [
   {
     title: "Instagram",
-    href: "https://instagram.com/questiondallaitement",
+    href: "https://www.instagram.com/carole.questiondallaitement/",
     iconKey: "Instagram",
   },
   {
-    title: "Facebook",
-    href: "https://facebook.com/questiondallaitement",
-    iconKey: "Facebook",
+    title: "TikTok",
+    href: "https://www.tiktok.com/@carole_herve",
+    iconKey: "TikTok",
   },
   {
     title: "LinkedIn",
-    href: "https://linkedin.com/in/carole-herve",
+    href: "https://www.linkedin.com/in/carole-herve-ibclc/",
     iconKey: "Linkedin",
   },
 ] as const;
