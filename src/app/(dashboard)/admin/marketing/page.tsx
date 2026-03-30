@@ -44,7 +44,7 @@ const TEMPLATE_TYPE_CONFIG: Record<
 
 const MarketingPage = async () => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") redirect("/connexion");
+  if (!user || !user.roles.includes("admin")) redirect("/connexion");
 
   const supabase = createAdminClient();
 

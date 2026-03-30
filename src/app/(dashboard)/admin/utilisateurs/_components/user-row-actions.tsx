@@ -126,22 +126,24 @@ export const UserRowActions = ({ user, isCurrentAdmin }: Props) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-role">Rôle</Label>
-              <select
-                id="edit-role"
-                name="role"
-                defaultValue={user.role}
-                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-              >
+              <Label>Rôles</Label>
+              <div className="space-y-2 rounded-md border border-input p-3">
                 {EDITABLE_ROLES.map((r) => (
-                  <option key={r} value={r}>
-                    {ROLES[r].label}
-                  </option>
+                  <label key={r} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="roles"
+                      value={r}
+                      defaultChecked={user.roles.includes(r)}
+                      className="h-4 w-4 rounded border-input"
+                    />
+                    <span className="text-sm font-medium">{ROLES[r].label}</span>
+                    <span className="text-xs text-muted-foreground">
+                      — {ROLES[r].description}
+                    </span>
+                  </label>
                 ))}
-              </select>
-              <p className="text-xs text-muted-foreground">
-                {ROLES[user.role]?.description}
-              </p>
+              </div>
             </div>
 
             <DialogFooter>

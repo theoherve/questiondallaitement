@@ -58,7 +58,7 @@ type Props = {
 
 const AdminEvenementsPage = async ({ searchParams }: Props) => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") redirect("/connexion");
+  if (!user || !user.roles.includes("admin")) redirect("/connexion");
 
   const params = await searchParams;
   const supabase = createAdminClient();
@@ -258,11 +258,11 @@ const AdminEvenementsPage = async ({ searchParams }: Props) => {
 
       {/* Table */}
       <Card>
-        <CardContent className="p-0">
-          <Table>
+        <CardContent className="p-0 overflow-hidden">
+          <Table className="table-fixed w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-70">Titre</TableHead>
+                <TableHead className="w-[30%]">Titre</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Consultante</TableHead>
@@ -300,9 +300,9 @@ const AdminEvenementsPage = async ({ searchParams }: Props) => {
                   return (
                     <TableRow key={event.id} className={isPast ? "opacity-60" : ""}>
                       <TableCell>
-                        <div>
-                          <p className="font-medium">{event.title}</p>
-                          <p className="text-xs text-muted-foreground">
+                        <div className="min-w-0">
+                          <p className="font-medium truncate" title={event.title}>{event.title}</p>
+                          <p className="text-xs text-muted-foreground truncate" title={`/evenements/${event.slug}`}>
                             /evenements/{event.slug}
                           </p>
                         </div>
@@ -329,7 +329,11 @@ const AdminEvenementsPage = async ({ searchParams }: Props) => {
                           })}
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm">{consultantName}</TableCell>
+                      <TableCell className="text-sm">
+                        <span className="block truncate" title={consultantName}>
+                          {consultantName}
+                        </span>
+                      </TableCell>
                       <TableCell className="text-sm">
                         {formatPrice(event.price_cents, event.currency)}
                       </TableCell>

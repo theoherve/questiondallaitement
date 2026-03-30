@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Users } from "lucide-react";
 import { UserRowActions } from "./_components/user-row-actions";
+import type { UserRole } from "@/types/database";
 
 export const metadata: Metadata = {
   title: "Gestion des utilisateurs",
@@ -29,7 +30,7 @@ export type ProfileRow = {
   email: string;
   first_name: string | null;
   last_name: string | null;
-  role: keyof typeof ROLES;
+  roles: UserRole[];
   created_at: string;
 };
 
@@ -47,7 +48,7 @@ const UtilisateursPage = async ({
   searchParams: SearchParams;
 }) => {
   const currentUser = await getSessionUser();
-  if (!currentUser || currentUser.role !== "admin") redirect("/admin");
+  if (!currentUser || !currentUser.roles.includes("admin")) redirect("/admin");
 
   const { search, role } = await searchParams;
 
@@ -55,12 +56,12 @@ const UtilisateursPage = async ({
 
   let query = supabase
     .from("profiles")
-    .select("id, email, first_name, last_name, role, created_at")
+    .select("id, email, first_name, last_name, roles, created_at")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (role && role !== "all") {
-    query = query.eq("role", role);
+    query = query.contains("roles", [role]);
   }
 
   if (search && search.trim().length >= 2) {
@@ -130,7 +131,7 @@ const UtilisateursPage = async ({
                 <TableRow>
                   <TableHead>Nom</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Rôle</TableHead>
+                  <TableHead>Rôles</TableHead>
                   <TableHead>Inscrit le</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -148,9 +149,13 @@ const UtilisateursPage = async ({
                         {platformUser.email}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">
-                          {ROLES[platformUser.role]?.label ?? platformUser.role}
-                        </Badge>
+                        <div className="flex flex-wrap gap-1">
+                          {platformUser.roles.map((r) => (
+                            <Badge key={r} variant="secondary">
+                              {ROLES[r]?.label ?? r}
+                            </Badge>
+                          ))}
+                        </div>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {new Date(platformUser.created_at).toLocaleDateString(

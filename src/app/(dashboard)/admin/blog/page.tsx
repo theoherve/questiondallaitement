@@ -45,7 +45,7 @@ type Props = {
 
 const AdminBlogPage = async ({ searchParams }: Props) => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") redirect("/connexion");
+  if (!user || !user.roles.includes("admin")) redirect("/connexion");
 
   const params = await searchParams;
   const supabase = createAdminClient();

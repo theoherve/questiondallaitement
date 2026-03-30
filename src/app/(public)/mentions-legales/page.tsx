@@ -78,16 +78,36 @@ const MentionsLegalesPage = () => (
         <h2 className="font-serif text-xl font-semibold text-primary-green">
           3. Propriété intellectuelle
         </h2>
-        <p className="mt-3 text-sm">
-          L&apos;ensemble du contenu de ce site (textes, images, vidéos,
-          graphismes, logo, icônes, sons, logiciels, etc.) est la propriété
-          exclusive de l&apos;éditeur ou de ses partenaires et est protégé par
-          les lois françaises et internationales relatives à la propriété
-          intellectuelle. Toute reproduction, représentation, modification,
-          publication, transmission, dénaturation, totale ou partielle du site
-          ou de son contenu, par quelque procédé que ce soit, et sur quelque
-          support que ce soit est interdite sans autorisation écrite préalable.
-        </p>
+        <div className="mt-3 space-y-3 text-sm">
+          <p>
+            Le site et les contenus de caroleherve.fr sont la propriété
+            exclusive de Carole Hervé. Toute reproduction, intégrale ou
+            partielle des éléments du site est interdite sauf autorisation
+            expresse et préalable de Carole Hervé.
+          </p>
+          <p>
+            L&apos;ensemble du Site relève de la législation française et
+            internationale sur le droit d&apos;auteur et la propriété
+            intellectuelle. En ces termes, l&apos;article L 122-4 du Code de la
+            propriété intellectuelle indique : « Toute représentation ou
+            reproduction intégrale ou partielle faite sans le consentement de
+            l&apos;auteur ou de ses ayants droit ou ayants cause est illicite.
+            Il en est de même pour la traduction, l&apos;adaptation ou la
+            transformation, l&apos;arrangement ou la reproduction par un art ou
+            un procédé quelconque. »
+          </p>
+          <p>
+            Ainsi, toute copie illicite du site, de son contenu et de son
+            architecture peut faire l&apos;objet de poursuites sur le terrain de
+            la contrefaçon sanctionnée par les articles L 335-2 et suivants du
+            Code de la propriété intellectuelle.
+          </p>
+          <p>
+            Tous les droits de reproduction sont réservés, y compris pour les
+            documents téléchargeables et les représentations iconographiques et
+            photographiques, sauf note contraire ou accord écrit préalable.
+          </p>
+        </div>
       </section>
 
       <section>

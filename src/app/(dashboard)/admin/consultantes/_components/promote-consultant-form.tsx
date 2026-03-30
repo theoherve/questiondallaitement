@@ -16,7 +16,7 @@ type UserResult = {
   email: string;
   first_name: string | null;
   last_name: string | null;
-  role: string;
+  roles: string[];
 };
 
 export const PromoteConsultantForm = () => {
@@ -118,7 +118,7 @@ export const PromoteConsultantForm = () => {
                   {selectedUser.email}
                 </p>
                 <Badge variant="secondary" className="mt-1">
-                  {selectedUser.role}
+                  {selectedUser.roles.join(", ")}
                 </Badge>
               </div>
               <Button
@@ -183,7 +183,7 @@ export const PromoteConsultantForm = () => {
                           {user.email}
                         </p>
                       </div>
-                      <Badge variant="outline">{user.role}</Badge>
+                      <Badge variant="outline">{user.roles.join(", ")}</Badge>
                     </button>
                   ))}
                 </div>

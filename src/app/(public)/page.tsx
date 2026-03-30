@@ -16,7 +16,7 @@ const BIO_STATS = [
   { value: "20+", label: "ans d'expérience" },
   { value: "5 000+", label: "consultations" },
   { value: "3", label: "livres publiés" },
-  { value: "IBCLC", label: "certifiée" },
+  { value: "IBCLC", label: "Certification internationale" },
 ];
 
 type HomePageProps = {
@@ -241,7 +241,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
               {[
                 { value: "20+", label: "ans d'exp." },
                 { value: "5k+", label: "consultations" },
-                { value: "IBCLC", label: "certifiée" },
+                { value: "IBCLC", label: "Certification internationale" },
               ].map((item, i) => (
                 <div key={item.label} className="flex items-center gap-5">
                   {i > 0 && <div className="h-8 w-px bg-background-beige/20" />}

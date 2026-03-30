@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 const AdminNewFormationPage = async () => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") redirect("/connexion");
+  if (!user || !user.roles.includes("admin")) redirect("/connexion");
 
   const supabase = createAdminClient();
   const { data: consultants } = await supabase

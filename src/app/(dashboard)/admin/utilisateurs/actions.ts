@@ -19,12 +19,12 @@ const updatePlatformUserSchema = z.object({
   userId: z.uuid("Utilisateur invalide"),
   first_name: z.string().trim().max(100, "Prénom trop long").nullable(),
   last_name: z.string().trim().max(100, "Nom trop long").nullable(),
-  role: z.enum(EDITABLE_ROLES, "Rôle invalide"),
+  roles: z.array(z.enum(EDITABLE_ROLES)).min(1, "Au moins un rôle requis"),
 });
 
 const requireAdmin = async () => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") redirect("/connexion");
+  if (!user || !user.roles.includes("admin")) redirect("/connexion");
   return user;
 };
 
@@ -37,11 +37,13 @@ const emptyToNull = (value: FormDataEntryValue | null): string | null => {
 export const updatePlatformUser = async (formData: FormData): Promise<void> => {
   await requireAdmin();
 
+  const rolesRaw = formData.getAll("roles").filter((v) => typeof v === "string") as string[];
+
   const parsed = updatePlatformUserSchema.safeParse({
     userId: formData.get("userId"),
     first_name: emptyToNull(formData.get("first_name")),
     last_name: emptyToNull(formData.get("last_name")),
-    role: formData.get("role"),
+    roles: rolesRaw,
   });
 
   if (!parsed.success) {
@@ -54,7 +56,7 @@ export const updatePlatformUser = async (formData: FormData): Promise<void> => {
     .update({
       first_name: parsed.data.first_name,
       last_name: parsed.data.last_name,
-      role: parsed.data.role,
+      roles: parsed.data.roles,
     })
     .eq("id", parsed.data.userId)
     .is("deleted_at", null);
@@ -83,7 +85,7 @@ export const deletePlatformUser = async (
 
   const { data: targetUser, error: targetError } = await supabase
     .from("profiles")
-    .select("id, role")
+    .select("id, roles")
     .eq("id", parsedUserId.data)
     .is("deleted_at", null)
     .maybeSingle();
@@ -92,11 +94,11 @@ export const deletePlatformUser = async (
     return { success: false, error: "Compte introuvable" };
   }
 
-  if (targetUser.role === "admin") {
+  if ((targetUser.roles as string[]).includes("admin")) {
     const { count } = await supabase
       .from("profiles")
       .select("id", { count: "exact", head: true })
-      .eq("role", "admin")
+      .contains("roles", ["admin"])
       .is("deleted_at", null);
 
     if ((count ?? 0) <= 1) {
@@ -111,7 +113,7 @@ export const deletePlatformUser = async (
     .from("profiles")
     .update({
       deleted_at: new Date().toISOString(),
-      role: "client",
+      roles: ["client"],
       first_name: null,
       last_name: null,
       phone: null,

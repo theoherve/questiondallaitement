@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 const NouvelleConsultantePage = async () => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") redirect("/admin");
+  if (!user || !user.roles.includes("admin")) redirect("/admin");
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">

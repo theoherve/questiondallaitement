@@ -69,7 +69,7 @@ const PaiementsPage = async ({
   searchParams: SearchParams;
 }) => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") redirect("/admin");
+  if (!user || !user.roles.includes("admin")) redirect("/admin");
 
   const params = await searchParams;
   const filters: PaymentFilters = {

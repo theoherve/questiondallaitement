@@ -35,7 +35,7 @@ const AdminAnalyticsPage = async ({
   searchParams: Promise<{ period?: string }>;
 }) => {
   const sessionUser = await getSessionUser();
-  if (!sessionUser || sessionUser.role !== "admin") redirect("/connexion");
+  if (!sessionUser || !sessionUser.roles.includes("admin")) redirect("/connexion");
 
   const params = await searchParams;
   const supabase = createAdminClient();
@@ -70,7 +70,7 @@ const AdminAnalyticsPage = async ({
     supabase
       .from("profiles")
       .select("id", { count: "exact", head: true })
-      .eq("role", "client")
+      .contains("roles", ["client"])
       .is("deleted_at", null),
     // Total active consultantes
     supabase

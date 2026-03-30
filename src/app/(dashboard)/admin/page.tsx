@@ -22,7 +22,7 @@ const formatCurrency = (cents: number): string =>
 
 const AdminDashboardPage = async () => {
   const sessionUser = await getSessionUser();
-  if (!sessionUser || sessionUser.role !== "admin") {
+  if (!sessionUser || !sessionUser.roles.includes("admin")) {
     return null;
   }
   const supabase = createAdminClient();
@@ -40,7 +40,7 @@ const AdminDashboardPage = async () => {
     supabase
       .from("profiles")
       .select("id", { count: "exact", head: true })
-      .eq("role", "client")
+      .contains("roles", ["client"])
       .is("deleted_at", null),
     supabase
       .from("formations")

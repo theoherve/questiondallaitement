@@ -41,7 +41,7 @@ export const GET = async (request: Request) => {
       const { data: admins } = await supabase
         .from("profiles")
         .select("email")
-        .eq("role", "admin")
+        .contains("roles", ["admin"])
         .not("email", "is", null);
 
       if (admins && admins.length > 0) {

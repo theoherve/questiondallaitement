@@ -8,7 +8,7 @@ export const uploadFileAction = async (
   formData: FormData
 ): Promise<ActionResult<{ url: string; path: string }>> => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") {
+  if (!user || !user.roles.includes("admin")) {
     return { success: false, error: "Non autorisé" };
   }
 
@@ -40,7 +40,7 @@ export const deleteFileAction = async (
   path: string
 ): Promise<ActionResult> => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") {
+  if (!user || !user.roles.includes("admin")) {
     return { success: false, error: "Non autorisé" };
   }
 

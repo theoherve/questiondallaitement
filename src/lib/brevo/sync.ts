@@ -9,12 +9,12 @@ const profileToBrevoAttributes = (profile: {
   first_name: string | null;
   last_name: string | null;
   phone: string | null;
-  role: string;
+  roles: string[];
 }) => ({
   PRENOM: profile.first_name ?? "",
   NOM: profile.last_name ?? "",
   TELEPHONE: profile.phone ?? "",
-  ROLE: profile.role,
+  ROLE: profile.roles.join(","),
 });
 
 // ─── Single contact sync ────────────────────────────────────
@@ -38,7 +38,7 @@ export const syncOnSignup = async (profile: {
   first_name: string | null;
   last_name: string | null;
   phone: string | null;
-  role: string;
+  roles: string[];
 }) => {
   const defaultListId = process.env.BREVO_DEFAULT_LIST_ID
     ? parseInt(process.env.BREVO_DEFAULT_LIST_ID)
@@ -72,7 +72,7 @@ export const syncAllContactsToBrevo = async (): Promise<{
 
   const { data: profiles, error } = await supabase
     .from("profiles")
-    .select("email, first_name, last_name, phone, role")
+    .select("email, first_name, last_name, phone, roles")
     .is("deleted_at", null)
     .order("created_at", { ascending: true });
 
@@ -98,7 +98,7 @@ export const syncAllContactsToBrevo = async (): Promise<{
         try {
           await createContact(
             profile.email,
-            profileToBrevoAttributes(profile),
+            profileToBrevoAttributes(profile as { first_name: string | null; last_name: string | null; phone: string | null; roles: string[] }),
             defaultListId ? [defaultListId] : undefined,
           );
           synced++;

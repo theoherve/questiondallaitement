@@ -39,7 +39,7 @@ type Props = {
 
 const AdminFormationsPage = async ({ searchParams }: Props) => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") redirect("/connexion");
+  if (!user || !user.roles.includes("admin")) redirect("/connexion");
 
   const params = await searchParams;
   const supabase = createAdminClient();
@@ -207,111 +207,114 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
       )}
 
       {/* Table */}
-      {rows.length > 0 ? (
-        <Card>
-          <Table>
+      <Card>
+        <CardContent className="p-0 overflow-hidden">
+          <Table className="table-fixed w-full">
             <TableHeader>
               <TableRow>
-                <TableHead>Titre</TableHead>
+                <TableHead className="w-[35%]">Titre</TableHead>
                 <TableHead>Consultante</TableHead>
                 <TableHead>Contenu</TableHead>
                 <TableHead>Prix</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead className="w-25">Actions</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((formation) => {
-                const consultantName = formation.consultants?.profiles
-                  ? `${formation.consultants.profiles.first_name ?? ""} ${formation.consultants.profiles.last_name ?? ""}`.trim()
-                  : "—";
+              {rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    Aucune formation trouvée. Créez-en une !
+                  </TableCell>
+                </TableRow>
+              ) : (
+                rows.map((formation) => {
+                  const consultantName = formation.consultants?.profiles
+                    ? `${formation.consultants.profiles.first_name ?? ""} ${formation.consultants.profiles.last_name ?? ""}`.trim()
+                    : "—";
 
-                const sectionCount = formation.formation_sections?.length ?? 0;
-                const blockCount =
-                  formation.formation_sections?.reduce(
-                    (acc, s) => acc + (s.formation_blocks?.length ?? 0),
-                    0
-                  ) ?? 0;
+                  const sectionCount = formation.formation_sections?.length ?? 0;
+                  const blockCount =
+                    formation.formation_sections?.reduce(
+                      (acc, s) => acc + (s.formation_blocks?.length ?? 0),
+                      0
+                    ) ?? 0;
 
-                return (
-                  <TableRow key={formation.id}>
-                    <TableCell>
-                      <Link
-                        href={`/admin/formations/${formation.id}/edit`}
-                        className="font-medium text-primary-green hover:underline"
-                        tabIndex={0}
-                      >
-                        {formation.title}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {consultantName}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {sectionCount > 0 || blockCount > 0 ? (
-                        <span>
-                          {sectionCount} sec. · {blockCount} leç.
+                  return (
+                    <TableRow key={formation.id}>
+                      <TableCell>
+                        <Link
+                          href={`/admin/formations/${formation.id}/edit`}
+                          className="font-medium text-primary-green hover:underline truncate block"
+                          tabIndex={0}
+                          title={formation.title}
+                        >
+                          {formation.title}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        <span className="block truncate" title={consultantName}>
+                          {consultantName}
                         </span>
-                      ) : (
-                        <span className="italic text-muted-foreground/60">
-                          Vide
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>{formatPrice(formation.price_cents)}</TableCell>
-                    <TableCell>
-                      <FormationStatusToggle
-                        formationId={formation.id}
-                        currentStatus={
-                          (formation.status as "draft" | "published" | "archived") ??
-                          "draft"
-                        }
-                      />
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {format(new Date(formation.created_at), "d MMM yyyy", {
-                        locale: fr,
-                      })}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button asChild variant="ghost" size="icon">
-                          <Link
-                            href={`/accompagnements/${formation.slug}`}
-                            target="_blank"
-                            tabIndex={0}
-                            aria-label={`Voir ${formation.title} sur le site`}
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button asChild variant="ghost" size="icon">
-                          <Link
-                            href={`/admin/formations/${formation.id}/edit`}
-                            tabIndex={0}
-                            aria-label={`Modifier ${formation.title}`}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {sectionCount > 0 || blockCount > 0 ? (
+                          <span>
+                            {sectionCount} sec. · {blockCount} leç.
+                          </span>
+                        ) : (
+                          <span className="italic text-muted-foreground/60">
+                            Vide
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>{formatPrice(formation.price_cents)}</TableCell>
+                      <TableCell>
+                        <FormationStatusToggle
+                          formationId={formation.id}
+                          currentStatus={
+                            (formation.status as "draft" | "published" | "archived") ??
+                            "draft"
+                          }
+                        />
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {format(new Date(formation.created_at), "d MMM yyyy", {
+                          locale: fr,
+                        })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button asChild variant="ghost" size="icon">
+                            <Link
+                              href={`/accompagnements/${formation.slug}`}
+                              target="_blank"
+                              tabIndex={0}
+                              aria-label={`Voir ${formation.title} sur le site`}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button asChild variant="ghost" size="icon">
+                            <Link
+                              href={`/admin/formations/${formation.id}/edit`}
+                              tabIndex={0}
+                              aria-label={`Modifier ${formation.title}`}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">
-              Aucune formation trouvée. Créez-en une !
-            </p>
-          </CardContent>
-        </Card>
-      )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -10,7 +10,7 @@ import type { ActionResult } from "@/types";
 
 const requireAdmin = async () => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") redirect("/connexion");
+  if (!user || !user.roles.includes("admin")) redirect("/connexion");
   return user;
 };
 
@@ -363,11 +363,11 @@ export const addCollaborator = async (
   // Verify the consultant exists and has consultant role
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, role")
+    .select("id, roles")
     .eq("id", parsed.data.consultant_id)
     .single();
 
-  if (!profile || profile.role !== "consultant") {
+  if (!profile || !(profile.roles as string[]).includes("consultant")) {
     return { success: false, error: "Ce profil n'est pas une consultante" };
   }
 

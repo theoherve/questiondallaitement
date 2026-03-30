@@ -9,7 +9,7 @@ import type { ActionResult } from "@/types";
 
 const requireAdmin = async () => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") redirect("/connexion");
+  if (!user || !user.roles.includes("admin")) redirect("/connexion");
   return user;
 };
 
