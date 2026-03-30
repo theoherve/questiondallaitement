@@ -23,7 +23,7 @@ const ConsultantCampaignStatsPage = async ({
   params: Promise<{ id: string }>;
 }) => {
   const user = await getSessionUser();
-  if (!user || (user.role !== "consultant" && user.role !== "admin")) {
+  if (!user || (!user.roles.includes("consultant") && !user.roles.includes("admin"))) {
     redirect("/connexion");
   }
 

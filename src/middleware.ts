@@ -43,7 +43,9 @@ const isApiRoute = (pathname: string): boolean => {
 export default auth((req) => {
   const { pathname } = req.nextUrl;
   const user = req.auth?.user;
-  const role = (user as { role?: string } | undefined)?.role;
+  const u = user as { roles?: string[]; role?: string } | undefined;
+  // Fallback: support old JWTs that still have single "role" string
+  const roles: string[] = u?.roles ?? (u?.role ? [u.role] : []);
 
   if (isApiRoute(pathname) || pathname.startsWith("/_next")) {
     return NextResponse.next();
@@ -71,7 +73,8 @@ export default auth((req) => {
 
   for (const [routePrefix, allowedRoles] of Object.entries(ROLE_ROUTE_MAP)) {
     if (pathname.startsWith(routePrefix)) {
-      if (!role || !allowedRoles.includes(role)) {
+      const hasAccess = roles.some((r) => allowedRoles.includes(r));
+      if (!hasAccess) {
         const url = req.nextUrl.clone();
         url.pathname = "/";
         return NextResponse.redirect(url);

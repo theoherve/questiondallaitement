@@ -62,7 +62,7 @@ const formatPrice = (cents: number): string =>
 
 const ConsultantDetailPage = async ({ params }: Props) => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") redirect("/admin");
+  if (!user || !user.roles.includes("admin")) redirect("/admin");
 
   const { id } = await params;
   const supabase = createAdminClient();

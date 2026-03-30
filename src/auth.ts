@@ -19,7 +19,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const supabase = createAdminClient();
         const { data: profile, error } = await supabase
           .from("profiles")
-          .select("id, email, role, password_hash")
+          .select("id, email, roles, password_hash")
           .eq("email", email)
           .is("deleted_at", null)
           .single();
@@ -31,7 +31,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return {
           id: profile.id,
           email: profile.email,
-          role: profile.role,
+          roles: profile.roles,
         };
       },
     }),
@@ -47,14 +47,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as { role?: string }).role;
+        const u = user as { roles?: string[]; role?: string };
+        // Support both new "roles" array and legacy "role" string from DB
+        token.roles = u.roles ?? (u.role ? [u.role] : ["client"]);
       }
       return token;
     },
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        (session.user as { role?: string }).role = token.role as string;
+        (session.user as { roles?: string[] }).roles = token.roles as string[];
       }
       return session;
     },

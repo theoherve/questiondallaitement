@@ -52,13 +52,19 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 };
 
 export const hasPermission = (
-  role: UserRole | undefined,
+  roles: UserRole[] | undefined,
   permission: Permission
 ): boolean => {
-  if (!role) return false;
-  return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
+  if (!roles || roles.length === 0) return false;
+  return roles.some((role) => ROLE_PERMISSIONS[role]?.includes(permission) ?? false);
 };
 
-export const getUserPermissions = (role: UserRole): Permission[] => {
-  return ROLE_PERMISSIONS[role] ?? [];
+export const getUserPermissions = (roles: UserRole[]): Permission[] => {
+  const perms = new Set<Permission>();
+  for (const role of roles) {
+    for (const perm of ROLE_PERMISSIONS[role] ?? []) {
+      perms.add(perm);
+    }
+  }
+  return [...perms];
 };

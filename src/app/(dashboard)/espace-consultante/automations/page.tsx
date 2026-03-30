@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 const AutomationsPage = async () => {
   const { user } = await getSupabaseAndUser();
 
-  if (!hasPermission(user.role as UserRole, "manage_automations")) {
+  if (!hasPermission(user.roles as UserRole[], "manage_automations")) {
     redirect("/espace-consultante");
   }
 

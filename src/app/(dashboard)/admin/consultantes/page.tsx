@@ -29,7 +29,7 @@ const ConsultantesPage = async ({
   searchParams: SearchParams;
 }) => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") redirect("/admin");
+  if (!user || !user.roles.includes("admin")) redirect("/admin");
 
   const { search, status } = await searchParams;
   const supabase = createAdminClient();

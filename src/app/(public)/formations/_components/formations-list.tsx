@@ -19,6 +19,8 @@ import {
   ChevronUp,
   SlidersHorizontal,
   X,
+  ExternalLink,
+  Tag,
 } from "lucide-react";
 import { format, isSameDay, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -41,6 +43,9 @@ export type EventData = {
   currency: string;
   thumbnail_url: string | null;
   consultants: unknown;
+  external_url: string | null;
+  discounted_price_cents: number | null;
+  provider: { name: string; logo_url: string | null } | null;
 };
 
 type EventCategory = "all" | "formation" | "masterclass" | "atelier" | "conference" | "live" | "autre";
@@ -448,6 +453,11 @@ export const FormationsList = ({
 /*  Event Card                                                         */
 /* ------------------------------------------------------------------ */
 
+const buildExternalUrl = (url: string): string => {
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}code=MILKPOWER`;
+};
+
 const EventCard = ({ event }: { event: EventData }) => {
   const typeInfo = EVENT_TYPE_LABELS[event.type] ?? EVENT_TYPE_LABELS.online;
   const TypeIcon = typeInfo.icon;
@@ -461,8 +471,10 @@ const EventCard = ({ event }: { event: EventData }) => {
     ? `${consultant.profiles.first_name ?? ""} ${consultant.profiles.last_name ?? ""}`.trim()
     : null;
   const isFree = event.price_cents === 0;
+  const isExternal = !!event.external_url;
+  const hasDiscount = event.discounted_price_cents != null;
 
-  return (
+  const cardContent = (
     <Card className="group flex h-full flex-col overflow-hidden transition-shadow duration-200 hover:shadow-md">
       <div className="relative text-white">
         {event.thumbnail_url ? (
@@ -477,12 +489,18 @@ const EventCard = ({ event }: { event: EventData }) => {
               />
               <div className="absolute inset-0 bg-linear-to-t from-primary-green/80 via-primary-green/20 to-transparent" />
             </div>
-            <div className="absolute left-4 top-4 flex items-center gap-2">
+            <div className="absolute left-4 top-4 flex flex-wrap items-center gap-2">
               <Badge className={`${categoryColor} text-xs`}>{categoryLabel}</Badge>
               <Badge className="bg-white/15 text-white border-0 text-xs backdrop-blur-sm">
                 <TypeIcon className="mr-1 h-3 w-3" />
                 {typeInfo.label}
               </Badge>
+              {isExternal && (
+                <Badge className="bg-amber-500 text-white border-0 text-xs backdrop-blur-sm">
+                  <Tag className="mr-1 h-3 w-3" />
+                  Code MILKPOWER
+                </Badge>
+              )}
             </div>
             <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
               <p className="text-2xl font-bold font-serif">
@@ -496,12 +514,18 @@ const EventCard = ({ event }: { event: EventData }) => {
           </>
         ) : (
           <div className="bg-primary-green p-5">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Badge className={`${categoryColor} text-xs`}>{categoryLabel}</Badge>
               <Badge className="bg-white/15 text-white border-0 text-xs">
                 <TypeIcon className="mr-1 h-3 w-3" />
                 {typeInfo.label}
               </Badge>
+              {isExternal && (
+                <Badge className="bg-amber-500 text-white border-0 text-xs">
+                  <Tag className="mr-1 h-3 w-3" />
+                  Code MILKPOWER
+                </Badge>
+              )}
             </div>
             <div className="mt-4 flex items-end justify-between">
               <div>
@@ -550,6 +574,22 @@ const EventCard = ({ event }: { event: EventData }) => {
                 <span>{consultantName}</span>
               </div>
             )}
+            {event.provider && (
+              <div className="flex items-center gap-1.5">
+                {event.provider.logo_url ? (
+                  <Image
+                    src={event.provider.logo_url}
+                    alt={event.provider.name}
+                    width={14}
+                    height={14}
+                    className="rounded-sm"
+                  />
+                ) : (
+                  <ExternalLink className="h-3.5 w-3.5" />
+                )}
+                <span>via {event.provider.name}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -559,27 +599,62 @@ const EventCard = ({ event }: { event: EventData }) => {
               <Badge variant="secondary" className="bg-emerald-50 text-emerald-700">
                 Gratuit
               </Badge>
+            ) : hasDiscount ? (
+              <div className="flex items-center gap-2">
+                <p className="text-sm line-through text-primary-green/40">
+                  {formatPrice(event.price_cents, event.currency)}
+                </p>
+                <p className="font-serif text-xl font-bold text-primary-red">
+                  {formatPrice(event.discounted_price_cents!, event.currency)}
+                </p>
+              </div>
             ) : (
               <p className="font-serif text-xl font-bold text-primary-green">
                 {formatPrice(event.price_cents, event.currency)}
               </p>
             )}
           </div>
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="border-primary-red text-primary-red hover:bg-primary-red hover:text-white"
-          >
-            <Link href={`/formations/${event.slug}`}>
-              En savoir plus
-              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-            </Link>
-          </Button>
+          {isExternal ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-primary-red text-primary-red hover:bg-primary-red hover:text-white pointer-events-none"
+            >
+              Voir l&apos;offre
+              <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+            </Button>
+          ) : (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="border-primary-red text-primary-red hover:bg-primary-red hover:text-white"
+            >
+              <Link href={`/formations/${event.slug}`}>
+                En savoir plus
+                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
   );
+
+  if (isExternal) {
+    return (
+      <a
+        href={buildExternalUrl(event.external_url!)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block h-full"
+      >
+        {cardContent}
+      </a>
+    );
+  }
+
+  return cardContent;
 };
 
 /* ------------------------------------------------------------------ */

@@ -11,7 +11,7 @@ const PublicLayout = async ({ children }: { children: React.ReactNode }) => {
     isMaintenanceMode(),
   ]);
 
-  if (maintenance && user?.role !== "admin") {
+  if (maintenance && !user?.roles.includes("admin")) {
     return <MaintenancePage />;
   }
 

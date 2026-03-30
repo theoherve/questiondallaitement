@@ -22,7 +22,7 @@ import type { CampaignStats } from "@/types/database";
 
 const requireAdmin = async () => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") redirect("/connexion");
+  if (!user || !user.roles.includes("admin")) redirect("/connexion");
   return user;
 };
 

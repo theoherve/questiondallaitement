@@ -4,7 +4,7 @@ import { syncAllContactsToBrevo } from "@/lib/brevo/sync";
 
 export async function POST() {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") {
+  if (!user || !user.roles.includes("admin")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

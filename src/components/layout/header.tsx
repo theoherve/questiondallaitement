@@ -117,11 +117,11 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
                       </DropdownMenuItem>
                     );
                   })}
-                  {canAccessBackoffice(user.role) && (
+                  {canAccessBackoffice(user.roles) && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link href={getBackofficeRedirectUrl(user.role)}>
+                        <Link href={getBackofficeRedirectUrl(user.roles)}>
                           Backoffice
                         </Link>
                       </DropdownMenuItem>
@@ -241,9 +241,9 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
                     {item.title}
                   </Link>
                 ))}
-                {canAccessBackoffice(user.role) && (
+                {canAccessBackoffice(user.roles) && (
                   <Link
-                    href={getBackofficeRedirectUrl(user.role)}
+                    href={getBackofficeRedirectUrl(user.roles)}
                     className="py-2 text-base font-medium text-primary-green/70 transition-colors hover:text-primary-red"
                     onClick={() => setMenuOpen(false)}
                   >

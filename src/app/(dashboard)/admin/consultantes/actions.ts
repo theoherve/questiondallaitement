@@ -12,7 +12,7 @@ import type { ActionResult } from "@/types";
 
 const requireAdmin = async () => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") redirect("/connexion");
+  if (!user || !user.roles.includes("admin")) redirect("/connexion");
   return user;
 };
 
@@ -25,7 +25,7 @@ export const searchUsers = async (
       email: string;
       first_name: string | null;
       last_name: string | null;
-      role: string;
+      roles: string[];
     }[]
   >
 > => {
@@ -35,13 +35,25 @@ export const searchUsers = async (
   }
 
   const supabase = createAdminClient();
-  const { data, error } = await supabase
+
+  // Get IDs of users who already have a consultant record
+  const { data: existingConsultants } = await supabase
+    .from("consultants")
+    .select("id");
+  const excludeIds = (existingConsultants ?? []).map((c) => c.id);
+
+  let profilesQuery = supabase
     .from("profiles")
-    .select("id, email, first_name, last_name, role")
+    .select("id, email, first_name, last_name, roles")
     .or(`email.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
-    .not("role", "eq", "consultant")
     .is("deleted_at", null)
     .limit(10);
+
+  if (excludeIds.length > 0) {
+    profilesQuery = profilesQuery.not("id", "in", `(${excludeIds.join(",")})`);
+  }
+
+  const { data, error } = await profilesQuery;
 
   if (error) {
     return { success: false, error: "Erreur lors de la recherche" };
@@ -83,13 +95,25 @@ export const promoteToConsultant = async (
     return { success: false, error: "Ce slug est déjà utilisé" };
   }
 
-  const { error: roleError } = await supabase
+  // Fetch current roles and add "consultant" if not present
+  const { data: profile } = await supabase
     .from("profiles")
-    .update({ role: "consultant" })
-    .eq("id", user_id);
+    .select("roles")
+    .eq("id", user_id)
+    .single();
 
-  if (roleError) {
-    return { success: false, error: "Erreur lors de la mise à jour du rôle" };
+  const currentRoles: string[] = (profile?.roles as string[]) ?? ["client"];
+
+  if (!currentRoles.includes("consultant")) {
+    const newRoles = [...currentRoles, "consultant"];
+    const { error: roleError } = await supabase
+      .from("profiles")
+      .update({ roles: newRoles })
+      .eq("id", user_id);
+
+    if (roleError) {
+      return { success: false, error: "Erreur lors de la mise à jour des rôles" };
+    }
   }
 
   const { error: consultantError } = await supabase
@@ -104,10 +128,13 @@ export const promoteToConsultant = async (
     });
 
   if (consultantError) {
-    await supabase
-      .from("profiles")
-      .update({ role: "client" })
-      .eq("id", user_id);
+    // Rollback: remove "consultant" from roles
+    if (!currentRoles.includes("consultant")) {
+      await supabase
+        .from("profiles")
+        .update({ roles: currentRoles })
+        .eq("id", user_id);
+    }
     return { success: false, error: "Erreur lors de la création du profil consultant" };
   }
 

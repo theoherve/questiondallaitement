@@ -466,7 +466,7 @@ export const createBooking = async (
       .insert({
         id: crypto.randomUUID(),
         email: email.toLowerCase(),
-        role: "client",
+        roles: ["client"],
         first_name,
         last_name,
         phone,

@@ -140,9 +140,9 @@ const MediasPage = () => {
                 Écouter & regarder
               </h2>
               <p className="mt-4 max-w-2xl text-background-beige/60 lg:text-lg">
-                Retrouvez Carole Hervé dans des podcasts, émissions TV et
-                vidéos sur l&apos;allaitement : La Maison des Maternelles,
-                Europe 1, France Bleu, Milkshaker, et bien d&apos;autres.
+                Retrouve-moi dans des podcasts, émissions TV et vidéos sur
+                l&apos;allaitement : La Maison des Maternelles, Europe 1,
+                France Bleu, Milkshaker, et bien d&apos;autres.
               </p>
             </div>
           </ScrollReveal>
@@ -234,8 +234,8 @@ const MediasPage = () => {
               aria-hidden
             />
             <h2 className="mt-6 font-serif text-3xl font-bold text-background-beige lg:text-5xl">
-              Retrouvez cette expertise dans{" "}
-              <em className="italic">ses livres</em>
+              Retrouvez mon expertise dans{" "}
+              <em className="italic">mes livres</em>
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-background-beige/70">
               3 ouvrages de référence sur l&apos;allaitement, disponibles dans

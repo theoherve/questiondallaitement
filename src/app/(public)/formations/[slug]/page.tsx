@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -117,6 +117,12 @@ const EventDetailPage = async ({ params }: Props) => {
     .single();
 
   if (!event) notFound();
+
+  // External events redirect directly to the provider's URL with discount code
+  if (event.external_url) {
+    const separator = event.external_url.includes("?") ? "&" : "?";
+    redirect(`${event.external_url}${separator}code=MILKPOWER`);
+  }
 
   const adminSupabase = createAdminClient();
   const user = await getSessionUser();

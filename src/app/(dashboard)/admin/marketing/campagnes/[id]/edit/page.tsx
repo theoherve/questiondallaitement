@@ -21,7 +21,7 @@ const EditCampaignPage = async ({
   params: Promise<{ id: string }>;
 }) => {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") redirect("/connexion");
+  if (!user || !user.roles.includes("admin")) redirect("/connexion");
 
   const { id } = await params;
 

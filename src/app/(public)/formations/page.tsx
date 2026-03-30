@@ -48,6 +48,12 @@ const FormationsProPage = async () => {
       price_cents,
       currency,
       thumbnail_url,
+      external_url,
+      discounted_price_cents,
+      training_providers!provider_id (
+        name,
+        logo_url
+      ),
       consultants (
         slug,
         profiles!consultants_id_fkey (
@@ -75,7 +81,10 @@ const FormationsProPage = async () => {
     );
   }
 
-  const all = events ?? [];
+  const all = (events ?? []).map((e) => ({
+    ...e,
+    provider: (e as Record<string, unknown>).training_providers as { name: string; logo_url: string | null } | null,
+  }));
   const now = new Date().toISOString();
   const upcomingEvents = all.filter((e) => e.starts_at >= now);
   const pastEvents = all.filter((e) => e.starts_at < now).reverse();

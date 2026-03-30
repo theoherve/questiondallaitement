@@ -50,16 +50,15 @@ export const BACKOFFICE_ROLES: UserRole[] = [
   "admin",
 ];
 
-/** URL de redirection vers le backoffice selon le rôle. */
-export const getBackofficeRedirectUrl = (role: string): string => {
-  if (role === "consultant" || role === "consultant_limited") {
+/** URL de redirection vers le backoffice selon les rôles. */
+export const getBackofficeRedirectUrl = (roles: UserRole[]): string => {
+  if (roles.includes("admin")) return "/admin";
+  if (roles.includes("consultant") || roles.includes("consultant_limited")) {
     return "/espace-consultante";
   }
-  if (role === "marketing_manager" || role === "admin") {
-    return "/admin";
-  }
+  if (roles.includes("marketing_manager")) return "/admin";
   return "/espace-client";
 };
 
-export const canAccessBackoffice = (role: string): boolean =>
-  (BACKOFFICE_ROLES as readonly string[]).includes(role);
+export const canAccessBackoffice = (roles: UserRole[]): boolean =>
+  roles.some((r) => (BACKOFFICE_ROLES as readonly string[]).includes(r));

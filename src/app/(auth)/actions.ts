@@ -135,7 +135,7 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
     password_hash,
     first_name: parsed.data.first_name,
     last_name: parsed.data.last_name,
-    role: "client",
+    roles: ["client"],
     email_verified: false,
     email_verification_token: verificationToken,
     email_verification_expires: verificationExpires,
@@ -164,7 +164,7 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
     first_name: parsed.data.first_name,
     last_name: parsed.data.last_name,
     phone: null,
-    role: "client",
+    roles: ["client"],
   }).catch(() => {});
 
   redirect(`/inscription?success=1`);

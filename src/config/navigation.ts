@@ -118,8 +118,8 @@ export const adminNav: NavItem[] = [
 /** Hrefs accessibles au marketing_manager dans l’admin (dashboard + marketing uniquement). */
 const ADMIN_MARKETING_MANAGER_HREFS = ["/admin", "/admin/marketing"];
 
-export const getAdminNavForRole = (role: string): NavItem[] => {
-  if (role === "marketing_manager") {
+export const getAdminNavForRole = (roles: string[]): NavItem[] => {
+  if (roles.includes("marketing_manager") && !roles.includes("admin")) {
     return adminNav.filter((item) =>
       ADMIN_MARKETING_MANAGER_HREFS.includes(item.href),
     );

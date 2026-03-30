@@ -75,7 +75,7 @@ export type BlockContent =
 
 export type Profile = {
   id: string;
-  role: UserRole;
+  roles: UserRole[];
   email: string;
   first_name: string | null;
   last_name: string | null;
@@ -243,6 +243,15 @@ export type FormationProgress = {
   completed_at: string | null;
 };
 
+export type TrainingProvider = {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  website_url: string | null;
+  created_at: string;
+};
+
 export type Event = {
   id: string;
   consultant_id: string;
@@ -259,6 +268,9 @@ export type Event = {
   price_cents: number;
   currency: string;
   is_published: boolean;
+  provider_id: string | null;
+  external_url: string | null;
+  discounted_price_cents: number | null;
   created_at: string;
   updated_at: string;
 };
