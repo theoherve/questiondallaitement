@@ -10,6 +10,11 @@ const PUBLIC_ROUTES = [
   "/politique-de-confidentialite",
   "/mentions-legales",
   "/replay-lives",
+  "/accompagnements",
+  "/livres",
+  "/medias",
+  "/blog",
+  "/a-propos",
 ];
 
 const AUTH_ROUTES = [
