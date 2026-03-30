@@ -440,3 +440,13 @@ export type BlogPost = {
   created_at: string;
   updated_at: string;
 };
+
+export type ReplayLive = {
+  id: string;
+  title: string;
+  vimeo_url: string;
+  description: string | null;
+  live_date: string;
+  created_at: string;
+  updated_at: string;
+};
