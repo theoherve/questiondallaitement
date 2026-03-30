@@ -71,6 +71,9 @@ RETURNS BOOLEAN AS $$
   );
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
+-- DEPRECATED: get_user_role() returns the first role only and is misleading in a multi-role context.
+-- No RLS policy calls this function. Kept for backward compatibility with external callers only.
+-- Use is_admin() or is_consultant() in RLS policies instead.
 CREATE OR REPLACE FUNCTION get_user_role()
 RETURNS user_role AS $$
   SELECT roles[1] FROM profiles WHERE id = auth.uid();

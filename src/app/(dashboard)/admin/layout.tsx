@@ -3,21 +3,13 @@ import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { getAdminNavForRole } from "@/config/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { handleLogout } from "@/app/(auth)/actions";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 const AdminLayout = async ({ children }: { children: React.ReactNode }) => {
   const user = await getSessionUser();
   const navItems = getAdminNavForRole(user?.roles ?? ["admin"]);
 
-  // Check if admin is also a consultant
-  const supabase = createAdminClient();
-  const { data: consultant } = await supabase
-    .from("consultants")
-    .select("id")
-    .eq("id", user?.id ?? "")
-    .single();
-
-  const finalNav = consultant
+  const isAlsoConsultant = user?.roles.includes("consultant") || user?.roles.includes("consultant_limited");
+  const finalNav = isAlsoConsultant
     ? [...navItems, { title: "Espace consultante", href: "/espace-consultante", iconKey: "Stethoscope" }]
     : navItems;
 
