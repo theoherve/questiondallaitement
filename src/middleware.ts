@@ -9,6 +9,7 @@ const PUBLIC_ROUTES = [
   "/reserver",
   "/politique-de-confidentialite",
   "/mentions-legales",
+  "/replay-lives",
 ];
 
 const AUTH_ROUTES = [
