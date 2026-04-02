@@ -57,7 +57,28 @@ const ConfirmationPage = async ({
     .eq("id", booking_id)
     .single();
 
-  if (!booking) notFound();
+  if (!booking) {
+    // The Stripe webhook hasn't fired yet — the booking will be created shortly.
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
+        <h1 className="mt-6 font-serif text-2xl font-bold text-primary-green sm:text-3xl">
+          Paiement reçu
+        </h1>
+        <p className="mt-2 text-muted-foreground">
+          Votre paiement a bien été enregistré. Votre rendez-vous est en cours de confirmation — vous recevrez un email dans quelques instants.
+        </p>
+        <div className="mt-6 flex justify-center gap-3">
+          <Button asChild variant="outline">
+            <Link href="/">Retour à l&apos;accueil</Link>
+          </Button>
+          <Button asChild className="bg-primary-red hover:bg-primary-red-dark">
+            <Link href="/reserver">Nouvelle réservation</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const consultationType = booking.consultation_types as unknown as {
     title: string;

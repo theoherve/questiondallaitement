@@ -3,7 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createConnectAccount, createAccountLink } from "@/lib/stripe/connect";
 
-export const POST = async () => {
+export const GET = async () => {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -37,5 +37,5 @@ export const POST = async () => {
     `${appUrl}/espace-consultante/parametres?stripe=success`
   );
 
-  return NextResponse.json({ url: accountLink.url });
+  return NextResponse.redirect(accountLink.url);
 };

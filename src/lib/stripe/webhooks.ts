@@ -31,7 +31,7 @@ export const handleCheckoutCompleted = async (
       );
       break;
     case "booking":
-      await handleBookingConfirmation(reference_id, paymentIntentId ?? null);
+      await handleBookingConfirmation(session, paymentIntentId ?? null);
       break;
     case "event":
       await handleEventRegistration(
@@ -251,16 +251,28 @@ const processCollaboratorSplits = async (
 };
 
 const handleBookingConfirmation = async (
-  bookingId: string,
+  session: Stripe.Checkout.Session,
   paymentIntentId: string | null,
 ) => {
+  const meta = session.metadata ?? {};
+
+  // The booking was not pre-created — insert it now with confirmed status.
   await getSupabase()
     .from("bookings")
-    .update({
+    .insert({
+      id: meta.reference_id,
+      client_id: meta.client_id,
+      consultant_id: meta.consultant_id,
+      consultation_type_id: meta.consultation_type_id,
+      duration_option_id: meta.duration_option_id,
+      starts_at: meta.starts_at,
+      ends_at: meta.ends_at,
       status: "confirmed",
+      location: meta.location,
+      payment_method: "online",
+      reason: meta.reason ?? "",
       stripe_payment_intent_id: paymentIntentId,
-    })
-    .eq("id", bookingId);
+    });
 };
 
 const handleEventRegistration = async (

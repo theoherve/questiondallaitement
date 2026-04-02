@@ -81,7 +81,7 @@ export const Footer = () => {
           {/* Social */}
           <div>
             <h3 className="font-sans text-xs font-medium uppercase tracking-widest text-background-beige/40">
-              Suivez-nous
+              Suivez-moi
             </h3>
             <div className="mt-3 flex gap-4">
               {socialLinks.map((social) => {

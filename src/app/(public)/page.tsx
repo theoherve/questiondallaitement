@@ -427,10 +427,6 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                   <span className="font-serif text-sm font-bold text-background-beige">
                     IBCLC
                   </span>
-                  <span className="text-background-beige/40">·</span>
-                  <span className="font-sans text-xs text-background-beige/75">
-                    Certification internationale
-                  </span>
                 </div>
               </div>
             </ScrollReveal>

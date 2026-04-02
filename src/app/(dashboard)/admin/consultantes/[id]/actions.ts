@@ -37,6 +37,26 @@ export const adminGetConsultationTypes = async (consultantId: string) => {
   return data ?? [];
 };
 
+export const adminGetConsultationTypeTemplates = async (excludeConsultantId: string) => {
+  await requireAdmin();
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("consultation_types")
+    .select("title, description, duration_minutes, price_cents, available_locations, buffer_minutes")
+    .neq("consultant_id", excludeConsultantId)
+    .eq("is_active", true)
+    .order("title");
+
+  if (!data) return [];
+
+  const seen = new Set<string>();
+  return data.filter((t) => {
+    if (seen.has(t.title)) return false;
+    seen.add(t.title);
+    return true;
+  });
+};
+
 export const adminCreateConsultationType = async (
   consultantId: string,
   formData: AdminConsultationTypeFormData
@@ -160,6 +180,57 @@ export const adminDeleteAvailability = async (
     .eq("id", id)
     .eq("consultant_id", consultantId);
   if (error) return { success: false, error: "Erreur suppression" };
+  revalidatePath(`/admin/consultantes/${consultantId}`);
+  return { success: true };
+};
+
+export const adminUploadAvatar = async (
+  consultantId: string,
+  formData: FormData
+): Promise<ActionResult<{ url: string }>> => {
+  await requireAdmin();
+  const file = formData.get("file") as File | null;
+  if (!file) return { success: false, error: "Fichier requis" };
+  if (file.size > 5 * 1024 * 1024)
+    return { success: false, error: "Le fichier dépasse 5 Mo" };
+
+  try {
+    const { uploadFile } = await import("@/lib/storage/helpers");
+    const result = await uploadFile("avatars", consultantId, file);
+    const supabase = createAdminClient();
+    const { error } = await supabase
+      .from("profiles")
+      .update({ avatar_url: result.url })
+      .eq("id", consultantId);
+    if (error) return { success: false, error: "Erreur mise à jour de l'avatar" };
+    revalidatePath(`/admin/consultantes/${consultantId}`);
+    return { success: true, data: { url: result.url } };
+  } catch {
+    return { success: false, error: "Erreur lors de l'upload" };
+  }
+};
+
+export const adminCopyAvailabilities = async (
+  consultantId: string,
+  fromDay: number,
+  toDays: number[],
+  slots: { start_time: string; end_time: string }[]
+): Promise<ActionResult> => {
+  await requireAdmin();
+  if (toDays.length === 0 || slots.length === 0)
+    return { success: false, error: "Aucun jour ou créneau à copier" };
+  const supabase = createAdminClient();
+  const rows = toDays.flatMap((day) =>
+    slots.map((slot) => ({
+      consultant_id: consultantId,
+      day_of_week: day,
+      start_time: slot.start_time,
+      end_time: slot.end_time,
+      is_active: true,
+    }))
+  );
+  const { error } = await supabase.from("availabilities").insert(rows);
+  if (error) return { success: false, error: "Erreur lors de la copie" };
   revalidatePath(`/admin/consultantes/${consultantId}`);
   return { success: true };
 };

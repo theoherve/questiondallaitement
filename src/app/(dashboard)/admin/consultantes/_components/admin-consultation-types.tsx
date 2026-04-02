@@ -15,6 +15,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, Plus, Pencil, Trash2 } from "lucide-react";
 import {
   adminCreateConsultationType,
@@ -34,9 +41,19 @@ type ConsultationType = {
   buffer_minutes: number;
 };
 
+type ConsultationTypeTemplate = {
+  title: string;
+  description: string | null;
+  duration_minutes: number;
+  price_cents: number;
+  available_locations: string[];
+  buffer_minutes: number;
+};
+
 type Props = {
   consultantId: string;
   types: ConsultationType[];
+  templates: ConsultationTypeTemplate[];
 };
 
 const LOCATION_OPTIONS: { value: ConsultationLocation; label: string }[] = [
@@ -56,23 +73,37 @@ const formatPrice = (cents: number) =>
     cents / 100
   );
 
-export const AdminConsultationTypes = ({ consultantId, types }: Props) => {
+export const AdminConsultationTypes = ({ consultantId, types, templates }: Props) => {
   const [isPending, startTransition] = useTransition();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingType, setEditingType] = useState<ConsultationType | null>(null);
   const [selectedLocations, setSelectedLocations] = useState<ConsultationLocation[]>(["teleconsultation"]);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [prefill, setPrefill] = useState<ConsultationTypeTemplate | null>(null);
+  const [formKey, setFormKey] = useState(0);
 
   const handleOpenCreate = () => {
     setEditingType(null);
+    setPrefill(null);
     setSelectedLocations(["teleconsultation"]);
+    setFormKey((k) => k + 1);
     setDialogOpen(true);
   };
 
   const handleOpenEdit = (ct: ConsultationType) => {
     setEditingType(ct);
+    setPrefill(null);
     setSelectedLocations((ct.available_locations ?? []) as ConsultationLocation[]);
+    setFormKey((k) => k + 1);
     setDialogOpen(true);
+  };
+
+  const handleSelectTemplate = (title: string) => {
+    const template = templates.find((t) => t.title === title);
+    if (!template) return;
+    setPrefill(template);
+    setSelectedLocations((template.available_locations ?? []) as ConsultationLocation[]);
+    setFormKey((k) => k + 1);
   };
 
   const handleLocationToggle = (loc: ConsultationLocation) => {
@@ -119,6 +150,16 @@ export const AdminConsultationTypes = ({ consultantId, types }: Props) => {
     });
   };
 
+  const currentTitle = prefill?.title ?? editingType?.title ?? "";
+  const currentDescription = prefill?.description ?? editingType?.description ?? "";
+  const currentDuration = prefill?.duration_minutes ?? editingType?.duration_minutes ?? 60;
+  const currentPrice = prefill
+    ? (prefill.price_cents / 100).toFixed(2)
+    : editingType
+    ? (editingType.price_cents / 100).toFixed(2)
+    : "";
+  const currentBuffer = prefill?.buffer_minutes ?? editingType?.buffer_minutes ?? 15;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -147,14 +188,36 @@ export const AdminConsultationTypes = ({ consultantId, types }: Props) => {
                 {editingType ? "Modifier" : "Nouveau"} type de consultation
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+
+            {!editingType && templates.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-muted-foreground">Partir d&apos;un type existant</Label>
+                <Select onValueChange={handleSelectTemplate}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choisir un modèle…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.map((t) => (
+                      <SelectItem key={t.title} value={t.title}>
+                        {t.title}
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {formatPrice(t.price_cents)} · {t.duration_minutes} min
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <form key={formKey} onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="ct-title">Titre</Label>
                 <Input
                   id="ct-title"
                   name="title"
                   required
-                  defaultValue={editingType?.title ?? ""}
+                  defaultValue={currentTitle}
                   placeholder="Ex : Consultation allaitement"
                 />
               </div>
@@ -164,7 +227,7 @@ export const AdminConsultationTypes = ({ consultantId, types }: Props) => {
                   id="ct-desc"
                   name="description"
                   rows={2}
-                  defaultValue={editingType?.description ?? ""}
+                  defaultValue={currentDescription}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -177,7 +240,7 @@ export const AdminConsultationTypes = ({ consultantId, types }: Props) => {
                     min={15}
                     max={480}
                     required
-                    defaultValue={editingType?.duration_minutes ?? 60}
+                    defaultValue={currentDuration}
                   />
                 </div>
                 <div className="space-y-2">
@@ -189,9 +252,7 @@ export const AdminConsultationTypes = ({ consultantId, types }: Props) => {
                     min={0}
                     step={0.01}
                     required
-                    defaultValue={
-                      editingType ? (editingType.price_cents / 100).toFixed(2) : ""
-                    }
+                    defaultValue={currentPrice}
                   />
                 </div>
               </div>
@@ -203,7 +264,7 @@ export const AdminConsultationTypes = ({ consultantId, types }: Props) => {
                   type="number"
                   min={0}
                   max={120}
-                  defaultValue={editingType?.buffer_minutes ?? 15}
+                  defaultValue={currentBuffer}
                 />
               </div>
               <div className="space-y-2">
