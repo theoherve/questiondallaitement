@@ -26,7 +26,8 @@ import { ConsultantActiveToggle } from "../_components/consultant-active-toggle"
 import { AdminConsultationTypes } from "../_components/admin-consultation-types";
 import { AdminLocations } from "../_components/admin-locations";
 import { AdminAvailabilities } from "../_components/admin-availabilities";
-import { adminGetConsultationTypes, adminGetLocations, adminGetAvailabilities } from "./actions";
+import { AdminAvatarUpload } from "../_components/admin-avatar-upload";
+import { adminGetConsultationTypes, adminGetConsultationTypeTemplates, adminGetLocations, adminGetAvailabilities } from "./actions";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -107,7 +108,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
     `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim() ||
     "Sans nom";
 
-  const [formationsRes, bookingsRes, paymentsRes, consultationTypes, consultantLocations, availabilities] = await Promise.all([
+  const [formationsRes, bookingsRes, paymentsRes, consultationTypes, consultationTypeTemplates, consultantLocations, availabilities] = await Promise.all([
     supabase
       .from("formations")
       .select("id, title, slug, status, price_cents, currency")
@@ -126,6 +127,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
       .eq("consultant_id", id)
       .eq("status", "succeeded"),
     adminGetConsultationTypes(id),
+    adminGetConsultationTypeTemplates(id),
     adminGetLocations(id),
     adminGetAvailabilities(id),
   ]);
@@ -151,19 +153,12 @@ const ConsultantDetailPage = async ({ params }: Props) => {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-4">
-          {profile.avatar_url ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={profile.avatar_url}
-              alt={fullName}
-              className="h-16 w-16 rounded-full object-cover"
-            />
-          ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-green/10 text-xl font-bold text-primary-green">
-              {(profile.first_name?.[0] ?? "").toUpperCase()}
-              {(profile.last_name?.[0] ?? "").toUpperCase()}
-            </div>
-          )}
+          <AdminAvatarUpload
+            consultantId={consultant.id}
+            avatarUrl={profile.avatar_url}
+            firstName={profile.first_name}
+            lastName={profile.last_name}
+          />
           <div>
             <h1 className="font-serif text-2xl font-bold text-primary-green">
               {fullName}
@@ -300,17 +295,17 @@ const ConsultantDetailPage = async ({ params }: Props) => {
         </Card>
       </div>
 
-      {/* Formations */}
+      {/* Accompagnements */}
       <Card>
         <CardHeader>
           <CardTitle className="text-primary-green">
-            Formations ({formations.length})
+            Accompagnements ({formations.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {formations.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted-foreground">
-              Aucune formation associée.
+              Aucun accompagnement associé.
             </p>
           ) : (
             <Table>
@@ -354,6 +349,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
             <AdminConsultationTypes
               consultantId={id}
               types={consultationTypes as Parameters<typeof AdminConsultationTypes>[0]["types"]}
+              templates={consultationTypeTemplates}
             />
           </CardContent>
         </Card>

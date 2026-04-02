@@ -191,7 +191,8 @@ export const getConsultantsForService = async (
     `
     )
     .in("id", filteredIds)
-    .eq("is_active", true);
+    .eq("is_active", true)
+    .eq("stripe_account_status", "active");
 
   return consultants ?? [];
 };
@@ -481,28 +482,6 @@ export const createBooking = async (
     isNewAccount = true;
   }
 
-  // Create the booking
-  const { data: booking, error: bookingError } = await supabase
-    .from("bookings")
-    .insert({
-      client_id: clientId,
-      consultant_id: formData.consultant_id,
-      consultation_type_id: formData.consultation_type_id,
-      duration_option_id: formData.duration_option_id,
-      starts_at: startsAt.toISOString(),
-      ends_at: endsAt.toISOString(),
-      status: "pending",
-      location: formData.location,
-      payment_method: formData.payment_method,
-      reason,
-    })
-    .select("id")
-    .single();
-
-  if (bookingError || !booking) {
-    return { success: false, error: "Erreur lors de la création de la réservation" };
-  }
-
   // Fetch consultant for Stripe and emails
   const { data: consultant } = await supabase
     .from("consultants")
@@ -525,6 +504,12 @@ export const createBooking = async (
       return { success: false, error: "La consultante n'a pas configuré son compte Stripe" };
     }
 
+    // Pre-generate a booking ID to use in the success URL and Stripe metadata.
+    // The booking record is NOT created here — it is created by the Stripe webhook
+    // (handleCheckoutCompleted) once payment is confirmed. This ensures that abandoned
+    // checkouts never leave orphan bookings in the database.
+    const bookingId = crypto.randomUUID();
+
     try {
       const session = await createCheckoutSession({
         consultantStripeAccountId: consultant.stripe_account_id,
@@ -536,20 +521,26 @@ export const createBooking = async (
         customerEmail: email,
         metadata: {
           type: "booking",
-          reference_id: booking.id,
+          reference_id: bookingId,
           client_id: clientId,
           consultant_id: formData.consultant_id,
+          consultation_type_id: formData.consultation_type_id,
+          duration_option_id: formData.duration_option_id,
+          starts_at: startsAt.toISOString(),
+          ends_at: endsAt.toISOString(),
+          location: formData.location,
+          reason: reason.substring(0, 500),
           platform_fee_cents: Math.round(
             totalPriceCents * (consultant.commission_rate / 100)
           ).toString(),
         },
-        successUrl: `${siteConfig.url}/reserver/confirmation?booking_id=${booking.id}`,
+        successUrl: `${siteConfig.url}/reserver/confirmation?booking_id=${bookingId}`,
         cancelUrl: `${siteConfig.url}/reserver?cancelled=true`,
       });
 
       return {
         success: true,
-        data: { booking_id: booking.id, redirect_url: session.url ?? undefined },
+        data: { booking_id: bookingId, redirect_url: session.url ?? undefined },
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erreur Stripe";
@@ -557,7 +548,28 @@ export const createBooking = async (
     }
   }
 
-  // on_site payment
+  // on_site payment: create the booking immediately
+  const { data: booking, error: bookingError } = await supabase
+    .from("bookings")
+    .insert({
+      client_id: clientId,
+      consultant_id: formData.consultant_id,
+      consultation_type_id: formData.consultation_type_id,
+      duration_option_id: formData.duration_option_id,
+      starts_at: startsAt.toISOString(),
+      ends_at: endsAt.toISOString(),
+      status: "pending",
+      location: formData.location,
+      payment_method: formData.payment_method,
+      reason,
+    })
+    .select("id")
+    .single();
+
+  if (bookingError || !booking) {
+    return { success: false, error: "Erreur lors de la création de la réservation" };
+  }
+
   const dateFormatted = format(startsAt, "EEEE d MMMM yyyy", { locale: fr });
   const timeFormatted = format(startsAt, "HH:mm");
 
