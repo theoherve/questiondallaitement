@@ -74,6 +74,16 @@ export const cancelBooking = async (
     return { success: false, error: "Réservation introuvable" };
   }
 
+  // Delete Zoom meeting if present (non-blocking)
+  if (booking.zoom_meeting_id) {
+    try {
+      const { deleteMeeting } = await import("@/lib/zoom/client");
+      await deleteMeeting(booking.consultant_id, booking.zoom_meeting_id);
+    } catch {
+      // Non-blocking
+    }
+  }
+
   if (booking.status === "cancelled") {
     return { success: false, error: "Déjà annulée" };
   }

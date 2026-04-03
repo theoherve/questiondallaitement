@@ -19,15 +19,59 @@ export const sendBookingConfirmation = async (
     consultant_name: string;
     date: string;
     time: string;
+    zoom_join_url?: string;
   },
 ) => {
   const template = await getTemplate("booking_confirmation");
   if (!template) return;
 
+  const zoom_block = variables.zoom_join_url
+    ? `<p style="margin-top:24px;"><a href="${variables.zoom_join_url}" style="display:inline-block;padding:12px 24px;background-color:#A0283E;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Rejoindre la réunion Zoom</a></p>`
+    : "";
+
+  const templateVars = {
+    client_name: variables.client_name,
+    consultant_name: variables.consultant_name,
+    date: variables.date,
+    time: variables.time,
+    zoom_block,
+  };
+
   await sendTransactionalEmail({
     to: clientEmail,
-    subject: renderTemplate(template.subject, variables),
-    html: renderTemplate(template.body_html, variables),
+    subject: renderTemplate(template.subject, templateVars),
+    html: renderTemplate(template.body_html, templateVars),
+  });
+};
+
+export const sendBookingConfirmedToConsultant = async (
+  consultantEmail: string,
+  variables: {
+    consultant_name: string;
+    client_name: string;
+    date: string;
+    time: string;
+    zoom_host_url?: string;
+  },
+) => {
+  const zoomBlock = variables.zoom_host_url
+    ? `<p style="margin-top:16px;"><a href="${variables.zoom_host_url}" style="display:inline-block;padding:12px 24px;background-color:#A0283E;color:#fff;text-decoration:none;border-radius:6px;">Démarrer la réunion Zoom</a></p>`
+    : "";
+
+  await sendTransactionalEmail({
+    to: consultantEmail,
+    subject: `Réservation confirmée — ${variables.client_name} le ${variables.date}`,
+    html: `
+      <h1>Réservation confirmée</h1>
+      <p>Bonjour ${variables.consultant_name},</p>
+      <p>Une nouvelle réservation a été confirmée et payée :</p>
+      <ul>
+        <li><strong>Client :</strong> ${variables.client_name}</li>
+        <li><strong>Date :</strong> ${variables.date} à ${variables.time}</li>
+      </ul>
+      ${zoomBlock}
+      <p>Connectez-vous à votre espace pour voir tous les détails.</p>
+    `,
   });
 };
 
