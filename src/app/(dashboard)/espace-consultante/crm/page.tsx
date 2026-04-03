@@ -11,10 +11,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Users } from "lucide-react";
+import { Search, Users, Layers } from "lucide-react";
 import Link from "next/link";
 import { getContacts, getTags } from "./actions";
 import { TagsManager } from "./_components/tags-manager";
+import { ClientScore } from "./_components/client-score";
 
 export const metadata: Metadata = {
   title: "CRM",
@@ -37,7 +38,15 @@ const CrmPage = async ({
         <h1 className="font-serif text-2xl font-bold text-primary-green">
           CRM
         </h1>
-        <TagsManager tags={tags} />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/espace-consultante/crm/segments">
+              <Layers className="h-4 w-4 mr-2" />
+              Segments
+            </Link>
+          </Button>
+          <TagsManager tags={tags} />
+        </div>
       </div>
 
       {/* Filters */}
@@ -107,6 +116,7 @@ const CrmPage = async ({
                   <TableHead className="text-center">Consultations</TableHead>
                   <TableHead className="text-center">Formations</TableHead>
                   <TableHead>Tags</TableHead>
+                  <TableHead className="text-center">Score</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -153,6 +163,9 @@ const CrmPage = async ({
                           </Badge>
                         ))}
                       </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <ClientScore score={contact.score} />
                     </TableCell>
                   </TableRow>
                 ))}

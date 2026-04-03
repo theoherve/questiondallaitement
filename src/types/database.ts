@@ -327,6 +327,39 @@ export type CrmContactTag = {
   consultant_id: string;
 };
 
+export type SegmentConditionField =
+  | "booking_count"
+  | "total_spent_cents"
+  | "formation_count"
+  | "event_count"
+  | "inactive_days"
+  | "days_since_registration";
+
+export type SegmentConditionOp = ">=" | "<=" | "=" | "!=";
+
+export type SegmentCondition = {
+  field: SegmentConditionField;
+  op: SegmentConditionOp;
+  value: number;
+};
+
+export type CrmSegment = {
+  id: string;
+  consultant_id: string | null;
+  name: string;
+  description: string | null;
+  color: string;
+  conditions: SegmentCondition[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ClientScore = {
+  client_id: string;
+  score: number;
+};
+
 export type EmailTemplate = {
   id: string;
   name: string;
