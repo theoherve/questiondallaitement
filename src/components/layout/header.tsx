@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -21,6 +21,13 @@ import {
 } from "@/constants/roles";
 import type { SessionUser } from "@/lib/auth";
 
+type Notification = {
+  id: string;
+  title: string;
+  body: string | null;
+  created_at: string;
+};
+
 type HeaderProps = {
   user: SessionUser | null;
   onLogout: (formData: FormData) => void | Promise<void>;
@@ -28,6 +35,28 @@ type HeaderProps = {
 
 export const Header = ({ user, onLogout }: HeaderProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch("/api/notifications");
+        if (res.ok) {
+          const data = (await res.json()) as Notification[];
+          setNotifications(data);
+        }
+      } catch {
+        // silently fail
+      }
+    };
+    fetchNotifications();
+  }, [user]);
+
+  const markAllRead = async () => {
+    await fetch("/api/notifications/read-all", { method: "PATCH" });
+    setNotifications([]);
+  };
 
   // Close menu on browser back/forward navigation
   useEffect(() => {
@@ -87,18 +116,38 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
           {/* Desktop right — icon-only user + CTA */}
           <div className="hidden items-center gap-2 lg:flex">
             {user ? (
-              <DropdownMenu>
+              <DropdownMenu onOpenChange={(open) => { if (open && notifications.length > 0) markAllRead(); }}>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-primary-green hover:bg-primary-red/10 hover:text-primary-red"
+                    className="relative text-primary-green hover:bg-primary-red/10 hover:text-primary-red"
                     aria-label="Mon compte"
                   >
                     <User className="h-4 w-4" />
+                    {notifications.length > 0 && (
+                      <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-primary-red" />
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-64">
+                  {notifications.length > 0 && (
+                    <>
+                      <DropdownMenuLabel className="flex items-center gap-1.5 text-xs font-medium text-primary-green">
+                        <Bell className="h-3 w-3" />
+                        Notifications
+                      </DropdownMenuLabel>
+                      {notifications.slice(0, 3).map((n) => (
+                        <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-0.5">
+                          <span className="text-xs font-medium">{n.title}</span>
+                          {n.body && (
+                            <span className="text-xs text-muted-foreground line-clamp-1">{n.body}</span>
+                          )}
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
                   <DropdownMenuLabel className="truncate text-xs font-normal text-muted-foreground">
                     {user.email}
                   </DropdownMenuLabel>

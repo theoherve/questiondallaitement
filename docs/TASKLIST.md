@@ -24,7 +24,7 @@
 | **V1.5**   | EPIC-15 a EPIC-20 | ✅ Terminé                                |
 | **V2**     | EPIC-21 a EPIC-23 | 🔶 Partiel (EPIC-21-22 ✅, EPIC-23 ⬜)    |
 | **V2.5**   | EPIC-25 a EPIC-26 | 🔶 Partiel (EPIC-25 ✅, EPIC-26 ✅)       |
-| **V3**     | EPIC-24           | ⬜ Futur                                  |
+| **V3**     | EPIC-24, EPIC-27  | ⬜ Futur                                  |
 
 ---
 
@@ -405,17 +405,21 @@
 
 ---
 
-## EPIC-17 : Zoom OAuth
+## EPIC-17 : Zoom OAuth ✅
 
 > Connexion Zoom par consultante, creation automatique de meetings.
 
-| ID    | Story                                                                             | Statut | Prio  |
-| ----- | --------------------------------------------------------------------------------- | ------ | ----- |
-| 17-01 | OAuth flow : route `/api/zoom/callback`, stockage tokens dans `consultants`       | 🔶     | 🟠 P1 |
-| 17-02 | Bouton "Connecter Zoom" dans parametres consultante                               | ⬜     | 🟠 P1 |
-| 17-03 | Creation automatique meeting Zoom a la confirmation d'un booking teleconsultation | ⬜     | 🟠 P1 |
-| 17-04 | Refresh token automatique (avant expiration)                                      | ⬜     | 🟠 P1 |
-| 17-05 | Stockage `zoom_join_url` et `zoom_host_url` dans le booking                       | ⬜     | 🟠 P1 |
+| ID    | Story                                                                                                                                              | Statut | Prio  |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
+| 17-01 | OAuth flow : route `/api/zoom/callback`, stockage tokens dans `consultants`                                                                        | ✅     | 🟠 P1 |
+| 17-02 | Bouton "Connecter Zoom" dans parametres consultante (onglet Integrations)                                                                          | ✅     | 🟠 P1 |
+| 17-03 | Creation automatique meeting Zoom a la confirmation d'un booking teleconsultation (webhook Stripe, non-bloquant)                                   | ✅     | 🟠 P1 |
+| 17-04 | Refresh token automatique via `getValidToken()` dans `lib/zoom/client.ts`                                                                          | ✅     | 🟠 P1 |
+| 17-05 | Stockage `zoom_meeting_id`, `zoom_join_url`, `zoom_host_url` dans le booking apres creation du meeting                                             | ✅     | 🟠 P1 |
+| 17-06 | Suppression automatique du meeting Zoom a l'annulation (consultante et client)                                                                     | ✅     | 🟠 P1 |
+| 17-07 | Envoi du lien `zoom_join_url` au client et `zoom_host_url` a la consultante dans les emails de confirmation                                        | ✅     | 🟠 P1 |
+| 17-08 | Template email `booking_confirmation` ameliore (mise en forme, bouton Zoom conditionnel via `{{zoom_block}}`) — migration 00034                    | ✅     | 🟡 P2 |
+| 17-09 | Validation serveur : paiement `on_site` bloque pour les teleconsultations                                                                          | ✅     | 🟠 P1 |
 
 ---
 
@@ -496,12 +500,10 @@
 
 | ID    | Story                                                                            | Statut | Prio  |
 | ----- | -------------------------------------------------------------------------------- | ------ | ----- |
-| 23-01 | Banner cookie avec consentement granulaire (analytics, marketing)                | ⬜     | 🟠 P1 |
-| 23-02 | Export RGPD : endpoint `/api/user/data-export` (JSON toutes les donnees du user) | ⬜     | 🟠 P1 |
-| 23-03 | Droit a l'effacement : soft delete 30j → hard delete (cron)                      | ⬜     | 🟠 P1 |
-| 23-04 | Notifications in-app (cloche dans le header, table `notifications`)              | ⬜     | 🟡 P2 |
-| 23-05 | CRM avance : historique interactions, scoring, segments                          | ⬜     | 🟡 P2 |
-| 23-06 | Analytics avances : funnel, retention, cohortes                                  | ⬜     | 🟡 P2 |
+| 23-01 | Banner cookie avec consentement granulaire (analytics, marketing)                | ✅     | 🟠 P1 |
+| 23-02 | Export RGPD : endpoint `/api/user/data-export` (JSON toutes les donnees du user) | ✅     | 🟠 P1 |
+| 23-03 | Droit a l'effacement : soft delete 30j → hard delete (cron)                      | ✅     | 🟠 P1 |
+| 23-04 | Notifications in-app (badge sur icone user, table `notifications`)               | ✅     | 🟡 P2 |
 
 ---
 
@@ -550,17 +552,28 @@
 
 ---
 
-## EPIC-24 : Futur
+## EPIC-24 : CRM & Analytics avances
+
+> Fonctionnalites CRM et analytics avancees (deplacees depuis EPIC-23).
+
+| ID    | Story                                                     | Statut | Prio  |
+| ----- | --------------------------------------------------------- | ------ | ----- |
+| 24-01 | CRM avance : historique interactions, scoring, segments   | ⬜     | 🟡 P2 |
+| 24-02 | Analytics avances : funnel, retention, cohortes           | ⬜     | 🟡 P2 |
+
+---
+
+## EPIC-27 : Futur
 
 > Fonctionnalites long-terme.
 
 | ID    | Story                                         | Statut | Prio  |
 | ----- | --------------------------------------------- | ------ | ----- |
-| 24-01 | App mobile (Expo) ou PWA                      | ⬜     | 🟡 P2 |
-| 24-02 | API publique (REST ou GraphQL)                | ⬜     | 🟡 P2 |
-| 24-03 | Avis / reviews sur formations et consultantes | ⬜     | 🟡 P2 |
-| 24-04 | Programme de fidelite                         | ⬜     | 🟡 P2 |
-| 24-05 | Multi-langue (i18next)                        | ⬜     | 🟡 P2 |
+| 27-01 | App mobile (Expo) ou PWA                      | ⬜     | 🟡 P2 |
+| 27-02 | API publique (REST ou GraphQL)                | ⬜     | 🟡 P2 |
+| 27-03 | Avis / reviews sur formations et consultantes | ⬜     | 🟡 P2 |
+| 27-04 | Programme de fidelite                         | ⬜     | 🟡 P2 |
+| 27-05 | Multi-langue (i18next)                        | ⬜     | 🟡 P2 |
 
 ---
 
@@ -576,6 +589,6 @@
 ### Prochaines priorites
 
 1. **EPIC-14** : Tests MVP — validation end-to-end des flows critiques
-2. **EPIC-17** : Zoom OAuth — creation automatique meetings teleconsultation (17-02 a 17-05)
+2. **EPIC-17** : Zoom OAuth — ✅ terminé (configurer les clés Zoom en prod pour activer)
 3. **07-08** : Seeds `consultant_locations` manquantes dans `seed.sql`
-4. **EPIC-23** : RGPD & Compliance (cookie banner, export, droit effacement)
+4. **EPIC-24** : CRM & Analytics avances (historique, scoring, funnel)

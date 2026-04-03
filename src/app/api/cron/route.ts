@@ -190,6 +190,27 @@ export const GET = async (request: Request) => {
 
   results.automation_logs_cleaned = deleteError ? -1 : 0;
 
+  // ─── Hard delete accounts (RGPD) — 30-day grace period ────
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const { data: pendingDeletion } = await supabase
+    .from("profiles")
+    .select("id")
+    .not("deleted_at", "is", null)
+    .lt("deleted_at", thirtyDaysAgo.toISOString());
+
+  let hardDeleted = 0;
+  for (const profile of pendingDeletion ?? []) {
+    try {
+      await supabase.auth.admin.deleteUser(profile.id);
+      hardDeleted++;
+    } catch (err) {
+      console.error(`Failed to hard delete user ${profile.id}:`, err);
+    }
+  }
+  results.accounts_hard_deleted = hardDeleted;
+
   return NextResponse.json({
     success: true,
     timestamp: new Date().toISOString(),

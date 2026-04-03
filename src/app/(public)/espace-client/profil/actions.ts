@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { ActionResult } from "@/types";
+import { signOut } from "@/auth";
 
 const changePasswordSchema = z
   .object({
@@ -88,4 +89,22 @@ export const updateClientProfile = async (
   }
 
   revalidatePath("/espace-client/profil");
+};
+
+export const requestAccountDeletion = async (): Promise<ActionResult> => {
+  const { user } = await getSupabaseAndUser();
+
+  const adminClient = createAdminClient();
+  const { error } = await adminClient
+    .from("profiles")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", user.id)
+    .is("deleted_at", null);
+
+  if (error) {
+    return { success: false, error: "Erreur lors de la demande de suppression" };
+  }
+
+  await signOut({ redirectTo: "/" });
+  return { success: true };
 };

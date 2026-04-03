@@ -7,6 +7,7 @@ import {
   sendBookingConfirmedToConsultant,
 } from "@/lib/emails/send";
 import { runAutomations } from "@/lib/automations/engine";
+import { createNotification } from "@/lib/notifications";
 
 const getSupabase = () => createAdminClient();
 
@@ -274,6 +275,26 @@ const handleBookingConfirmation = async (
       reason: meta.reason ?? "",
       stripe_payment_intent_id: paymentIntentId,
     });
+
+  // Create in-app notification for the client (non-blocking)
+  try {
+    const { data: ct } = await getSupabase()
+      .from("consultation_types")
+      .select("title")
+      .eq("id", meta.consultation_type_id)
+      .single();
+    await createNotification(
+      meta.client_id,
+      "booking_confirmed",
+      "Réservation confirmée",
+      ct?.title
+        ? `Votre consultation "${ct.title}" a été confirmée.`
+        : "Votre consultation a été confirmée.",
+      { booking_id: meta.reference_id }
+    );
+  } catch {
+    // Non-blocking
+  }
 
   // Create Zoom meeting for teleconsultations (non-blocking)
   if (meta.location === "teleconsultation") {
