@@ -30,7 +30,7 @@ import { AdminLocations } from "../_components/admin-locations";
 import { AdminAvailabilities } from "../_components/admin-availabilities";
 import { AdminAvatarUpload } from "../_components/admin-avatar-upload";
 import { adminGetConsultationTypes, adminGetConsultationTypeTemplates, adminGetLocations, adminGetAvailabilities } from "./actions";
-import { getLocationConfigs } from "../../reservation/actions";
+import { getLocationConfigs } from "@/app/(dashboard)/admin/reservation/actions";
 
 type Props = {
   params: Promise<{ id: string }>;

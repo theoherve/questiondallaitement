@@ -32,7 +32,7 @@ export const updateLocationConfig = async (
   if (!user?.roles.includes("admin")) redirect("/admin");
 
   const supabase = createAdminClient();
-  const { error } = await supabase
+  const { error, count } = await supabase
     .from("location_configs")
     .update({
       label: formData.label || "",
@@ -42,8 +42,10 @@ export const updateLocationConfig = async (
       postal_code: formData.postal_code || null,
       is_active: formData.is_active,
     })
-    .eq("location_type", locationType);
+    .eq("location_type", locationType)
+    .select("location_type", { count: "exact", head: true });
 
   if (error) return { success: false, error: error.message };
+  if (count === 0) return { success: false, error: "Type de lieu introuvable" };
   return { success: true };
 };
