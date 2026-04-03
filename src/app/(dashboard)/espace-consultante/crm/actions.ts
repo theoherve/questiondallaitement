@@ -14,6 +14,33 @@ const requireConsultant = async () => {
   return user;
 };
 
+// ─── Score helpers ──────────────────────────────────────────
+
+function computeClientScore({
+  completedBookings,
+  totalSpentCents,
+  formationsEnrolled,
+  eventsAttended,
+  inactiveDays,
+}: {
+  completedBookings: number;
+  totalSpentCents: number;
+  formationsEnrolled: number;
+  eventsAttended: number;
+  inactiveDays: number;
+}): number {
+  const base =
+    Math.min(40, completedBookings * 15) +
+    Math.min(25, totalSpentCents / 4000) +
+    Math.min(20, formationsEnrolled * 10) +
+    Math.min(15, eventsAttended * 5);
+
+  const recency =
+    inactiveDays >= 180 ? 0.5 : inactiveDays >= 90 ? 0.75 : 1.0;
+
+  return Math.max(0, Math.min(100, Math.round(base * recency)));
+}
+
 // ─── Contacts ───────────────────────────────────────────────
 
 export type CrmContact = {
@@ -39,7 +66,7 @@ export const getContacts = async (params?: {
   const [bookingsRes, enrollmentsRes] = await Promise.all([
     supabase
       .from("bookings")
-      .select("client_id")
+      .select("client_id, starts_at")
       .eq("consultant_id", user.id)
       .not("status", "eq", "cancelled"),
     supabase
@@ -125,35 +152,70 @@ export const getContacts = async (params?: {
 
   // Count bookings and enrollments per client
   const bookingCounts = new Map<string, number>();
-  for (const id of bookingClientIds) {
-    bookingCounts.set(id, (bookingCounts.get(id) ?? 0) + 1);
+  const lastActivityMap = new Map<string, string>();
+  for (const b of bookingsRes.data ?? []) {
+    bookingCounts.set(b.client_id, (bookingCounts.get(b.client_id) ?? 0) + 1);
+    const existing = lastActivityMap.get(b.client_id);
+    if (!existing || b.starts_at > existing)
+      lastActivityMap.set(b.client_id, b.starts_at);
   }
   const enrollmentCounts = new Map<string, number>();
   for (const id of enrollmentClientIds) {
     enrollmentCounts.set(id, (enrollmentCounts.get(id) ?? 0) + 1);
   }
 
-  // Calculate scores in parallel
-  const scores = await Promise.all(
-    profiles.map((p) =>
-      supabase.rpc("calculate_client_score", {
-        p_client_id: p.id,
-        p_consultant_id: user.id,
-      }),
-    ),
-  );
+  // Load payments + events for score calculation (2 shared queries, no N×RPC)
+  const profileIds = profiles.map((p) => p.id);
+  const [paymentsRes, eventsRes] = await Promise.all([
+    supabase
+      .from("payments")
+      .select("client_id, amount_cents")
+      .eq("consultant_id", user.id)
+      .eq("status", "succeeded")
+      .in("client_id", profileIds),
+    supabase
+      .from("event_registrations")
+      .select("client_id")
+      .eq("status", "confirmed")
+      .in("client_id", profileIds),
+  ]);
 
-  return profiles.map((p, i) => ({
-    id: p.id,
-    first_name: p.first_name,
-    last_name: p.last_name,
-    email: p.email,
-    avatar_url: p.avatar_url,
-    bookings_count: bookingCounts.get(p.id) ?? 0,
-    enrollments_count: enrollmentCounts.get(p.id) ?? 0,
-    tags: tagsByClient.get(p.id) ?? [],
-    score: (scores[i]?.data as number | null) ?? 0,
-  }));
+  const totalSpentMap = new Map<string, number>();
+  for (const p of paymentsRes.data ?? []) {
+    totalSpentMap.set(p.client_id, (totalSpentMap.get(p.client_id) ?? 0) + p.amount_cents);
+  }
+  const eventCountMap = new Map<string, number>();
+  for (const e of eventsRes.data ?? []) {
+    eventCountMap.set(e.client_id, (eventCountMap.get(e.client_id) ?? 0) + 1);
+  }
+
+  const now = Date.now();
+
+  return profiles.map((p) => {
+    const lastActivity = lastActivityMap.get(p.id);
+    const inactiveDays = lastActivity
+      ? Math.floor((now - new Date(lastActivity).getTime()) / 86400000)
+      : 9999;
+    const score = computeClientScore({
+      completedBookings: bookingCounts.get(p.id) ?? 0,
+      totalSpentCents: totalSpentMap.get(p.id) ?? 0,
+      formationsEnrolled: enrollmentCounts.get(p.id) ?? 0,
+      eventsAttended: eventCountMap.get(p.id) ?? 0,
+      inactiveDays,
+    });
+
+    return {
+      id: p.id,
+      first_name: p.first_name,
+      last_name: p.last_name,
+      email: p.email,
+      avatar_url: p.avatar_url,
+      bookings_count: bookingCounts.get(p.id) ?? 0,
+      enrollments_count: enrollmentCounts.get(p.id) ?? 0,
+      tags: tagsByClient.get(p.id) ?? [],
+      score,
+    };
+  });
 };
 
 // ─── Contact Detail ─────────────────────────────────────────

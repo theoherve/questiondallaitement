@@ -29,20 +29,14 @@ export const getFunnelData = async (): Promise<FunnelStep[]> => {
   await requireAdmin();
   const supabase = createAdminClient();
 
-  const [clientsRes, oneOrderRes, twoOrdersRes, activeRes] = await Promise.all([
+  const [clientsRes, allOrdersRes, activeRes] = await Promise.all([
     // Total clients inscrits
     supabase
       .from("profiles")
       .select("id", { count: "exact", head: true })
       .contains("roles", ["client"]),
 
-    // Clients avec au moins 1 paiement réussi
-    supabase
-      .from("payments")
-      .select("client_id")
-      .eq("status", "succeeded"),
-
-    // Clients avec au moins 2 paiements réussis
+    // Tous les paiements réussis (réutilisé pour ≥1 et ≥2)
     supabase
       .from("payments")
       .select("client_id")
@@ -61,18 +55,16 @@ export const getFunnelData = async (): Promise<FunnelStep[]> => {
 
   const totalClients = clientsRes.count ?? 0;
 
-  const oneOrderSet = new Set(
-    (oneOrderRes.data ?? []).map((p) => p.client_id).filter(Boolean),
-  );
+  const allOrders = (allOrdersRes.data ?? []).filter((p) => p.client_id);
+
+  const oneOrderSet = new Set(allOrders.map((p) => p.client_id));
+
   const twoOrdersSet = new Set(
     Object.entries(
-      (twoOrdersRes.data ?? []).reduce<Record<string, number>>(
-        (acc, p) => {
-          if (p.client_id) acc[p.client_id] = (acc[p.client_id] ?? 0) + 1;
-          return acc;
-        },
-        {},
-      ),
+      allOrders.reduce<Record<string, number>>((acc, p) => {
+        acc[p.client_id] = (acc[p.client_id] ?? 0) + 1;
+        return acc;
+      }, {}),
     )
       .filter(([, count]) => count >= 2)
       .map(([id]) => id),
@@ -158,6 +150,7 @@ export const getRetentionData = async (
   );
 
   for (const [, { cohortDate, clientIds }] of sortedCohorts) {
+    const clientSet = new Set(clientIds);
     const maxMonths = differenceInMonths(now, cohortDate);
     const monthRetention: (number | null)[] = [];
 
@@ -178,7 +171,7 @@ export const getRetentionData = async (
             return (
               d >= monthStart &&
               d < monthEnd &&
-              clientIds.includes(p.client_id)
+              clientSet.has(p.client_id)
             );
           })
           .map((p) => p.client_id),

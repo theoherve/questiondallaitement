@@ -141,12 +141,37 @@ export const evaluateSegment = async (
   if (!segment) return [];
 
   const conditions = segment.conditions as SegmentCondition[];
+  const stats = await getConsultantClientStats(user.id);
+  return stats.filter((client) => matchesConditions(client, conditions));
+};
 
-  // Load all client stats for this consultant
+/**
+ * Évalue tous les segments d'une consultante en un seul chargement de stats.
+ * À utiliser à la place de Promise.all(segments.map(evaluateSegment)) pour
+ * éviter le pattern N+1 (une requête getConsultantClientStats par segment).
+ */
+export const evaluateAllSegments = async (
+  segments: { id: string; conditions: SegmentCondition[] }[],
+): Promise<Map<string, number>> => {
+  await requireConsultant();
+  const user = await (async () => {
+    const u = await getSessionUser();
+    return u!;
+  })();
+
+  if (segments.length === 0) return new Map();
+
+  // Stats chargées une seule fois pour tous les segments
   const stats = await getConsultantClientStats(user.id);
 
-  // Evaluate conditions client-side
-  return stats.filter((client) => matchesConditions(client, conditions));
+  const counts = new Map<string, number>();
+  for (const segment of segments) {
+    const matched = stats.filter((client) =>
+      matchesConditions(client, segment.conditions),
+    );
+    counts.set(segment.id, matched.length);
+  }
+  return counts;
 };
 
 const matchesConditions = (

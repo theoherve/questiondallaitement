@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, ArrowLeft, Layers, Pencil } from "lucide-react";
-import { getSegments, evaluateSegment } from "./actions";
+import { getSegments, evaluateAllSegments } from "./actions";
 import { DeleteSegmentButton } from "./_components/delete-segment-button";
 
 export const metadata: Metadata = {
@@ -22,9 +22,9 @@ export const metadata: Metadata = {
 const SegmentsPage = async () => {
   const segments = await getSegments();
 
-  // Evaluate client count for each segment
-  const segmentCounts = await Promise.all(
-    segments.map((s) => evaluateSegment(s.id).then((clients) => clients.length)),
+  // Stats chargées une seule fois, tous les segments évalués en mémoire
+  const segmentCountsMap = await evaluateAllSegments(
+    segments.map((s) => ({ id: s.id, conditions: s.conditions })),
   );
 
   return (
@@ -68,7 +68,7 @@ const SegmentsPage = async () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {segments.map((segment, i) => (
+                {segments.map((segment) => (
                   <TableRow key={segment.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -96,7 +96,7 @@ const SegmentsPage = async () => {
                       </div>
                     </TableCell>
                     <TableCell className="text-center font-medium">
-                      {segmentCounts[i]}
+                      {segmentCountsMap.get(segment.id) ?? 0}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
