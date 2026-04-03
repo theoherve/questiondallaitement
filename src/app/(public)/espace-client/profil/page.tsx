@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { updateClientProfile } from "./actions";
 import { ChangePasswordForm } from "./_components/change-password-form";
+import { DeleteAccountDialog } from "./_components/delete-account-dialog";
 
 export const metadata: Metadata = {
   title: "Mon profil",
@@ -90,6 +91,43 @@ const ProfilePage = async () => {
       </Card>
 
       <ChangePasswordForm />
+
+      <Card className="max-w-xl">
+        <CardHeader>
+          <CardTitle className="font-serif text-lg">Mes données (RGPD)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Conformément au RGPD, vous pouvez télécharger l&apos;ensemble de vos
+            données personnelles stockées sur notre plateforme.
+          </p>
+          <Button
+            asChild
+            variant="outline"
+            className="border-primary-green/30 text-primary-green hover:border-primary-green hover:bg-transparent"
+          >
+            <a href="/api/user/data-export" download>
+              Télécharger mes données
+            </a>
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="max-w-xl border-destructive/30">
+        <CardHeader>
+          <CardTitle className="font-serif text-lg text-destructive">
+            Zone de danger
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            La suppression de votre compte est irréversible. Vos données
+            personnelles seront effacées définitivement après un délai de 30
+            jours.
+          </p>
+          <DeleteAccountDialog />
+        </CardContent>
+      </Card>
     </div>
   );
 };

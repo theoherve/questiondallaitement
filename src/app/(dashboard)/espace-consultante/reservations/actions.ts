@@ -7,6 +7,7 @@ import { differenceInHours } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { siteConfig } from "@/config/site";
 import { runAutomations } from "@/lib/automations/engine";
+import { createNotification } from "@/lib/notifications";
 import type { ActionResult } from "@/types";
 
 export const confirmBooking = async (
@@ -48,6 +49,13 @@ export const confirmBooking = async (
         consultation_type_id: booking.consultation_type_id,
         consultation_type_title: ct?.title,
       });
+      await createNotification(
+        booking.client_id,
+        "booking_confirmed",
+        "Réservation confirmée",
+        ct?.title ? `Votre consultation "${ct.title}" a été confirmée.` : "Votre consultation a été confirmée.",
+        { booking_id: bookingId }
+      );
     }
   } catch {
     // Non-blocking
