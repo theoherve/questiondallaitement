@@ -25,8 +25,9 @@ const createChain = (table: string) => {
   };
 
   // Thenable (update().eq() awaited)
-  (chain as { then?: Function }).then = (resolve: Function) =>
-    Promise.resolve({ data: null, error: null }).then(resolve as never);
+  (chain as { then?: (onFulfilled: (value: unknown) => unknown) => unknown }).then = (
+    onFulfilled: (value: unknown) => unknown,
+  ) => Promise.resolve({ data: null, error: null }).then(onFulfilled);
 
   return chain;
 };

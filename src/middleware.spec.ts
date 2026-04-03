@@ -17,7 +17,7 @@ vi.mock("next/server", () => ({
 
 // auth() retourne directement le handler pour tester la logique interne
 vi.mock("@/auth", () => ({
-  auth: vi.fn((handler: Function) => handler),
+  auth: vi.fn((handler: (req: unknown) => unknown) => handler),
 }));
 
 import middleware from "@/middleware";

@@ -7,7 +7,6 @@ const insertCalls: Array<{ table: string; data: unknown }> = [];
 const upsertCalls: Array<{ table: string; data: unknown }> = [];
 
 // Appels mockImplementationOnce pour simuler les séquences de from()
-const mockSingle = vi.fn();
 const mockFrom = vi.fn();
 
 vi.mock("@/lib/supabase/admin", () => ({
@@ -50,16 +49,17 @@ import type { BookingFormData } from "./actions";
 
 /**
  * Crée un chain Supabase chaînable et thenable.
- * - singleData : retourné par .single()
- * - listData   : retourné quand la query est await-ée sans .single()
+ * - singleData       : retourné par .single()
+ * - listData         : retourné quand la query est await-ée sans .single()
  * - insertSingleData : retourné par .insert().select().single()
+ * - tableName        : injecté par mockFrom pour tracer correctement les appels
  */
 const createChain = (opts: {
   singleData?: unknown;
   listData?: unknown[];
   insertSingleData?: unknown;
   insertError?: { message: string } | null;
-} = {}) => {
+} = {}, tableName = "__unknown__") => {
   const chain: Record<string, unknown> = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
@@ -69,11 +69,11 @@ const createChain = (opts: {
     limit: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     upsert: vi.fn((data: unknown) => {
-      upsertCalls.push({ table: "__unknown__", data });
+      upsertCalls.push({ table: tableName, data });
       return Promise.resolve({ error: null });
     }),
     insert: vi.fn((data: unknown) => {
-      insertCalls.push({ table: "__unknown__", data });
+      insertCalls.push({ table: tableName, data });
       // Retourne le même chain pour permettre .select().single()
       return chain;
     }),
@@ -87,8 +87,9 @@ const createChain = (opts: {
   };
 
   // Thenable pour les queries sans .single()
-  (chain as { then?: Function }).then = (resolve: Function) =>
-    Promise.resolve({ data: opts.listData ?? [], error: null }).then(resolve as never);
+  (chain as { then?: (onFulfilled: (value: unknown) => unknown) => unknown }).then = (
+    onFulfilled: (value: unknown) => unknown,
+  ) => Promise.resolve({ data: opts.listData ?? [], error: null }).then(onFulfilled);
 
   return chain;
 };
@@ -154,11 +155,11 @@ describe("14-06 : createBooking — paiement en ligne", () => {
     // 4. profiles.update → mise à jour
     // 5. consultants → consultant
     mockFrom
-      .mockImplementationOnce(() => createChain({ singleData: DURATION_OPTION }))
-      .mockImplementationOnce(() => createChain({ singleData: CONSULTATION_TYPE }))
-      .mockImplementationOnce(() => createChain({ singleData: { id: "client-uuid-existing" } })) // profil existant
-      .mockImplementationOnce(() => createChain()) // profiles.update
-      .mockImplementationOnce(() => createChain({ singleData: CONSULTANT })); // consultant
+      .mockImplementationOnce((t: string) => createChain({ singleData: DURATION_OPTION }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTATION_TYPE }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: { id: "client-uuid-existing" } }, t))
+      .mockImplementationOnce((t: string) => createChain({}, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTANT }, t));
 
     mockCreateCheckoutSession.mockResolvedValue({ url: "https://checkout.stripe.com/session_test" });
   });
@@ -189,11 +190,11 @@ describe("14-06 : createBooking — paiement en ligne", () => {
     // Remplace le mock consultant par un sans stripe_account_id (teleconsultation — pas de surcharge DB)
     mockFrom
       .mockReset()
-      .mockImplementationOnce(() => createChain({ singleData: DURATION_OPTION }))
-      .mockImplementationOnce(() => createChain({ singleData: CONSULTATION_TYPE }))
-      .mockImplementationOnce(() => createChain({ singleData: { id: "client-uuid-existing" } }))
-      .mockImplementationOnce(() => createChain())
-      .mockImplementationOnce(() => createChain({ singleData: { ...CONSULTANT, stripe_account_id: null } }));
+      .mockImplementationOnce((t: string) => createChain({ singleData: DURATION_OPTION }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTATION_TYPE }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: { id: "client-uuid-existing" } }, t))
+      .mockImplementationOnce((t: string) => createChain({}, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: { ...CONSULTANT, stripe_account_id: null } }, t));
 
     const result = await createBooking(makeBookingForm());
 
@@ -205,11 +206,11 @@ describe("14-06 : createBooking — paiement en ligne", () => {
     // Teleconsultation → pas de requête surcharge
     mockFrom
       .mockReset()
-      .mockImplementationOnce(() => createChain({ singleData: DURATION_OPTION }))
-      .mockImplementationOnce(() => createChain({ singleData: CONSULTATION_TYPE }))
-      .mockImplementationOnce(() => createChain({ singleData: { id: "client-uuid-existing" } }))
-      .mockImplementationOnce(() => createChain())
-      .mockImplementationOnce(() => createChain({ singleData: CONSULTANT }));
+      .mockImplementationOnce((t: string) => createChain({ singleData: DURATION_OPTION }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTATION_TYPE }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: { id: "client-uuid-existing" } }, t))
+      .mockImplementationOnce((t: string) => createChain({}, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTANT }, t));
 
     const result = await createBooking(
       makeBookingForm({ payment_method: "on_site", location: "teleconsultation" }),
@@ -246,16 +247,13 @@ describe("14-07 : createBooking — flow guest (sans compte)", () => {
     // 4. profiles.insert().select().single() → nouveau profil
     // 5. consultants
     mockFrom
-      .mockImplementationOnce(() => createChain({ singleData: DURATION_OPTION }))
-      .mockImplementationOnce(() => createChain({ singleData: CONSULTATION_TYPE }))
-      .mockImplementationOnce(() => createChain({ singleData: null })) // pas de profil existant
-      .mockImplementationOnce(() =>
-        createChain({
-          singleData: null,
-          insertSingleData: { id: NEW_PROFILE_ID }, // insert().select().single()
-        }),
+      .mockImplementationOnce((t: string) => createChain({ singleData: DURATION_OPTION }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTATION_TYPE }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: null }, t))
+      .mockImplementationOnce((t: string) =>
+        createChain({ singleData: null, insertSingleData: { id: NEW_PROFILE_ID } }, t),
       )
-      .mockImplementationOnce(() => createChain({ singleData: CONSULTANT }));
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTANT }, t));
 
     mockCreateCheckoutSession.mockResolvedValue({ url: "https://checkout.stripe.com/guest_session" });
   });
@@ -263,11 +261,7 @@ describe("14-07 : createBooking — flow guest (sans compte)", () => {
   it("crée un nouveau profil avec le rôle client", async () => {
     await createBooking(makeBookingForm());
 
-    const profileInsert = insertCalls.find((c) =>
-      c.data !== null &&
-      typeof c.data === "object" &&
-      "email" in (c.data as object),
-    );
+    const profileInsert = insertCalls.find((c) => c.table === "profiles");
     expect(profileInsert).toBeDefined();
     expect(profileInsert!.data).toMatchObject({
       email: "marie@test.fr",
@@ -312,15 +306,13 @@ describe("14-09 : createBooking — paiement sur place (on_site)", () => {
     // 6. consultants
     // 7. bookings.insert().select().single() → booking créé
     mockFrom
-      .mockImplementationOnce(() => createChain({ singleData: DURATION_OPTION }))
-      .mockImplementationOnce(() => createChain({ singleData: CONSULTATION_TYPE }))
-      .mockImplementationOnce(() => createChain({ singleData: null })) // consultant_locations
-      .mockImplementationOnce(() => createChain({ singleData: { id: "client-uuid-001" } }))
-      .mockImplementationOnce(() => createChain())
-      .mockImplementationOnce(() => createChain({ singleData: CONSULTANT }))
-      .mockImplementationOnce(() =>
-        createChain({ insertSingleData: { id: BOOKING_ID } }),
-      );
+      .mockImplementationOnce((t: string) => createChain({ singleData: DURATION_OPTION }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTATION_TYPE }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: null }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: { id: "client-uuid-001" } }, t))
+      .mockImplementationOnce((t: string) => createChain({}, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTANT }, t))
+      .mockImplementationOnce((t: string) => createChain({ insertSingleData: { id: BOOKING_ID } }, t));
   });
 
   it("crée le booking directement en DB avec status pending", async () => {

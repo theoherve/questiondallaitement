@@ -2,10 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ─── Supabase mock ────────────────────────────────────────────
 
-// Suivi global des appels par table
-const upsertCalls: Array<{ table: string; data: unknown; opts?: unknown }> = [];
-const insertCalls: Array<{ table: string; data: unknown }> = [];
-const updateCalls: Array<{ table: string; data: unknown }> = [];
+// Suivi des appels par table — réinitialisé via state dans chaque beforeEach
+// pour éviter toute contamination entre suites (pas de .length = 0 oublié)
+const state = {
+  upsertCalls: [] as Array<{ table: string; data: unknown; opts?: unknown }>,
+  insertCalls: [] as Array<{ table: string; data: unknown }>,
+  updateCalls: [] as Array<{ table: string; data: unknown }>,
+};
 
 // Config par table : { single?, list? }
 const db: Record<string, { single?: unknown; list?: unknown[] }> = {};
@@ -18,23 +21,24 @@ const createChain = (table: string) => {
     eq: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
     update: vi.fn((data: unknown) => {
-      updateCalls.push({ table, data });
+      state.updateCalls.push({ table, data });
       return chain;
     }),
     upsert: vi.fn((data: unknown, opts?: unknown) => {
-      upsertCalls.push({ table, data, opts });
+      state.upsertCalls.push({ table, data, opts });
       return Promise.resolve({ error: null });
     }),
     insert: vi.fn((data: unknown) => {
-      insertCalls.push({ table, data });
+      state.insertCalls.push({ table, data });
       return Promise.resolve({ error: null });
     }),
     single: vi.fn().mockResolvedValue({ data: config.single ?? null, error: null }),
   };
 
   // Thenable pour les requêtes sans .single() (ex: .select().eq() await)
-  (chain as { then?: Function }).then = (resolve: Function) =>
-    Promise.resolve({ data: config.list ?? [], error: null }).then(resolve as never);
+  (chain as { then?: (onFulfilled: (value: unknown) => unknown) => unknown }).then = (
+    onFulfilled: (value: unknown) => unknown,
+  ) => Promise.resolve({ data: config.list ?? [], error: null }).then(onFulfilled);
 
   return chain;
 };
@@ -124,9 +128,9 @@ const makeBookingSession = (): Stripe.Checkout.Session =>
 describe("handleCheckoutCompleted — type formation (14-05)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    upsertCalls.length = 0;
-    insertCalls.length = 0;
-    updateCalls.length = 0;
+    state.upsertCalls = [];
+    state.insertCalls = [];
+    state.updateCalls = [];
 
     // Pas de collaborateurs par défaut
     db["formation_collaborators"] = { list: [] };
@@ -140,7 +144,7 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
   it("crée un enrollment (upsert formation_enrollments)", async () => {
     await handleCheckoutCompleted(makeFormationSession());
 
-    const enrollment = upsertCalls.find((c) => c.table === "formation_enrollments");
+    const enrollment = state.upsertCalls.find((c) => c.table === "formation_enrollments");
     expect(enrollment).toBeDefined();
     expect(enrollment!.data).toMatchObject({
       client_id: CLIENT_ID,
@@ -152,7 +156,7 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
   it("enregistre le paiement (upsert payments)", async () => {
     await handleCheckoutCompleted(makeFormationSession());
 
-    const payment = upsertCalls.find((c) => c.table === "payments");
+    const payment = state.upsertCalls.find((c) => c.table === "payments");
     expect(payment).toBeDefined();
     expect(payment!.data).toMatchObject({
       client_id: CLIENT_ID,
@@ -217,7 +221,7 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
 
     expect(mockCreateTransfer).not.toHaveBeenCalled();
     // Un audit "collaborator_transfer_skipped" doit être loggé
-    const skippedLog = insertCalls.find(
+    const skippedLog = state.insertCalls.find(
       (c) =>
         c.table === "audit_logs" &&
         (c.data as { action: string }).action === "collaborator_transfer_skipped",
@@ -231,9 +235,9 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
 describe("handleCheckoutCompleted — type booking", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    upsertCalls.length = 0;
-    insertCalls.length = 0;
-    updateCalls.length = 0;
+    state.upsertCalls = [];
+    state.insertCalls = [];
+    state.updateCalls = [];
 
     db["bookings"] = {};
     db["payments"] = {};
@@ -245,7 +249,7 @@ describe("handleCheckoutCompleted — type booking", () => {
   it("insère le booking avec status confirmed", async () => {
     await handleCheckoutCompleted(makeBookingSession());
 
-    const bookingInsert = insertCalls.find((c) => c.table === "bookings");
+    const bookingInsert = state.insertCalls.find((c) => c.table === "bookings");
     expect(bookingInsert).toBeDefined();
     expect(bookingInsert!.data).toMatchObject({
       id: BOOKING_ID,
@@ -260,7 +264,7 @@ describe("handleCheckoutCompleted — type booking", () => {
   it("enregistre le paiement (upsert payments)", async () => {
     await handleCheckoutCompleted(makeBookingSession());
 
-    const payment = upsertCalls.find((c) => c.table === "payments");
+    const payment = state.upsertCalls.find((c) => c.table === "payments");
     expect(payment).toBeDefined();
     expect(payment!.data).toMatchObject({
       amount_cents: 7000,
@@ -275,7 +279,7 @@ describe("handleCheckoutCompleted — type booking", () => {
 describe("handleChargeRefunded", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    updateCalls.length = 0;
+    state.updateCalls = [];
     db["payments"] = {};
   });
 
@@ -289,7 +293,7 @@ describe("handleChargeRefunded", () => {
   it("met le statut 'refunded' pour un remboursement total", async () => {
     await handleChargeRefunded(makeCharge(5000, 5000));
 
-    const updateCall = updateCalls.find((c) => c.table === "payments");
+    const updateCall = state.updateCalls.find((c) => c.table === "payments");
     expect(updateCall).toBeDefined();
     expect(updateCall!.data).toMatchObject({ status: "refunded", refund_amount_cents: 5000 });
   });
@@ -297,14 +301,14 @@ describe("handleChargeRefunded", () => {
   it("met le statut 'partially_refunded' pour un remboursement partiel", async () => {
     await handleChargeRefunded(makeCharge(5000, 2500));
 
-    const updateCall = updateCalls.find((c) => c.table === "payments");
+    const updateCall = state.updateCalls.find((c) => c.table === "payments");
     expect(updateCall).toBeDefined();
     expect(updateCall!.data).toMatchObject({ status: "partially_refunded", refund_amount_cents: 2500 });
   });
 
   it("ne fait rien si payment_intent est absent", async () => {
     await handleChargeRefunded({ payment_intent: null, amount: 5000, amount_refunded: 5000 } as unknown as Stripe.Charge);
-    expect(updateCalls).toHaveLength(0);
+    expect(state.updateCalls).toHaveLength(0);
   });
 });
 
@@ -313,7 +317,7 @@ describe("handleChargeRefunded", () => {
 describe("handleAccountUpdated", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    updateCalls.length = 0;
+    state.updateCalls = [];
     db["consultants"] = {};
   });
 
@@ -326,25 +330,25 @@ describe("handleAccountUpdated", () => {
 
   it("passe en 'active' si charges_enabled", async () => {
     await handleAccountUpdated(makeAccount(true, true));
-    const call = updateCalls.find((c) => c.table === "consultants");
+    const call = state.updateCalls.find((c) => c.table === "consultants");
     expect(call!.data).toMatchObject({ stripe_account_status: "active" });
   });
 
   it("passe en 'pending_verification' si details_submitted mais pas charges_enabled", async () => {
     await handleAccountUpdated(makeAccount(false, true));
-    const call = updateCalls.find((c) => c.table === "consultants");
+    const call = state.updateCalls.find((c) => c.table === "consultants");
     expect(call!.data).toMatchObject({ stripe_account_status: "pending_verification" });
   });
 
   it("passe en 'pending' si rien de soumis", async () => {
     await handleAccountUpdated(makeAccount(false, false));
-    const call = updateCalls.find((c) => c.table === "consultants");
+    const call = state.updateCalls.find((c) => c.table === "consultants");
     expect(call!.data).toMatchObject({ stripe_account_status: "pending" });
   });
 
   it("ne fait rien si consultant_id manquant dans les métadonnées", async () => {
     await handleAccountUpdated({ metadata: {} } as unknown as Stripe.Account);
-    expect(updateCalls).toHaveLength(0);
+    expect(state.updateCalls).toHaveLength(0);
   });
 });
 
@@ -353,7 +357,7 @@ describe("handleAccountUpdated", () => {
 describe("handleAccountDeauthorized", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    updateCalls.length = 0;
+    state.updateCalls = [];
     db["consultants"] = {};
   });
 
@@ -362,7 +366,7 @@ describe("handleAccountDeauthorized", () => {
       metadata: { consultant_id: CONSULTANT_ID },
     } as unknown as Stripe.Account);
 
-    const call = updateCalls.find((c) => c.table === "consultants");
+    const call = state.updateCalls.find((c) => c.table === "consultants");
     expect(call!.data).toMatchObject({
       stripe_account_id: null,
       stripe_account_status: "deauthorized",
