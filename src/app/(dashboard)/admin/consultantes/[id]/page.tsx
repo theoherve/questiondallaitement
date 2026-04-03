@@ -18,9 +18,11 @@ import {
   ArrowLeft,
   BookOpen,
   CalendarDays,
+  CheckCircle2,
   CreditCard,
   Edit,
   TrendingUp,
+  Video,
 } from "lucide-react";
 import { ConsultantActiveToggle } from "../_components/consultant-active-toggle";
 import { AdminConsultationTypes } from "../_components/admin-consultation-types";
@@ -28,6 +30,7 @@ import { AdminLocations } from "../_components/admin-locations";
 import { AdminAvailabilities } from "../_components/admin-availabilities";
 import { AdminAvatarUpload } from "../_components/admin-avatar-upload";
 import { adminGetConsultationTypes, adminGetConsultationTypeTemplates, adminGetLocations, adminGetAvailabilities } from "./actions";
+import { getLocationConfigs } from "@/app/(dashboard)/admin/reservation/actions";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -80,6 +83,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
       is_active,
       stripe_account_id,
       stripe_account_status,
+      zoom_access_token,
       onboarding_completed,
       created_at,
       profiles!consultants_id_fkey (
@@ -108,7 +112,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
     `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim() ||
     "Sans nom";
 
-  const [formationsRes, bookingsRes, paymentsRes, consultationTypes, consultationTypeTemplates, consultantLocations, availabilities] = await Promise.all([
+  const [formationsRes, bookingsRes, paymentsRes, consultationTypes, consultationTypeTemplates, consultantLocations, availabilities, locationConfigs] = await Promise.all([
     supabase
       .from("formations")
       .select("id, title, slug, status, price_cents, currency")
@@ -130,6 +134,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
     adminGetConsultationTypeTemplates(id),
     adminGetLocations(id),
     adminGetAvailabilities(id),
+    getLocationConfigs(),
   ]);
 
   const formations = formationsRes.data ?? [];
@@ -212,8 +217,8 @@ const ConsultantDetailPage = async ({ params }: Props) => {
 
       {/* Infos consultante */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
+        <Card className="gap-4">
+          <CardHeader className="gap-0">
             <CardTitle className="text-primary-green">Profil</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -258,39 +263,99 @@ const ConsultantDetailPage = async ({ params }: Props) => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-primary-green">Stripe Connect</CardTitle>
+        <Card className="gap-4">
+          <CardHeader className="gap-0">
+            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-primary-green">
+              Intégrations & onboarding
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Statut
-              </p>
-              <StripeStatusBadge
-                status={consultant.stripe_account_status}
-              />
+          <CardContent className="space-y-5">
+            {/* Integration tiles */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-3">
+                <div className="flex items-center gap-1.5">
+                  <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">Stripe</span>
+                </div>
+                <StripeStatusBadge status={consultant.stripe_account_status} />
+                {consultant.stripe_account_id && (
+                  <p className="truncate font-mono text-[10px] text-muted-foreground">
+                    {consultant.stripe_account_id}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-3">
+                <div className="flex items-center gap-1.5">
+                  <Video className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">Zoom</span>
+                </div>
+                <Badge
+                  variant={consultant.zoom_access_token ? "default" : "secondary"}
+                  className="w-fit text-xs"
+                >
+                  {consultant.zoom_access_token ? "Connecté" : "Non connecté"}
+                </Badge>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Account ID
-              </p>
-              <p className="font-mono text-sm">
-                {consultant.stripe_account_id || "Non connecté"}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Onboarding
-              </p>
-              <Badge
-                variant={
-                  consultant.onboarding_completed ? "default" : "secondary"
-                }
-              >
-                {consultant.onboarding_completed ? "Terminé" : "En cours"}
-              </Badge>
-            </div>
+
+            {/* Onboarding progress */}
+            {(() => {
+              const checklist = [
+                { label: "Bio renseignée", ok: !!consultant.bio },
+                { label: "Stripe actif", ok: consultant.stripe_account_status === "active" },
+                { label: "Zoom connecté", ok: !!consultant.zoom_access_token },
+                {
+                  label: "Au moins un lieu actif",
+                  ok: (consultantLocations as { is_active: boolean }[]).some((l) => l.is_active),
+                },
+                {
+                  label: "Au moins un type de consultation actif",
+                  ok: (consultationTypes as { is_active?: boolean }[]).some(
+                    (t) => t.is_active !== false
+                  ),
+                },
+                { label: "Au moins une disponibilité", ok: (availabilities as unknown[]).length > 0 },
+              ];
+              const done = checklist.filter((c) => c.ok).length;
+              const total = checklist.length;
+              const pct = Math.round((done / total) * 100);
+
+              return (
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <span className="text-xs font-medium text-muted-foreground">Onboarding</span>
+                    <span className="tabular-nums text-xs text-muted-foreground">
+                      {done}/{total}
+                    </span>
+                  </div>
+                  <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={`h-1.5 rounded-full transition-all ${
+                        pct === 100 ? "bg-green-500" : "bg-primary-green"
+                      }`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <ul className="space-y-1.5">
+                    {checklist.map(({ label, ok }) => (
+                      <li key={label} className="flex items-center gap-2">
+                        {ok ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" />
+                        ) : (
+                          <div className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-muted-foreground/30" />
+                        )}
+                        <span
+                          className={`text-xs ${ok ? "text-foreground" : "text-muted-foreground"}`}
+                        >
+                          {label}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
       </div>
@@ -358,6 +423,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
             <AdminLocations
               consultantId={id}
               locations={consultantLocations as Parameters<typeof AdminLocations>[0]["locations"]}
+              locationConfigs={locationConfigs}
             />
           </CardContent>
         </Card>

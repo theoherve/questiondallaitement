@@ -1,37 +1,40 @@
 "use client";
 
 import { Building2, Video, Home } from "lucide-react";
-import type { ConsultationLocation } from "@/types/database";
+import type { ConsultationLocation, LocationConfig } from "@/types/database";
 
-type StepLocationProps = {
-  availableLocations: string[];
-  selected: ConsultationLocation | null;
-  onSelect: (location: ConsultationLocation) => void;
+const LOCATION_ICONS: Record<string, React.ReactNode> = {
+  cabinet: <Building2 className="h-8 w-8" />,
+  teleconsultation: <Video className="h-8 w-8" />,
+  domicile: <Home className="h-8 w-8" />,
 };
 
-const LOCATION_CONFIG: Record<
-  string,
-  { label: string; description: string; icon: React.ReactNode }
-> = {
+// Fallback labels if location_configs not available
+const FALLBACK: Record<string, { label: string; description: string }> = {
   cabinet: {
     label: "Au cabinet",
-    description: "Rendez-vous en personne au cabinet de la consultante",
-    icon: <Building2 className="h-8 w-8" />,
+    description: "Rendez-vous en personne au cabinet",
   },
   teleconsultation: {
     label: "Téléconsultation",
     description: "Rendez-vous en visio depuis chez vous",
-    icon: <Video className="h-8 w-8" />,
   },
   domicile: {
     label: "À domicile",
     description: "La consultante se déplace chez vous (supplément possible)",
-    icon: <Home className="h-8 w-8" />,
   },
+};
+
+type StepLocationProps = {
+  availableLocations: string[];
+  locationConfigs: LocationConfig[];
+  selected: ConsultationLocation | null;
+  onSelect: (location: ConsultationLocation) => void;
 };
 
 export const StepLocation = ({
   availableLocations,
+  locationConfigs,
   selected,
   onSelect,
 }: StepLocationProps) => (
@@ -43,7 +46,10 @@ export const StepLocation = ({
       {(["cabinet", "teleconsultation", "domicile"] as const)
         .filter((loc) => availableLocations.includes(loc))
         .map((loc) => {
-          const config = LOCATION_CONFIG[loc];
+          const config = locationConfigs.find((c) => c.location_type === loc);
+          const label = config?.label ?? FALLBACK[loc].label;
+          const description = config?.description ?? FALLBACK[loc].description;
+
           return (
             <button
               key={loc}
@@ -55,14 +61,12 @@ export const StepLocation = ({
                   : "border-muted"
               }`}
               tabIndex={0}
-              aria-label={`Sélectionner ${config.label}`}
+              aria-label={`Sélectionner ${label}`}
             >
-              <div className="text-primary-green/70">{config.icon}</div>
+              <div className="text-primary-green/70">{LOCATION_ICONS[loc]}</div>
               <div>
-                <p className="font-medium text-primary-green">{config.label}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {config.description}
-                </p>
+                <p className="font-medium text-primary-green">{label}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{description}</p>
               </div>
             </button>
           );

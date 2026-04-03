@@ -450,3 +450,16 @@ export type ReplayLive = {
   created_at: string;
   updated_at: string;
 };
+
+export type LocationConfig = {
+  location_type: ConsultationLocation;
+  label: string;
+  description: string | null;
+  address: string | null;
+  city: string | null;
+  postal_code: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
