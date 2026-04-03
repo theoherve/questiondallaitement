@@ -8,6 +8,7 @@ const mockUpdate = vi.fn();
 const mockEq = vi.fn();
 const mockSelectAfterEq = vi.fn();
 
+
 const mockFrom = vi.fn(() => ({
   select: mockSelect,
   update: mockUpdate,
@@ -77,8 +78,8 @@ describe("updateLocationConfig", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // Chain: .update().eq().select() → { error: null, count: 1 }
-    mockSelectAfterEq.mockResolvedValue({ error: null, count: 1 });
+    // Chain: .update().eq().select() → { error: null, data: [{ location_type: "cabinet" }] }
+    mockSelectAfterEq.mockResolvedValue({ error: null, data: [{ location_type: "cabinet" }] });
     mockEq.mockReturnValue({ select: mockSelectAfterEq });
     mockUpdate.mockReturnValue({ eq: mockEq });
     vi.mocked(getSessionUser).mockResolvedValue({
@@ -101,11 +102,11 @@ describe("updateLocationConfig", () => {
       is_active: true,
     });
     expect(mockEq).toHaveBeenCalledWith("location_type", "cabinet");
-    expect(mockSelectAfterEq).toHaveBeenCalledWith("location_type", { count: "exact", head: true });
+    expect(mockSelectAfterEq).toHaveBeenCalledWith("location_type");
   });
 
   it("retourne { success: false, error } quand Supabase retourne une erreur", async () => {
-    mockSelectAfterEq.mockResolvedValue({ error: { message: "DB error" }, count: null });
+    mockSelectAfterEq.mockResolvedValue({ error: { message: "DB error" }, data: null });
 
     const result = await updateLocationConfig("teleconsultation", validFormData);
 
@@ -113,7 +114,7 @@ describe("updateLocationConfig", () => {
   });
 
   it("retourne { success: false } quand aucune ligne n'est affectée (type introuvable)", async () => {
-    mockSelectAfterEq.mockResolvedValue({ error: null, count: 0 });
+    mockSelectAfterEq.mockResolvedValue({ error: null, data: [] });
 
     const result = await updateLocationConfig("cabinet", validFormData);
 
