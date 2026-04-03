@@ -13,6 +13,7 @@ import {
   getAvailabilities,
   getExceptions,
 } from "./actions";
+import { getLocationConfigs } from "@/app/(dashboard)/admin/reservation/actions";
 import { getAuthorizationUrl } from "@/lib/zoom/client";
 
 export const metadata: Metadata = {
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
 const ConsultantSettingsPage = async () => {
   const { supabase, user } = await getSupabaseAndUser();
 
-  const [profileRes, consultantRes, locations, consultationTypes, availabilities, exceptions] =
+  const [profileRes, consultantRes, locations, consultationTypes, availabilities, exceptions, locationConfigs] =
     await Promise.all([
       supabase.from("profiles").select("*").eq("id", user.id).single(),
       supabase.from("consultants").select("*").eq("id", user.id).single(),
@@ -30,6 +31,7 @@ const ConsultantSettingsPage = async () => {
       getConsultationTypes(),
       getAvailabilities(),
       getExceptions(),
+      getLocationConfigs(),
     ]);
 
   const profile = profileRes.data;
@@ -56,7 +58,7 @@ const ConsultantSettingsPage = async () => {
         </TabsContent>
 
         <TabsContent value="lieux" className="mt-6">
-          <LocationsTab locations={locations} />
+          <LocationsTab locations={locations} locationConfigs={locationConfigs} />
         </TabsContent>
 
         <TabsContent value="consultations" className="mt-6">

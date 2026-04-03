@@ -13,7 +13,7 @@ import { StepContact } from "./step-contact";
 import { StepPayment } from "./step-payment";
 import { StepConfirmation } from "./step-confirmation";
 import { createBooking, computeSlotPrice, type BookingFormData } from "../actions";
-import type { ConsultationLocation, BookingPaymentMethod } from "@/types/database";
+import type { ConsultationLocation, BookingPaymentMethod, LocationConfig } from "@/types/database";
 
 type ServiceOption = {
   title: string;
@@ -26,6 +26,7 @@ type ServiceOption = {
 
 type BookingWizardProps = {
   services: ServiceOption[];
+  locationConfigs: LocationConfig[];
 };
 
 const STEPS = [
@@ -79,7 +80,7 @@ const initialState: BookingState = {
   currency: "eur",
 };
 
-export const BookingWizard = ({ services }: BookingWizardProps) => {
+export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps) => {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [state, setState] = useState<BookingState>(initialState);
@@ -210,6 +211,7 @@ export const BookingWizard = ({ services }: BookingWizardProps) => {
                 services.find((s) => s.title === state.serviceTitle)
                   ?.available_locations ?? []
               }
+              locationConfigs={locationConfigs}
               selected={state.location}
               onSelect={(loc) => {
                 setState({

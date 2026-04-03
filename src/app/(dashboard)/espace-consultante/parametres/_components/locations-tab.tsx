@@ -12,9 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Building2, Home, Loader2, Video } from "lucide-react";
+import { Building2, Home, Loader2, MapPin, Video } from "lucide-react";
 import { upsertLocation, type LocationFormData } from "../actions";
-import type { ConsultationLocation } from "@/types/database";
+import type { ConsultationLocation, LocationConfig } from "@/types/database";
 
 type Location = {
   id: string;
@@ -30,43 +30,18 @@ type Location = {
 
 type LocationsTabProps = {
   locations: Location[];
+  locationConfigs: LocationConfig[];
 };
 
-const LOCATION_CONFIGS: {
-  type: ConsultationLocation;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  hasAddress: boolean;
-  hasDomicile: boolean;
-}[] = [
-  {
-    type: "cabinet",
-    title: "Cabinet",
-    description: "Consultations en personne à votre cabinet",
-    icon: <Building2 className="h-5 w-5" />,
-    hasAddress: true,
-    hasDomicile: false,
-  },
-  {
-    type: "teleconsultation",
-    title: "Téléconsultation",
-    description: "Consultations en visio (Zoom)",
-    icon: <Video className="h-5 w-5" />,
-    hasAddress: false,
-    hasDomicile: false,
-  },
-  {
-    type: "domicile",
-    title: "Domicile",
-    description: "Déplacement chez le client (supplément possible)",
-    icon: <Home className="h-5 w-5" />,
-    hasAddress: false,
-    hasDomicile: true,
-  },
-];
+const ICONS: Record<ConsultationLocation, React.ReactNode> = {
+  cabinet: <Building2 className="h-5 w-5" />,
+  teleconsultation: <Video className="h-5 w-5" />,
+  domicile: <Home className="h-5 w-5" />,
+};
 
-export const LocationsTab = ({ locations }: LocationsTabProps) => {
+const LOCATION_TYPES: ConsultationLocation[] = ["cabinet", "teleconsultation", "domicile"];
+
+export const LocationsTab = ({ locations, locationConfigs }: LocationsTabProps) => {
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{
     type: "success" | "error";
@@ -75,6 +50,9 @@ export const LocationsTab = ({ locations }: LocationsTabProps) => {
 
   const getExisting = (type: string) =>
     locations.find((l) => l.location_type === type);
+
+  const getConfig = (type: ConsultationLocation) =>
+    locationConfigs.find((c) => c.location_type === type);
 
   const handleSave = (type: ConsultationLocation, form: HTMLFormElement) => {
     const formData = new FormData(form);
@@ -112,7 +90,7 @@ export const LocationsTab = ({ locations }: LocationsTabProps) => {
           Configuration des lieux
         </h2>
         <p className="text-sm text-muted-foreground">
-          Configurez les lieux où vous proposez des consultations.
+          Activez les lieux où vous proposez des consultations.
         </p>
       </div>
 
@@ -125,18 +103,21 @@ export const LocationsTab = ({ locations }: LocationsTabProps) => {
         </p>
       )}
 
-      {LOCATION_CONFIGS.map((config) => {
-        const existing = getExisting(config.type);
+      {LOCATION_TYPES.map((locationType) => {
+        const existing = getExisting(locationType);
+        const globalConfig = getConfig(locationType);
 
         return (
-          <Card key={config.type}>
+          <Card key={locationType}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="text-primary-green/70">{config.icon}</div>
+                  <div className="text-primary-green/70">{ICONS[locationType]}</div>
                   <div>
-                    <CardTitle className="text-base">{config.title}</CardTitle>
-                    <CardDescription>{config.description}</CardDescription>
+                    <CardTitle className="text-base">
+                      {globalConfig?.label ?? locationType}
+                    </CardTitle>
+                    <CardDescription>{globalConfig?.description}</CardDescription>
                   </div>
                 </div>
               </div>
@@ -145,56 +126,33 @@ export const LocationsTab = ({ locations }: LocationsTabProps) => {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  handleSave(config.type, e.currentTarget);
+                  handleSave(locationType, e.currentTarget);
                 }}
                 className="space-y-4"
               >
                 <div className="flex items-center gap-3">
                   <Switch
-                    id={`active-${config.type}`}
+                    id={`active-${locationType}`}
                     name="is_active"
                     defaultChecked={existing?.is_active ?? false}
                   />
-                  <Label htmlFor={`active-${config.type}`}>Actif</Label>
+                  <Label htmlFor={`active-${locationType}`}>Actif</Label>
                 </div>
 
-                {config.hasAddress && (
-                  <>
-                    <div className="space-y-2">
-                      <Label>Nom du lieu</Label>
-                      <Input
-                        name="label"
-                        defaultValue={existing?.label ?? ""}
-                        placeholder="Ex : Cabinet Paris 15e"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Adresse</Label>
-                      <Input
-                        name="address"
-                        defaultValue={existing?.address ?? ""}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Ville</Label>
-                        <Input
-                          name="city"
-                          defaultValue={existing?.city ?? ""}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Code postal</Label>
-                        <Input
-                          name="postal_code"
-                          defaultValue={existing?.postal_code ?? ""}
-                        />
-                      </div>
-                    </div>
-                  </>
+                {/* Cabinet: show global address (read-only), no editable fields */}
+                {locationType === "cabinet" && globalConfig?.address && (
+                  <div className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {globalConfig.address}
+                      {globalConfig.city && `, ${globalConfig.city}`}
+                      {globalConfig.postal_code && ` ${globalConfig.postal_code}`}
+                    </span>
+                  </div>
                 )}
 
-                {config.hasDomicile && (
+                {/* Domicile: keep specific fields */}
+                {locationType === "domicile" && (
                   <>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
