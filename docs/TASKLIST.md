@@ -20,7 +20,7 @@
 
 | Phase      | Epics             | Statut global                             |
 | ---------- | ----------------- | ----------------------------------------- |
-| **MVP**    | EPIC-01 a EPIC-14 | 🔶 En cours (~95% — tests seuls restants) |
+| **MVP**    | EPIC-01 a EPIC-14 | ✅ Terminé                                |
 | **V1.5**   | EPIC-15 a EPIC-20 | ✅ Terminé                                |
 | **V2**     | EPIC-21 a EPIC-23 | 🔶 Partiel (EPIC-21-22 ✅, EPIC-23 ⬜)    |
 | **V2.5**   | EPIC-25 a EPIC-26 | 🔶 Partiel (EPIC-25 ✅, EPIC-26 ✅)       |
@@ -350,15 +350,15 @@
 
 | ID    | Story                                                                                                           | Statut | Prio  |
 | ----- | --------------------------------------------------------------------------------------------------------------- | ------ | ----- |
-| 14-01 | Test : inscription client → connexion → espace client                                                           | ⬜     | 🟠 P1 |
-| 14-02 | Test : consultante → connexion → espace consultante (formations lecture seule, reservations)                    | ⬜     | 🟠 P1 |
-| 14-03 | Test : admin → connexion → backoffice complet (formations CRUD, consultantes, paiements, parametres)            | ⬜     | 🟠 P1 |
-| 14-04 | Test : marketing_manager → connexion → backoffice filtre (dashboard + marketing uniquement)                     | ⬜     | 🟡 P2 |
-| 14-05 | Test : flow achat formation (page detail → Stripe Checkout → webhook → enrollment → acces formation)            | ⬜     | 🔴 P0 |
-| 14-06 | Test : flow reservation en 7 steps (service → lieu → consultante → creneau → contact → paiement → confirmation) | ⬜     | 🔴 P0 |
-| 14-07 | Test : flow reservation guest (sans compte) → compte cree automatiquement                                       | ⬜     | 🟠 P1 |
-| 14-08 | Test : annulation rdv (>= 48h → refund total, < 48h → penalite 50%)                                             | ⬜     | 🟠 P1 |
-| 14-09 | Test : booking on_site (pas de Stripe, confirmation manuelle consultante)                                       | ⬜     | 🟠 P1 |
+| 14-01 | Test : inscription client → connexion → espace client                                                           | ✅     | 🟠 P1 |
+| 14-02 | Test : consultante → connexion → espace consultante (formations lecture seule, reservations)                    | ✅     | 🟠 P1 |
+| 14-03 | Test : admin → connexion → backoffice complet (formations CRUD, consultantes, paiements, parametres)            | ✅     | 🟠 P1 |
+| 14-04 | Test : marketing_manager → connexion → backoffice filtre (dashboard + marketing uniquement)                     | ✅     | 🟡 P2 |
+| 14-05 | Test : flow achat formation (page detail → Stripe Checkout → webhook → enrollment → acces formation)            | ✅     | 🔴 P0 |
+| 14-06 | Test : flow reservation en 7 steps (service → lieu → consultante → creneau → contact → paiement → confirmation) | ✅     | 🔴 P0 |
+| 14-07 | Test : flow reservation guest (sans compte) → compte cree automatiquement                                       | ✅     | 🟠 P1 |
+| 14-08 | Test : annulation rdv (>= 48h → refund total, < 48h → penalite 50%)                                             | ✅     | 🟠 P1 |
+| 14-09 | Test : booking on_site (pas de Stripe, confirmation manuelle consultante)                                       | ✅     | 🟠 P1 |
 | 14-10 | Configuration Vitest (`vitest.config.ts`) + premiers tests unitaires (`vimeo.spec.ts`, `actions.spec.ts`)       | ✅     | 🟠 P1 |
 
 ---
