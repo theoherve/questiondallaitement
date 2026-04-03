@@ -3,7 +3,7 @@
 > Suivi projet structure en **Epics** et **Stories**.
 > Reference : [PLATFORM_ARCHITECTURE.md](./PLATFORM_ARCHITECTURE.md) | [roadmap.md](./roadmap.md)
 >
-> Derniere mise a jour : 2026-03-17
+> Derniere mise a jour : 2026-04-03
 
 ## Legende
 
@@ -18,12 +18,13 @@
 
 ## Vue d'ensemble par phase
 
-| Phase    | Epics             | Statut global                             |
-| -------- | ----------------- | ----------------------------------------- |
-| **MVP**  | EPIC-01 a EPIC-14 | 🔶 En cours (~95% — tests seuls restants) |
-| **V1.5** | EPIC-15 a EPIC-20 | ✅ Terminé                                |
-| **V2**   | EPIC-21 a EPIC-23 | 🔶 Partiel (EPIC-21-22 ✅, EPIC-23 ⬜)    |
-| **V3**   | EPIC-24           | ⬜ Futur                                  |
+| Phase      | Epics             | Statut global                             |
+| ---------- | ----------------- | ----------------------------------------- |
+| **MVP**    | EPIC-01 a EPIC-14 | 🔶 En cours (~95% — tests seuls restants) |
+| **V1.5**   | EPIC-15 a EPIC-20 | ✅ Terminé                                |
+| **V2**     | EPIC-21 a EPIC-23 | 🔶 Partiel (EPIC-21-22 ✅, EPIC-23 ⬜)    |
+| **V2.5**   | EPIC-25 a EPIC-26 | 🔶 Partiel (EPIC-25 ✅, EPIC-26 ✅)       |
+| **V3**     | EPIC-24           | ⬜ Futur                                  |
 
 ---
 
@@ -68,9 +69,12 @@
 | 02-12 | Rate limiting sur les routes sensibles (in-memory, swappable Upstash pour prod)                              | ✅     | —     |
 | 02-13 | Security headers (HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy)                            | 🔶     | 🟡 P2 |
 | 02-14 | Validation MIME type sur les uploads (Supabase Storage policies)                                             | ⬜     | 🟡 P2 |
+| 02-15 | Migration 00031 : refactorisation systeme de roles en tableaux multi-roles (`user_role[]`)                   | ✅     | —     |
+| 02-16 | Refactorisation auth.ts, JWT session (`roles[]`), middleware RBAC, constants/permissions pour multi-role     | ✅     | —     |
 
 > **02-13 note** : HSTS, X-Frame-Options, X-Content-Type-Options et Referrer-Policy sont en place. CSP manquant (reporter apres MVP pour eviter les faux positifs avec les CDN/embeds).
 > **02-14 note** : Bloque par EPIC-13 (Supabase Storage non encore configure).
+> **02-15/16 note** : Introduit PR #17 (multi-role). Un utilisateur peut desormais cumuler plusieurs roles (ex: `consultant` + `marketing_manager`). Helpers `hasRole()`, `hasAnyRole()` utilises partout.
 
 ---
 
@@ -110,6 +114,9 @@
 | 04-04 | Vue detail consultante : stats (nombre formations, bookings, revenus), status Stripe Connect, formations associees                                        | ✅     | 🟡 P2 |
 | 04-05 | Activation / desactivation consultante (toggle `is_active`)                                                                                               | ✅     | 🟠 P1 |
 | 04-06 | Server Actions admin consultantes : `promoteToConsultant`, `updateConsultant`, `toggleActive`, `searchUsers`, `getConsultantStats`                        | ✅     | 🟠 P1 |
+| 04-07 | Admin : upload avatar consultante depuis la fiche admin (`admin-avatar-upload`, upload Supabase Storage)                                                  | ✅     | 🟡 P2 |
+| 04-08 | Admin : templates types de consultation — creation rapide depuis modeles predefined (composant `admin-consultation-types` enrichi)                        | ✅     | 🟡 P2 |
+| 04-09 | Admin : gestion complete des disponibilites consultante depuis la fiche admin (creneaux recurrents + exceptions)                                          | ✅     | 🟡 P2 |
 
 ---
 
@@ -178,6 +185,18 @@
 | 07-27                       | Email annulation au client et a la consultante avec details refund                                                                                                  | ✅     | 🟠 P1 |
 | **Cron & notifications**    |                                                                                                                                                                     |        |       |
 | 07-28                       | Cron `/api/cron` : email rappel RDV J-1 pour les bookings confirmed de demain                                                                                       | ✅     | 🟡 P2 |
+| **Tarification par duree**  |                                                                                                                                                                     |        |       |
+| 07-29                       | Migration 00028 : table `consultation_type_durations` (duree_minutes, prix_cents, surcharge_weekend_cents, surcharge_ferie_cents, is_default)                       | ✅     | 🟠 P1 |
+| 07-30                       | Migration 00029 : seed durees par defaut pour tous les types de consultation existants                                                                              | ✅     | 🟠 P1 |
+| 07-31                       | Step Duration (nouveau step wizard entre Service et Lieu) : selection duree + affichage prix calcule en temps reel                                                  | ✅     | 🟠 P1 |
+| 07-32                       | Tarification weekend et jours feries : surcharge configurable, detection via `french-holidays.ts`, calcul dans `lib/booking/pricing.ts`                            | ✅     | 🟠 P1 |
+| 07-33                       | Consultante : CRUD des durees par type de consultation depuis l'onglet Parametres (consultation-types-tab enrichi)                                                 | ✅     | 🟠 P1 |
+| **Configuration lieux (admin)** |                                                                                                                                                                 |        |       |
+| 07-34                       | Migration 00033 : table `location_configs` (config globale plateforme par type de lieu : cabinet, teleconsultation, domicile)                                      | ✅     | 🟠 P1 |
+| 07-35                       | Page `/admin/reservation` : configuration globale des lieux (activer/desactiver chaque type de lieu, parametres par defaut)                                        | ✅     | 🟠 P1 |
+| 07-36                       | Server Actions `getLocationConfigs`, `updateLocationConfig` dans `/admin/reservation/actions.ts`                                                                   | ✅     | 🟠 P1 |
+| 07-37                       | Integration `location_configs` dans le wizard de reservation (filtrage types de lieux selon config plateforme)                                                     | ✅     | 🟠 P1 |
+| 07-38                       | Tests unitaires `actions.spec.ts` pour les configurations de lieux (`getLocationConfigs`, `updateLocationConfig`)                                                  | ✅     | 🟡 P2 |
 
 ---
 
@@ -261,6 +280,7 @@
 | 10-11 | SEO : meta tags dynamiques par page (title, description, og:image, Twitter Cards)                | ✅     | 🟡 P2 |
 | 10-12 | Bouton "Acheter" sur page detail formation connecte a Stripe Checkout                            | ✅     | 🔴 P0 |
 | 10-13 | Bouton "Reserver" sur page detail consultante → redirect `/reserver?consultant=slug`             | ✅     | 🟠 P1 |
+| 10-14 | Extension middleware : routes publiques supplementaires ajoutees (`/replay-lives`, etc.)         | ✅     | —     |
 
 ---
 
@@ -339,6 +359,7 @@
 | 14-07 | Test : flow reservation guest (sans compte) → compte cree automatiquement                                       | ⬜     | 🟠 P1 |
 | 14-08 | Test : annulation rdv (>= 48h → refund total, < 48h → penalite 50%)                                             | ⬜     | 🟠 P1 |
 | 14-09 | Test : booking on_site (pas de Stripe, confirmation manuelle consultante)                                       | ⬜     | 🟠 P1 |
+| 14-10 | Configuration Vitest (`vitest.config.ts`) + premiers tests unitaires (`vimeo.spec.ts`, `actions.spec.ts`)       | ✅     | 🟠 P1 |
 
 ---
 
@@ -481,6 +502,47 @@
 | 23-04 | Notifications in-app (cloche dans le header, table `notifications`)              | ⬜     | 🟡 P2 |
 | 23-05 | CRM avance : historique interactions, scoring, segments                          | ⬜     | 🟡 P2 |
 | 23-06 | Analytics avances : funnel, retention, cohortes                                  | ⬜     | 🟡 P2 |
+
+---
+
+# V2.5 (Phase intermediaire – fonctionnalites ajoutees en continu)
+
+---
+
+## EPIC-25 : Replay Lives ✅
+
+> Gestion et diffusion de lives enregistres (replays Vimeo) depuis l'admin et page publique.
+
+| ID    | Story                                                                                                                             | Statut | Prio  |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
+| 25-01 | Migration 00032 : table `replay_lives` (titre, description, vimeo_id, thumbnail_url, is_published, published_at, consultante_id) | ✅     | 🟠 P1 |
+| 25-02 | Types TypeScript : `ReplayLive` dans `database.ts`                                                                                | ✅     | 🟠 P1 |
+| 25-03 | Lib Vimeo : `src/lib/vimeo.ts` — helpers `getVideoMetadata`, `getVideoThumbnail`, validation video_id                            | ✅     | 🟠 P1 |
+| 25-04 | Tests unitaires : `src/lib/vimeo.spec.ts` (couverture helpers Vimeo)                                                             | ✅     | 🟡 P2 |
+| 25-05 | Admin : page `/admin/replay-lives` — liste des replays (titre, status, date publication, consultante)                            | ✅     | 🟠 P1 |
+| 25-06 | Admin : page `/admin/replay-lives/nouveau` — formulaire creation replay (titre, vimeo_id, thumbnail auto-fetch, description)     | ✅     | 🟠 P1 |
+| 25-07 | Admin : page `/admin/replay-lives/[id]/edit` — edition + publication / depublication                                             | ✅     | 🟠 P1 |
+| 25-08 | Server Actions admin : `createReplayLive`, `updateReplayLive`, `deleteReplayLive`, `togglePublished`                             | ✅     | 🟠 P1 |
+| 25-09 | Nav admin : entree "Replay Lives" dans la sidebar                                                                                 | ✅     | 🟠 P1 |
+| 25-10 | Page publique `/replay-lives` : hero + carousel des replays publies (composants `replay-hero`, `replay-carousel`, `replay-card`) | ✅     | 🟠 P1 |
+| 25-11 | Embed Vimeo responsive sur la page publique (player integre dans la replay-card)                                                  | ✅     | 🟠 P1 |
+| 25-12 | Route `/replay-lives` ajoutee au middleware (acces public sans auth)                                                              | ✅     | 🟠 P1 |
+
+---
+
+## EPIC-26 : Ameliorations Formations & Booking ✅
+
+> Fonctionnalites avancees ajoutees sur le systeme de formations et de reservation.
+
+| ID    | Story                                                                                                                                  | Statut | Prio  |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
+| 26-01 | Migration 00030 : table `training_providers` (organismes de formation, gestion multi-provider)                                         | ✅     | 🟡 P2 |
+| 26-02 | Page formations publique : ordre des modules configurable, refactorisation en composant `FormationsList`                               | ✅     | 🟡 P2 |
+| 26-03 | Notification admin a la publication d'un article de blog (`blog post published`)                                                       | ✅     | 🟡 P2 |
+| 26-04 | Editeur WYSIWYG : support alignement texte (gauche, centre, droite) dans Novel                                                         | ✅     | 🟡 P2 |
+| 26-05 | Slugification automatique des slugs d'articles de blog a la creation                                                                   | ✅     | 🟡 P2 |
+| 26-06 | Validation date de programmation blog (scheduled_at doit etre dans le futur)                                                           | ✅     | 🟡 P2 |
+| 26-07 | Mise a jour footer et liens de navigation (clarification labels, liens sociaux)                                                        | ✅     | 🟡 P2 |
 
 ---
 

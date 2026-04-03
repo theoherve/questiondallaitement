@@ -499,6 +499,10 @@ export const createBooking = async (
     ? `${consultantProfile.first_name ?? ""} ${consultantProfile.last_name ?? ""}`.trim()
     : "Consultante";
 
+  if (formData.payment_method === "on_site" && formData.location === "teleconsultation") {
+    return { success: false, error: "Le paiement sur place n'est pas disponible pour les téléconsultations." };
+  }
+
   if (formData.payment_method === "online") {
     if (!consultant?.stripe_account_id) {
       return { success: false, error: "La consultante n'a pas configuré son compte Stripe" };

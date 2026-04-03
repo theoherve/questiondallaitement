@@ -4,6 +4,7 @@ import { createTransfer } from "@/lib/stripe/connect";
 import {
   sendFormationAccess,
   sendBookingConfirmation,
+  sendBookingConfirmedToConsultant,
 } from "@/lib/emails/send";
 import { runAutomations } from "@/lib/automations/engine";
 
@@ -273,6 +274,40 @@ const handleBookingConfirmation = async (
       reason: meta.reason ?? "",
       stripe_payment_intent_id: paymentIntentId,
     });
+
+  // Create Zoom meeting for teleconsultations (non-blocking)
+  if (meta.location === "teleconsultation") {
+    try {
+      const { createMeeting } = await import("@/lib/zoom/client");
+      const durationMinutes = Math.round(
+        (new Date(meta.ends_at).getTime() - new Date(meta.starts_at).getTime()) / 60000,
+      );
+      const { data: consultationType } = await getSupabase()
+        .from("consultation_types")
+        .select("title")
+        .eq("id", meta.consultation_type_id)
+        .single();
+      const topic = consultationType?.title
+        ? `${consultationType.title} — Téléconsultation`
+        : "Téléconsultation";
+      const meeting = await createMeeting(
+        meta.consultant_id,
+        topic,
+        meta.starts_at,
+        durationMinutes,
+      );
+      await getSupabase()
+        .from("bookings")
+        .update({
+          zoom_meeting_id: meeting.id,
+          zoom_join_url: meeting.join_url,
+          zoom_host_url: meeting.start_url,
+        })
+        .eq("id", meta.reference_id);
+    } catch {
+      // Non-blocking: Zoom failure should never fail the booking
+    }
+  }
 };
 
 const handleEventRegistration = async (
@@ -329,7 +364,7 @@ const sendCheckoutEmails = async (
       const { data: booking } = await supabase
         .from("bookings")
         .select(
-          "starts_at, consultants(profiles!consultants_id_fkey(first_name, last_name))",
+          "starts_at, zoom_join_url, zoom_host_url, consultants(profiles!consultants_id_fkey(first_name, last_name, email))",
         )
         .eq("id", referenceId)
         .single();
@@ -339,27 +374,42 @@ const sendCheckoutEmails = async (
           profiles: {
             first_name: string | null;
             last_name: string | null;
+            email: string | null;
           } | null;
         } | null;
-        const consultantName = consultant?.profiles
-          ? `${consultant.profiles.first_name ?? ""} ${consultant.profiles.last_name ?? ""}`.trim()
+        const consultantProfile = consultant?.profiles ?? null;
+        const consultantName = consultantProfile
+          ? `${consultantProfile.first_name ?? ""} ${consultantProfile.last_name ?? ""}`.trim()
           : "";
         const startsAt = new Date(booking.starts_at);
+        const date = startsAt.toLocaleDateString("fr-FR", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+        const time = startsAt.toLocaleTimeString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
 
         await sendBookingConfirmation(clientProfile.email, {
           client_name: clientName,
           consultant_name: consultantName,
-          date: startsAt.toLocaleDateString("fr-FR", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          }),
-          time: startsAt.toLocaleTimeString("fr-FR", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
+          date,
+          time,
+          zoom_join_url: booking.zoom_join_url ?? undefined,
         });
+
+        if (consultantProfile?.email) {
+          await sendBookingConfirmedToConsultant(consultantProfile.email, {
+            consultant_name: consultantName,
+            client_name: clientName,
+            date,
+            time,
+            zoom_host_url: booking.zoom_host_url ?? undefined,
+          });
+        }
       }
     }
   } catch {
