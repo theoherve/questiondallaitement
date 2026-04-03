@@ -14,6 +14,33 @@ const requireConsultant = async () => {
   return user;
 };
 
+// ─── Score helpers ──────────────────────────────────────────
+
+function computeClientScore({
+  completedBookings,
+  totalSpentCents,
+  formationsEnrolled,
+  eventsAttended,
+  inactiveDays,
+}: {
+  completedBookings: number;
+  totalSpentCents: number;
+  formationsEnrolled: number;
+  eventsAttended: number;
+  inactiveDays: number;
+}): number {
+  const base =
+    Math.min(40, completedBookings * 15) +
+    Math.min(25, totalSpentCents / 4000) +
+    Math.min(20, formationsEnrolled * 10) +
+    Math.min(15, eventsAttended * 5);
+
+  const recency =
+    inactiveDays >= 180 ? 0.5 : inactiveDays >= 90 ? 0.75 : 1.0;
+
+  return Math.max(0, Math.min(100, Math.round(base * recency)));
+}
+
 // ─── Contacts ───────────────────────────────────────────────
 
 export type CrmContact = {
@@ -25,6 +52,7 @@ export type CrmContact = {
   bookings_count: number;
   enrollments_count: number;
   tags: { id: string; name: string; color: string | null }[];
+  score: number;
 };
 
 export const getContacts = async (params?: {
@@ -38,7 +66,7 @@ export const getContacts = async (params?: {
   const [bookingsRes, enrollmentsRes] = await Promise.all([
     supabase
       .from("bookings")
-      .select("client_id")
+      .select("client_id, starts_at")
       .eq("consultant_id", user.id)
       .not("status", "eq", "cancelled"),
     supabase
@@ -124,27 +152,84 @@ export const getContacts = async (params?: {
 
   // Count bookings and enrollments per client
   const bookingCounts = new Map<string, number>();
-  for (const id of bookingClientIds) {
-    bookingCounts.set(id, (bookingCounts.get(id) ?? 0) + 1);
+  const lastActivityMap = new Map<string, string>();
+  for (const b of bookingsRes.data ?? []) {
+    bookingCounts.set(b.client_id, (bookingCounts.get(b.client_id) ?? 0) + 1);
+    const existing = lastActivityMap.get(b.client_id);
+    if (!existing || b.starts_at > existing)
+      lastActivityMap.set(b.client_id, b.starts_at);
   }
   const enrollmentCounts = new Map<string, number>();
   for (const id of enrollmentClientIds) {
     enrollmentCounts.set(id, (enrollmentCounts.get(id) ?? 0) + 1);
   }
 
-  return profiles.map((p) => ({
-    id: p.id,
-    first_name: p.first_name,
-    last_name: p.last_name,
-    email: p.email,
-    avatar_url: p.avatar_url,
-    bookings_count: bookingCounts.get(p.id) ?? 0,
-    enrollments_count: enrollmentCounts.get(p.id) ?? 0,
-    tags: tagsByClient.get(p.id) ?? [],
-  }));
+  // Load payments + events for score calculation (2 shared queries, no N×RPC)
+  const profileIds = profiles.map((p) => p.id);
+  const [paymentsRes, eventsRes] = await Promise.all([
+    supabase
+      .from("payments")
+      .select("client_id, amount_cents")
+      .eq("consultant_id", user.id)
+      .eq("status", "succeeded")
+      .in("client_id", profileIds),
+    supabase
+      .from("event_registrations")
+      .select("client_id")
+      .eq("status", "confirmed")
+      .in("client_id", profileIds),
+  ]);
+
+  const totalSpentMap = new Map<string, number>();
+  for (const p of paymentsRes.data ?? []) {
+    totalSpentMap.set(p.client_id, (totalSpentMap.get(p.client_id) ?? 0) + p.amount_cents);
+  }
+  const eventCountMap = new Map<string, number>();
+  for (const e of eventsRes.data ?? []) {
+    eventCountMap.set(e.client_id, (eventCountMap.get(e.client_id) ?? 0) + 1);
+  }
+
+  const now = Date.now();
+
+  return profiles.map((p) => {
+    const lastActivity = lastActivityMap.get(p.id);
+    const inactiveDays = lastActivity
+      ? Math.floor((now - new Date(lastActivity).getTime()) / 86400000)
+      : 9999;
+    const score = computeClientScore({
+      completedBookings: bookingCounts.get(p.id) ?? 0,
+      totalSpentCents: totalSpentMap.get(p.id) ?? 0,
+      formationsEnrolled: enrollmentCounts.get(p.id) ?? 0,
+      eventsAttended: eventCountMap.get(p.id) ?? 0,
+      inactiveDays,
+    });
+
+    return {
+      id: p.id,
+      first_name: p.first_name,
+      last_name: p.last_name,
+      email: p.email,
+      avatar_url: p.avatar_url,
+      bookings_count: bookingCounts.get(p.id) ?? 0,
+      enrollments_count: enrollmentCounts.get(p.id) ?? 0,
+      tags: tagsByClient.get(p.id) ?? [],
+      score,
+    };
+  });
 };
 
 // ─── Contact Detail ─────────────────────────────────────────
+
+export type InteractionType = "booking" | "enrollment" | "event" | "note";
+
+export type Interaction = {
+  id: string;
+  type: InteractionType;
+  title: string;
+  subtitle?: string;
+  date: string;
+  status?: string;
+};
 
 export type CrmContactDetail = {
   profile: {
@@ -156,17 +241,8 @@ export type CrmContactDetail = {
     avatar_url: string | null;
     created_at: string;
   };
-  bookings: {
-    id: string;
-    starts_at: string;
-    status: string;
-    consultation_types: { title: string } | null;
-  }[];
-  enrollments: {
-    formation_id: string;
-    enrolled_at: string;
-    formations: { title: string } | null;
-  }[];
+  score: number;
+  interactions: Interaction[];
   notes: {
     id: string;
     content: string;
@@ -198,33 +274,43 @@ export const getContactDetail = async (
         .eq("consultant_id", user.id)
     ).data?.map((f) => f.id) ?? [];
 
-  const [bookingsRes, enrollmentsRes, notesRes, tagsRes] = await Promise.all([
-    supabase
-      .from("bookings")
-      .select("id, starts_at, status, consultation_types(title)")
-      .eq("client_id", clientId)
-      .eq("consultant_id", user.id)
-      .order("starts_at", { ascending: false }),
-    consultantFormationIds.length > 0
-      ? supabase
-          .from("formation_enrollments")
-          .select("formation_id, enrolled_at, formations(title)")
-          .eq("client_id", clientId)
-          .in("formation_id", consultantFormationIds)
-          .order("enrolled_at", { ascending: false })
-      : Promise.resolve({ data: [] }),
-    supabase
-      .from("crm_notes")
-      .select("id, content, created_at, updated_at")
-      .eq("client_id", clientId)
-      .eq("consultant_id", user.id)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("crm_contact_tags")
-      .select("crm_tags(id, name, color)")
-      .eq("client_id", clientId)
-      .eq("consultant_id", user.id),
-  ]);
+  const [bookingsRes, enrollmentsRes, eventsRes, notesRes, tagsRes, scoreRes] =
+    await Promise.all([
+      supabase
+        .from("bookings")
+        .select("id, starts_at, status, consultation_types(title)")
+        .eq("client_id", clientId)
+        .eq("consultant_id", user.id)
+        .order("starts_at", { ascending: false }),
+      consultantFormationIds.length > 0
+        ? supabase
+            .from("formation_enrollments")
+            .select("formation_id, enrolled_at, formations(title)")
+            .eq("client_id", clientId)
+            .in("formation_id", consultantFormationIds)
+            .order("enrolled_at", { ascending: false })
+        : Promise.resolve({ data: [] }),
+      supabase
+        .from("event_registrations")
+        .select("id, registered_at, status, events(title)")
+        .eq("client_id", clientId)
+        .order("registered_at", { ascending: false }),
+      supabase
+        .from("crm_notes")
+        .select("id, content, created_at, updated_at")
+        .eq("client_id", clientId)
+        .eq("consultant_id", user.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("crm_contact_tags")
+        .select("crm_tags(id, name, color)")
+        .eq("client_id", clientId)
+        .eq("consultant_id", user.id),
+      supabase.rpc("calculate_client_score", {
+        p_client_id: clientId,
+        p_consultant_id: user.id,
+      }),
+    ]);
 
   const tags = (tagsRes.data ?? [])
     .map(
@@ -237,12 +323,60 @@ export const getContactDetail = async (
     )
     .filter(Boolean) as { id: string; name: string; color: string | null }[];
 
+  // Build unified interactions timeline
+  const interactions: Interaction[] = [];
+
+  for (const b of (bookingsRes.data ?? []) as unknown as {
+    id: string;
+    starts_at: string;
+    status: string;
+    consultation_types: { title: string } | null;
+  }[]) {
+    interactions.push({
+      id: b.id,
+      type: "booking",
+      title: b.consultation_types?.title ?? "Consultation",
+      date: b.starts_at,
+      status: b.status,
+    });
+  }
+
+  for (const e of (enrollmentsRes.data ?? []) as unknown as {
+    formation_id: string;
+    enrolled_at: string;
+    formations: { title: string } | null;
+  }[]) {
+    interactions.push({
+      id: e.formation_id,
+      type: "enrollment",
+      title: e.formations?.title ?? "Formation",
+      date: e.enrolled_at,
+    });
+  }
+
+  for (const ev of (eventsRes.data ?? []) as unknown as {
+    id: string;
+    registered_at: string;
+    status: string;
+    events: { title: string } | null;
+  }[]) {
+    interactions.push({
+      id: ev.id,
+      type: "event",
+      title: ev.events?.title ?? "Événement",
+      date: ev.registered_at,
+      status: ev.status,
+    });
+  }
+
+  interactions.sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
+
   return {
     profile,
-    bookings: (bookingsRes.data ??
-      []) as unknown as CrmContactDetail["bookings"],
-    enrollments: (enrollmentsRes.data ??
-      []) as unknown as CrmContactDetail["enrollments"],
+    score: (scoreRes.data as number | null) ?? 0,
+    interactions,
     notes: notesRes.data ?? [],
     tags,
   };

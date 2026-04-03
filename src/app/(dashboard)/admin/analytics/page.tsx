@@ -11,6 +11,9 @@ import {
   CalendarDays,
   TrendingUp,
   Trophy,
+  Filter,
+  BarChart2,
+  Repeat,
 } from "lucide-react";
 import { format, eachDayOfInterval, eachMonthOfInterval } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -18,6 +21,11 @@ import { PeriodSelector } from "@/components/dashboard/period-selector";
 import { getDateRange } from "@/lib/date-range";
 import { RevenueChart } from "@/components/dashboard/revenue-chart";
 import { RankingChart } from "@/components/dashboard/ranking-chart";
+import { getFunnelData, getRetentionData, getLtvData } from "@/actions/analytics-advanced";
+import { FunnelChart } from "./_components/funnel-chart";
+import { RetentionHeatmap } from "./_components/retention-heatmap";
+import { LtvTable } from "./_components/ltv-table";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Analytics — Administration",
@@ -29,18 +37,38 @@ const formatCurrency = (cents: number): string =>
     currency: "EUR",
   }).format(cents / 100);
 
+const TABS = [
+  { id: "revenus", label: "Revenus", icon: TrendingUp },
+  { id: "funnel", label: "Funnel", icon: Filter },
+  { id: "retention", label: "Rétention", icon: Repeat },
+  { id: "ltv", label: "Clients (LTV)", icon: BarChart2 },
+] as const;
+
+type TabId = (typeof TABS)[number]["id"];
+
 const AdminAnalyticsPage = async ({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ period?: string; tab?: string }>;
 }) => {
   const sessionUser = await getSessionUser();
   if (!sessionUser || !sessionUser.roles.includes("admin")) redirect("/connexion");
 
   const params = await searchParams;
+  const activeTab: TabId =
+    (params.tab as TabId | undefined) ?? "revenus";
+  const isValidTab = TABS.some((t) => t.id === activeTab);
+  const tab: TabId = isValidTab ? activeTab : "revenus";
   const supabase = createAdminClient();
   const period = params.period || "30d";
   const { start, end, groupBy } = getDateRange(period);
+
+  // Fetch advanced analytics only for the relevant tab
+  const [funnelData, retentionData, ltvData] = await Promise.all([
+    tab === "funnel" ? getFunnelData() : Promise.resolve(null),
+    tab === "retention" ? getRetentionData() : Promise.resolve(null),
+    tab === "ltv" ? getLtvData() : Promise.resolve(null),
+  ]);
 
   // ── Fetch all data in parallel ────────────────────────────
   const [
@@ -238,9 +266,31 @@ const AdminAnalyticsPage = async ({
         <h1 className="font-serif text-2xl font-bold text-primary-green">
           Analytics plateforme
         </h1>
-        <PeriodSelector />
+        {tab === "revenus" && <PeriodSelector />}
       </div>
 
+      {/* Tabs nav */}
+      <div className="flex gap-1 border-b">
+        {TABS.map(({ id, label, icon: Icon }) => (
+          <Link
+            key={id}
+            href={`/admin/analytics?tab=${id}${id === "revenus" ? `&period=${period}` : ""}`}
+            className={[
+              "flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+              tab === id
+                ? "border-primary-green text-primary-green"
+                : "border-transparent text-muted-foreground hover:text-foreground",
+            ].join(" ")}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </Link>
+        ))}
+      </div>
+
+      {/* ── TAB: Revenus ─────────────────────────────────────── */}
+      {tab === "revenus" && (
+        <>
       {/* Summary stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -332,6 +382,53 @@ const AdminAnalyticsPage = async ({
           </CardContent>
         </Card>
       </div>
+        </>
+      )}
+
+      {/* ── TAB: Funnel ──────────────────────────────────────── */}
+      {tab === "funnel" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 font-serif text-lg">
+              <Filter className="h-5 w-5" />
+              Funnel de conversion
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FunnelChart data={funnelData ?? []} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── TAB: Rétention ───────────────────────────────────── */}
+      {tab === "retention" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 font-serif text-lg">
+              <Repeat className="h-5 w-5" />
+              Rétention par cohorte
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RetentionHeatmap data={retentionData ?? []} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── TAB: LTV ─────────────────────────────────────────── */}
+      {tab === "ltv" && ltvData && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 font-serif text-lg">
+              <BarChart2 className="h-5 w-5" />
+              Valeur vie client (LTV)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LtvTable data={ltvData} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

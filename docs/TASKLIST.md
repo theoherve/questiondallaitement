@@ -3,7 +3,7 @@
 > Suivi projet structure en **Epics** et **Stories**.
 > Reference : [PLATFORM_ARCHITECTURE.md](./PLATFORM_ARCHITECTURE.md) | [roadmap.md](./roadmap.md)
 >
-> Derniere mise a jour : 2026-04-03
+> Derniere mise a jour : 2026-04-03 (EPIC-24 terminé)
 
 ## Legende
 
@@ -24,7 +24,7 @@
 | **V1.5**   | EPIC-15 a EPIC-20 | ✅ Terminé                                |
 | **V2**     | EPIC-21 a EPIC-23 | 🔶 Partiel (EPIC-21-22 ✅, EPIC-23 ⬜)    |
 | **V2.5**   | EPIC-25 a EPIC-26 | 🔶 Partiel (EPIC-25 ✅, EPIC-26 ✅)       |
-| **V3**     | EPIC-24, EPIC-27  | ⬜ Futur                                  |
+| **V3**     | EPIC-24, EPIC-27  | 🔶 Partiel (EPIC-24 ✅, EPIC-27 ⬜)       |
 
 ---
 
@@ -552,14 +552,14 @@
 
 ---
 
-## EPIC-24 : CRM & Analytics avances
+## EPIC-24 : CRM & Analytics avances ✅
 
 > Fonctionnalites CRM et analytics avancees (deplacees depuis EPIC-23).
 
-| ID    | Story                                                     | Statut | Prio  |
-| ----- | --------------------------------------------------------- | ------ | ----- |
-| 24-01 | CRM avance : historique interactions, scoring, segments   | ⬜     | 🟡 P2 |
-| 24-02 | Analytics avances : funnel, retention, cohortes           | ⬜     | 🟡 P2 |
+| ID    | Story                                                                                             | Statut | Prio  |
+| ----- | ------------------------------------------------------------------------------------------------- | ------ | ----- |
+| 24-01 | CRM avance : timeline interactions unifiee, score client auto (0-100), segments par regles JSONB  | ✅     | 🟡 P2 |
+| 24-02 | Analytics avances : funnel conversion, retention par cohorte (heatmap), LTV / top clients        | ✅     | 🟡 P2 |
 
 ---
 
@@ -581,9 +581,9 @@
 
 | Statut            | Nombre   |
 | ----------------- | -------- |
-| ✅ Termine        | ~157     |
+| ✅ Termine        | ~159     |
 | 🔶 Partiel        | ~2       |
-| ⬜ A faire        | ~8       |
+| ⬜ A faire        | ~6       |
 | **Total stories** | **~167** |
 
 ### Prochaines priorites
@@ -591,4 +591,3 @@
 1. **EPIC-14** : Tests MVP — validation end-to-end des flows critiques
 2. **EPIC-17** : Zoom OAuth — ✅ terminé (configurer les clés Zoom en prod pour activer)
 3. **07-08** : Seeds `consultant_locations` manquantes dans `seed.sql`
-4. **EPIC-24** : CRM & Analytics avances (historique, scoring, funnel)
