@@ -34,6 +34,9 @@ export const useCookieConsent = () => {
 
   useEffect(() => {
     const stored = readConsent();
+    // Initialisation depuis le cookie : setState dans useEffect est intentionnel ici
+    // (évite un flash du banner pendant l'hydratation SSR)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setConsent(stored);
     setHasAnswered(stored !== null);
   }, []);

@@ -463,3 +463,16 @@ export type LocationConfig = {
   created_at: string;
   updated_at: string;
 };
+
+export type NotificationType = "booking_confirmed" | "consultant_message" | "admin";
+
+export type Notification = {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  body: string | null;
+  metadata: Record<string, unknown> | null;
+  read_at: string | null;
+  created_at: string;
+};

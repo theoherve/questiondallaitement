@@ -1,6 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-
-type NotificationType = "booking_confirmed" | "consultant_message" | "admin";
+import type { NotificationType } from "@/types/database";
 
 export const createNotification = async (
   userId: string,

@@ -16,10 +16,15 @@ import { requestAccountDeletion } from "../actions";
 export const DeleteAccountDialog = () => {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   const handleDelete = () => {
+    setError(null);
     startTransition(async () => {
-      await requestAccountDeletion();
+      const result = await requestAccountDeletion();
+      if (!result.success) {
+        setError(result.error ?? "Erreur inconnue");
+      }
     });
   };
 
@@ -51,6 +56,11 @@ export const DeleteAccountDialog = () => {
             </div>
           </DialogDescription>
         </DialogHeader>
+        {error && (
+          <p className="text-sm text-destructive" role="alert">
+            {error}
+          </p>
+        )}
         <DialogFooter className="gap-2">
           <Button
             variant="outline"

@@ -20,13 +20,7 @@ import {
   getBackofficeRedirectUrl,
 } from "@/constants/roles";
 import type { SessionUser } from "@/lib/auth";
-
-type Notification = {
-  id: string;
-  title: string;
-  body: string | null;
-  created_at: string;
-};
+import type { Notification } from "@/types/database";
 
 type HeaderProps = {
   user: SessionUser | null;
@@ -54,8 +48,8 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
   }, [user]);
 
   const markAllRead = async () => {
-    await fetch("/api/notifications/read-all", { method: "PATCH" });
-    setNotifications([]);
+    const res = await fetch("/api/notifications/read-all", { method: "PATCH" });
+    if (res.ok) setNotifications([]);
   };
 
   // Close menu on browser back/forward navigation
