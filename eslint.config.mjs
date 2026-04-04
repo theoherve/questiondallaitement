@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Scripts utilitaires CommonJS hors scope Next.js
+    "blog-scraper/**",
+    "formations-scraper/**",
+    "scripts/**",
   ]),
 ]);
 

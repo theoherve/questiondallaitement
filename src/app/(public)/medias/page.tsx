@@ -26,8 +26,6 @@ export const metadata: Metadata = {
 /* ─── Page ─── */
 
 const MediasPage = () => {
-  const totalMedia = PRESS_ARTICLES.length + PODCASTS.length + VIDEOS.length;
-
   return (
     <>
       {/* ─── HERO ─── */}

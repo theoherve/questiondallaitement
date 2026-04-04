@@ -1,6 +1,12 @@
 import { Resend } from "resend";
 
-export const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    _resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return _resend;
+}
 
 const DEFAULT_FROM =
   process.env.RESEND_FROM ??
@@ -19,6 +25,7 @@ export const sendTransactionalEmail = async ({
   html,
   from = DEFAULT_FROM,
 }: SendEmailParams) => {
+  const resend = getResend();
   const { data, error } = await resend.emails.send({
     from,
     to,
