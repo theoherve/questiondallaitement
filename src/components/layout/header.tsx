@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { Menu, X, User, LogOut, Bell } from "lucide-react";
+import { Menu, X, User, LogOut, Bell, Stethoscope, Shield, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,8 +16,9 @@ import {
 import { publicNav, clientNav } from "@/config/navigation";
 import { getNavIcon } from "@/config/navigation-icons";
 import {
-  canAccessBackoffice,
-  getBackofficeRedirectUrl,
+  isConsultant,
+  isAdmin,
+  isMarketingManagerOnly,
 } from "@/constants/roles";
 import type { SessionUser } from "@/lib/auth";
 import type { Notification } from "@/types/database";
@@ -160,12 +161,35 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
                       </DropdownMenuItem>
                     );
                   })}
-                  {canAccessBackoffice(user.roles) && (
+                  {isConsultant(user.roles) && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link href={getBackofficeRedirectUrl(user.roles)}>
+                        <Link href="/espace-consultante" className="flex items-center gap-2">
+                          <Stethoscope className="h-4 w-4" />
+                          Espace consultante
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {isAdmin(user.roles) && (
+                    <>
+                      {!isConsultant(user.roles) && <DropdownMenuSeparator />}
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin" className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
                           Backoffice
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {isMarketingManagerOnly(user.roles) && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin" className="flex items-center gap-2">
+                          <Megaphone className="h-4 w-4" />
+                          Espace marketing
                         </Link>
                       </DropdownMenuItem>
                     </>
@@ -284,13 +308,34 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
                     {item.title}
                   </Link>
                 ))}
-                {canAccessBackoffice(user.roles) && (
+                {isConsultant(user.roles) && (
                   <Link
-                    href={getBackofficeRedirectUrl(user.roles)}
-                    className="py-2 text-base font-medium text-primary-green/70 transition-colors hover:text-primary-red"
+                    href="/espace-consultante"
+                    className="flex items-center gap-2 py-2 text-base font-medium text-primary-green/70 transition-colors hover:text-primary-red"
                     onClick={() => setMenuOpen(false)}
                   >
+                    <Stethoscope className="h-4 w-4" />
+                    Espace consultante
+                  </Link>
+                )}
+                {isAdmin(user.roles) && (
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-2 py-2 text-base font-medium text-primary-green/70 transition-colors hover:text-primary-red"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <Shield className="h-4 w-4" />
                     Backoffice
+                  </Link>
+                )}
+                {isMarketingManagerOnly(user.roles) && (
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-2 py-2 text-base font-medium text-primary-green/70 transition-colors hover:text-primary-red"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <Megaphone className="h-4 w-4" />
+                    Espace marketing
                   </Link>
                 )}
                 <form action={onLogout} className="mt-4">
