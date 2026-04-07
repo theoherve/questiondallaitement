@@ -62,3 +62,12 @@ export const getBackofficeRedirectUrl = (roles: UserRole[]): string => {
 
 export const canAccessBackoffice = (roles: UserRole[]): boolean =>
   roles.some((r) => (BACKOFFICE_ROLES as readonly string[]).includes(r));
+
+export const isConsultant = (roles: UserRole[]): boolean =>
+  roles.some((r) => (CONSULTANT_ROLES as readonly string[]).includes(r));
+
+export const isAdmin = (roles: UserRole[]): boolean =>
+  roles.includes("admin");
+
+export const isMarketingManagerOnly = (roles: UserRole[]): boolean =>
+  roles.includes("marketing_manager") && !roles.includes("admin");
