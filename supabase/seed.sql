@@ -1,16 +1,12 @@
 -- Seed data for development (Wix migration data)
 --
--- IMPORTANT: Before running this seed, you MUST create an auth user for the consultant.
--- Option A: Create the user in Supabase Dashboard (Authentication → Add user), then
---           replace the UUID below with that user's ID.
--- Option B: Use Supabase Auth Admin API to create the user with this exact UUID:
---           auth.admin.createUser({ id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', email: 'carole@example.com', password: '...' })
---
--- Placeholder consultant auth user ID (replace or create user with this ID): a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
+-- Auth is handled by NextAuth (ADR-008), not Supabase Auth.
+-- Profiles are inserted directly — no auth.users dependency.
+-- Consultant UUID used throughout: a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11
 --
 DO $$
 DECLARE cid UUID := 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
-BEGIN -- 1. Profile + Consultant (requires auth user with id = cid to exist)
+BEGIN -- 1. Profile + Consultant
 INSERT INTO profiles (id, role, email, first_name, last_name)
 VALUES (
     cid,
