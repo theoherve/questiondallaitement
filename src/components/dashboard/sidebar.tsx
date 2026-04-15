@@ -18,7 +18,7 @@ export const Sidebar = ({ items, onLogout }: SidebarProps) => {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
       <div className="flex h-16 items-center border-b border-sidebar-border px-6">
         <Link
           href="/"
@@ -64,12 +64,12 @@ export const Sidebar = ({ items, onLogout }: SidebarProps) => {
           })}
         </nav>
       </ScrollArea>
-      <div className="border-t border-sidebar-border p-4">
+      <div className="p-4">
         <form action={onLogout}>
           <Button
             type="submit"
             variant="ghost"
-            className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+            className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer border border-sidebar-accent/50"
           >
             <LogOut className="h-4 w-4" />
             Déconnexion
