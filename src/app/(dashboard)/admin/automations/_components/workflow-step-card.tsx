@@ -9,7 +9,6 @@ import type {
   AdminWorkflowActionType,
   Label,
 } from "@/lib/admin-workflows/types";
-import { WORKFLOW_EMAIL_VARIABLES } from "@/lib/admin-workflows/types";
 
 type StepDraft = {
   key: string;
@@ -28,6 +27,7 @@ type Props = {
     name: string;
     subject: string;
     body_html: string;
+    body_design: Record<string, unknown> | null;
   }[];
   labels: Label[];
   onUpdate: (updates: Partial<StepDraft>) => void;
@@ -96,7 +96,7 @@ export const WorkflowStepCard = ({
           onChange={(e) => {
             const newType = e.target.value as AdminWorkflowActionType;
             const defaultConfigs: Record<string, Record<string, unknown>> = {
-              send_email: { subject: "", body_html: "" },
+              send_email: { subject: "", body_html: "", body_design: null },
               add_label: { label_id: "" },
               webhook: { url: "", method: "POST" },
             };
@@ -117,15 +117,18 @@ export const WorkflowStepCard = ({
         <EmailStepEditor
           subject={(step.action_config.subject as string) ?? ""}
           bodyHtml={(step.action_config.body_html as string) ?? ""}
+          bodyDesign={
+            (step.action_config.body_design as Record<string, unknown> | null) ?? null
+          }
           emailTemplates={emailTemplates}
           onSubjectChange={(subject) =>
             onUpdate({
               action_config: { ...step.action_config, subject },
             })
           }
-          onBodyChange={(body_html) =>
+          onBodyChange={(body_design) =>
             onUpdate({
-              action_config: { ...step.action_config, body_html },
+              action_config: { ...step.action_config, body_design, body_html: "" },
             })
           }
           onLoadTemplate={(template) =>
@@ -134,6 +137,7 @@ export const WorkflowStepCard = ({
                 ...step.action_config,
                 subject: template.subject,
                 body_html: template.body_html,
+                body_design: template.body_design ?? null,
                 template_id: template.id,
               },
             })

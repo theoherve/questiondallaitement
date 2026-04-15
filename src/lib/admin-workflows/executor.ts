@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/resend/client";
+import { resolveEmailHtml } from "@/lib/emails/render-block-email";
 import { resolveAudience } from "./labels";
 import type {
   AudienceConfig,
@@ -194,10 +195,11 @@ const executeSendEmail = async (
   vars: Record<string, string>,
 ): Promise<{ success: boolean; error?: string }> => {
   try {
+    const html = await resolveEmailHtml(config.body_design, config.body_html, vars);
     await sendTransactionalEmail({
       to: email,
       subject: renderVariables(config.subject, vars),
-      html: renderVariables(config.body_html, vars),
+      html,
     });
     return { success: true };
   } catch (err) {

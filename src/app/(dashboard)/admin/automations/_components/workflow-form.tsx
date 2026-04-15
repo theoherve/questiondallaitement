@@ -44,6 +44,7 @@ type Props = {
     name: string;
     subject: string;
     body_html: string;
+    body_design: Record<string, unknown> | null;
   }[];
 };
 
@@ -85,7 +86,9 @@ export const WorkflowForm = ({
         key: s.id,
         position: i,
         delay_days: s.delay_days,
-        send_time: s.send_time ?? "09:00",
+        // Postgres TIME returns "HH:MM:SS" — the input expects "HH:MM" and the
+        // zod schema rejects the seconds-suffix form.
+        send_time: (s.send_time ?? "09:00").slice(0, 5),
         action_type: s.action_type,
         action_config: s.action_config as Record<string, unknown>,
       }));

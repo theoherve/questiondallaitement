@@ -47,6 +47,8 @@ export type AdminWorkflowActionType =
 export type SendEmailStepConfig = {
   subject: string;
   body_html: string;
+  /** Maily block editor JSON. When present, takes precedence over body_html. */
+  body_design?: Record<string, unknown> | null;
   template_id?: string | null;
   save_as_template?: boolean;
   template_name?: string;

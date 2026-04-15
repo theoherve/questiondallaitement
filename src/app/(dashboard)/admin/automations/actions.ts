@@ -312,6 +312,10 @@ export const createWorkflow = async (
         name: step.action_config.template_name,
         subject: step.action_config.subject,
         body_html: step.action_config.body_html,
+        body_design:
+          "body_design" in step.action_config
+            ? (step.action_config.body_design ?? null)
+            : null,
         type: "transactional",
         variables: [],
       });
@@ -452,13 +456,19 @@ export const getScheduledActions = async (
 };
 
 export const getEmailTemplates = async (): Promise<
-  { id: string; name: string; subject: string; body_html: string }[]
+  {
+    id: string;
+    name: string;
+    subject: string;
+    body_html: string;
+    body_design: Record<string, unknown> | null;
+  }[]
 > => {
   await requireAdmin();
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("email_templates")
-    .select("id, name, subject, body_html")
+    .select("id, name, subject, body_html, body_design")
     .order("name");
   return data ?? [];
 };

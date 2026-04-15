@@ -59,13 +59,19 @@ export type RecurringEventDefinitionInput = z.infer<
 
 // ─── Workflow Step ──────────────────────────────────────────
 
-const sendEmailStepConfigSchema = z.object({
-  subject: z.string().min(1, "Sujet requis"),
-  body_html: z.string().min(1, "Contenu requis"),
-  template_id: z.string().uuid().nullable().optional(),
-  save_as_template: z.boolean().optional(),
-  template_name: z.string().optional(),
-});
+const sendEmailStepConfigSchema = z
+  .object({
+    subject: z.string().min(1, "Sujet requis"),
+    body_html: z.string().default(""),
+    body_design: z.record(z.string(), z.unknown()).nullable().optional(),
+    template_id: z.string().uuid().nullable().optional(),
+    save_as_template: z.boolean().optional(),
+    template_name: z.string().optional(),
+  })
+  .refine(
+    (d) => (d.body_design && Object.keys(d.body_design).length > 0) || d.body_html.length >= 1,
+    { message: "Contenu requis", path: ["body_html"] },
+  );
 
 const addLabelStepConfigSchema = z.object({
   label_id: z.string().uuid("Label requis"),
@@ -81,7 +87,8 @@ export const adminWorkflowStepSchema = z.object({
   delay_days: z.number().int().min(-30).max(30),
   send_time: z
     .string()
-    .regex(/^\d{2}:\d{2}$/, "Format HH:MM requis")
+    .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Format HH:MM requis")
+    .transform((v) => v.slice(0, 5))
     .default("09:00"),
   action_type: z.enum(ADMIN_WORKFLOW_ACTION_TYPES),
   action_config: z.union([

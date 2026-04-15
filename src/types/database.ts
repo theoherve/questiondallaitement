@@ -367,6 +367,7 @@ export type EmailTemplate = {
   name: string;
   subject: string;
   body_html: string;
+  body_design: Record<string, unknown> | null;
   type: "transactional" | "marketing";
   variables: string[];
   created_by: string | null;
@@ -381,6 +382,7 @@ export type EmailCampaign = {
   template_id: string | null;
   subject: string;
   body_html: string | null;
+  body_design: Record<string, unknown> | null;
   status: "draft" | "scheduled" | "sending" | "sent";
   brevo_campaign_id: string | null;
   recipient_list_ids: number[];

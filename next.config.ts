@@ -2,6 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  experimental: {
+    // Uploads (blog images, email crops) go through Server Actions and can
+    // exceed the 1 MB default. Storage helpers already cap files at 50 MB —
+    // keep the action limit in line with that.
+    serverActions: {
+      bodySizeLimit: "50mb",
+    },
+  },
   images: {
     unoptimized: process.env.NODE_ENV === "development",
     remotePatterns: [

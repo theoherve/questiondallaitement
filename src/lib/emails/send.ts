@@ -1,16 +1,34 @@
 import { sendTransactionalEmail, renderTemplate } from "@/lib/resend/client";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { resolveEmailHtml } from "@/lib/emails/render-block-email";
 
-const getTemplate = async (templateName: string) => {
+type TemplateRow = {
+  subject: string;
+  body_html: string;
+  body_design: Record<string, unknown> | null;
+};
+
+const getTemplate = async (templateName: string): Promise<TemplateRow | null> => {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("email_templates")
-    .select("subject, body_html")
+    .select("subject, body_html, body_design")
     .eq("name", templateName)
     .single();
 
-  return data;
+  return data as TemplateRow | null;
 };
+
+/**
+ * Render a template row with variables, picking block design over legacy HTML.
+ */
+const renderTemplateRow = async (
+  tpl: TemplateRow,
+  variables: Record<string, string>,
+): Promise<{ subject: string; html: string }> => ({
+  subject: renderTemplate(tpl.subject, variables),
+  html: await resolveEmailHtml(tpl.body_design, tpl.body_html, variables),
+});
 
 export const sendBookingConfirmation = async (
   clientEmail: string,
@@ -29,19 +47,15 @@ export const sendBookingConfirmation = async (
     ? `<p style="margin-top:24px;"><a href="${variables.zoom_join_url}" style="display:inline-block;padding:12px 24px;background-color:#A0283E;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Rejoindre la réunion Zoom</a></p>`
     : "";
 
-  const templateVars = {
+  const { subject, html } = await renderTemplateRow(template, {
     client_name: variables.client_name,
     consultant_name: variables.consultant_name,
     date: variables.date,
     time: variables.time,
     zoom_block,
-  };
-
-  await sendTransactionalEmail({
-    to: clientEmail,
-    subject: renderTemplate(template.subject, templateVars),
-    html: renderTemplate(template.body_html, templateVars),
   });
+
+  await sendTransactionalEmail({ to: clientEmail, subject, html });
 };
 
 export const sendBookingConfirmedToConsultant = async (
@@ -86,11 +100,8 @@ export const sendBookingReminder = async (
   const template = await getTemplate("booking_reminder");
   if (!template) return;
 
-  await sendTransactionalEmail({
-    to: clientEmail,
-    subject: renderTemplate(template.subject, variables),
-    html: renderTemplate(template.body_html, variables),
-  });
+  const { subject, html } = await renderTemplateRow(template, variables);
+  await sendTransactionalEmail({ to: clientEmail, subject, html });
 };
 
 export const sendBookingCancelled = async (
@@ -104,11 +115,8 @@ export const sendBookingCancelled = async (
   const template = await getTemplate("booking_cancelled");
   if (!template) return;
 
-  await sendTransactionalEmail({
-    to: clientEmail,
-    subject: renderTemplate(template.subject, variables),
-    html: renderTemplate(template.body_html, variables),
-  });
+  const { subject, html } = await renderTemplateRow(template, variables);
+  await sendTransactionalEmail({ to: clientEmail, subject, html });
 };
 
 export const sendFormationAccess = async (
@@ -121,11 +129,12 @@ export const sendFormationAccess = async (
   const template = await getTemplate("formation_access");
   if (!template) return;
 
-  await sendTransactionalEmail({
-    to: clientEmail,
-    subject: renderTemplate(template.subject, variables),
-    html: renderTemplate(template.body_html, variables),
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const { subject, html } = await renderTemplateRow(template, {
+    ...variables,
+    formation_url: `${siteUrl}/espace-client/formations`,
   });
+  await sendTransactionalEmail({ to: clientEmail, subject, html });
 };
 
 export const sendWelcomeEmail = async (
@@ -137,11 +146,12 @@ export const sendWelcomeEmail = async (
   const template = await getTemplate("welcome");
   if (!template) return;
 
-  await sendTransactionalEmail({
-    to: clientEmail,
-    subject: renderTemplate(template.subject, variables),
-    html: renderTemplate(template.body_html, variables),
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const { subject, html } = await renderTemplateRow(template, {
+    ...variables,
+    dashboard_url: `${siteUrl}/espace-client`,
   });
+  await sendTransactionalEmail({ to: clientEmail, subject, html });
 };
 
 export const sendNewBookingNotification = async (
@@ -157,13 +167,16 @@ export const sendNewBookingNotification = async (
 ) => {
   const template = await getTemplate("new_booking_notification");
 
-  const subject = template
-    ? renderTemplate(template.subject, variables)
-    : `Nouvelle réservation de ${variables.client_name}`;
+  if (template) {
+    const { subject, html } = await renderTemplateRow(template, variables);
+    await sendTransactionalEmail({ to: consultantEmail, subject, html });
+    return;
+  }
 
-  const html = template
-    ? renderTemplate(template.body_html, variables)
-    : `
+  await sendTransactionalEmail({
+    to: consultantEmail,
+    subject: `Nouvelle réservation de ${variables.client_name}`,
+    html: `
       <h1>Nouvelle réservation</h1>
       <p>Bonjour ${variables.consultant_name},</p>
       <p>Vous avez une nouvelle réservation :</p>
@@ -174,9 +187,8 @@ export const sendNewBookingNotification = async (
         <li><strong>Paiement :</strong> ${variables.payment_method}</li>
       </ul>
       <p>Connectez-vous à votre espace pour gérer cette réservation.</p>
-    `;
-
-  await sendTransactionalEmail({ to: consultantEmail, subject, html });
+    `,
+  });
 };
 
 export const sendGuestAccountEmail = async (
@@ -188,22 +200,24 @@ export const sendGuestAccountEmail = async (
 ) => {
   const template = await getTemplate("guest_account_setup");
 
-  const subject = template
-    ? renderTemplate(template.subject, variables)
-    : "Finalisez votre compte — Question d'Allaitement";
+  if (template) {
+    const { subject, html } = await renderTemplateRow(template, variables);
+    await sendTransactionalEmail({ to: clientEmail, subject, html });
+    return;
+  }
 
-  const html = template
-    ? renderTemplate(template.body_html, variables)
-    : `
+  await sendTransactionalEmail({
+    to: clientEmail,
+    subject: "Finalisez votre compte — Question d'Allaitement",
+    html: `
       <h1>Bienvenue sur Question d'Allaitement</h1>
       <p>Bonjour ${variables.client_name},</p>
       <p>Votre réservation a été enregistrée. Un compte a été créé automatiquement pour vous.</p>
       <p>Pour accéder à votre espace personnel et suivre vos rendez-vous, définissez votre mot de passe :</p>
       <p><a href="${variables.setup_url}" style="display:inline-block;padding:12px 24px;background-color:#A0283E;color:#fff;text-decoration:none;border-radius:6px;">Créer mon mot de passe</a></p>
       <p>Si vous n'avez pas effectué cette réservation, ignorez cet email.</p>
-    `;
-
-  await sendTransactionalEmail({ to: clientEmail, subject, html });
+    `,
+  });
 };
 
 export const sendBookingCancelledToConsultant = async (
@@ -236,11 +250,8 @@ export const sendVerificationEmail = async (
   const template = await getTemplate("email_verification");
 
   if (template) {
-    await sendTransactionalEmail({
-      to: clientEmail,
-      subject: renderTemplate(template.subject, variables),
-      html: renderTemplate(template.body_html, variables),
-    });
+    const { subject, html } = await renderTemplateRow(template, variables);
+    await sendTransactionalEmail({ to: clientEmail, subject, html });
     return;
   }
 
@@ -301,11 +312,8 @@ export const sendPasswordResetEmail = async (
   const template = await getTemplate("password_reset");
 
   if (template) {
-    await sendTransactionalEmail({
-      to: clientEmail,
-      subject: renderTemplate(template.subject, variables),
-      html: renderTemplate(template.body_html, variables),
-    });
+    const { subject, html } = await renderTemplateRow(template, variables);
+    await sendTransactionalEmail({ to: clientEmail, subject, html });
     return;
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   EditorRoot,
   EditorContent,
@@ -47,8 +47,56 @@ import {
   Unlink,
   Undo,
   Redo,
+  Image as ImageIcon,
+  Columns2,
+  Columns3,
+  Info,
+  Lightbulb,
+  AlertTriangle,
+  StickyNote,
+  Crop,
 } from "lucide-react";
 import { Editor } from "@tiptap/react";
+import {
+  ImageExtension,
+  Columns,
+  Column,
+  Callout,
+  blogImageUpload,
+  type CalloutVariant,
+} from "./wysiwyg-extensions";
+import { ImageCropDialog } from "./image-crop-dialog";
+
+/**
+ * Tiptap chains for our custom nodes are not in the global Commands<> shape
+ * (Maily already augments `columns` differently — see wysiwyg-extensions.tsx).
+ * These helpers wrap the slash-command call sites with a single cast.
+ */
+type ChainAny = {
+  focus(): ChainAny;
+  deleteRange(r: { from: number; to: number }): ChainAny;
+  setColumns(): ChainAny;
+  setColumns3(): ChainAny;
+  setCallout(v: CalloutVariant): ChainAny;
+  run(): boolean;
+};
+const columns = (editor: Editor, range: { from: number; to: number }) =>
+  (editor.chain() as unknown as ChainAny).focus().deleteRange(range).setColumns().run();
+const columns3 = (editor: Editor, range: { from: number; to: number }) =>
+  (editor.chain() as unknown as ChainAny).focus().deleteRange(range).setColumns3().run();
+const callout = (
+  editor: Editor,
+  range: { from: number; to: number },
+  variant: CalloutVariant,
+) =>
+  (editor.chain() as unknown as ChainAny)
+    .focus()
+    .deleteRange(range)
+    .setCallout(variant)
+    .run();
+import { handleImageDrop, handleImagePaste } from "novel";
+import { uploadFileAction } from "@/lib/storage/actions";
+import { toast } from "sonner";
 
 type WysiwygEditorProps = {
   initialContent?: string;
@@ -84,6 +132,10 @@ const extensions = [
   TextAlign.configure({
     types: ["heading", "paragraph"],
   }),
+  ImageExtension,
+  Columns,
+  Column,
+  Callout,
   Placeholder.configure({ placeholder: "Commencez à écrire..." }),
 ];
 
@@ -189,6 +241,91 @@ const slashCommandItems = createSuggestionItems([
       editor.chain().focus().deleteRange(range).setHorizontalRule().run();
     },
   },
+  {
+    title: "Image",
+    description: "Uploader une image (max 5 Mo)",
+    icon: <ImageIcon className="h-4 w-4" />,
+    searchTerms: ["image", "img", "photo", "upload"],
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).run();
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        const fd = new FormData();
+        fd.set("file", file);
+        fd.set("bucket", "blog");
+        fd.set("folder", "content");
+        const result = await uploadFileAction(fd);
+        if (result.success && result.data) {
+          editor
+            .chain()
+            .focus()
+            .setImage({ src: result.data.url, alt: file.name })
+            .run();
+        } else {
+          toast.error(result.error ?? "Upload échoué");
+        }
+      };
+      input.click();
+    },
+  },
+  {
+    title: "Deux colonnes",
+    description: "Mise en page sur deux colonnes",
+    icon: <Columns2 className="h-4 w-4" />,
+    searchTerms: ["columns", "colonnes", "grid", "layout", "2"],
+    command: ({ editor, range }) => {
+      columns(editor, range);
+    },
+  },
+  {
+    title: "Trois colonnes",
+    description: "Mise en page sur trois colonnes",
+    icon: <Columns3 className="h-4 w-4" />,
+    searchTerms: ["columns", "colonnes", "grid", "layout", "3"],
+    command: ({ editor, range }) => {
+      columns3(editor, range);
+    },
+  },
+  {
+    title: "Encadré info",
+    description: "Bloc d'information mis en valeur",
+    icon: <Info className="h-4 w-4" />,
+    searchTerms: ["callout", "info", "encadre", "encadré", "section"],
+    command: ({ editor, range }) => {
+      callout(editor, range, "info");
+    },
+  },
+  {
+    title: "Encadré conseil",
+    description: "Conseil ou astuce",
+    icon: <Lightbulb className="h-4 w-4" />,
+    searchTerms: ["tip", "conseil", "astuce"],
+    command: ({ editor, range }) => {
+      callout(editor, range, "tip");
+    },
+  },
+  {
+    title: "Encadré attention",
+    description: "Avertissement / point d'attention",
+    icon: <AlertTriangle className="h-4 w-4" />,
+    searchTerms: ["warning", "attention", "alerte"],
+    command: ({ editor, range }) => {
+      callout(editor, range, "warning");
+    },
+  },
+  {
+    title: "Encadré note",
+    description: "Note simple",
+    icon: <StickyNote className="h-4 w-4" />,
+    searchTerms: ["note", "memo"],
+    command: ({ editor, range }) => {
+      callout(editor, range, "note");
+    },
+  },
 ]);
 
 const htmlToContent = (html: string): JSONContent | undefined => {
@@ -234,6 +371,39 @@ function ToolbarDivider() {
 function Toolbar({ editor }: { editor: Editor | null }) {
   const [linkUrl, setLinkUrl] = useState("");
   const [showLinkInput, setShowLinkInput] = useState(false);
+  const [cropOpen, setCropOpen] = useState(false);
+  // Image node currently selected in the editor (null = none). Populated from
+  // `selectionUpdate` / `transaction` events so the Crop button enables only
+  // when an image is actually clicked.
+  const [selectedImage, setSelectedImage] = useState<{
+    src: string;
+    pos: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!editor) return;
+    const sync = () => {
+      const sel = editor.state.selection as unknown as {
+        node?: { type: { name: string }; attrs: Record<string, unknown> };
+        from: number;
+      };
+      if (sel.node && sel.node.type.name === "image") {
+        const src = sel.node.attrs.src;
+        if (typeof src === "string" && src.length > 0) {
+          setSelectedImage({ src, pos: sel.from });
+          return;
+        }
+      }
+      setSelectedImage(null);
+    };
+    editor.on("selectionUpdate", sync);
+    editor.on("transaction", sync);
+    sync();
+    return () => {
+      editor.off("selectionUpdate", sync);
+      editor.off("transaction", sync);
+    };
+  }, [editor]);
 
   if (!editor) return null;
 
@@ -423,6 +593,49 @@ function Toolbar({ editor }: { editor: Editor | null }) {
 
       <ToolbarDivider />
 
+      {/* Image crop */}
+      <ToolbarButton
+        onClick={() => selectedImage && setCropOpen(true)}
+        disabled={!selectedImage}
+        ariaLabel={
+          selectedImage
+            ? "Rogner l'image sélectionnée"
+            : "Sélectionne une image dans l'éditeur pour la rogner"
+        }
+      >
+        <Crop className="h-4 w-4" />
+      </ToolbarButton>
+
+      <ImageCropDialog
+        open={cropOpen}
+        onOpenChange={setCropOpen}
+        src={selectedImage?.src ?? null}
+        bucket="blog"
+        uploadFolder="content"
+        onCropped={(url: string) => {
+          if (!selectedImage) return;
+          // Re-select the image node by its stored position and swap src.
+          // `setNodeSelection` not in Novel's chain types — the cast matches
+          // our ChainAny (which already has its own TS escape hatch).
+          (editor.chain() as unknown as {
+            focus(): {
+              setNodeSelection(pos: number): {
+                updateAttributes(
+                  name: string,
+                  attrs: Record<string, unknown>,
+                ): { run(): boolean };
+              };
+            };
+          })
+            .focus()
+            .setNodeSelection(selectedImage.pos)
+            .updateAttributes("image", { src: url })
+            .run();
+        }}
+      />
+
+      <ToolbarDivider />
+
       {/* Link */}
       {showLinkInput ? (
         <div className="flex items-center gap-1">
@@ -528,6 +741,10 @@ export const WysiwygEditor = ({
             attributes: {
               class: "outline-none min-h-[150px]",
             },
+            handlePaste: (view, event) =>
+              handleImagePaste(view, event, blogImageUpload),
+            handleDrop: (view, event, _slice, moved) =>
+              handleImageDrop(view, event, moved, blogImageUpload),
             ...(initialContent
               ? {
                   handleDOMEvents: {
