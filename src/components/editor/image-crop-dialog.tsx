@@ -86,6 +86,17 @@ export const ImageCropDialog = ({
     }
   }, [open, src]);
 
+  // `crossOrigin` MUST be set BEFORE `src` for the browser to issue a CORS
+  // request — otherwise `canvas.toBlob()` throws SecurityError on the
+  // tainted canvas. Setting via ref guarantees attribute order.
+  useEffect(() => {
+    if (!open || !src) return;
+    const img = imgRef.current;
+    if (!img) return;
+    img.crossOrigin = "anonymous";
+    img.src = src;
+  }, [open, src]);
+
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
       const { naturalWidth, naturalHeight } = e.currentTarget;
@@ -258,10 +269,11 @@ export const ImageCropDialog = ({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 ref={imgRef}
-                src={src}
+                // `src` + `crossOrigin` set imperatively via ref (see effect
+                // above) — setting them in JSX leaves the attr order up to
+                // React and may taint the canvas.
                 alt="À rogner"
                 onLoad={onImageLoad}
-                crossOrigin="anonymous"
                 className="max-h-[55vh] max-w-full"
               />
             </ReactCrop>

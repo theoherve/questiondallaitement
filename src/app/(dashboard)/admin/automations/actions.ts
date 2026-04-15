@@ -17,7 +17,6 @@ import type {
   RecurringEventDefinition,
   AdminWorkflowLog,
   ScheduledWorkflowAction,
-  AudienceConfig,
 } from "@/lib/admin-workflows/types";
 import { triggerManualWorkflow as triggerManual } from "@/lib/admin-workflows/scheduler";
 
@@ -308,17 +307,21 @@ export const createWorkflow = async (
       "template_name" in step.action_config &&
       step.action_config.template_name
     ) {
-      await supabase.from("email_templates").insert({
-        name: step.action_config.template_name,
-        subject: step.action_config.subject,
-        body_html: step.action_config.body_html,
-        body_design:
-          "body_design" in step.action_config
-            ? (step.action_config.body_design ?? null)
-            : null,
-        type: "transactional",
-        variables: [],
-      });
+      // Upsert by name so re-editing a workflow doesn't duplicate templates.
+      await supabase.from("email_templates").upsert(
+        {
+          name: step.action_config.template_name,
+          subject: step.action_config.subject,
+          body_html: step.action_config.body_html,
+          body_design:
+            "body_design" in step.action_config
+              ? (step.action_config.body_design ?? null)
+              : null,
+          type: "transactional",
+          variables: [],
+        },
+        { onConflict: "name" },
+      );
     }
   }
 
@@ -352,20 +355,53 @@ export const updateWorkflow = async (
 
   if (error) return { success: false, error: error.message };
 
-  // Replace steps: delete all, re-insert
-  await supabase.from("admin_workflow_steps").delete().eq("workflow_id", id);
+  /*
+   * Steps diff: preserve existing step ids so `scheduled_workflow_actions`
+   * (FK cascade delete) aren't wiped on every edit. Rules:
+   *   - input step has an `id` matching an existing row → UPDATE in place
+   *   - input step has no id or an unknown id → INSERT
+   *   - existing row not referenced in input → DELETE (its scheduled
+   *     actions cascade away, which is correct when the step is removed)
+   */
+  const { data: existingRows } = await supabase
+    .from("admin_workflow_steps")
+    .select("id")
+    .eq("workflow_id", id);
+  const existingIds = new Set((existingRows ?? []).map((r) => r.id));
 
-  if (steps.length > 0) {
-    const stepRows = steps.map((s) => ({
-      workflow_id: id,
+  const toUpdate: { id: string; row: Record<string, unknown> }[] = [];
+  const toInsert: Record<string, unknown>[] = [];
+
+  for (const s of steps) {
+    const row = {
       position: s.position,
       delay_days: s.delay_days,
       send_time: s.send_time,
       action_type: s.action_type,
       action_config: s.action_config,
-    }));
+    };
+    if (s.id && existingIds.has(s.id)) {
+      toUpdate.push({ id: s.id, row });
+      existingIds.delete(s.id);
+    } else {
+      toInsert.push({ workflow_id: id, ...row });
+    }
+  }
 
-    await supabase.from("admin_workflow_steps").insert(stepRows);
+  // Delete orphan steps first so position collisions don't clash during update.
+  if (existingIds.size > 0) {
+    await supabase
+      .from("admin_workflow_steps")
+      .delete()
+      .in("id", [...existingIds]);
+  }
+
+  for (const { id: stepId, row } of toUpdate) {
+    await supabase.from("admin_workflow_steps").update(row).eq("id", stepId);
+  }
+
+  if (toInsert.length > 0) {
+    await supabase.from("admin_workflow_steps").insert(toInsert);
   }
 
   revalidatePath(REVALIDATE_PATH);

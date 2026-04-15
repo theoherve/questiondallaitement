@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { getRecurringDefinitions, getConsultants } from "../actions";
 import { describeRecurrence } from "@/lib/admin-workflows/recurrence";
 import type { RecurrenceRule } from "@/lib/admin-workflows/types";
@@ -55,7 +55,7 @@ const AdminRecurrentsPage = async () => {
           <Table className="w-full table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[25%]">Titre</TableHead>
+                <TableHead className="w-[35%]">Titre</TableHead>
                 <TableHead>Récurrence</TableHead>
                 <TableHead>Heure</TableHead>
                 <TableHead>Consultante</TableHead>

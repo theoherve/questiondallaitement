@@ -71,13 +71,19 @@ export const EmailPreviewDialog = ({
   }, [design, hasDesign, overrides]);
 
   // Re-render on open, or whenever design/overrides change while open.
+  // Variable overrides debounce 400ms — each keystroke would otherwise hit
+  // the `previewEmailHtml` server action (Maily render + juice CSS inlining
+  // is ~100-300ms).
   useEffect(() => {
-    if (open && hasDesign) {
+    if (!open || !hasDesign) return;
+    const timer = setTimeout(() => {
       render();
-    }
+    }, 400);
+    return () => clearTimeout(timer);
   }, [open, hasDesign, render]);
 
-  // Auto-size iframe to its content once loaded.
+  // Auto-size iframe to its content once loaded (no arbitrary cap — the
+  // parent container handles scrolling for very tall emails).
   const onIframeLoad = useCallback(() => {
     const doc = iframeRef.current?.contentDocument;
     if (!doc) return;
@@ -85,8 +91,16 @@ export const EmailPreviewDialog = ({
       doc.documentElement.scrollHeight,
       doc.body?.scrollHeight ?? 0,
     );
-    if (h > 0) setIframeHeight(Math.min(h + 16, 2000));
+    if (h > 0) setIframeHeight(h + 16);
   }, []);
+
+  // Switching device width changes wrapper size — re-measure the iframe
+  // content so the mobile preview isn't stuck at desktop height.
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(onIframeLoad, 50);
+    return () => clearTimeout(t);
+  }, [device, open, onIframeLoad, html]);
 
   const maxWidth = device === "mobile" ? 375 : 640;
 

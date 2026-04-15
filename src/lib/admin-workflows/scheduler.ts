@@ -78,24 +78,31 @@ export const scheduleWorkflowActionsForUpcomingEvents = async (): Promise<{
         if (new Date(scheduledForStr) <= new Date()) continue;
 
         for (const profileId of profileIds) {
+          // The migration's unique index is PARTIAL (WHERE anchor_event_id
+          // IS NOT NULL), so PG's ON CONFLICT can't infer it. We INSERT and
+          // swallow duplicate-key (23505) errors — the partial index still
+          // enforces uniqueness at write time.
           const { error } = await supabase
             .from("scheduled_workflow_actions")
-            .upsert(
-              {
-                workflow_id: workflow.id,
-                step_id: step.id,
-                profile_id: profileId,
-                anchor_event_id: event.id,
-                scheduled_for: scheduledForStr,
-                status: "pending",
-              },
-              {
-                onConflict: "step_id,profile_id,anchor_event_id",
-                ignoreDuplicates: true,
-              },
-            );
+            .insert({
+              workflow_id: workflow.id,
+              step_id: step.id,
+              profile_id: profileId,
+              anchor_event_id: event.id,
+              scheduled_for: scheduledForStr,
+              status: "pending",
+            });
 
-          if (!error) workflowScheduled++;
+          if (!error) {
+            workflowScheduled++;
+          } else if (error.code !== "23505") {
+            // Log anything that isn't an idempotent duplicate — silent
+            // failures here hide genuine scheduling bugs.
+            console.error(
+              `scheduler: failed to schedule action for profile ${profileId} on step ${step.id}:`,
+              error.message,
+            );
+          }
         }
       }
     }

@@ -20,15 +20,13 @@ export const generateRecurringEvents = async (): Promise<{
 
   if (!definitions?.length) return { generated };
 
-  // Compute "today" in Europe/Paris
-  const nowParis = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "Europe/Paris" }),
-  );
-  const today = new Date(
-    nowParis.getFullYear(),
-    nowParis.getMonth(),
-    nowParis.getDate(),
-  );
+  // Compute "today" in Europe/Paris — independent of the host timezone.
+  // Intl in `en-CA` emits an unambiguous `YYYY-MM-DD` value we can parse.
+  const parisTodayStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Paris",
+  }).format(new Date());
+  const [py, pm, pd] = parisTodayStr.split("-").map(Number);
+  const today = new Date(py, pm - 1, pd);
 
   for (const def of definitions as RecurringEventDefinition[]) {
     const horizon = new Date(today);

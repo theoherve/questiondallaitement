@@ -115,22 +115,25 @@ const scheduleCatchUpActions = async (
         // Only schedule if in the future
         if (new Date(scheduledFor) <= now) continue;
 
-        await supabase
+        // INSERT + swallow 23505 (see scheduler.ts for rationale — partial
+        // unique index doesn't support ON CONFLICT inference).
+        const { error } = await supabase
           .from("scheduled_workflow_actions")
-          .upsert(
-            {
-              workflow_id: workflow.id,
-              step_id: step.id,
-              profile_id: profileId,
-              anchor_event_id: event.id,
-              scheduled_for: scheduledFor,
-              status: "pending",
-            },
-            {
-              onConflict: "step_id,profile_id,anchor_event_id",
-              ignoreDuplicates: true,
-            },
+          .insert({
+            workflow_id: workflow.id,
+            step_id: step.id,
+            profile_id: profileId,
+            anchor_event_id: event.id,
+            scheduled_for: scheduledFor,
+            status: "pending",
+          });
+
+        if (error && error.code !== "23505") {
+          console.error(
+            `catchup: failed to schedule action for profile ${profileId} on step ${step.id}:`,
+            error.message,
           );
+        }
       }
     }
   }
@@ -183,41 +186,37 @@ export const resolveAudience = async (
 /**
  * Compute absolute scheduled_for timestamp from occurrence date + delay + send time.
  * Interprets send_time in Europe/Paris timezone.
+ *
+ * Uses the offset Intl reports for the *target* Paris datetime (candidate
+ * UTC instant), which correctly resolves DST for CET (+01:00) vs CEST
+ * (+02:00). Handles any hh:mm offset shape, not just whole-hour.
  */
 export const computeScheduledFor = (
   occurrenceDate: string,
   delayDays: number,
   sendTime: string,
 ): string => {
-  // Parse occurrence date (YYYY-MM-DD)
   const [year, month, day] = occurrenceDate.split("-").map(Number);
-
-  // Apply delay
-  const date = new Date(year, month - 1, day + delayDays);
-
-  // Parse send time (HH:MM)
   const [hours, minutes] = sendTime.split(":").map(Number);
 
-  // Create date in Europe/Paris then convert to UTC
-  // Use a temporary date to find the UTC offset for this specific datetime in Paris
-  const parisDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
+  // First approximation: treat the local time as UTC, then adjust by the
+  // offset Paris had at that instant.
+  const pretendUtc = new Date(
+    Date.UTC(year, month - 1, day + delayDays, hours, minutes, 0),
+  );
 
-  // Get UTC offset for this date in Paris
-  const formatter = new Intl.DateTimeFormat("en-US", {
+  const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "Europe/Paris",
-    timeZoneName: "shortOffset",
-  });
-  const parts = formatter.formatToParts(date);
-  const offsetPart = parts.find((p) => p.type === "timeZoneName");
-  const offsetStr = offsetPart?.value ?? "GMT+1";
+    timeZoneName: "longOffset",
+  }).formatToParts(pretendUtc);
+  // longOffset emits "GMT+01:00" / "GMT+02:00" reliably.
+  const offsetStr =
+    parts.find((p) => p.type === "timeZoneName")?.value ?? "GMT+01:00";
+  const match = offsetStr.match(/GMT([+-])(\d{2}):?(\d{2})?/);
+  const sign = match?.[1] === "-" ? -1 : 1;
+  const offH = match ? Number(match[2]) : 1;
+  const offM = match?.[3] ? Number(match[3]) : 0;
+  const offsetMs = sign * (offH * 60 + offM) * 60 * 1000;
 
-  // Parse offset (e.g., "GMT+2" → +2, "GMT+1" → +1)
-  const offsetMatch = offsetStr.match(/GMT([+-]\d+)/);
-  const offsetHours = offsetMatch ? parseInt(offsetMatch[1], 10) : 1;
-
-  // Build UTC date
-  const utcDate = new Date(`${parisDateStr}:00.000Z`);
-  utcDate.setHours(utcDate.getHours() - offsetHours);
-
-  return utcDate.toISOString();
+  return new Date(pretendUtc.getTime() - offsetMs).toISOString();
 };

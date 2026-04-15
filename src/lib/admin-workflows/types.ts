@@ -178,4 +178,9 @@ export const WORKFLOW_EMAIL_VARIABLES = [
   "event_location",
   "zoom_join_url",
   "replay_url",
+  // Injected by the transactional senders (send.ts) when the matching
+  // template is used — exposed here so the block editor's @ menu suggests
+  // them in workflow steps too.
+  "formation_url",
+  "dashboard_url",
 ] as const;

@@ -83,6 +83,13 @@ const webhookStepConfigSchema = z.object({
 });
 
 export const adminWorkflowStepSchema = z.object({
+  /**
+   * Optional step id — when the workflow is edited the client sends the
+   * existing step ids so the server can UPDATE them in place rather than
+   * DELETE+INSERT (which would cascade-delete `scheduled_workflow_actions`
+   * and wipe the pending queue).
+   */
+  id: z.string().uuid().optional(),
   position: z.number().int().min(0),
   delay_days: z.number().int().min(-30).max(30),
   send_time: z

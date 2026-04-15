@@ -16,6 +16,11 @@ import { Button } from "@/components/ui/button";
 import { Eye, Crop } from "lucide-react";
 import { EmailPreviewDialog } from "./email-preview-dialog";
 import { ImageCropDialog } from "./image-crop-dialog";
+import {
+  hasBlobImageSrc,
+  stripBlobImageSrcs,
+  mimeToExt,
+} from "./email-block-helpers";
 import "@maily-to/core/style.css";
 
 /**
@@ -42,32 +47,6 @@ type TiptapEditorLike = {
       };
     };
   };
-};
-
-/**
- * Walk the design tree and reset image `src` attrs that still point at a
- * `blob:` URL (i.e. the upload is mid-flight). Returns a new tree (mutates
- * a clone — original untouched).
- */
-const stripBlobImageSrcs = (json: JSONContent): JSONContent => {
-  if (!json || typeof json !== "object") return json;
-  const cloned = JSON.parse(JSON.stringify(json)) as JSONContent;
-  const visit = (node: { type?: string; attrs?: Record<string, unknown>; content?: unknown[] }) => {
-    if (
-      node.type === "image" &&
-      typeof node.attrs?.src === "string" &&
-      node.attrs.src.startsWith("blob:")
-    ) {
-      node.attrs.src = "";
-    }
-    if (Array.isArray(node.content)) {
-      for (const child of node.content as { type?: string; attrs?: Record<string, unknown>; content?: unknown[] }[]) {
-        visit(child);
-      }
-    }
-  };
-  visit(cloned as { type?: string; attrs?: Record<string, unknown>; content?: unknown[] });
-  return cloned;
 };
 
 type EmailBlockEditorProps = {
@@ -119,7 +98,7 @@ export const EmailBlockEditor = ({
       const name =
         file instanceof File && file.name
           ? file.name
-          : `image-${Date.now()}.${(file.type.split("/")[1] ?? "png").replace("svg+xml", "svg")}`;
+          : `image-${Date.now()}.${mimeToExt(file.type)}`;
       const fileObj = file instanceof File ? file : new File([file], name, { type: file.type });
       formData.set("file", fileObj);
       formData.set("bucket", "mails");
@@ -165,11 +144,9 @@ export const EmailBlockEditor = ({
 
   const handleUpdate = useCallback((e: { getJSON: () => JSONContent }) => {
     const raw = e.getJSON();
-    // Drop transient `blob:` URLs from image nodes — they belong to the local
-    // tab and would be saved as broken refs if the user hits "Save" before the
-    // Supabase upload resolves. Strip them so the user sees an empty image
-    // placeholder on reload (and re-uploads) instead of a silently dead URL.
-    const json = stripBlobImageSrcs(raw);
+    // Drop transient `blob:` URLs only when one is actually present — the
+    // common keystroke path skips the JSON round-trip entirely.
+    const json = hasBlobImageSrc(raw) ? stripBlobImageSrcs(raw) : raw;
     liveDesignRef.current = json;
     onChangeRef.current(json);
   }, []);
@@ -208,8 +185,10 @@ export const EmailBlockEditor = ({
       setSelectedImage(null);
     };
 
+    // `selectionUpdate` fires only when the selection actually changes —
+    // avoids firing `syncSelection` on every keystroke (the "transaction"
+    // event would over-trigger state updates).
     editor.on("selectionUpdate", syncSelection);
-    editor.on("transaction", syncSelection);
     syncSelection();
   }, []);
 

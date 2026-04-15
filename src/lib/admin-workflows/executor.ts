@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendTransactionalEmail } from "@/lib/resend/client";
+import { sendTransactionalEmail, renderTemplate } from "@/lib/resend/client";
 import { resolveEmailHtml } from "@/lib/emails/render-block-email";
 import { resolveAudience } from "./labels";
 import type {
@@ -12,18 +12,30 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 /**
- * Render template variables in a string.
+ * Shape returned by the `pendingActions` join — keeps the cast local so the
+ * loop body doesn't repeat the boilerplate.
  */
-const renderVariables = (
-  template: string,
-  vars: Record<string, string>,
-): string => {
-  let result = template;
-  for (const [key, value] of Object.entries(vars)) {
-    result = result.replace(new RegExp(`{{${key}}}`, "g"), value);
-  }
-  return result;
+type PendingActionRow = {
+  id: string;
+  workflow_id: string;
+  step_id: string;
+  profile_id: string;
+  anchor_event_id: string | null;
+  admin_workflow_steps: {
+    action_type: string;
+    action_config: Record<string, unknown>;
+  };
+  admin_workflows: {
+    is_active: boolean;
+    audience_config: AudienceConfig;
+  };
 };
+
+/**
+ * Resend's free tier allows ~10 emails/sec. Keep a small spacing between
+ * sends so a large batch doesn't trip rate limits.
+ */
+const EMAIL_SEND_SPACING_MS = 120;
 
 /**
  * Execute all pending scheduled workflow actions whose scheduled_for has passed.
@@ -57,18 +69,16 @@ export const executeScheduledActions = async (): Promise<{
 
   if (!pendingActions?.length) return { executed, failed };
 
+  const rows = pendingActions as unknown as PendingActionRow[];
+
   // Cache resolved audiences to avoid repeated queries
   const audienceCache = new Map<string, Set<string>>();
+  const touchedWorkflowIds = new Set<string>();
 
-  for (const action of pendingActions) {
-    const workflow = action.admin_workflows as unknown as {
-      is_active: boolean;
-      audience_config: AudienceConfig;
-    };
-    const step = action.admin_workflow_steps as unknown as {
-      action_type: string;
-      action_config: Record<string, unknown>;
-    };
+  for (const action of rows) {
+    const workflow = action.admin_workflows;
+    const step = action.admin_workflow_steps;
+    touchedWorkflowIds.add(action.workflow_id);
 
     // Skip if workflow deactivated
     if (!workflow.is_active) {
@@ -94,6 +104,7 @@ export const executeScheduledActions = async (): Promise<{
     }
 
     // Execute action
+    const isEmail = step.action_type === "send_email";
     try {
       const result = await executeAction(
         supabase,
@@ -104,7 +115,9 @@ export const executeScheduledActions = async (): Promise<{
       );
 
       if (result.success) {
-        await markAction(supabase, action.id, "executed", result);
+        // Only persist error details — successful runs store an empty blob
+        // to keep `scheduled_workflow_actions.result` small over time.
+        await markAction(supabase, action.id, "executed", {});
         executed++;
       } else {
         await markAction(supabase, action.id, "failed", result);
@@ -117,8 +130,17 @@ export const executeScheduledActions = async (): Promise<{
       failed++;
     }
 
-    // Update workflow log counters
-    await updateLogCounters(supabase, action.workflow_id);
+    // Resend rate-limit guard (~10/sec). Only sleep after actual email sends.
+    if (isEmail) {
+      await new Promise((r) => setTimeout(r, EMAIL_SEND_SPACING_MS));
+    }
+  }
+
+  // Refresh log counters once per touched workflow (was per-action before —
+  // O(N²) on large batches). Counters reflect cumulative totals across runs;
+  // per-run scoping would require adding a log_id FK on the actions table.
+  for (const workflowId of touchedWorkflowIds) {
+    await updateLogCounters(supabase, workflowId);
   }
 
   return { executed, failed };
@@ -198,7 +220,7 @@ const executeSendEmail = async (
     const html = await resolveEmailHtml(config.body_design, config.body_html, vars);
     await sendTransactionalEmail({
       to: email,
-      subject: renderVariables(config.subject, vars),
+      subject: renderTemplate(config.subject, vars),
       html,
     });
     return { success: true };

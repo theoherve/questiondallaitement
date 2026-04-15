@@ -156,6 +156,10 @@ export const WorkflowForm = ({
         match: matchMode,
       },
       steps: steps.map((s) => ({
+        // Persist the step key as `id` — server uses it to preserve step
+        // identity across edits (UPDATE vs INSERT) and avoid cascading away
+        // the scheduled action queue.
+        id: s.key,
         position: s.position,
         delay_days: s.delay_days,
         send_time: s.send_time,

@@ -1,4 +1,3 @@
-import "server-only";
 import { Maily } from "@maily-to/render";
 import type { JSONContent } from "@maily-to/render";
 
