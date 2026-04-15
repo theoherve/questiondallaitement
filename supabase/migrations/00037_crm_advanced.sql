@@ -24,7 +24,7 @@ CREATE INDEX crm_segments_consultant_id_idx ON crm_segments(consultant_id);
 -- Trigger updated_at
 CREATE TRIGGER set_crm_segments_updated_at
   BEFORE UPDATE ON crm_segments
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- ============================================================
 -- RLS crm_segments

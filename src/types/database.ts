@@ -271,6 +271,8 @@ export type Event = {
   provider_id: string | null;
   external_url: string | null;
   discounted_price_cents: number | null;
+  recurring_definition_id: string | null;
+  occurrence_date: string | null;
   created_at: string;
   updated_at: string;
 };

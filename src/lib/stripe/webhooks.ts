@@ -150,6 +150,14 @@ const handleFormationPurchase = async (
 
   // 2. Process collaborator revenue splits
   await processCollaboratorSplits(formationId, paymentIntentId);
+
+  // 3. Auto-assign platform labels
+  const { autoAssignLabelsOnEnrollment } = await import(
+    "@/lib/admin-workflows/labels"
+  );
+  await autoAssignLabelsOnEnrollment(clientId, formationId).catch(
+    console.error,
+  );
 };
 
 /**

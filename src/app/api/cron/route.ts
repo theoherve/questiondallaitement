@@ -5,6 +5,9 @@ import { format, addDays, startOfDay, endOfDay, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { revalidatePath } from "next/cache";
 import { runAutomations } from "@/lib/automations/engine";
+import { generateRecurringEvents } from "@/lib/admin-workflows/generate-events";
+import { scheduleWorkflowActionsForUpcomingEvents } from "@/lib/admin-workflows/scheduler";
+import { executeScheduledActions } from "@/lib/admin-workflows/executor";
 
 export const GET = async (request: Request) => {
   const authHeader = request.headers.get("authorization");
@@ -179,6 +182,34 @@ export const GET = async (request: Request) => {
     }
   }
   results.delay_automations_run = delayRuns;
+
+  // ─── Generate Recurring Events ───────────────────────────
+  try {
+    const recurringResult = await generateRecurringEvents();
+    results.recurring_events_generated = recurringResult.generated;
+  } catch (err) {
+    console.error("Failed to generate recurring events:", err);
+    results.recurring_events_generated = -1;
+  }
+
+  // ─── Schedule Workflow Actions ─────────────────────────────
+  try {
+    const schedulingResult = await scheduleWorkflowActionsForUpcomingEvents();
+    results.workflow_actions_scheduled = schedulingResult.scheduled;
+  } catch (err) {
+    console.error("Failed to schedule workflow actions:", err);
+    results.workflow_actions_scheduled = -1;
+  }
+
+  // ─── Execute Scheduled Workflow Actions ────────────────────
+  try {
+    const executionResult = await executeScheduledActions();
+    results.workflow_actions_executed = executionResult.executed;
+    results.workflow_actions_failed = executionResult.failed;
+  } catch (err) {
+    console.error("Failed to execute scheduled actions:", err);
+    results.workflow_actions_executed = -1;
+  }
 
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
