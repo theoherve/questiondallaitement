@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ROLES } from "@/constants/roles";
@@ -144,7 +145,14 @@ const UtilisateursPage = async ({
 
                   return (
                     <TableRow key={platformUser.id}>
-                      <TableCell className="font-medium">{fullName}</TableCell>
+                      <TableCell className="font-medium">
+                        <Link
+                          href={`/admin/utilisateurs/${platformUser.id}`}
+                          className="hover:text-primary-green hover:underline"
+                        >
+                          {fullName}
+                        </Link>
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         {platformUser.email}
                       </TableCell>
