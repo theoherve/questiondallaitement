@@ -271,6 +271,8 @@ export type Event = {
   provider_id: string | null;
   external_url: string | null;
   discounted_price_cents: number | null;
+  recurring_definition_id: string | null;
+  occurrence_date: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -365,6 +367,7 @@ export type EmailTemplate = {
   name: string;
   subject: string;
   body_html: string;
+  body_design: Record<string, unknown> | null;
   type: "transactional" | "marketing";
   variables: string[];
   created_by: string | null;
@@ -379,6 +382,7 @@ export type EmailCampaign = {
   template_id: string | null;
   subject: string;
   body_html: string | null;
+  body_design: Record<string, unknown> | null;
   status: "draft" | "scheduled" | "sending" | "sent";
   brevo_campaign_id: string | null;
   recipient_list_ids: number[];

@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { WysiwygEditor } from "@/components/editor/wysiwyg-editor";
+import { EmailBlockEditor } from "@/components/editor/email-block-editor";
 import { toast } from "sonner";
+import type { JSONContent } from "@maily-to/render";
 import { ArrowLeft, Send, Save, Trash2, Clock } from "lucide-react";
 import Link from "next/link";
 import {
@@ -30,6 +31,7 @@ type CampaignFormProps = {
     name: string;
     subject: string;
     body_html: string;
+    body_design: Record<string, unknown> | null;
     recipient_list_ids: number[];
     scheduled_at?: string | null;
   }) => Promise<{ success: boolean; error?: string; data?: { id: string } }>;
@@ -55,6 +57,7 @@ export const CampaignForm = ({
     name: campaign?.name ?? "",
     subject: campaign?.subject ?? "",
     body_html: campaign?.body_html ?? "",
+    body_design: campaign?.body_design ?? null,
     recipient_list_ids: campaign?.recipient_list_ids ?? [],
     scheduled_at: campaign?.scheduled_at ?? "",
   });
@@ -315,12 +318,16 @@ export const CampaignForm = ({
             </CardHeader>
             <CardContent>
               {isDraft ? (
-                <WysiwygEditor
-                  initialContent={formData.body_html}
-                  onChange={(html) =>
-                    setFormData((prev) => ({ ...prev, body_html: html }))
+                <EmailBlockEditor
+                  initialDesign={(formData.body_design as JSONContent | null) ?? undefined}
+                  onChange={(design) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      body_design: design as Record<string, unknown>,
+                    }))
                   }
-                  placeholder="Rédigez le contenu de votre email..."
+                  uploadFolder="campaigns"
+                  previewSubject={formData.subject}
                 />
               ) : (
                 <div

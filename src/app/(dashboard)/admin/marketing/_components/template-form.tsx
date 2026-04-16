@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { WysiwygEditor } from "@/components/editor/wysiwyg-editor";
+import { EmailBlockEditor } from "@/components/editor/email-block-editor";
 import { toast } from "sonner";
+import type { JSONContent } from "@maily-to/render";
 import { ArrowLeft, Save, Trash2, Plus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -28,6 +29,7 @@ type TemplateFormProps = {
     name: string;
     subject: string;
     body_html: string;
+    body_design: Record<string, unknown> | null;
     type: "transactional" | "marketing";
     variables: string[];
   }) => Promise<{ success: boolean; error?: string; data?: { id: string } }>;
@@ -47,6 +49,7 @@ export const TemplateForm = ({
     name: template?.name ?? "",
     subject: template?.subject ?? "",
     body_html: template?.body_html ?? "",
+    body_design: template?.body_design ?? null,
     type: template?.type ?? ("marketing" as "transactional" | "marketing"),
     variables: template?.variables ?? [],
   });
@@ -59,7 +62,8 @@ export const TemplateForm = ({
       toast.error("Le nom et l'objet sont obligatoires.");
       return;
     }
-    if (!formData.body_html || formData.body_html.length < 10) {
+    const hasDesign = formData.body_design && Object.keys(formData.body_design).length > 0;
+    if (!hasDesign && (!formData.body_html || formData.body_html.length < 10)) {
       toast.error("Le contenu du template est trop court.");
       return;
     }
@@ -232,12 +236,17 @@ export const TemplateForm = ({
               </h2>
             </CardHeader>
             <CardContent>
-              <WysiwygEditor
-                initialContent={formData.body_html}
-                onChange={(html) =>
-                  setFormData((prev) => ({ ...prev, body_html: html }))
+              <EmailBlockEditor
+                initialDesign={(formData.body_design as JSONContent | null) ?? undefined}
+                onChange={(design) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    body_design: design as Record<string, unknown>,
+                  }))
                 }
-                placeholder="Rédigez le contenu du template..."
+                variables={formData.variables}
+                uploadFolder="templates"
+                previewSubject={formData.subject}
               />
             </CardContent>
           </Card>

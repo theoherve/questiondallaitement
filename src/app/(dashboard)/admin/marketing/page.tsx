@@ -19,6 +19,7 @@ import { Plus, Eye, Pencil, Mail, FileText, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { SyncButton } from "./_components/sync-button";
+import { RestoreTemplatesButton } from "./_components/restore-templates-button";
 
 export const metadata: Metadata = {
   title: "Marketing",
@@ -180,7 +181,8 @@ const MarketingPage = async () => {
 
         {/* ─── Templates Tab ──────────────────────── */}
         <TabsContent value="templates" className="mt-4">
-          <div className="mb-4 flex justify-end">
+          <div className="mb-4 flex justify-end gap-2">
+            <RestoreTemplatesButton />
             <Button asChild variant="outline">
               <Link href="/admin/marketing/templates/nouveau">
                 <Plus className="mr-2 h-4 w-4" />

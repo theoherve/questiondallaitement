@@ -15,10 +15,30 @@ import {
   getLists as brevoGetLists,
 } from "@/lib/brevo/client";
 import { syncAllContactsToBrevo } from "@/lib/brevo/sync";
+import { renderBlockEmail } from "@/lib/emails/render-block-email";
+import { DEFAULT_TEMPLATE_DESIGNS } from "@/lib/emails/default-template-designs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/types";
 import type { CampaignStats } from "@/types/database";
+import type { JSONContent } from "@maily-to/render";
+
+/**
+ * If a block design is present, render it to HTML and cache in body_html.
+ * For marketing (Brevo), Brevo receives final HTML — pre-rendering is required.
+ * Template variables stay as {{var}} placeholders (replaceVariables=false).
+ */
+const withRenderedHtml = async <T extends { body_html?: string; body_design?: Record<string, unknown> | null }>(
+  input: T,
+): Promise<T & { body_html: string }> => {
+  if (input.body_design && Object.keys(input.body_design).length > 0) {
+    const html = await renderBlockEmail(input.body_design as JSONContent, {
+      replaceVariables: false,
+    });
+    return { ...input, body_html: html };
+  }
+  return { ...input, body_html: input.body_html ?? "" };
+};
 
 const requireAdmin = async () => {
   const user = await getSessionUser();
@@ -68,10 +88,12 @@ export const createTemplate = async (
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
+  const rendered = await withRenderedHtml(parsed.data);
+
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("email_templates")
-    .insert({ ...parsed.data, created_by: user.id })
+    .insert({ ...rendered, created_by: user.id })
     .select("id")
     .single();
 
@@ -93,10 +115,12 @@ export const updateTemplate = async (
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
+  const rendered = await withRenderedHtml(parsed.data);
+
   const supabase = createAdminClient();
   const { error } = await supabase
     .from("email_templates")
-    .update(parsed.data)
+    .update(rendered)
     .eq("id", id);
 
   if (error) {
@@ -161,16 +185,18 @@ export const createCampaign = async (
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
+  const rendered = await withRenderedHtml(parsed.data);
   const supabase = createAdminClient();
 
   // Create in local DB first
   const { data, error } = await supabase
     .from("email_campaigns")
     .insert({
-      name: parsed.data.name,
-      subject: parsed.data.subject,
-      body_html: parsed.data.body_html,
-      recipient_list_ids: parsed.data.recipient_list_ids,
+      name: rendered.name,
+      subject: rendered.subject,
+      body_html: rendered.body_html,
+      body_design: rendered.body_design ?? null,
+      recipient_list_ids: rendered.recipient_list_ids,
       status: "draft",
       consultant_id: null, // admin campaign
     })
@@ -214,14 +240,17 @@ export const updateCampaign = async (
     };
   }
 
+  const rendered = await withRenderedHtml(parsed.data);
+
   const { error } = await supabase
     .from("email_campaigns")
     .update({
-      name: parsed.data.name,
-      subject: parsed.data.subject,
-      body_html: parsed.data.body_html,
-      recipient_list_ids: parsed.data.recipient_list_ids,
-      scheduled_at: parsed.data.scheduled_at ?? null,
+      name: rendered.name,
+      subject: rendered.subject,
+      body_html: rendered.body_html,
+      body_design: rendered.body_design ?? null,
+      recipient_list_ids: rendered.recipient_list_ids,
+      scheduled_at: rendered.scheduled_at ?? null,
     })
     .eq("id", id);
 
@@ -232,10 +261,10 @@ export const updateCampaign = async (
   // Update in Brevo if already synced
   if (campaign.brevo_campaign_id) {
     await brevoUpdateCampaign(campaign.brevo_campaign_id, {
-      name: parsed.data.name,
-      subject: parsed.data.subject,
-      htmlContent: parsed.data.body_html,
-      recipients: { listIds: parsed.data.recipient_list_ids },
+      name: rendered.name,
+      subject: rendered.subject,
+      htmlContent: rendered.body_html,
+      recipients: { listIds: rendered.recipient_list_ids },
     });
   }
 
@@ -484,6 +513,79 @@ export const removeBrevoListFromConsultant = async (
 
   revalidatePath("/admin/marketing");
   return { success: true };
+};
+
+// ─── Default transactional designs ──────────────────────────
+
+const TEMPLATE_DEFAULT_SUBJECTS: Record<string, string> = {
+  booking_confirmation: "Votre réservation est confirmée — {{date}}",
+  booking_reminder: "Rappel : votre consultation demain à {{time}}",
+  booking_cancelled: "Votre réservation du {{date}} a été annulée",
+  formation_access: "Votre formation « {{formation_title}} » est disponible",
+  welcome: "Bienvenue sur Question d'Allaitement",
+  password_reset: "Réinitialisation de votre mot de passe",
+};
+
+const TEMPLATE_DEFAULT_VARIABLES: Record<string, string[]> = {
+  booking_confirmation: ["client_name", "consultant_name", "date", "time"],
+  booking_reminder: ["client_name", "consultant_name", "time"],
+  booking_cancelled: ["client_name", "date", "refund_info"],
+  formation_access: ["client_name", "formation_title", "formation_url"],
+  welcome: ["client_name", "dashboard_url"],
+  password_reset: ["client_name", "reset_url"],
+};
+
+/**
+ * Upsert the bundled brand-styled designs for every seeded transactional
+ * template. Idempotent — re-running overwrites design/body_html/subject with
+ * the latest defaults, leaves created_at untouched.
+ */
+export const restoreDefaultTemplates = async (): Promise<
+  ActionResult<{ updated: number }>
+> => {
+  await requireAdmin();
+  const supabase = createAdminClient();
+  let updated = 0;
+
+  for (const [name, design] of Object.entries(DEFAULT_TEMPLATE_DESIGNS)) {
+    const body_html = await renderBlockEmail(design as JSONContent, {
+      replaceVariables: false,
+    });
+    const subject = TEMPLATE_DEFAULT_SUBJECTS[name] ?? name;
+    const variables = TEMPLATE_DEFAULT_VARIABLES[name] ?? [];
+
+    const { data: existing } = await supabase
+      .from("email_templates")
+      .select("id")
+      .eq("name", name)
+      .maybeSingle();
+
+    if (existing?.id) {
+      await supabase
+        .from("email_templates")
+        .update({
+          subject,
+          body_html,
+          body_design: design,
+          variables,
+          type: "transactional",
+        })
+        .eq("id", existing.id);
+    } else {
+      await supabase.from("email_templates").insert({
+        name,
+        subject,
+        body_html,
+        body_design: design,
+        variables,
+        type: "transactional",
+      });
+    }
+    updated++;
+  }
+
+  revalidatePath("/admin/marketing");
+  return { success: true, data: { updated } };
 };
 
 // ─── Batch Sync ─────────────────────────────────────────────

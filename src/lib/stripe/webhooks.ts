@@ -8,6 +8,7 @@ import {
 } from "@/lib/emails/send";
 import { runAutomations } from "@/lib/automations/engine";
 import { createNotification } from "@/lib/notifications";
+import { autoAssignLabelsOnEnrollment } from "@/lib/admin-workflows/labels";
 
 const getSupabase = () => createAdminClient();
 
@@ -150,6 +151,11 @@ const handleFormationPurchase = async (
 
   // 2. Process collaborator revenue splits
   await processCollaboratorSplits(formationId, paymentIntentId);
+
+  // 3. Auto-assign platform labels
+  await autoAssignLabelsOnEnrollment(clientId, formationId).catch(
+    console.error,
+  );
 };
 
 /**
