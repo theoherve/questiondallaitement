@@ -23,7 +23,6 @@ import {
   ShieldCheck,
   ArrowRight,
   PieChart,
-  AlertCircle,
 } from "lucide-react";
 import { format, subDays, eachDayOfInterval } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -70,20 +69,15 @@ const AdminDashboardPage = async () => {
     prevPaymentsRes,
     prevBookingsRes,
     // Totals
-    totalConsultantsRes,
     totalClientsRes,
     totalFormationsRes,
     allPaymentsRes,
-    // Revenue by type
-    revenueByTypeRes,
     // Upcoming bookings
     upcomingBookingsRes,
     // Recent clients
     recentClientsRes,
     // Recent payments
     recentPaymentsRes,
-    // Recent enrollments
-    recentEnrollmentsRes,
     // Consultant status
     allConsultantsRes,
     consultantsWithAvailRes,
@@ -139,11 +133,6 @@ const AdminDashboardPage = async () => {
       .not("status", "eq", "cancelled")
       .gte("created_at", sixtyDaysAgo.toISOString())
       .lt("created_at", thirtyDaysAgo.toISOString()),
-    // Total active consultants
-    supabase
-      .from("consultants")
-      .select("id", { count: "exact", head: true })
-      .eq("is_active", true),
     // Total clients
     supabase
       .from("profiles")
@@ -156,15 +145,10 @@ const AdminDashboardPage = async () => {
       .select("id", { count: "exact", head: true })
       .eq("status", "published")
       .is("deleted_at", null),
-    // All-time platform revenue
+    // All-time payments (revenue + breakdown by type)
     supabase
       .from("payments")
-      .select("platform_fee_cents")
-      .eq("status", "succeeded"),
-    // Revenue by type (all time)
-    supabase
-      .from("payments")
-      .select("type, amount_cents")
+      .select("platform_fee_cents, amount_cents, type")
       .eq("status", "succeeded"),
     // Upcoming bookings (next 7 days)
     supabase
@@ -189,12 +173,6 @@ const AdminDashboardPage = async () => {
       .from("payments")
       .select("id, amount_cents, type, created_at, client_id")
       .eq("status", "succeeded")
-      .order("created_at", { ascending: false })
-      .limit(5),
-    // Recent enrollments
-    supabase
-      .from("formation_enrollments")
-      .select("id, profile_id, formation_id, created_at")
       .order("created_at", { ascending: false })
       .limit(5),
     // All consultants (for status breakdown)
@@ -226,7 +204,6 @@ const AdminDashboardPage = async () => {
   ]);
 
   // ── Compute stats ─────────────────────────────────────────
-  const totalConsultants = totalConsultantsRes.count ?? 0;
   const totalClients = totalClientsRes.count ?? 0;
   const formationsPublished = totalFormationsRes.count ?? 0;
   const totalRevenue = (allPaymentsRes.data ?? []).reduce(
@@ -273,7 +250,7 @@ const AdminDashboardPage = async () => {
     event: "Événements",
   };
   const revenueByType = new Map<string, number>();
-  for (const p of revenueByTypeRes.data ?? []) {
+  for (const p of allPaymentsRes.data ?? []) {
     const label = typeLabels[p.type] ?? p.type;
     revenueByType.set(label, (revenueByType.get(label) ?? 0) + p.amount_cents);
   }
