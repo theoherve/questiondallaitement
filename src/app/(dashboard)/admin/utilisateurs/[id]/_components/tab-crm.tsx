@@ -79,7 +79,7 @@ export const TabCrm = ({ userId, tags, notes, availableTags }: Props) => {
   const handleDeleteNote = (noteId: string) => {
     if (!confirm("Supprimer cette note ?")) return;
     startTransition(async () => {
-      await adminDeleteNote(noteId);
+      await adminDeleteNote(noteId, userId);
       router.refresh();
     });
   };

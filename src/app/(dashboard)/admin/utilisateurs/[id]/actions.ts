@@ -13,6 +13,12 @@ const requireAdmin = async () => {
   return user;
 };
 
+const parseUuid = (value: unknown) => {
+  const parsed = z.uuid("Identifiant invalide").safeParse(value);
+  if (!parsed.success) return null;
+  return parsed.data;
+};
+
 // ─── Update profile ────────────────────────────────────────
 
 const EDITABLE_ROLES = [
@@ -93,12 +99,15 @@ export const resetUserPassword = async (
   userId: string,
 ): Promise<ActionResult<{ message: string }>> => {
   const admin = await requireAdmin();
+  const parsedId = parseUuid(userId);
+  if (!parsedId) return { success: false, error: "Utilisateur invalide" };
+
   const supabase = createAdminClient();
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("email")
-    .eq("id", userId)
+    .eq("id", parsedId)
     .single();
 
   if (!profile) {
@@ -121,7 +130,7 @@ export const resetUserPassword = async (
     user_id: admin.id,
     action: "admin_password_reset",
     entity_type: "profiles",
-    entity_id: userId,
+    entity_id: parsedId,
   });
 
   return {
@@ -137,18 +146,42 @@ export const toggleUserBan = async (
   ban: boolean,
 ): Promise<ActionResult> => {
   const admin = await requireAdmin();
+  const parsedId = parseUuid(userId);
+  if (!parsedId) return { success: false, error: "Utilisateur invalide" };
 
-  if (userId === admin.id) {
+  if (parsedId === admin.id) {
     return { success: false, error: "Vous ne pouvez pas vous bannir" };
   }
 
   const supabase = createAdminClient();
 
+  // Last-admin protection (same pattern as deletePlatformUser)
   if (ban) {
+    const { data: targetUser } = await supabase
+      .from("profiles")
+      .select("roles")
+      .eq("id", parsedId)
+      .single();
+
+    if (targetUser && (targetUser.roles as string[]).includes("admin")) {
+      const { count } = await supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .contains("roles", ["admin"])
+        .is("deleted_at", null);
+
+      if ((count ?? 0) <= 1) {
+        return {
+          success: false,
+          error: "Impossible de bannir le dernier administrateur.",
+        };
+      }
+    }
+
     const { error } = await supabase
       .from("profiles")
       .update({ deleted_at: new Date().toISOString() })
-      .eq("id", userId)
+      .eq("id", parsedId)
       .is("deleted_at", null);
 
     if (error) return { success: false, error: "Erreur lors du bannissement" };
@@ -156,12 +189,12 @@ export const toggleUserBan = async (
     await supabase
       .from("consultants")
       .update({ is_active: false })
-      .eq("id", userId);
+      .eq("id", parsedId);
   } else {
     const { error } = await supabase
       .from("profiles")
       .update({ deleted_at: null })
-      .eq("id", userId);
+      .eq("id", parsedId);
 
     if (error)
       return { success: false, error: "Erreur lors du débannissement" };
@@ -171,10 +204,10 @@ export const toggleUserBan = async (
     user_id: admin.id,
     action: ban ? "admin_user_banned" : "admin_user_unbanned",
     entity_type: "profiles",
-    entity_id: userId,
+    entity_id: parsedId,
   });
 
-  revalidatePath(`/admin/utilisateurs/${userId}`);
+  revalidatePath(`/admin/utilisateurs/${parsedId}`);
   revalidatePath("/admin/utilisateurs");
   return { success: true };
 };
@@ -185,37 +218,40 @@ export const exportUserData = async (
   userId: string,
 ): Promise<ActionResult<Record<string, unknown>>> => {
   await requireAdmin();
+  const parsedId = parseUuid(userId);
+  if (!parsedId) return { success: false, error: "Utilisateur invalide" };
+
   const supabase = createAdminClient();
 
   const [profile, bookings, enrollments, payments, events, tags, notes] =
     await Promise.all([
-      supabase.from("profiles").select("*").eq("id", userId).single(),
+      supabase.from("profiles").select("*").eq("id", parsedId).single(),
       supabase
         .from("bookings")
         .select("*")
-        .eq("client_id", userId)
+        .eq("client_id", parsedId)
         .order("created_at", { ascending: false }),
       supabase
         .from("formation_enrollments")
         .select("*, formations(title)")
-        .eq("client_id", userId),
+        .eq("client_id", parsedId),
       supabase
         .from("payments")
         .select("*")
-        .eq("client_id", userId)
+        .eq("client_id", parsedId)
         .order("created_at", { ascending: false }),
       supabase
         .from("event_registrations")
         .select("*, events(title)")
-        .eq("client_id", userId),
+        .eq("client_id", parsedId),
       supabase
         .from("crm_contact_tags")
         .select("crm_tags(name, color)")
-        .eq("client_id", userId),
+        .eq("client_id", parsedId),
       supabase
         .from("crm_notes")
         .select("content, created_at")
-        .eq("client_id", userId),
+        .eq("client_id", parsedId),
     ]);
 
   if (!profile.data) {
@@ -244,12 +280,17 @@ export const adminAssignTag = async (
   tagId: string,
 ): Promise<ActionResult> => {
   const admin = await requireAdmin();
+  const parsedClientId = parseUuid(clientId);
+  const parsedTagId = parseUuid(tagId);
+  if (!parsedClientId || !parsedTagId)
+    return { success: false, error: "Identifiant invalide" };
+
   const supabase = createAdminClient();
 
   const { error } = await supabase.from("crm_contact_tags").upsert(
     {
-      client_id: clientId,
-      tag_id: tagId,
+      client_id: parsedClientId,
+      tag_id: parsedTagId,
       consultant_id: admin.id,
     },
     { onConflict: "client_id,tag_id,consultant_id" },
@@ -259,7 +300,7 @@ export const adminAssignTag = async (
     return { success: false, error: "Erreur lors de l'assignation du tag" };
   }
 
-  revalidatePath(`/admin/utilisateurs/${clientId}`);
+  revalidatePath(`/admin/utilisateurs/${parsedClientId}`);
   return { success: true };
 };
 
@@ -269,20 +310,26 @@ export const adminRemoveTag = async (
   consultantId: string,
 ): Promise<ActionResult> => {
   await requireAdmin();
+  const parsedClientId = parseUuid(clientId);
+  const parsedTagId = parseUuid(tagId);
+  const parsedConsultantId = parseUuid(consultantId);
+  if (!parsedClientId || !parsedTagId || !parsedConsultantId)
+    return { success: false, error: "Identifiant invalide" };
+
   const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("crm_contact_tags")
     .delete()
-    .eq("client_id", clientId)
-    .eq("tag_id", tagId)
-    .eq("consultant_id", consultantId);
+    .eq("client_id", parsedClientId)
+    .eq("tag_id", parsedTagId)
+    .eq("consultant_id", parsedConsultantId);
 
   if (error) {
     return { success: false, error: "Erreur lors du retrait du tag" };
   }
 
-  revalidatePath(`/admin/utilisateurs/${clientId}`);
+  revalidatePath(`/admin/utilisateurs/${parsedClientId}`);
   return { success: true };
 };
 
@@ -293,13 +340,16 @@ export const adminCreateNote = async (
   content: string,
 ): Promise<ActionResult> => {
   const admin = await requireAdmin();
+  const parsedClientId = parseUuid(clientId);
+  if (!parsedClientId)
+    return { success: false, error: "Identifiant invalide" };
   if (!content.trim()) {
     return { success: false, error: "Le contenu est requis" };
   }
 
   const supabase = createAdminClient();
   const { error } = await supabase.from("crm_notes").insert({
-    client_id: clientId,
+    client_id: parsedClientId,
     consultant_id: admin.id,
     content: content.trim(),
   });
@@ -308,25 +358,31 @@ export const adminCreateNote = async (
     return { success: false, error: "Erreur lors de la création de la note" };
   }
 
-  revalidatePath(`/admin/utilisateurs/${clientId}`);
+  revalidatePath(`/admin/utilisateurs/${parsedClientId}`);
   return { success: true };
 };
 
 export const adminDeleteNote = async (
   noteId: string,
+  clientId: string,
 ): Promise<ActionResult> => {
   await requireAdmin();
+  const parsedNoteId = parseUuid(noteId);
+  const parsedClientId = parseUuid(clientId);
+  if (!parsedNoteId || !parsedClientId)
+    return { success: false, error: "Identifiant invalide" };
+
   const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("crm_notes")
     .delete()
-    .eq("id", noteId);
+    .eq("id", parsedNoteId);
 
   if (error) {
     return { success: false, error: "Erreur lors de la suppression" };
   }
 
-  revalidatePath("/admin/utilisateurs");
+  revalidatePath(`/admin/utilisateurs/${parsedClientId}`);
   return { success: true };
 };

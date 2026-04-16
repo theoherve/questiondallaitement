@@ -22,6 +22,7 @@ import { TabEvenements } from "./_components/tab-evenements";
 import { TabCrm } from "./_components/tab-crm";
 import { TabActivite, type TimelineEntry } from "./_components/tab-activite";
 import { TabConsultant } from "./_components/tab-consultant";
+import type { UserRole } from "@/types/database";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -63,7 +64,7 @@ const UserDetailPage = async ({ params }: Props) => {
 
   if (!profile) notFound();
 
-  const roles = profile.roles as string[];
+  const roles = profile.roles as UserRole[];
   const isConsultant =
     roles.includes("consultant") || roles.includes("consultant_limited");
 
@@ -117,7 +118,7 @@ const UserDetailPage = async ({ params }: Props) => {
     supabase
       .from("audit_logs")
       .select("id, action, entity_type, metadata, created_at")
-      .or(`user_id.eq.${id},entity_id.eq.${id}`)
+      .or(`user_id.eq."${id}",entity_id.eq."${id}"`)
       .order("created_at", { ascending: false })
       .limit(50),
     supabase.rpc("calculate_client_score", {
@@ -391,7 +392,7 @@ const UserDetailPage = async ({ params }: Props) => {
           first_name: profile.first_name,
           last_name: profile.last_name,
           avatar_url: profile.avatar_url,
-          roles: profile.roles as import("@/types/database").UserRole[],
+          roles: roles,
           created_at: profile.created_at,
           email_verified: profile.email_verified ?? false,
           deleted_at: profile.deleted_at,
@@ -457,7 +458,7 @@ const UserDetailPage = async ({ params }: Props) => {
               first_name: profile.first_name,
               last_name: profile.last_name,
               phone: profile.phone,
-              roles: profile.roles as import("@/types/database").UserRole[],
+              roles: roles,
               created_at: profile.created_at,
               updated_at: profile.updated_at,
             }}

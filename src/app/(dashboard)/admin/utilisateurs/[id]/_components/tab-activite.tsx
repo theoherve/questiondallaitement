@@ -1,11 +1,16 @@
+"use client";
+
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   CalendarDays,
   BookOpen,
   CreditCard,
   Calendar,
   Shield,
+  ChevronDown,
 } from "lucide-react";
 
 export type TimelineEntry = {
@@ -41,7 +46,13 @@ const TYPE_COLOR: Record<string, string> = {
   audit: "bg-gray-100 text-gray-700",
 };
 
+const PAGE_SIZE = 20;
+
 export const TabActivite = ({ entries }: { entries: TimelineEntry[] }) => {
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const visibleEntries = entries.slice(0, visibleCount);
+  const hasMore = visibleCount < entries.length;
+
   return (
     <Card>
       <CardHeader>
@@ -55,53 +66,73 @@ export const TabActivite = ({ entries }: { entries: TimelineEntry[] }) => {
             Aucune activité enregistrée.
           </p>
         ) : (
-          <div className="relative space-y-0">
-            {/* Timeline line */}
-            <div className="absolute left-[19px] top-0 bottom-0 w-px bg-border" />
+          <>
+            <div className="relative space-y-0">
+              {/* Timeline line */}
+              <div className="absolute left-[19px] top-0 bottom-0 w-px bg-border" />
 
-            {entries.map((entry, i) => {
-              const Icon = ICON_MAP[entry.type];
-              const colorClass =
-                TYPE_COLOR[entry.type] ?? "bg-gray-100 text-gray-700";
+              {visibleEntries.map((entry, i) => {
+                const Icon = ICON_MAP[entry.type];
+                const colorClass =
+                  TYPE_COLOR[entry.type] ?? "bg-gray-100 text-gray-700";
 
-              return (
-                <div key={`${entry.type}-${entry.id}-${i}`} className="relative flex gap-4 pb-6">
+                return (
                   <div
-                    className={`z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${colorClass}`}
+                    key={`${entry.type}-${entry.id}-${i}`}
+                    className="relative flex gap-4 pb-6"
                   >
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1 pt-1">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px]">
-                        {TYPE_LABEL[entry.type] ?? entry.type}
-                      </Badge>
-                      {entry.status && (
-                        <span className="text-xs text-muted-foreground">
-                          {entry.status}
-                        </span>
-                      )}
+                    <div
+                      className={`z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${colorClass}`}
+                    >
+                      <Icon className="h-4 w-4" />
                     </div>
-                    <p className="mt-0.5 text-sm font-medium">{entry.title}</p>
-                    {entry.subtitle && (
-                      <p className="text-xs text-muted-foreground">
-                        {entry.subtitle}
+                    <div className="flex-1 pt-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-[10px]">
+                          {TYPE_LABEL[entry.type] ?? entry.type}
+                        </Badge>
+                        {entry.status && (
+                          <span className="text-xs text-muted-foreground">
+                            {entry.status}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-sm font-medium">
+                        {entry.title}
                       </p>
-                    )}
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {new Date(entry.date).toLocaleDateString("fr-FR", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
+                      {entry.subtitle && (
+                        <p className="text-xs text-muted-foreground">
+                          {entry.subtitle}
+                        </p>
+                      )}
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {new Date(entry.date).toLocaleDateString("fr-FR", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+
+            {hasMore && (
+              <div className="mt-4 flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                >
+                  <ChevronDown className="mr-2 h-4 w-4" />
+                  Voir plus ({entries.length - visibleCount} restants)
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

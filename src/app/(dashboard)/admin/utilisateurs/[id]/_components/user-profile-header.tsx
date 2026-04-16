@@ -3,6 +3,16 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,6 +62,7 @@ export const UserProfileHeader = ({ user, score, isCurrentAdmin }: Props) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
+  const [banDialogOpen, setBanDialogOpen] = useState(false);
 
   const fullName =
     `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || "Sans nom";
@@ -82,8 +93,6 @@ export const UserProfileHeader = ({ user, score, isCurrentAdmin }: Props) => {
   };
 
   const handleToggleBan = () => {
-    const action = isBanned ? "débannir" : "bannir";
-    if (!confirm(`Voulez-vous ${action} cet utilisateur ?`)) return;
     startTransition(async () => {
       const result = await toggleUserBan(user.id, !isBanned);
       if (!result.success) {
@@ -91,6 +100,7 @@ export const UserProfileHeader = ({ user, score, isCurrentAdmin }: Props) => {
       } else {
         router.refresh();
       }
+      setBanDialogOpen(false);
     });
   };
 
@@ -201,28 +211,30 @@ export const UserProfileHeader = ({ user, score, isCurrentAdmin }: Props) => {
                 <Download className="mr-2 h-4 w-4" />
                 Exporter les données
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
               {!isCurrentAdmin && (
-                <DropdownMenuItem
-                  onClick={handleToggleBan}
-                  className={
-                    isBanned
-                      ? "text-green-600 focus:text-green-600"
-                      : "text-destructive focus:text-destructive"
-                  }
-                >
-                  {isBanned ? (
-                    <>
-                      <Unlock className="mr-2 h-4 w-4" />
-                      Débannir
-                    </>
-                  ) : (
-                    <>
-                      <Ban className="mr-2 h-4 w-4" />
-                      Bannir
-                    </>
-                  )}
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setBanDialogOpen(true)}
+                    className={
+                      isBanned
+                        ? "text-green-600 focus:text-green-600"
+                        : "text-destructive focus:text-destructive"
+                    }
+                  >
+                    {isBanned ? (
+                      <>
+                        <Unlock className="mr-2 h-4 w-4" />
+                        Débannir
+                      </>
+                    ) : (
+                      <>
+                        <Ban className="mr-2 h-4 w-4" />
+                        Bannir
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -247,6 +259,36 @@ export const UserProfileHeader = ({ user, score, isCurrentAdmin }: Props) => {
         )}
         <span className="font-mono text-[10px]">ID: {user.id}</span>
       </div>
+
+      {/* Ban/Unban AlertDialog */}
+      <AlertDialog open={banDialogOpen} onOpenChange={setBanDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {isBanned ? "Débannir" : "Bannir"} {fullName} ?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {isBanned
+                ? "L'utilisateur pourra de nouveau se connecter et accéder à la plateforme."
+                : "L'utilisateur ne pourra plus se connecter. Son compte consultante sera désactivé le cas échéant. Cette action est réversible."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleToggleBan}
+              disabled={isPending}
+              className={
+                isBanned
+                  ? ""
+                  : "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              }
+            >
+              {isBanned ? "Débannir" : "Bannir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
