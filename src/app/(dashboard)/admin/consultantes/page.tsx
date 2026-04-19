@@ -50,7 +50,8 @@ const ConsultantesPage = async ({
         first_name,
         last_name,
         email,
-        avatar_url
+        avatar_url,
+        deleted_at
       )
     `
     )
@@ -64,8 +65,15 @@ const ConsultantesPage = async ({
 
   const { data: consultants } = await query;
 
+  const activeProfiles = (consultants ?? []).filter((c) => {
+    const profile = c.profiles as unknown as {
+      deleted_at: string | null;
+    } | null;
+    return profile !== null && profile.deleted_at === null;
+  });
+
   const filtered = search
-    ? (consultants ?? []).filter((c) => {
+    ? activeProfiles.filter((c) => {
         const profile = c.profiles as unknown as {
           first_name: string | null;
           last_name: string | null;
@@ -77,10 +85,10 @@ const ConsultantesPage = async ({
         const q = search.toLowerCase();
         return fullName.includes(q) || email.includes(q);
       })
-    : (consultants ?? []);
+    : activeProfiles;
 
-  const activeCount = (consultants ?? []).filter((c) => c.is_active).length;
-  const totalCount = consultants?.length ?? 0;
+  const activeCount = activeProfiles.filter((c) => c.is_active).length;
+  const totalCount = activeProfiles.length;
 
   return (
     <div className="space-y-6">
