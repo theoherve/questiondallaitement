@@ -20,6 +20,7 @@ import { syncOnSignup } from "@/lib/brevo/sync";
 import { rateLimit, AUTH_RATE_LIMITS } from "@/lib/rate-limit";
 
 const RESET_TOKEN_EXPIRY_HOURS = 24;
+const MIGRATION_TOKEN_EXPIRY_HOURS = 72;
 const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
 
 const baseUrl = () =>
@@ -50,11 +51,13 @@ export const handleLogin = async (formData: FormData): Promise<void> => {
 
   const email = parsed.data.email.trim().toLowerCase();
 
-  // Check email verification before attempting sign-in
+  // Check email verification and migrated account before attempting sign-in
   const supabase = createAdminClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("email_verified")
+    .select(
+      "id, first_name, email_verified, password_hash, password_reset_token, password_reset_expires",
+    )
     .eq("email", email)
     .is("deleted_at", null)
     .maybeSingle();
@@ -62,6 +65,46 @@ export const handleLogin = async (formData: FormData): Promise<void> => {
   if (profile && !profile.email_verified) {
     redirect(
       `/connexion?error=${encodeURIComponent("Veuillez confirmer votre adresse email avant de vous connecter. Vérifiez votre boîte de réception.")}&unverified_email=${encodeURIComponent(email)}`,
+    );
+  }
+
+  // Migrated account (from Wix): no password set yet → trigger password setup
+  if (profile && !profile.password_hash) {
+    const hasActiveToken =
+      !!profile.password_reset_token &&
+      !!profile.password_reset_expires &&
+      new Date(profile.password_reset_expires).getTime() > Date.now();
+
+    if (hasActiveToken) {
+      redirect(
+        `/connexion?success=${encodeURIComponent("Un email pour définir votre mot de passe vous a déjà été envoyé. Vérifiez votre boîte de réception (et les spams).")}`,
+      );
+    }
+
+    const token = randomBytes(32).toString("hex");
+    const expires = new Date(
+      Date.now() + MIGRATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000,
+    ).toISOString();
+
+    await supabase
+      .from("profiles")
+      .update({ password_reset_token: token, password_reset_expires: expires })
+      .eq("id", profile.id);
+
+    const setupUrl = `${baseUrl()}/reset-password?token=${token}`;
+
+    try {
+      const { sendMigrationWelcomeEmail } = await import("@/lib/emails/send");
+      await sendMigrationWelcomeEmail(email, {
+        client_name: profile.first_name ?? "Utilisateur",
+        setup_url: setupUrl,
+      });
+    } catch (err) {
+      console.error("[handleLogin] sendMigrationWelcomeEmail failed:", err);
+    }
+
+    redirect(
+      `/connexion?success=${encodeURIComponent("Votre compte a été migré vers notre nouvelle plateforme. Un email vous a été envoyé pour définir votre mot de passe.")}`,
     );
   }
 

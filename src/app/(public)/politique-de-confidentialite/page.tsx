@@ -118,6 +118,14 @@ const PolitiqueConfidentialitePage = () => (
             transactionnels
           </li>
           <li>
+            <strong>Brevo :</strong> gestion de la liste de contacts et envoi
+            d&apos;emails marketing (avec votre consentement)
+          </li>
+          <li>
+            <strong>Zoom :</strong> visioconférences pour les consultations en
+            ligne (prénom, nom, email)
+          </li>
+          <li>
             <strong>Supabase :</strong> hébergement de la base de données
           </li>
           <li>

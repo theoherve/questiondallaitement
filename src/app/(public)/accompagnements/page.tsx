@@ -14,7 +14,6 @@ import {
   BadgeCheck,
   ShieldCheck,
   Check,
-  Users,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -66,9 +65,6 @@ const BENEFITS = [
   { icon: BadgeCheck, label: "Accès à vie" },
   { icon: ShieldCheck, label: "Experts certifiés IBCLC" },
 ];
-
-// TODO: Replace with real enrollment counts fetched from formation_enrollments table
-const MOCK_ENROLLMENT_COUNTS = [47, 23, 61, 18, 34, 52, 29, 41];
 
 const AccompagnementsPage = async () => {
   const supabase = await createClient();
@@ -340,15 +336,12 @@ const AccompagnementsPage = async () => {
             Accédez à un module précis selon votre besoin du moment.
           </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {modules.map((formation, index) => {
+            {modules.map((formation) => {
               const sectionCount = formation.formation_sections.length;
               const blockCount = formation.formation_sections.reduce(
                 (acc, s) => acc + (s.formation_blocks?.length ?? 0),
                 0
               );
-              // TODO: Replace with real enrollment count from formation_enrollments table
-              const enrollmentCount =
-                MOCK_ENROLLMENT_COUNTS[index % MOCK_ENROLLMENT_COUNTS.length];
               return (
                 <Card
                   key={formation.id}
@@ -400,13 +393,6 @@ const AccompagnementsPage = async () => {
                           {blockCount} leçon{blockCount > 1 ? "s" : ""}
                         </span>
                       )}
-                      {(sectionCount > 0 || blockCount > 0) && (
-                        <span aria-hidden>·</span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {enrollmentCount} inscrits
-                      </span>
                     </div>
                   </CardContent>
                   <CardFooter>

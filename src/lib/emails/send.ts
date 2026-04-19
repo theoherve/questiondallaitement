@@ -302,6 +302,36 @@ export const sendBlogPostPublishedNotification = async (
   }
 };
 
+export const sendMigrationWelcomeEmail = async (
+  clientEmail: string,
+  variables: {
+    client_name: string;
+    setup_url: string;
+  },
+) => {
+  const template = await getTemplate("migration_welcome");
+
+  if (template) {
+    const { subject, html } = await renderTemplateRow(template, variables);
+    await sendTransactionalEmail({ to: clientEmail, subject, html });
+    return;
+  }
+
+  await sendTransactionalEmail({
+    to: clientEmail,
+    subject: "Votre espace Question d'Allaitement a migré",
+    html: `
+      <h1>Bienvenue sur votre nouvel espace</h1>
+      <p>Bonjour ${variables.client_name},</p>
+      <p>Votre compte Question d'Allaitement a été transféré vers notre nouvelle plateforme.</p>
+      <p>Pour accéder à votre espace personnel, définissez votre mot de passe en cliquant ci-dessous :</p>
+      <p><a href="${variables.setup_url}" style="display:inline-block;padding:12px 24px;background-color:#A0283E;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Activer mon compte</a></p>
+      <p>Ce lien est valide pendant 72 heures. Passé ce délai, cliquez sur « Mot de passe oublié » depuis la page de connexion.</p>
+      <p>À très bientôt,<br>L'équipe Question d'Allaitement</p>
+    `,
+  });
+};
+
 export const sendPasswordResetEmail = async (
   clientEmail: string,
   variables: {
