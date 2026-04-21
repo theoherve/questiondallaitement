@@ -245,7 +245,7 @@ const AdminDashboardPage = async () => {
 
   // ── Revenue breakdown by type ─────────────────────────────
   const typeLabels: Record<string, string> = {
-    formation: "Formations",
+    formation: "Accompagnements",
     booking: "Consultations",
     event: "Événements",
   };
@@ -389,7 +389,7 @@ const AdminDashboardPage = async () => {
       (formations ?? []).map((f) => [f.id, f.title])
     );
     topFormationsData = topFormationIds.map(([id, revenue]) => ({
-      name: titleMap.get(id) ?? "Formation supprimée",
+      name: titleMap.get(id) ?? "Accompagnement supprimé",
       value: revenue,
     }));
   }
@@ -444,7 +444,7 @@ const AdminDashboardPage = async () => {
           trendLabel="vs 30j préc."
         />
         <StatCard
-          title="Formations publiées"
+          title="Accompagnements publiés"
           value={formationsPublished}
           description={`${currentEnrollments} inscription${currentEnrollments > 1 ? "s" : ""} ce mois`}
           icon={BookOpen}
@@ -511,7 +511,7 @@ const AdminDashboardPage = async () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-serif text-lg">
               <Trophy className="h-5 w-5" />
-              Top formations (30j)
+              Top accompagnements (30j)
             </CardTitle>
           </CardHeader>
           <CardContent>

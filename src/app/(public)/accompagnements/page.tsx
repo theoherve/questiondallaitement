@@ -145,7 +145,7 @@ const AccompagnementsPage = async () => {
           variant="secondary"
           className="bg-primary-red/10 text-primary-red"
         >
-          Formations en ligne
+          Accompagnements en ligne
         </Badge>
         <h1 className="mt-4 font-serif text-3xl font-bold text-primary-green sm:text-4xl">
           Accompagnements en ligne

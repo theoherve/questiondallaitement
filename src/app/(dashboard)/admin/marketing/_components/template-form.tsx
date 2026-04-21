@@ -9,7 +9,17 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmailBlockEditor } from "@/components/editor/email-block-editor";
 import { toast } from "sonner";
 import type { JSONContent } from "@maily-to/render";
-import { ArrowLeft, Save, Trash2, Plus, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  Trash2,
+  Plus,
+  X,
+  Sparkles,
+  FileCode,
+  AlertCircle,
+  MoreHorizontal,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import {
@@ -19,12 +29,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { EmailTemplate } from "@/types/database";
 
 type TemplateFormProps = {
   template?: EmailTemplate | null;
+  /** True when a bundled default design exists for this template name. */
+  hasDefaultDesign?: boolean;
   onSave: (data: {
     name: string;
     subject: string;
@@ -34,12 +51,16 @@ type TemplateFormProps = {
     variables: string[];
   }) => Promise<{ success: boolean; error?: string; data?: { id: string } }>;
   onDelete?: (id: string) => Promise<{ success: boolean; error?: string }>;
+  /** Optional per-template restore — applies the bundled default to this row. */
+  onRestoreDefault?: () => Promise<{ success: boolean; error?: string }>;
 };
 
 export const TemplateForm = ({
   template,
+  hasDefaultDesign = false,
   onSave,
   onDelete,
+  onRestoreDefault,
 }: TemplateFormProps) => {
   const isEdit = !!template;
   const router = useRouter();
@@ -56,6 +77,15 @@ export const TemplateForm = ({
 
   const [newVariable, setNewVariable] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [forceEditor, setForceEditor] = useState(false);
+
+  const hasDesign =
+    formData.body_design !== null &&
+    typeof formData.body_design === "object" &&
+    Object.keys(formData.body_design as Record<string, unknown>).length > 0;
+  const hasLegacyHtml =
+    !hasDesign && !!formData.body_html && formData.body_html.length > 10;
 
   const handleSave = () => {
     if (!formData.name.trim() || !formData.subject.trim()) {
@@ -119,6 +149,22 @@ export const TemplateForm = ({
     }));
   };
 
+  const handleRestoreDefault = () => {
+    if (!onRestoreDefault) return;
+    startTransition(async () => {
+      const result = await onRestoreDefault();
+      if (result.success) {
+        toast.success("Design par défaut restauré.");
+        setShowRestoreDialog(false);
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "Erreur lors de la restauration.");
+      }
+    });
+  };
+
+  const showLegacyFallback = hasLegacyHtml && !forceEditor;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -134,37 +180,58 @@ export const TemplateForm = ({
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          {isEdit && onDelete && (
-            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="text-destructive">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Supprimer
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Supprimer le template ?</DialogTitle>
-                  <DialogDescription>
-                    Cette action est irréversible. Les campagnes utilisant ce
-                    template ne seront pas affectées.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-                    Annuler
-                  </Button>
-                  <Button variant="destructive" onClick={handleDelete} disabled={isPending}>
-                    Supprimer
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
           <Button onClick={handleSave} disabled={isPending}>
             <Save className="mr-2 h-4 w-4" />
             Enregistrer
           </Button>
+
+          {isEdit && onDelete && (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    aria-label="Plus d'actions"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setShowDeleteDialog(true);
+                    }}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Supprimer
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Supprimer le template ?</DialogTitle>
+                    <DialogDescription>
+                      Cette action est irréversible. Les campagnes utilisant ce
+                      template ne seront pas affectées.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                      Annuler
+                    </Button>
+                    <Button variant="destructive" onClick={handleDelete} disabled={isPending}>
+                      Supprimer
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
         </div>
       </div>
 
@@ -236,20 +303,100 @@ export const TemplateForm = ({
               </h2>
             </CardHeader>
             <CardContent>
-              <EmailBlockEditor
-                initialDesign={(formData.body_design as JSONContent | null) ?? undefined}
-                onChange={(design) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    body_design: design as Record<string, unknown>,
-                  }))
-                }
-                variables={formData.variables}
-                uploadFolder="templates"
-                previewSubject={formData.subject}
-              />
+              {showLegacyFallback ? (
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                    <div className="space-y-1 text-sm">
+                      <p className="font-medium text-amber-900">
+                        Ce template n&apos;a pas encore de design en blocs
+                      </p>
+                      <p className="text-amber-800">
+                        Le contenu actuel provient d&apos;un HTML brut (probablement
+                        issu d&apos;une migration). L&apos;aperçu ci-dessous
+                        correspond à l&apos;email envoyé. Pour l&apos;éditer en
+                        blocs, restaure le design par défaut ou commence depuis
+                        zéro.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {hasDefaultDesign && onRestoreDefault && (
+                      <Button
+                        variant="default"
+                        onClick={() => setShowRestoreDialog(true)}
+                        disabled={isPending}
+                      >
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Restaurer le design par défaut
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      onClick={() => setForceEditor(true)}
+                      disabled={isPending}
+                    >
+                      <FileCode className="mr-2 h-4 w-4" />
+                      Commencer depuis zéro
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Aperçu HTML actuel (lecture seule)
+                    </Label>
+                    <iframe
+                      srcDoc={formData.body_html}
+                      title="Aperçu du template"
+                      className="h-96 w-full rounded-lg border bg-white"
+                      sandbox=""
+                    />
+                  </div>
+                </div>
+              ) : (
+                <EmailBlockEditor
+                  initialDesign={(formData.body_design as JSONContent | null) ?? undefined}
+                  onChange={(design) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      body_design: design as Record<string, unknown>,
+                    }))
+                  }
+                  variables={formData.variables}
+                  uploadFolder="templates"
+                  previewSubject={formData.subject}
+                />
+              )}
             </CardContent>
           </Card>
+
+          {/* Per-template restore confirmation */}
+          {hasDefaultDesign && onRestoreDefault && (
+            <Dialog open={showRestoreDialog} onOpenChange={setShowRestoreDialog}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Restaurer le design par défaut ?</DialogTitle>
+                  <DialogDescription>
+                    Le contenu (design blocs, HTML rendu, sujet, variables) sera
+                    réécrit avec le design bundled de la marque. Aucune
+                    personnalisation ne sera conservée.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowRestoreDialog(false)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button onClick={handleRestoreDefault} disabled={isPending}>
+                    {isPending ? "Restauration..." : "Restaurer"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         {/* Sidebar */}

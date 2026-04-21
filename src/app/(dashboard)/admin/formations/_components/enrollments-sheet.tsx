@@ -60,7 +60,7 @@ export const EnrollmentsSheet = ({
   const [isPending, startTransition] = useTransition();
 
   const handleUnenroll = (enrollmentId: string) => {
-    if (!confirm("Retirer cet utilisateur de la formation ?")) return;
+    if (!confirm("Retirer cet utilisateur de l'accompagnement ?")) return;
     startTransition(async () => {
       const result = await unenrollFromFormation(enrollmentId);
       if (result.success) {

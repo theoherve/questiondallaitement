@@ -12,7 +12,7 @@ const ICON_MAP: Record<InteractionType, React.ReactNode> = {
 
 const TYPE_LABEL: Record<InteractionType, string> = {
   booking: "Réservation",
-  enrollment: "Formation",
+  enrollment: "Accompagnement",
   event: "Événement",
   note: "Note",
 };

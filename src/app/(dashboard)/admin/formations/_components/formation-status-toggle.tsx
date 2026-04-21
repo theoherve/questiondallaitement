@@ -54,10 +54,10 @@ export const FormationStatusToggle = ({
       setStatus(newStatus);
       toast.success(
         newStatus === "published"
-          ? "Formation publiée"
+          ? "Accompagnement publié"
           : newStatus === "archived"
-            ? "Formation archivée"
-            : "Formation dépubliée"
+            ? "Accompagnement archivé"
+            : "Accompagnement dépublié"
       );
       router.refresh();
     } else {

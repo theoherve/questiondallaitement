@@ -263,7 +263,7 @@ export const WorkflowForm = ({
               }}
             >
               <option value="recurring_event">Événement récurrent</option>
-              <option value="formation_enrolled">Achat formation</option>
+              <option value="formation_enrolled">Achat accompagnement</option>
               <option value="manual">Manuel</option>
             </select>
           </div>
@@ -297,7 +297,7 @@ export const WorkflowForm = ({
           {triggerType === "formation_enrolled" && (
             <div>
               <label className="mb-1 block text-sm font-medium">
-                Formations (laisser vide = toutes)
+                Accompagnements (laisser vide = tous)
               </label>
               <div className="max-h-40 space-y-1 overflow-y-auto rounded border p-2">
                 {formations.map((f) => (

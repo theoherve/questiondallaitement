@@ -15,7 +15,7 @@ type Props = {
 };
 
 export const metadata: Metadata = {
-  title: "Modifier la formation",
+  title: "Modifier l'accompagnement",
 };
 
 const AdminEditFormationPage = async ({ params }: Props) => {

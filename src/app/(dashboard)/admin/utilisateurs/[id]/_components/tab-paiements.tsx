@@ -33,7 +33,7 @@ const STATUS_MAP: Record<
 };
 
 const TYPE_MAP: Record<string, string> = {
-  formation: "Formation",
+  formation: "Accompagnement",
   booking: "Réservation",
   event: "Événement",
 };

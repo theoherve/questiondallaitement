@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export const metadata: Metadata = {
-  title: "Mes formations",
+  title: "Mes accompagnements",
 };
 
 const ClientFormationsPage = async () => {
@@ -56,7 +56,7 @@ const ClientFormationsPage = async () => {
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="font-serif text-2xl font-bold text-primary-green">
-        Mes formations
+        Mes accompagnements
       </h1>
 
       {enrollments && enrollments.length > 0 ? (
@@ -98,7 +98,7 @@ const ClientFormationsPage = async () => {
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center">
-                      <span className="text-primary-green/30">Formation</span>
+                      <span className="text-primary-green/30">Accompagnement</span>
                     </div>
                   )}
                 </div>
@@ -151,11 +151,11 @@ const ClientFormationsPage = async () => {
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground">
-              Vous n&apos;êtes inscrit à aucune formation.
+              Vous n&apos;êtes inscrit à aucun accompagnement.
             </p>
             <Button asChild variant="outline" className="mt-4">
-              <Link href="/formations" tabIndex={0}>
-                Découvrir les formations
+              <Link href="/accompagnements" tabIndex={0}>
+                Découvrir les accompagnements
               </Link>
             </Button>
           </CardContent>

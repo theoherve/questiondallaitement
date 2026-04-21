@@ -22,7 +22,7 @@ export const PurchaseButton = ({
     return (
       <Button asChild className="w-full bg-green-600 hover:bg-green-700">
         <a href={`/espace-client/formations/${formationId}`} tabIndex={0}>
-          Accéder à la formation
+          Accéder à l&apos;accompagnement
         </a>
       </Button>
     );
@@ -59,7 +59,7 @@ export const PurchaseButton = ({
       ) : (
         <ShoppingCart className="mr-2 h-4 w-4" />
       )}
-      Acheter la formation
+      Acheter l&apos;accompagnement
     </Button>
   );
 };

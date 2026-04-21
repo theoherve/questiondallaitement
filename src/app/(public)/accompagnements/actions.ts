@@ -26,7 +26,7 @@ export const purchaseFormation = async (
   if (existing) {
     return {
       success: false,
-      error: "Vous êtes déjà inscrit à cette formation",
+      error: "Vous êtes déjà inscrit à cet accompagnement",
     };
   }
 
@@ -41,7 +41,7 @@ export const purchaseFormation = async (
     .single();
 
   if (!formation) {
-    return { success: false, error: "Formation introuvable" };
+    return { success: false, error: "Accompagnement introuvable" };
   }
 
   const { data: consultant } = await supabase
@@ -53,7 +53,7 @@ export const purchaseFormation = async (
   if (!consultant?.stripe_account_id) {
     return {
       success: false,
-      error: "Le paiement n'est pas disponible pour cette formation",
+      error: "Le paiement n'est pas disponible pour cet accompagnement",
     };
   }
 

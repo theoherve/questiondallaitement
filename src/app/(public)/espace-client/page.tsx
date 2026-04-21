@@ -101,7 +101,7 @@ const ClientDashboardPage = async () => {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Mes formations"
+          title="Mes accompagnements"
           value={totalEnrollments ?? 0}
           icon={BookOpen}
         />
@@ -126,7 +126,7 @@ const ClientDashboardPage = async () => {
         <Card>
           <CardHeader>
             <CardTitle className="font-serif text-lg">
-              Mes formations récentes
+              Mes accompagnements récents
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -191,11 +191,11 @@ const ClientDashboardPage = async () => {
             ) : (
               <div className="space-y-3 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Aucune formation pour le moment
+                  Aucun accompagnement pour le moment
                 </p>
                 <Button asChild variant="outline" size="sm">
-                  <Link href="/formations" tabIndex={0}>
-                    Découvrir les formations
+                  <Link href="/accompagnements" tabIndex={0}>
+                    Découvrir les accompagnements
                   </Link>
                 </Button>
               </div>

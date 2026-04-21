@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 const TRIGGER_LABELS: Record<string, string> = {
   recurring_event: "Événement récurrent",
-  formation_enrolled: "Achat formation",
+  formation_enrolled: "Achat accompagnement",
   manual: "Manuel",
 };
 

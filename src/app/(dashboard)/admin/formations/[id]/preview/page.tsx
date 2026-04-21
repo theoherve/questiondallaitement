@@ -6,7 +6,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowLeft, BookOpen, Clock, Eye, Pencil, User } from "lucide-react";
+import { FormationReader } from "@/app/(public)/espace-client/formations/[id]/_components/formation-reader";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -81,10 +83,31 @@ const FormationPreviewPage = async ({ params }: Props) => {
 
   if (!formation) notFound();
 
-  const sections = (formation.formation_sections ?? []).sort(
-    (a: { position: number }, b: { position: number }) =>
-      a.position - b.position
-  );
+  const sections = (formation.formation_sections ?? [])
+    .sort(
+      (a: { position: number }, b: { position: number }) =>
+        a.position - b.position
+    )
+    .map(
+      (section: {
+        id: string;
+        title: string;
+        position: number;
+        formation_blocks?: {
+          id: string;
+          type: string;
+          content: unknown;
+          position: number;
+        }[];
+      }) => ({
+        ...section,
+        formation_blocks: (section.formation_blocks ?? []).sort(
+          (a: { position: number }, b: { position: number }) =>
+            a.position - b.position
+        ),
+      })
+    );
+
   const totalBlocks = sections.reduce(
     (acc: number, s: { formation_blocks?: unknown[] }) =>
       acc + (s.formation_blocks?.length ?? 0),
@@ -139,118 +162,167 @@ const FormationPreviewPage = async ({ params }: Props) => {
         </div>
       </div>
 
-      {/* Formation content — mirrors public layout */}
-      <div className="mx-auto max-w-5xl">
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <Badge
-              variant="secondary"
-              className="bg-primary-red/10 text-primary-red"
-            >
-              Formation
-            </Badge>
-            <h1 className="mt-4 font-serif text-3xl font-bold text-primary-green sm:text-4xl">
-              {formation.title}
-            </h1>
+      <Tabs defaultValue="learner" className="w-full">
+        <TabsList className="w-fit">
+          <TabsTrigger value="learner">Vue apprenant</TabsTrigger>
+          <TabsTrigger value="landing">Page vitrine</TabsTrigger>
+        </TabsList>
 
-            {formation.long_description_html ? (
-              <div
-                className="prose prose-green mt-6 max-w-none text-primary-green/80"
-                dangerouslySetInnerHTML={{
-                  __html: formation.long_description_html,
+        {/* Learner view — same as enrolled user */}
+        <TabsContent value="learner" className="mt-6">
+          {sections.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <BookOpen className="mx-auto mb-3 h-8 w-8 opacity-40" />
+                <p>Aucune section. Ajoute du contenu pour prévisualiser.</p>
+                <Button variant="outline" size="sm" className="mt-4" asChild>
+                  <Link href={`/admin/formations/${id}/edit`}>
+                    Éditer l&apos;accompagnement
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="mx-auto max-w-4xl">
+              <p className="mb-4 text-xs text-muted-foreground">
+                Tu navigues comme un apprenant inscrit. La progression n&apos;est
+                pas sauvegardée.
+              </p>
+              <FormationReader
+                formation={{
+                  id: formation.id,
+                  title: formation.title,
+                  description: formation.description,
                 }}
+                sections={sections}
+                completedBlockIds={[]}
+                totalBlocks={totalBlocks}
+                completedCount={0}
+                readOnly
+                backHref={`/admin/formations/${id}/edit`}
               />
-            ) : formation.description ? (
-              <div
-                className="prose prose-green mt-6 max-w-none text-primary-green/80"
-                dangerouslySetInnerHTML={{ __html: formation.description }}
-              />
-            ) : null}
+            </div>
+          )}
+        </TabsContent>
 
-            <div className="mt-8">
-              <h2 className="font-serif text-xl font-semibold text-primary-green">
-                Programme
-              </h2>
-              <div className="mt-4 space-y-3">
-                {sections.map(
-                  (section: {
-                    id: string;
-                    title: string;
-                    formation_blocks?: { id: string; type: string }[];
-                  }) => (
-                    <Card key={section.id}>
-                      <CardContent className="flex items-center justify-between py-4">
-                        <span className="font-medium text-primary-green">
-                          {section.title}
-                        </span>
-                        <span className="text-sm text-primary-green/50">
-                          {section.formation_blocks?.length ?? 0} leçon
-                          {(section.formation_blocks?.length ?? 0) > 1
-                            ? "s"
-                            : ""}
-                        </span>
-                      </CardContent>
-                    </Card>
-                  )
-                )}
+        {/* Landing page — what a prospect sees before purchase */}
+        <TabsContent value="landing" className="mt-6">
+          <div className="mx-auto max-w-5xl">
+            <div className="grid gap-8 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <Badge
+                  variant="secondary"
+                  className="bg-primary-red/10 text-primary-red"
+                >
+                  Accompagnement
+                </Badge>
+                <h1 className="mt-4 font-serif text-3xl font-bold text-primary-green sm:text-4xl">
+                  {formation.title}
+                </h1>
 
-                {sections.length === 0 && (
-                  <p className="py-4 text-center text-sm text-muted-foreground">
-                    Aucune section pour le moment.
-                  </p>
-                )}
+                {formation.long_description_html ? (
+                  <div
+                    className="prose prose-green mt-6 max-w-none text-primary-green/80"
+                    dangerouslySetInnerHTML={{
+                      __html: formation.long_description_html,
+                    }}
+                  />
+                ) : formation.description ? (
+                  <div
+                    className="prose prose-green mt-6 max-w-none text-primary-green/80"
+                    dangerouslySetInnerHTML={{ __html: formation.description }}
+                  />
+                ) : null}
+
+                <div className="mt-8">
+                  <h2 className="font-serif text-xl font-semibold text-primary-green">
+                    Programme
+                  </h2>
+                  <div className="mt-4 space-y-3">
+                    {sections.map(
+                      (section: {
+                        id: string;
+                        title: string;
+                        formation_blocks?: { id: string; type: string }[];
+                      }) => (
+                        <Card key={section.id}>
+                          <CardContent className="flex items-center justify-between py-4">
+                            <span className="font-medium text-primary-green">
+                              {section.title}
+                            </span>
+                            <span className="text-sm text-primary-green/50">
+                              {section.formation_blocks?.length ?? 0} leçon
+                              {(section.formation_blocks?.length ?? 0) > 1
+                                ? "s"
+                                : ""}
+                            </span>
+                          </CardContent>
+                        </Card>
+                      )
+                    )}
+
+                    {sections.length === 0 && (
+                      <p className="py-4 text-center text-sm text-muted-foreground">
+                        Aucune section pour le moment.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-1">
+                <Card className="sticky top-24">
+                  <CardContent className="space-y-6 pt-6">
+                    {formation.thumbnail_url && (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={formation.thumbnail_url}
+                        alt={formation.title}
+                        className="w-full rounded-md object-cover"
+                      />
+                    )}
+                    <div className="text-center">
+                      <p className="font-serif text-3xl font-bold text-primary-green">
+                        {formatPrice(
+                          formation.price_cents,
+                          formation.currency
+                        )}
+                      </p>
+                    </div>
+                    <div className="space-y-3 text-sm text-primary-green/70">
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="h-4 w-4" />
+                        <span>
+                          {sections.length} section
+                          {sections.length > 1 ? "s" : ""} &middot;{" "}
+                          {totalBlocks} leçon{totalBlocks > 1 ? "s" : ""}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        <span>Accès illimité</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        <span>Par {consultantName}</span>
+                      </div>
+                    </div>
+                    <Button
+                      className="w-full bg-primary-red hover:bg-primary-red-dark"
+                      disabled
+                    >
+                      Acheter l&apos;accompagnement
+                    </Button>
+                    <p className="text-center text-xs text-muted-foreground">
+                      Bouton désactivé en mode preview
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>
-
-          <div className="lg:col-span-1">
-            <Card className="sticky top-24">
-              <CardContent className="space-y-6 pt-6">
-                {formation.thumbnail_url && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={formation.thumbnail_url}
-                    alt={formation.title}
-                    className="w-full rounded-md object-cover"
-                  />
-                )}
-                <div className="text-center">
-                  <p className="font-serif text-3xl font-bold text-primary-green">
-                    {formatPrice(formation.price_cents, formation.currency)}
-                  </p>
-                </div>
-                <div className="space-y-3 text-sm text-primary-green/70">
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="h-4 w-4" />
-                    <span>
-                      {sections.length} section
-                      {sections.length > 1 ? "s" : ""} &middot; {totalBlocks}{" "}
-                      leçon{totalBlocks > 1 ? "s" : ""}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    <span>Accès illimité</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    <span>Par {consultantName}</span>
-                  </div>
-                </div>
-                <Button
-                  className="w-full bg-primary-red hover:bg-primary-red-dark"
-                  disabled
-                >
-                  Acheter la formation
-                </Button>
-                <p className="text-center text-xs text-muted-foreground">
-                  Bouton désactivé en mode preview
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

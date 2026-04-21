@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export const metadata: Metadata = {
-  title: "Mes formations",
+  title: "Mes accompagnements",
 };
 
 const STATUS_CONFIG: Record<
@@ -149,10 +149,10 @@ const ConsultantFormationsPage = async () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-2xl font-bold text-primary-green">
-          Mes formations
+          Mes accompagnements
         </h1>
         <p className="text-sm text-muted-foreground">
-          Lecture seule — les formations sont gérées par l&apos;administration
+          Lecture seule — les accompagnements sont gérés par l&apos;administration
         </p>
       </div>
 
@@ -165,7 +165,7 @@ const ConsultantFormationsPage = async () => {
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground">
-              Aucune formation associée à votre profil.
+              Aucun accompagnement associé à votre profil.
             </p>
           </CardContent>
         </Card>

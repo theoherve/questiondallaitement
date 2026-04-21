@@ -369,7 +369,7 @@ export const DESIGN_WELCOME = doc([
             text("• Prenez rendez-vous avec une consultante IBCLC"),
           ]),
           paragraph([
-            text("• Explorez nos formations en autonomie"),
+            text("• Explorez nos accompagnements en autonomie"),
           ]),
           paragraph([
             text("• Lisez les articles du blog pour vous informer"),

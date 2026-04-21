@@ -589,6 +589,57 @@ export const restoreDefaultTemplates = async (): Promise<
   return { success: true, data: { updated } };
 };
 
+/**
+ * Restore the bundled default design for a single template identified by name.
+ * Used from the template editor when `body_design` is empty but a bundled
+ * default exists — lets the admin reclaim an editable block version without
+ * reseeding every template.
+ */
+export const restoreTemplateDesign = async (
+  name: string,
+): Promise<ActionResult<{ id: string }>> => {
+  await requireAdmin();
+  const design = DEFAULT_TEMPLATE_DESIGNS[name];
+  if (!design) {
+    return { success: false, error: "Aucun design par défaut pour ce template." };
+  }
+
+  const supabase = createAdminClient();
+  const { data: existing } = await supabase
+    .from("email_templates")
+    .select("id")
+    .eq("name", name)
+    .maybeSingle();
+
+  if (!existing?.id) {
+    return { success: false, error: "Template introuvable." };
+  }
+
+  const body_html = await renderBlockEmail(design as JSONContent, {
+    replaceVariables: false,
+  });
+  const subject = TEMPLATE_DEFAULT_SUBJECTS[name] ?? name;
+  const variables = TEMPLATE_DEFAULT_VARIABLES[name] ?? [];
+
+  const { error } = await supabase
+    .from("email_templates")
+    .update({
+      subject,
+      body_html,
+      body_design: design,
+      variables,
+    })
+    .eq("id", existing.id);
+
+  if (error) {
+    return { success: false, error: "Erreur lors de la restauration." };
+  }
+
+  revalidatePath("/admin/marketing");
+  revalidatePath(`/admin/marketing/templates/${existing.id}/edit`);
+  return { success: true, data: { id: existing.id } };
+};
+
 // ─── Batch Sync ─────────────────────────────────────────────
 
 export const triggerBatchSync = async (): Promise<
