@@ -69,7 +69,7 @@ export const Sidebar = ({ items, onLogout }: SidebarProps) => {
           <Button
             type="submit"
             variant="ghost"
-            className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground cursor-pointer border border-sidebar-accent/50"
+            className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground border border-sidebar-accent/50"
           >
             <LogOut className="h-4 w-4" />
             Déconnexion

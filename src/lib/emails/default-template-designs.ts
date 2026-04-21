@@ -267,26 +267,81 @@ export const DESIGN_FORMATION_ACCESS = doc([
   brandHeader(),
   section(
     [
-      heading(1, [text("Votre formation est disponible")], "center"),
+      heading(
+        1,
+        [text("Votre accompagnement est disponible")],
+        "center",
+      ),
+      spacer(4),
+      paragraph(
+        [
+          text(
+            "Un nouvel espace vient d'être ouvert pour vous.",
+            [{ type: "italic" }],
+          ),
+        ],
+        "center",
+      ),
+      spacer(20),
       paragraph([text("Bonjour "), variable("client_name"), text(",")]),
       paragraph([
-        text("Bonne nouvelle : vous avez désormais accès à la formation "),
-        text("« ", [{ type: "bold" }]),
-        { ...variable("formation_title"), marks: [{ type: "bold" }] },
-        text(" »", [{ type: "bold" }]),
-        text("."),
-      ]),
-      spacer(16),
-      button("Accéder à ma formation", "{{formation_url}}"),
-      spacer(16),
-      paragraph([
         text(
-          "Avancez à votre rythme. Tout le contenu reste accessible depuis votre espace personnel.",
+          "Nous sommes ravies de vous accueillir. Votre accès est activé — vous pouvez dès maintenant retrouver l'ensemble du contenu dans votre espace personnel.",
         ),
       ]),
-      spacer(16),
+      spacer(8),
+      detailsBox([
+        {
+          label: "Votre accompagnement :",
+          value: [
+            { ...variable("formation_title"), marks: [{ type: "bold" }] },
+          ],
+        },
+      ]),
+      paragraph([
+        text("Ce qui vous attend :", [{ type: "bold" }]),
+      ]),
+      paragraph([
+        text("• Des vidéos et ressources accessibles à tout moment"),
+      ]),
+      paragraph([
+        text("• Une progression à votre rythme, sans limite de durée"),
+      ]),
+      paragraph([
+        text("• Le soutien bienveillant de consultantes IBCLC"),
+      ]),
+      spacer(24),
+      button("J'accède à mon accompagnement", "{{formation_url}}"),
+      spacer(12),
       paragraph(
-        [text("Belle formation,\nL'équipe Question d'Allaitement")],
+        [
+          text(
+            "Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur : ",
+            [{ type: "italic" }],
+          ),
+          text("{{formation_url}}", [
+            { type: "italic" },
+            {
+              type: "link",
+              attrs: {
+                href: "{{formation_url}}",
+                target: "_blank",
+                rel: "noopener noreferrer",
+              },
+            } as { type: string },
+          ]),
+        ],
+        "center",
+      ),
+      spacer(24),
+      paragraph([
+        text(
+          "Une question, un doute ? Répondez directement à cet email, nous sommes à votre écoute.",
+        ),
+      ]),
+      spacer(20),
+      paragraph(
+        [text("Avec douceur,\nL'équipe Question d'Allaitement")],
         "center",
       ),
     ],
