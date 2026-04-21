@@ -56,7 +56,7 @@ export const handleLogin = async (formData: FormData): Promise<void> => {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "id, first_name, email_verified, password_hash, password_reset_token, password_reset_expires",
+      "id, first_name, email_verified, password_hash, password_reset_token, password_reset_expires, wix_contact_id",
     )
     .eq("email", email)
     .is("deleted_at", null)
@@ -69,7 +69,8 @@ export const handleLogin = async (formData: FormData): Promise<void> => {
   }
 
   // Migrated account (from Wix): no password set yet → trigger password setup
-  if (profile && !profile.password_hash) {
+  // Guard on wix_contact_id to not catch guest accounts or other flows
+  if (profile && !profile.password_hash && profile.wix_contact_id) {
     const hasActiveToken =
       !!profile.password_reset_token &&
       !!profile.password_reset_expires &&

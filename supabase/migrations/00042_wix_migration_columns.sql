@@ -13,6 +13,11 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS wix_product_names TEXT[];
 CREATE INDEX IF NOT EXISTS idx_profiles_wix_contact_id
   ON profiles(wix_contact_id) WHERE wix_contact_id IS NOT NULL;
 
+-- Seed "Import à vérifier" label for flagging imported profiles needing manual review
+INSERT INTO labels (name, slug, color)
+SELECT 'Import à vérifier', 'import-a-verifier', '#F59E0B'
+WHERE NOT EXISTS (SELECT 1 FROM labels WHERE slug = 'import-a-verifier');
+
 -- Insert migration welcome email template (only if not already present)
 INSERT INTO email_templates (id, name, subject, body_html, body_design)
 SELECT

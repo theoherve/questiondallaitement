@@ -397,7 +397,7 @@ export const FormationEditor = ({
               <div className="space-y-2">
                 <Label htmlFor="consultant_id">Consultante</Label>
                 <Select value={consultantId} onValueChange={setConsultantId}>
-                  <SelectTrigger>
+                  <SelectTrigger className="cursor-pointer">
                     <SelectValue placeholder="Choisir" />
                   </SelectTrigger>
                   <SelectContent>
@@ -471,7 +471,7 @@ export const FormationEditor = ({
             <Button
               type="submit"
               disabled={isSaving}
-              className="bg-primary-red hover:bg-primary-red-dark"
+              className="cursor-pointer bg-primary-red hover:bg-primary-red-dark"
             >
               <Save className="mr-2 h-4 w-4" />
               {isSaving ? "Enregistrement..." : "Enregistrer"}
