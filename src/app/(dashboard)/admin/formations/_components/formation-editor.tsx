@@ -81,6 +81,7 @@ type FormationEditorProps = {
   formation: FormationData;
   sections: SectionData[];
   consultants: ConsultantOption[];
+  headerActions?: React.ReactNode;
 };
 
 const STATUS_CONFIG: Record<
@@ -104,6 +105,7 @@ export const FormationEditor = ({
   formation,
   sections,
   consultants,
+  headerActions,
 }: FormationEditorProps) => {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
@@ -224,6 +226,7 @@ export const FormationEditor = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {headerActions}
           <Button variant="outline" size="sm" asChild>
             <Link href={`/admin/formations/${formation.id}/preview`}>
               <Eye className="mr-2 h-4 w-4" />

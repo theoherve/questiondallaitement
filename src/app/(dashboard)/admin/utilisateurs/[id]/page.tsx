@@ -470,7 +470,7 @@ const UserDetailPage = async ({ params }: Props) => {
         </TabsContent>
 
         <TabsContent value="formations">
-          <TabFormations enrollments={enrollmentsWithProgress} />
+          <TabFormations enrollments={enrollmentsWithProgress} userId={id} />
         </TabsContent>
 
         <TabsContent value="paiements">

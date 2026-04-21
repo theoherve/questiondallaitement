@@ -4,6 +4,10 @@ import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { FormationEditor } from "@/app/(dashboard)/admin/formations/_components/formation-editor";
 import { CollaboratorManager } from "@/app/(dashboard)/admin/formations/_components/collaborator-manager";
+import {
+  EnrollmentsSheet,
+  type EnrollmentRow,
+} from "@/app/(dashboard)/admin/formations/_components/enrollments-sheet";
 import { getFormationCollaborators } from "@/app/(dashboard)/admin/formations/actions";
 
 type Props = {
@@ -97,6 +101,35 @@ const AdminEditFormationPage = async ({ params }: Props) => {
 
   const collaborators = await getFormationCollaborators(id);
 
+  const { data: enrollmentsRaw } = await supabase
+    .from("formation_enrollments")
+    .select(
+      `id, enrolled_at, source, client:profiles!formation_enrollments_client_id_fkey (id, email, first_name, last_name)`,
+    )
+    .eq("formation_id", id)
+    .order("enrolled_at", { ascending: false });
+
+  const enrollments: EnrollmentRow[] = (
+    (enrollmentsRaw ?? []) as unknown as {
+      id: string;
+      enrolled_at: string;
+      source: "stripe" | "manual" | null;
+      client: {
+        id: string;
+        email: string;
+        first_name: string | null;
+        last_name: string | null;
+      } | null;
+    }[]
+  )
+    .filter((e) => e.client !== null)
+    .map((e) => ({
+      id: e.id,
+      enrolled_at: e.enrolled_at,
+      source: (e.source ?? "stripe") as "stripe" | "manual",
+      client: e.client!,
+    }));
+
   return (
     <>
       <FormationEditor
@@ -114,6 +147,13 @@ const AdminEditFormationPage = async ({ params }: Props) => {
         }}
         sections={sections}
         consultants={consultantOptions}
+        headerActions={
+          <EnrollmentsSheet
+            formationId={formation.id}
+            formationTitle={formation.title}
+            enrollments={enrollments}
+          />
+        }
       />
       <div className="mx-auto mt-6 max-w-4xl">
         <CollaboratorManager
