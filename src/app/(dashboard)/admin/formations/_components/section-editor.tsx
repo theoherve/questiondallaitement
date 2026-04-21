@@ -45,6 +45,8 @@ import {
   ImageIcon,
   HelpCircle,
   Download,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { SortableBlock } from "./sortable-block";
 import { BlockEditor } from "./block-editor";
@@ -107,6 +109,7 @@ export const SectionEditor = ({
   const [editTitle, setEditTitle] = useState(section.title);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [blocks, setBlocks] = useState(section.formation_blocks);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -189,9 +192,21 @@ export const SectionEditor = ({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+      <CardHeader
+        className={`flex flex-row items-center justify-between space-y-0 pb-3 ${
+          !isEditing ? "cursor-pointer" : ""
+        }`}
+        onClick={() => {
+          if (!isEditing) setIsExpanded((v) => !v);
+        }}
+        role={!isEditing ? "button" : undefined}
+        aria-expanded={isExpanded}
+      >
         {isEditing ? (
-          <div className="flex items-center gap-2">
+          <div
+            className="flex items-center gap-2"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Input
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
@@ -208,7 +223,7 @@ export const SectionEditor = ({
             <Button
               size="icon"
               variant="ghost"
-              className="h-8 w-8"
+              className="h-8 w-8 cursor-pointer"
               onClick={handleRenameSection}
               aria-label="Confirmer"
             >
@@ -217,7 +232,7 @@ export const SectionEditor = ({
             <Button
               size="icon"
               variant="ghost"
-              className="h-8 w-8"
+              className="h-8 w-8 cursor-pointer"
               onClick={() => {
                 setIsEditing(false);
                 setEditTitle(section.title);
@@ -229,6 +244,11 @@ export const SectionEditor = ({
           </div>
         ) : (
           <CardTitle className="flex items-center gap-2 text-base">
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )}
             {section.title}
             <span className="text-xs text-muted-foreground">
               ({blocks.length} bloc{blocks.length > 1 ? "s" : ""})
@@ -236,11 +256,14 @@ export const SectionEditor = ({
           </CardTitle>
         )}
 
-        <div className="flex items-center gap-1">
+        <div
+          className="flex items-center gap-1"
+          onClick={(e) => e.stopPropagation()}
+        >
           <Button
             size="icon"
             variant="ghost"
-            className="h-8 w-8"
+            className="h-8 w-8 cursor-pointer"
             onClick={() => setIsEditing(true)}
             aria-label="Renommer la section"
           >
@@ -251,7 +274,7 @@ export const SectionEditor = ({
             <Button
               size="icon"
               variant="ghost"
-              className="h-8 w-8"
+              className="h-8 w-8 cursor-pointer"
               onClick={() => setDeleteDialogOpen(true)}
               aria-label="Supprimer la section"
             >
@@ -280,7 +303,9 @@ export const SectionEditor = ({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent
+        className={`space-y-3 ${isExpanded ? "" : "hidden"}`}
+      >
         {blocks.length > 0 ? (
           <DndContext
             sensors={sensors}
