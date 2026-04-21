@@ -1,13 +1,19 @@
 "use server";
 
+import { randomBytes } from "crypto";
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendFormationAccess } from "@/lib/emails/send";
-import { siteConfig } from "@/config/site";
+import { baseUrl } from "@/lib/url";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod/v4";
 import type { ActionResult } from "@/types";
+
+// Matches the MIGRATION_TOKEN_EXPIRY_HOURS window used for Wix-migrated users
+// in src/app/(auth)/actions.ts — new manually-enrolled accounts share the same
+// "set your password" landing flow.
+const SETUP_TOKEN_EXPIRY_HOURS = 72;
 
 const requireEnrollRole = async () => {
   const user = await getSessionUser();
@@ -55,7 +61,10 @@ export const searchClientsForEnroll = async (
 
   const excludeIds = (alreadyEnrolled ?? []).map((e) => e.client_id);
 
-  const escaped = trimmed.replace(/[%,]/g, " ");
+  // Strip every ILIKE/postgrest-sensitive char (%, _, \, comma, parens) before
+  // building the pattern — otherwise an operator typing `a_@` would silently
+  // do a broader match than they expect.
+  const escaped = trimmed.replace(/[\\%_,()]/g, " ");
   const pattern = `%${escaped}%`;
 
   let builder = supabase
@@ -130,21 +139,40 @@ const insertEnrollmentAndNotify = async (args: {
     return { success: false, error: "Erreur lors de l'inscription" };
   }
 
-  const baseUrl = siteConfig.url.replace(/\/$/, "");
-  const formationUrl = `${baseUrl}/espace-client/formations/${args.formationId}`;
-  const accessUrl = args.isNewAccount
-    ? `${baseUrl}/reset-password?email=${encodeURIComponent(args.clientEmail)}&next=${encodeURIComponent(`/espace-client/formations/${args.formationId}`)}`
-    : formationUrl;
+  const root = baseUrl();
+  const formationUrl = `${root}/espace-client/formations/${args.formationId}`;
+
+  // For new accounts, provision a password-setup token (same pattern as the
+  // Wix-migration flow in (auth)/actions.ts) and build a `/reset-password?token=`
+  // URL the user can actually consume. After password creation they land on
+  // /connexion; they navigate to the formation from /espace-client.
+  let accessUrl = formationUrl;
+  if (args.isNewAccount) {
+    const token = randomBytes(32).toString("hex");
+    const expires = new Date(
+      Date.now() + SETUP_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000,
+    ).toISOString();
+    await supabase
+      .from("profiles")
+      .update({
+        password_reset_token: token,
+        password_reset_expires: expires,
+      })
+      .eq("id", args.clientId);
+    accessUrl = `${root}/reset-password?token=${token}`;
+  }
 
   try {
     await sendFormationAccess(args.clientEmail, {
-      client_name: args.clientFirstName ?? args.clientEmail,
+      client_name: args.clientFirstName ?? "",
       formation_title: args.formationTitle,
       access_url: accessUrl,
       is_new_account: args.isNewAccount,
     });
-  } catch {
-    // Non-blocking: enrollment already persisted. Admin can resend manually.
+  } catch (err) {
+    // Non-blocking: enrollment already persisted. Log so admin can diagnose
+    // and resend manually if needed.
+    console.error("[manualEnroll] sendFormationAccess failed:", err);
   }
 
   await supabase.from("audit_logs").insert({

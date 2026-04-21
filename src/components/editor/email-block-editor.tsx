@@ -207,8 +207,6 @@ export const EmailBlockEditor = ({
   const handleInsertCallout = useCallback((variant: CalloutVariant) => {
     const editor = editorRef.current;
     if (!editor) return;
-    // Dynamic import of the factory keeps this file light — the presets module
-    // re-exports `buildCalloutSectionNode` below, loaded statically.
     editor.chain().focus().insertContent(buildCalloutSectionNode(variant)).run();
   }, []);
 

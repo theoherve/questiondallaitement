@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/table";
 import { EnrollModal } from "./enroll-modal";
 import { unenrollFromFormation } from "@/app/(dashboard)/admin/formations/[id]/enroll-actions";
+import { formatClientName } from "./enrollment-utils";
 
 export type EnrollmentRow = {
   id: string;
@@ -48,11 +49,6 @@ type EnrollmentsSheetProps = {
   formationId: string;
   formationTitle: string;
   enrollments: EnrollmentRow[];
-};
-
-const clientLabel = (c: EnrollmentRow["client"]) => {
-  const name = [c.first_name, c.last_name].filter(Boolean).join(" ").trim();
-  return name.length > 0 ? name : c.email;
 };
 
 export const EnrollmentsSheet = ({
@@ -150,7 +146,7 @@ export const EnrollmentsSheet = ({
                           href={`/admin/utilisateurs/${e.client.id}`}
                           className="truncate font-medium hover:underline"
                         >
-                          {clientLabel(e.client)}
+                          {formatClientName(e.client)}
                         </Link>
                         <span className="truncate text-xs text-muted-foreground">
                           {e.client.email}

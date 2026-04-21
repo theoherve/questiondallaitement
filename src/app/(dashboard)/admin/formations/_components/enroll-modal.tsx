@@ -22,16 +22,12 @@ import {
   manualEnrollNewClient,
   type ClientSearchResult,
 } from "@/app/(dashboard)/admin/formations/[id]/enroll-actions";
+import { formatClientName } from "./enrollment-utils";
 
 type EnrollModalProps = {
   formationId: string;
   formationTitle: string;
   trigger?: React.ReactNode;
-};
-
-const displayName = (c: ClientSearchResult) => {
-  const name = [c.first_name, c.last_name].filter(Boolean).join(" ").trim();
-  return name.length > 0 ? name : c.email;
 };
 
 export const EnrollModal = ({
@@ -162,7 +158,6 @@ export const EnrollModal = ({
                   onChange={(e) => handleQueryChange(e.target.value)}
                   placeholder="alice@example.fr"
                   className="pl-9"
-                  autoFocus
                 />
               </div>
             </div>
@@ -185,7 +180,7 @@ export const EnrollModal = ({
                   className="flex items-center justify-between rounded-md border px-3 py-2 hover:bg-accent"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{displayName(c)}</p>
+                    <p className="truncate text-sm font-medium">{formatClientName(c)}</p>
                     <p className="flex items-center gap-2 truncate text-xs text-muted-foreground">
                       <Mail className="h-3 w-3" />
                       {c.email}
