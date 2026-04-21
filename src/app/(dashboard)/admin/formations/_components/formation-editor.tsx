@@ -23,8 +23,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { FileUpload } from "@/components/ui/file-upload";
 import { WysiwygEditor } from "@/components/editor/wysiwyg-editor";
 import { SectionEditor } from "./section-editor";
@@ -44,6 +50,7 @@ import {
   Trash2,
   Plus,
   ArrowLeft,
+  MoreHorizontal,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -211,127 +218,160 @@ export const FormationEditor = ({
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header — sticky for always-on-hand actions */}
+      <div className="sticky top-0 z-20 -mx-4 border-b border-border/60 bg-background-beige/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background-beige/80">
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon">
+          <Button asChild variant="ghost" size="icon" className="shrink-0">
             <Link href="/admin/formations" aria-label="Retour" tabIndex={0}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <h1 className="font-serif text-2xl font-bold text-primary-green">
-            {formation.title}
-          </h1>
-          <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
-        </div>
 
-        <div className="flex items-center gap-2">
-          {headerActions}
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/admin/formations/${formation.id}/preview`}>
-              <Eye className="mr-2 h-4 w-4" />
-              Preview
-            </Link>
-          </Button>
-          {formation.status === "draft" && (
-            <Dialog open={statusDialogOpen && pendingStatus === "published"} onOpenChange={(o) => { setStatusDialogOpen(o); if (!o) setPendingStatus(null); }}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPendingStatus("published")}
-                >
-                  <Globe className="mr-2 h-4 w-4" />
-                  Publier
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Publier la formation ?</DialogTitle>
-                  <DialogDescription>
-                    La formation sera visible publiquement.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setStatusDialogOpen(false)}>
-                    Annuler
-                  </Button>
-                  <Button
-                    className="bg-primary-red hover:bg-primary-red-dark"
-                    onClick={() => handleStatusChange("published")}
-                  >
-                    Publier
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
-
-          {formation.status === "published" && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setPendingStatus("draft");
-                  handleStatusChange("draft");
-                }}
-              >
-                <EyeOff className="mr-2 h-4 w-4" />
-                Dépublier
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setPendingStatus("archived");
-                  handleStatusChange("archived");
-                }}
-              >
-                <Archive className="mr-2 h-4 w-4" />
-                Archiver
-              </Button>
-            </>
-          )}
-
-          {formation.status === "archived" && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleStatusChange("draft")}
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <h1
+              className="truncate font-serif text-xl font-bold text-primary-green"
+              title={formation.title}
             >
-              Restaurer en brouillon
-            </Button>
-          )}
+              {formation.title}
+            </h1>
+            <Badge variant={statusConfig.variant} className="shrink-0">
+              {statusConfig.label}
+            </Badge>
+          </div>
 
-          {/* Delete */}
-          <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Supprimer">
-                <Trash2 className="h-4 w-4 text-red-500" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Supprimer la formation ?</DialogTitle>
-                <DialogDescription>
-                  La formation sera archivée et ne sera plus visible.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
+          <div className="flex shrink-0 items-center gap-2">
+            {headerActions}
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/admin/formations/${formation.id}/preview`}>
+                <Eye className="mr-2 h-4 w-4" />
+                Preview
+              </Link>
+            </Button>
+
+            {/* Status + destructive actions regrouped in a single menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  onClick={() => setDeleteDialogOpen(false)}
+                  size="icon"
+                  aria-label="Plus d'actions"
                 >
-                  Annuler
+                  <MoreHorizontal className="h-4 w-4" />
                 </Button>
-                <Button variant="destructive" onClick={handleDelete}>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {formation.status === "draft" && (
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setPendingStatus("published");
+                      setStatusDialogOpen(true);
+                    }}
+                  >
+                    <Globe className="mr-2 h-4 w-4" />
+                    Publier
+                  </DropdownMenuItem>
+                )}
+                {formation.status === "published" && (
+                  <>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setPendingStatus("draft");
+                        handleStatusChange("draft");
+                      }}
+                    >
+                      <EyeOff className="mr-2 h-4 w-4" />
+                      Dépublier
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setPendingStatus("archived");
+                        handleStatusChange("archived");
+                      }}
+                    >
+                      <Archive className="mr-2 h-4 w-4" />
+                      Archiver
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {formation.status === "archived" && (
+                  <DropdownMenuItem
+                    onSelect={() => handleStatusChange("draft")}
+                  >
+                    <EyeOff className="mr-2 h-4 w-4" />
+                    Restaurer en brouillon
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
                   Supprimer
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
+
+        {/* Publish confirmation dialog — lives outside the menu so it remains reachable */}
+        <Dialog
+          open={statusDialogOpen && pendingStatus === "published"}
+          onOpenChange={(o) => {
+            setStatusDialogOpen(o);
+            if (!o) setPendingStatus(null);
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Publier la formation ?</DialogTitle>
+              <DialogDescription>
+                La formation sera visible publiquement.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setStatusDialogOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                className="bg-primary-red hover:bg-primary-red-dark"
+                onClick={() => handleStatusChange("published")}
+              >
+                Publier
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete confirmation dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Supprimer la formation ?</DialogTitle>
+              <DialogDescription>
+                La formation sera archivée et ne sera plus visible.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDeleteDialogOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button variant="destructive" onClick={handleDelete}>
+                Supprimer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Metadata form */}
