@@ -19,7 +19,7 @@ import { Plus, Eye, Pencil, Mail, FileText, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { SyncButton } from "./_components/sync-button";
-import { TemplatesOverflowMenu } from "./_components/restore-templates-button";
+import { TemplatesOverflowMenu } from "./_components/templates-overflow-menu";
 
 export const metadata: Metadata = {
   title: "Marketing",

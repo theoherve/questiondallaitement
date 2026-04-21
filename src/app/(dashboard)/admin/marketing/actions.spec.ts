@@ -1,0 +1,202 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// ─── Mocks ────────────────────────────────────────────────────
+
+const mockSingle = vi.fn();
+const mockMaybeSingle = vi.fn();
+const mockSelect = vi.fn();
+const mockInsert = vi.fn();
+const mockUpdate = vi.fn();
+const mockEq = vi.fn();
+
+const buildChain = () => ({
+  select: mockSelect,
+  insert: mockInsert,
+  update: mockUpdate,
+  eq: mockEq,
+  single: mockSingle,
+  maybeSingle: mockMaybeSingle,
+});
+
+const mockFrom = vi.fn(() => buildChain());
+
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => ({ from: mockFrom }),
+}));
+
+vi.mock("@/lib/auth", () => ({
+  getSessionUser: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn((url: string) => {
+    throw new Error(`NEXT_REDIRECT:${url}`);
+  }),
+}));
+
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
+
+const mockRenderBlockEmail = vi.fn();
+vi.mock("@/lib/emails/render-block-email", () => ({
+  renderBlockEmail: (...args: unknown[]) => mockRenderBlockEmail(...args),
+}));
+
+import { restoreTemplateDesign, restoreDefaultTemplates } from "./actions";
+import { DEFAULT_TEMPLATE_DESIGNS } from "@/lib/emails/default-template-designs";
+import { getSessionUser } from "@/lib/auth";
+
+const ADMIN = { id: "a1b2c3d4-e5f6-4a7b-8c9d-e0f1a2b3c4d5", roles: ["admin"] };
+const TEMPLATE_ID = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
+
+const setAuth = (user: unknown) => {
+  vi.mocked(getSessionUser).mockResolvedValue(user as never);
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  // Fluent defaults — chain-returning methods yield the chain, resolvers yield
+  // empty results so tests override only what they assert on.
+  mockSelect.mockReturnValue(buildChain());
+  mockEq.mockReturnValue(buildChain());
+  mockInsert.mockReturnValue(buildChain());
+  mockUpdate.mockReturnValue(buildChain());
+  mockSingle.mockResolvedValue({ data: null, error: null });
+  mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+  mockRenderBlockEmail.mockResolvedValue("<html>rendered</html>");
+  setAuth(ADMIN);
+});
+
+// ─── Role guard ───────────────────────────────────────────────
+
+describe("restoreTemplateDesign — guard", () => {
+  it("redirige si utilisateur non authentifié", async () => {
+    setAuth(null);
+    await expect(restoreTemplateDesign("welcome")).rejects.toThrow(
+      /NEXT_REDIRECT/,
+    );
+  });
+
+  it("redirige un non-admin", async () => {
+    setAuth({ id: "c", roles: ["client"] });
+    await expect(restoreTemplateDesign("welcome")).rejects.toThrow(
+      /NEXT_REDIRECT/,
+    );
+  });
+});
+
+// ─── restoreTemplateDesign ────────────────────────────────────
+
+describe("restoreTemplateDesign", () => {
+  it("refuse un nom sans design par défaut", async () => {
+    const result = await restoreTemplateDesign("nom-inconnu");
+    expect(result).toEqual({
+      success: false,
+      error: "Aucun design par défaut pour ce template.",
+    });
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it("met à jour la ligne existante quand le template existe", async () => {
+    mockMaybeSingle.mockResolvedValueOnce({
+      data: { id: TEMPLATE_ID },
+      error: null,
+    });
+    // update().eq() returns { error: null } after the last eq
+    mockEq.mockImplementationOnce(() => buildChain()) // select().eq("name",...)
+      .mockImplementationOnce(() => ({ error: null })); // update().eq("id",...)
+
+    const result = await restoreTemplateDesign("welcome");
+
+    expect(result).toEqual({ success: true, data: { id: TEMPLATE_ID } });
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(mockInsert).not.toHaveBeenCalled();
+
+    const payload = mockUpdate.mock.calls[0][0];
+    expect(payload).toMatchObject({
+      name: "welcome",
+      subject: "Bienvenue sur Question d'Allaitement",
+      body_html: "<html>rendered</html>",
+      variables: ["client_name", "dashboard_url"],
+      type: "transactional",
+    });
+    expect(payload.body_design).toBeDefined();
+  });
+
+  it("insère une nouvelle ligne quand le template n'existe pas encore", async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    mockSingle.mockResolvedValueOnce({
+      data: { id: "new-id" },
+      error: null,
+    });
+
+    const result = await restoreTemplateDesign("welcome");
+
+    expect(result).toEqual({ success: true, data: { id: "new-id" } });
+    expect(mockInsert).toHaveBeenCalledTimes(1);
+    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(mockInsert.mock.calls[0][0]).toMatchObject({
+      name: "welcome",
+      type: "transactional",
+    });
+  });
+
+  it("retourne une erreur quand l'update échoue", async () => {
+    mockMaybeSingle.mockResolvedValueOnce({
+      data: { id: TEMPLATE_ID },
+      error: null,
+    });
+    mockEq
+      .mockImplementationOnce(() => buildChain())
+      .mockImplementationOnce(() => ({ error: { message: "db down" } }));
+
+    const result = await restoreTemplateDesign("welcome");
+
+    expect(result).toEqual({
+      success: false,
+      error: "Erreur lors de la restauration.",
+    });
+  });
+
+  it("retourne une erreur quand l'insert échoue", async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    mockSingle.mockResolvedValueOnce({
+      data: null,
+      error: { message: "constraint violation" },
+    });
+
+    const result = await restoreTemplateDesign("welcome");
+
+    expect(result).toEqual({
+      success: false,
+      error: "Erreur lors de la restauration.",
+    });
+  });
+});
+
+// ─── restoreDefaultTemplates ──────────────────────────────────
+
+describe("restoreDefaultTemplates", () => {
+  it("itère sur chaque design par défaut et compte les succès", async () => {
+    // Every lookup finds an existing row, every update succeeds.
+    mockMaybeSingle.mockResolvedValue({
+      data: { id: TEMPLATE_ID },
+      error: null,
+    });
+    mockEq.mockImplementation(() => {
+      // Alternates: select().eq(name,...) returns chain, update().eq(id,...) returns { error:null }
+      // Simplest: always return a value that satisfies both paths.
+      return Object.assign(buildChain(), { error: null });
+    });
+
+    const result = await restoreDefaultTemplates();
+
+    const expectedCount = Object.keys(DEFAULT_TEMPLATE_DESIGNS).length;
+    expect(result).toEqual({
+      success: true,
+      data: { updated: expectedCount },
+    });
+    expect(mockRenderBlockEmail).toHaveBeenCalledTimes(expectedCount);
+  });
+});

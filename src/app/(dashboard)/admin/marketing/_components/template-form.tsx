@@ -38,6 +38,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { EmailTemplate } from "@/types/database";
 
+const MIN_LEGACY_HTML_LENGTH = 10;
+
 type TemplateFormProps = {
   template?: EmailTemplate | null;
   /** True when a bundled default design exists for this template name. */
@@ -85,15 +87,20 @@ export const TemplateForm = ({
     typeof formData.body_design === "object" &&
     Object.keys(formData.body_design as Record<string, unknown>).length > 0;
   const hasLegacyHtml =
-    !hasDesign && !!formData.body_html && formData.body_html.length > 10;
+    !hasDesign &&
+    !!formData.body_html &&
+    formData.body_html.length > MIN_LEGACY_HTML_LENGTH;
 
   const handleSave = () => {
     if (!formData.name.trim() || !formData.subject.trim()) {
       toast.error("Le nom et l'objet sont obligatoires.");
       return;
     }
-    const hasDesign = formData.body_design && Object.keys(formData.body_design).length > 0;
-    if (!hasDesign && (!formData.body_html || formData.body_html.length < 10)) {
+    if (
+      !hasDesign &&
+      (!formData.body_html ||
+        formData.body_html.length < MIN_LEGACY_HTML_LENGTH)
+    ) {
       toast.error("Le contenu du template est trop court.");
       return;
     }
