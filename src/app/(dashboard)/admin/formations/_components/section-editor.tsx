@@ -223,7 +223,7 @@ export const SectionEditor = ({
             <Button
               size="icon"
               variant="ghost"
-              className="h-8 w-8 cursor-pointer"
+              className="h-8 w-8"
               onClick={handleRenameSection}
               aria-label="Confirmer"
             >
@@ -232,7 +232,7 @@ export const SectionEditor = ({
             <Button
               size="icon"
               variant="ghost"
-              className="h-8 w-8 cursor-pointer"
+              className="h-8 w-8"
               onClick={() => {
                 setIsEditing(false);
                 setEditTitle(section.title);
@@ -263,7 +263,7 @@ export const SectionEditor = ({
           <Button
             size="icon"
             variant="ghost"
-            className="h-8 w-8 cursor-pointer"
+            className="h-8 w-8"
             onClick={() => setIsEditing(true)}
             aria-label="Renommer la section"
           >
@@ -274,7 +274,7 @@ export const SectionEditor = ({
             <Button
               size="icon"
               variant="ghost"
-              className="h-8 w-8 cursor-pointer"
+              className="h-8 w-8"
               onClick={() => setDeleteDialogOpen(true)}
               aria-label="Supprimer la section"
             >

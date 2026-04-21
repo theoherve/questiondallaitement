@@ -521,7 +521,8 @@ const TEMPLATE_DEFAULT_SUBJECTS: Record<string, string> = {
   booking_confirmation: "Votre réservation est confirmée — {{date}}",
   booking_reminder: "Rappel : votre consultation demain à {{time}}",
   booking_cancelled: "Votre réservation du {{date}} a été annulée",
-  formation_access: "Votre formation « {{formation_title}} » est disponible",
+  formation_access:
+    "Votre accompagnement « {{formation_title}} » est disponible",
   welcome: "Bienvenue sur Question d'Allaitement",
   password_reset: "Réinitialisation de votre mot de passe",
 };

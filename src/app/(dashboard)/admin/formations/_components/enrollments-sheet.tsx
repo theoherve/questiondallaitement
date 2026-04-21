@@ -75,7 +75,7 @@ export const EnrollmentsSheet = ({
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 cursor-pointer">
+        <Button variant="outline" size="sm" className="gap-2">
           <Users className="h-4 w-4" />
           Participants
           <Badge
