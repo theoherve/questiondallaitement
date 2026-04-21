@@ -13,9 +13,20 @@ import {
 import type { JSONContent } from "@maily-to/render";
 import { uploadFileAction } from "@/lib/storage/actions";
 import { Button } from "@/components/ui/button";
-import { Eye, Crop } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Eye, Crop, Info, Lightbulb, AlertTriangle, XCircle, MessageSquare } from "lucide-react";
 import { EmailPreviewDialog } from "./email-preview-dialog";
 import { ImageCropDialog } from "./image-crop-dialog";
+import {
+  CALLOUT_PRESETS,
+  buildCalloutSectionNode,
+  type CalloutVariant,
+} from "./email-callout-presets";
 import {
   hasBlobImageSrc,
   stripBlobImageSrcs,
@@ -45,6 +56,7 @@ type TiptapEditorLike = {
           attrs: Record<string, unknown>,
         ) => { run: () => boolean };
       };
+      insertContent: (content: unknown) => { run: () => boolean };
     };
   };
 };
@@ -192,6 +204,12 @@ export const EmailBlockEditor = ({
     syncSelection();
   }, []);
 
+  const handleInsertCallout = useCallback((variant: CalloutVariant) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.chain().focus().insertContent(buildCalloutSectionNode(variant)).run();
+  }, []);
+
   const handleCropped = useCallback((url: string) => {
     const editor = editorRef.current;
     if (!editor || !selectedImage) return;
@@ -208,7 +226,33 @@ export const EmailBlockEditor = ({
       className={`email-block-editor ${className ?? ""}`}
       // Maily ships its own styles under mly: prefix — no Tailwind conflict.
     >
-      <div className="mb-2 flex items-center justify-end gap-2">
+      <div className="mb-2 flex flex-wrap items-center justify-end gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="outline" size="sm">
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Insérer un encart
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleInsertCallout("info")}>
+              <Info className="mr-2 h-4 w-4 text-primary-green" />
+              {CALLOUT_PRESETS.info.label}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleInsertCallout("tip")}>
+              <Lightbulb className="mr-2 h-4 w-4 text-primary-red" />
+              {CALLOUT_PRESETS.tip.label}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleInsertCallout("warning")}>
+              <AlertTriangle className="mr-2 h-4 w-4 text-amber-600" />
+              {CALLOUT_PRESETS.warning.label}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleInsertCallout("error")}>
+              <XCircle className="mr-2 h-4 w-4 text-red-700" />
+              {CALLOUT_PRESETS.error.label}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button
           type="button"
           variant="outline"

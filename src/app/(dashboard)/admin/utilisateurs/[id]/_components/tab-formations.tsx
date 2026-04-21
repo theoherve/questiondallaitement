@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EnrollToFormationModal } from "@/app/(dashboard)/admin/utilisateurs/_components/enroll-to-formation-modal";
 
 type Enrollment = {
   id: string;
@@ -18,15 +19,18 @@ type Enrollment = {
 
 export const TabFormations = ({
   enrollments,
+  userId,
 }: {
   enrollments: Enrollment[];
+  userId: string;
 }) => {
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-primary-green">
           Formations ({enrollments.length})
         </CardTitle>
+        <EnrollToFormationModal clientId={userId} />
       </CardHeader>
       <CardContent>
         {enrollments.length === 0 ? (

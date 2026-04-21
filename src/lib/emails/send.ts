@@ -124,15 +124,22 @@ export const sendFormationAccess = async (
   variables: {
     client_name: string;
     formation_title: string;
+    access_url?: string;
+    is_new_account?: boolean;
   },
 ) => {
   const template = await getTemplate("formation_access");
   if (!template) return;
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const accessUrl = variables.access_url ?? `${siteUrl}/espace-client/formations`;
   const { subject, html } = await renderTemplateRow(template, {
-    ...variables,
-    formation_url: `${siteUrl}/espace-client/formations`,
+    client_name: variables.client_name,
+    formation_title: variables.formation_title,
+    access_url: accessUrl,
+    // Legacy var retained for back-compat with older template copies.
+    formation_url: accessUrl,
+    is_new_account: variables.is_new_account ? "true" : "false",
   });
   await sendTransactionalEmail({ to: clientEmail, subject, html });
 };
