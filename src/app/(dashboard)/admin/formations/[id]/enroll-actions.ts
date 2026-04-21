@@ -44,7 +44,7 @@ export const searchClientsForEnroll = async (
 
   const parsedFormationId = uuidSchema.safeParse(formationId);
   if (!parsedFormationId.success) {
-    return { success: false, error: "Formation invalide" };
+    return { success: false, error: "Accompagnement invalide" };
   }
 
   const trimmed = query.trim();
@@ -120,7 +120,7 @@ const insertEnrollmentAndNotify = async (args: {
   if (existing) {
     return {
       success: false,
-      error: "Cet utilisateur est déjà inscrit à cette formation",
+      error: "Cet utilisateur est déjà inscrit à cet accompagnement",
     };
   }
 
@@ -223,7 +223,7 @@ export const manualEnrollExistingClient = async (
 
   const formation = await loadFormationTitle(parsedFormation.data);
   if (!formation) {
-    return { success: false, error: "Formation introuvable" };
+    return { success: false, error: "Accompagnement introuvable" };
   }
 
   const supabase = createAdminClient();
@@ -257,7 +257,7 @@ export const manualEnrollNewClient = async (
 
   const parsedFormation = uuidSchema.safeParse(formationId);
   if (!parsedFormation.success) {
-    return { success: false, error: "Formation invalide" };
+    return { success: false, error: "Accompagnement invalide" };
   }
 
   const parsed = newClientSchema.safeParse(input);
@@ -267,7 +267,7 @@ export const manualEnrollNewClient = async (
 
   const formation = await loadFormationTitle(parsedFormation.data);
   if (!formation) {
-    return { success: false, error: "Formation introuvable" };
+    return { success: false, error: "Accompagnement introuvable" };
   }
 
   const supabase = createAdminClient();

@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { AdminFormationCreateForm } from "@/app/(dashboard)/admin/formations/_components/formation-create-form";
 
 export const metadata: Metadata = {
-  title: "Nouvelle formation",
+  title: "Nouvel accompagnement",
 };
 
 const AdminNewFormationPage = async () => {
@@ -44,7 +44,7 @@ const AdminNewFormationPage = async () => {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <h1 className="font-serif text-2xl font-bold text-primary-green">
-        Nouvelle formation
+        Nouvel accompagnement
       </h1>
       <AdminFormationCreateForm consultants={options} />
     </div>

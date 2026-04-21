@@ -536,6 +536,55 @@ const TEMPLATE_DEFAULT_VARIABLES: Record<string, string[]> = {
   password_reset: ["client_name", "reset_url"],
 };
 
+type SupabaseAdmin = ReturnType<typeof createAdminClient>;
+
+const buildDefaultTemplatePayload = async (name: string) => {
+  const design = DEFAULT_TEMPLATE_DESIGNS[name];
+  if (!design) return null;
+  const body_html = await renderBlockEmail(design as JSONContent, {
+    replaceVariables: false,
+  });
+  return {
+    name,
+    subject: TEMPLATE_DEFAULT_SUBJECTS[name] ?? name,
+    body_html,
+    body_design: design,
+    variables: TEMPLATE_DEFAULT_VARIABLES[name] ?? [],
+    type: "transactional" as const,
+  };
+};
+
+const upsertDefaultTemplateByName = async (
+  supabase: SupabaseAdmin,
+  name: string,
+): Promise<{ id: string } | null> => {
+  const payload = await buildDefaultTemplatePayload(name);
+  if (!payload) return null;
+
+  const { data: existing } = await supabase
+    .from("email_templates")
+    .select("id")
+    .eq("name", name)
+    .maybeSingle();
+
+  if (existing?.id) {
+    const { error } = await supabase
+      .from("email_templates")
+      .update(payload)
+      .eq("id", existing.id);
+    if (error) return null;
+    return { id: existing.id };
+  }
+
+  const { data: inserted, error } = await supabase
+    .from("email_templates")
+    .insert(payload)
+    .select("id")
+    .single();
+  if (error || !inserted?.id) return null;
+  return { id: inserted.id };
+};
+
 /**
  * Upsert the bundled brand-styled designs for every seeded transactional
  * template. Idempotent — re-running overwrites design/body_html/subject with
@@ -548,45 +597,38 @@ export const restoreDefaultTemplates = async (): Promise<
   const supabase = createAdminClient();
   let updated = 0;
 
-  for (const [name, design] of Object.entries(DEFAULT_TEMPLATE_DESIGNS)) {
-    const body_html = await renderBlockEmail(design as JSONContent, {
-      replaceVariables: false,
-    });
-    const subject = TEMPLATE_DEFAULT_SUBJECTS[name] ?? name;
-    const variables = TEMPLATE_DEFAULT_VARIABLES[name] ?? [];
-
-    const { data: existing } = await supabase
-      .from("email_templates")
-      .select("id")
-      .eq("name", name)
-      .maybeSingle();
-
-    if (existing?.id) {
-      await supabase
-        .from("email_templates")
-        .update({
-          subject,
-          body_html,
-          body_design: design,
-          variables,
-          type: "transactional",
-        })
-        .eq("id", existing.id);
-    } else {
-      await supabase.from("email_templates").insert({
-        name,
-        subject,
-        body_html,
-        body_design: design,
-        variables,
-        type: "transactional",
-      });
-    }
-    updated++;
+  for (const name of Object.keys(DEFAULT_TEMPLATE_DESIGNS)) {
+    const result = await upsertDefaultTemplateByName(supabase, name);
+    if (result) updated++;
   }
 
   revalidatePath("/admin/marketing");
   return { success: true, data: { updated } };
+};
+
+/**
+ * Restore the bundled default design for a single template identified by name.
+ * Used from the template editor when `body_design` is empty but a bundled
+ * default exists — lets the admin reclaim an editable block version without
+ * reseeding every template.
+ */
+export const restoreTemplateDesign = async (
+  name: string,
+): Promise<ActionResult<{ id: string }>> => {
+  await requireAdmin();
+  if (!DEFAULT_TEMPLATE_DESIGNS[name]) {
+    return { success: false, error: "Aucun design par défaut pour ce template." };
+  }
+
+  const supabase = createAdminClient();
+  const result = await upsertDefaultTemplateByName(supabase, name);
+  if (!result) {
+    return { success: false, error: "Erreur lors de la restauration." };
+  }
+
+  revalidatePath("/admin/marketing");
+  revalidatePath(`/admin/marketing/templates/${result.id}/edit`);
+  return { success: true, data: { id: result.id } };
 };
 
 // ─── Batch Sync ─────────────────────────────────────────────

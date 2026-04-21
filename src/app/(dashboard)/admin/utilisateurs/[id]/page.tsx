@@ -271,7 +271,7 @@ const UserDetailPage = async ({ params }: Props) => {
     timeline.push({
       id: e.id,
       type: "enrollment",
-      title: e.formations?.title ?? "Formation",
+      title: e.formations?.title ?? "Accompagnement",
       subtitle: `Progression: ${e.progress_pct}%`,
       date: e.enrolled_at,
     });
@@ -419,7 +419,7 @@ const UserDetailPage = async ({ params }: Props) => {
           </TabsTrigger>
           <TabsTrigger value="formations">
             <BookOpen className="mr-1.5 h-4 w-4" />
-            Formations
+            Accompagnements
             {enrollmentsWithProgress.length > 0 && (
               <span className="ml-1 text-xs text-muted-foreground">
                 ({enrollmentsWithProgress.length})

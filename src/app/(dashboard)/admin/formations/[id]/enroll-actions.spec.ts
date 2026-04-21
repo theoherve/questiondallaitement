@@ -144,7 +144,7 @@ describe("manualEnrollNewClient — validation", () => {
       first_name: "Alice",
       last_name: "Martin",
     });
-    expect(result).toEqual({ success: false, error: "Formation invalide" });
+    expect(result).toEqual({ success: false, error: "Accompagnement invalide" });
   });
 });
 
@@ -158,6 +158,6 @@ describe("searchClientsForEnroll", () => {
 
   it("refuse un formationId invalide", async () => {
     const result = await searchClientsForEnroll("alice", "pas-uuid");
-    expect(result).toEqual({ success: false, error: "Formation invalide" });
+    expect(result).toEqual({ success: false, error: "Accompagnement invalide" });
   });
 });

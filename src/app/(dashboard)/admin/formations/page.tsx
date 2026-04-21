@@ -20,7 +20,7 @@ import { fr } from "date-fns/locale";
 import { FormationStatusToggle } from "./_components/formation-status-toggle";
 
 export const metadata: Metadata = {
-  title: "Gestion des formations",
+  title: "Gestion des accompagnements",
 };
 
 const formatPrice = (cents: number): string =>
@@ -125,12 +125,12 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-2xl font-bold text-primary-green">
-          Formations
+          Accompagnements
         </h1>
         <Button asChild className="bg-primary-red hover:bg-primary-red-dark">
           <Link href="/admin/formations/nouveau" tabIndex={0}>
             <Plus className="mr-2 h-4 w-4" />
-            Nouvelle formation
+            Nouvel accompagnement
           </Link>
         </Button>
       </div>
@@ -202,7 +202,7 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
 
       {formationsError && (
         <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          Erreur lors du chargement des formations : {formationsError.message}
+          Erreur lors du chargement des accompagnements : {formationsError.message}
         </p>
       )}
 
@@ -225,7 +225,7 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
               {rows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    Aucune formation trouvée. Créez-en une !
+                    Aucun accompagnement trouvé. Créez-en un !
                   </TableCell>
                 </TableRow>
               ) : (

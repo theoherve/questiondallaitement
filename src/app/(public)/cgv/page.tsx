@@ -35,7 +35,7 @@ const CgvPage = () => (
         </h2>
         <ul className="mt-3 list-inside list-disc space-y-1 text-sm">
           <li>
-            <strong>Formations en ligne :</strong> accès à des contenus
+            <strong>Accompagnements en ligne :</strong> accès à des contenus
             pédagogiques (vidéos, textes, quiz, fichiers téléchargeables) après
             achat
           </li>
@@ -63,11 +63,11 @@ const CgvPage = () => (
 
       <section>
         <h2 className="font-serif text-xl font-semibold text-primary-green">
-          4. Formations en ligne
+          4. Accompagnements en ligne
         </h2>
         <p className="mt-3 text-sm">
-          L&apos;accès aux formations est illimité dans le temps après achat.
-          Le contenu des formations est protégé par le droit d&apos;auteur et
+          L&apos;accès aux accompagnements est illimité dans le temps après achat.
+          Le contenu des accompagnements est protégé par le droit d&apos;auteur et
           ne peut être reproduit, partagé ou redistribué sans autorisation
           écrite préalable. Tout accès est strictement personnel et
           nominatif.
@@ -107,7 +107,7 @@ const CgvPage = () => (
           Conformément à l&apos;article L.221-28 du Code de la consommation,
           le droit de rétractation ne s&apos;applique pas aux contenus
           numériques fournis sur support immatériel dont l&apos;exécution a
-          commencé (formations en ligne consultées). Pour les consultations
+          commencé (accompagnements en ligne consultés). Pour les consultations
           non encore effectuées, le droit de rétractation de 14 jours
           s&apos;applique, sous réserve que la consultation n&apos;ait pas
           encore eu lieu.

@@ -32,7 +32,7 @@ const ICON_MAP = {
 
 const TYPE_LABEL: Record<string, string> = {
   booking: "Réservation",
-  enrollment: "Formation",
+  enrollment: "Accompagnement",
   payment: "Paiement",
   event: "Événement",
   audit: "Action",

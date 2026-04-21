@@ -28,20 +28,20 @@ export const TabFormations = ({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-primary-green">
-          Formations ({enrollments.length})
+          Accompagnements ({enrollments.length})
         </CardTitle>
         <EnrollToFormationModal clientId={userId} />
       </CardHeader>
       <CardContent>
         {enrollments.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Aucune formation achetée.
+            Aucun accompagnement acheté.
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Formation</TableHead>
+                <TableHead>Accompagnement</TableHead>
                 <TableHead>Date d&apos;inscription</TableHead>
                 <TableHead>Progression</TableHead>
               </TableRow>
@@ -79,7 +79,7 @@ export const TabFormations = ({
                           variant="outline"
                           className="border-green-200 text-green-700"
                         >
-                          Terminée
+                          Terminé
                         </Badge>
                       )}
                     </div>

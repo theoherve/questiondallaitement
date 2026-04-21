@@ -7,10 +7,11 @@ import { Loader2 } from "lucide-react";
 import { markBlockComplete, markBlockIncomplete } from "../actions";
 
 type ProgressToggleProps = {
-  enrollmentId: string;
+  enrollmentId?: string;
   blockId: string;
   isCompleted: boolean;
   onToggle: (blockId: string, completed: boolean) => void;
+  readOnly?: boolean;
 };
 
 export const ProgressToggle = ({
@@ -18,11 +19,13 @@ export const ProgressToggle = ({
   blockId,
   isCompleted,
   onToggle,
+  readOnly = false,
 }: ProgressToggleProps) => {
   const [isPending, startTransition] = useTransition();
 
   const handleChange = (checked: boolean) => {
     onToggle(blockId, checked);
+    if (readOnly || !enrollmentId) return;
     startTransition(async () => {
       if (checked) {
         await markBlockComplete(enrollmentId, blockId);

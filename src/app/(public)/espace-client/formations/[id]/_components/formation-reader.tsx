@@ -26,10 +26,12 @@ type Section = {
 type FormationReaderProps = {
   formation: { id: string; title: string; description: string | null };
   sections: Section[];
-  enrollmentId: string;
+  enrollmentId?: string;
   completedBlockIds: string[];
   totalBlocks: number;
   completedCount: number;
+  readOnly?: boolean;
+  backHref?: string;
 };
 
 export const FormationReader = ({
@@ -38,6 +40,8 @@ export const FormationReader = ({
   enrollmentId,
   completedBlockIds: initialCompleted,
   totalBlocks,
+  readOnly = false,
+  backHref = "/espace-client/formations",
 }: FormationReaderProps) => {
   const [activeSection, setActiveSection] = useState(0);
   const [completedIds, setCompletedIds] = useState(new Set(initialCompleted));
@@ -73,11 +77,7 @@ export const FormationReader = ({
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button asChild variant="ghost" size="icon">
-          <Link
-            href="/espace-client/formations"
-            aria-label="Retour"
-            tabIndex={0}
-          >
+          <Link href={backHref} aria-label="Retour" tabIndex={0}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -154,6 +154,7 @@ export const FormationReader = ({
                         blockId={block.id}
                         isCompleted={completedIds.has(block.id)}
                         onToggle={handleToggle}
+                        readOnly={readOnly}
                       />
                     </div>
                   </CardContent>

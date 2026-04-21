@@ -346,7 +346,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
-                    Formations
+                    Accompagnements
                   </p>
                   <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-5xl">
                     Accompagnements
@@ -797,7 +797,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-background-beige/70">
               Prenez rendez-vous pour une consultation personnalisée, ou
-              explorez nos formations à votre rythme.
+              explorez nos accompagnements à votre rythme.
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Button

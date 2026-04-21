@@ -19,7 +19,7 @@ import { Plus, Eye, Pencil, Mail, FileText, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { SyncButton } from "./_components/sync-button";
-import { RestoreTemplatesButton } from "./_components/restore-templates-button";
+import { TemplatesOverflowMenu } from "./_components/templates-overflow-menu";
 
 export const metadata: Metadata = {
   title: "Marketing",
@@ -65,10 +65,16 @@ const MarketingPage = async () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-serif text-2xl font-bold text-primary-green">
-          Marketing
-        </h1>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="font-serif text-2xl font-bold text-primary-green">
+            Marketing
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Gère tes campagnes marketing et les templates transactionnels envoyés
+            automatiquement.
+          </p>
+        </div>
         <div className="flex items-center gap-2">
           <SyncButton />
           <Button asChild>
@@ -97,11 +103,22 @@ const MarketingPage = async () => {
           <Card>
             <CardContent className="p-0">
               {campaigns.length === 0 ? (
-                <div className="py-12 text-center">
-                  <Mail className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-                  <p className="text-muted-foreground">
-                    Aucune campagne pour le moment.
-                  </p>
+                <div className="flex flex-col items-center gap-3 py-12 text-center">
+                  <Mail className="h-10 w-10 text-muted-foreground/40" />
+                  <div className="space-y-1">
+                    <p className="font-medium text-primary-green">
+                      Aucune campagne pour le moment
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Crée ta première campagne pour l&apos;envoyer à une liste Brevo.
+                    </p>
+                  </div>
+                  <Button asChild className="mt-2">
+                    <Link href="/admin/marketing/campagnes/nouveau">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Nouvelle campagne
+                    </Link>
+                  </Button>
                 </div>
               ) : (
                 <Table>
@@ -182,22 +199,33 @@ const MarketingPage = async () => {
         {/* ─── Templates Tab ──────────────────────── */}
         <TabsContent value="templates" className="mt-4">
           <div className="mb-4 flex justify-end gap-2">
-            <RestoreTemplatesButton />
             <Button asChild variant="outline">
               <Link href="/admin/marketing/templates/nouveau">
                 <Plus className="mr-2 h-4 w-4" />
                 Nouveau template
               </Link>
             </Button>
+            <TemplatesOverflowMenu />
           </div>
           <Card>
             <CardContent className="p-0">
               {templates.length === 0 ? (
-                <div className="py-12 text-center">
-                  <FileText className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-                  <p className="text-muted-foreground">
-                    Aucun template pour le moment.
-                  </p>
+                <div className="flex flex-col items-center gap-3 py-12 text-center">
+                  <FileText className="h-10 w-10 text-muted-foreground/40" />
+                  <div className="space-y-1">
+                    <p className="font-medium text-primary-green">
+                      Aucun template pour le moment
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Crée un template réutilisable pour tes campagnes.
+                    </p>
+                  </div>
+                  <Button asChild variant="outline" className="mt-2">
+                    <Link href="/admin/marketing/templates/nouveau">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Nouveau template
+                    </Link>
+                  </Button>
                 </div>
               ) : (
                 <Table>

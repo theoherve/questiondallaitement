@@ -114,7 +114,7 @@ const CrmPage = async ({
                 <TableRow>
                   <TableHead>Client</TableHead>
                   <TableHead className="text-center">Consultations</TableHead>
-                  <TableHead className="text-center">Formations</TableHead>
+                  <TableHead className="text-center">Accompagnements</TableHead>
                   <TableHead>Tags</TableHead>
                   <TableHead className="text-center">Score</TableHead>
                 </TableRow>
@@ -175,7 +175,7 @@ const CrmPage = async ({
             <p className="py-8 text-center text-muted-foreground">
               {params.q || params.tag_id
                 ? "Aucun contact trouvé avec ces filtres."
-                : "Aucun contact pour le moment. Les clients apparaîtront ici après leur première réservation ou inscription à une formation."}
+                : "Aucun contact pour le moment. Les clients apparaîtront ici après leur première réservation ou inscription à un accompagnement."}
             </p>
           )}
         </CardContent>

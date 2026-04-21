@@ -18,7 +18,7 @@ export const generateMetadata = async ({
     .eq("id", id)
     .single();
 
-  return { title: data?.title ?? "Formation" };
+  return { title: data?.title ?? "Accompagnement" };
 };
 
 const FormationReaderPage = async ({ params }: Props) => {

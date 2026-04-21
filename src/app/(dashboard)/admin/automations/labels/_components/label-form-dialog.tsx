@@ -139,12 +139,12 @@ export const LabelFormDialog = ({ formations, label }: Props) => {
                 onChange={(e) => setAutoAssign(e.target.checked)}
                 className="rounded"
               />
-              Auto-assigner à l&apos;achat d&apos;une formation
+              Auto-assigner à l&apos;achat d&apos;un accompagnement
             </label>
             {autoAssign && (
               <div className="ml-6 space-y-2">
                 <p className="text-xs text-muted-foreground">
-                  Laisser vide = toute formation
+                  Laisser vide = tout accompagnement
                 </p>
                 {formations.map((f) => (
                   <label key={f.id} className="flex items-center gap-2 text-sm">

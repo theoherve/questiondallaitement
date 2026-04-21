@@ -89,7 +89,7 @@ const ConsultantDashboardPage = async () => {
           icon={CalendarDays}
         />
         <StatCard
-          title="Formations"
+          title="Accompagnements"
           value={formationsResult.count ?? 0}
           icon={BookOpen}
         />

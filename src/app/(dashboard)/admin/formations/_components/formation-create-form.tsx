@@ -68,7 +68,7 @@ export const AdminFormationCreateForm = ({
     setIsSubmitting(false);
 
     if (result.success && result.data) {
-      toast.success("Formation créée");
+      toast.success("Accompagnement créé");
       router.push(`/admin/formations/${result.data.id}/edit`);
     } else {
       toast.error(result.error ?? "Erreur lors de la création");
@@ -165,7 +165,7 @@ export const AdminFormationCreateForm = ({
         disabled={isSubmitting}
         className="w-full bg-primary-red hover:bg-primary-red-dark"
       >
-        {isSubmitting ? "Création en cours..." : "Créer la formation"}
+        {isSubmitting ? "Création en cours..." : "Créer l'accompagnement"}
       </Button>
     </form>
   );

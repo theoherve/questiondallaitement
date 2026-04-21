@@ -50,7 +50,7 @@ export const clientNav: NavItem[] = [
     iconKey: "LayoutDashboard",
   },
   {
-    title: "Mes formations",
+    title: "Mes accompagnements",
     href: "/espace-client/formations",
     iconKey: "BookOpen",
   },
@@ -69,7 +69,7 @@ export const consultantNav: NavItem[] = [
     iconKey: "LayoutDashboard",
   },
   {
-    title: "Formations",
+    title: "Accompagnements",
     href: "/espace-consultante/formations",
     iconKey: "BookOpen",
   },
@@ -106,7 +106,7 @@ export const adminNav: NavItem[] = [
   { title: "Tableau de bord", href: "/admin", iconKey: "LayoutDashboard" },
   { title: "Utilisateurs", href: "/admin/utilisateurs", iconKey: "Users" },
   { title: "Consultantes", href: "/admin/consultantes", iconKey: "Users" },
-  { title: "Formations", href: "/admin/formations", iconKey: "BookOpen" },
+  { title: "Accompagnements", href: "/admin/formations", iconKey: "BookOpen" },
   { title: "Blog", href: "/admin/blog", iconKey: "FileText" },
   { title: "Événements", href: "/admin/evenements", iconKey: "CalendarClock" },
   { title: "Replay Lives", href: "/admin/replay-lives", iconKey: "Video" },

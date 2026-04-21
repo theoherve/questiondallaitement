@@ -190,7 +190,7 @@ const ConsultantAnalyticsPage = async ({
           icon={CalendarDays}
         />
         <StatCard
-          title="Inscriptions formations"
+          title="Inscriptions accompagnements"
           value={totalEnrollments}
           description={`${periodEnrollments} sur la période`}
           icon={GraduationCap}

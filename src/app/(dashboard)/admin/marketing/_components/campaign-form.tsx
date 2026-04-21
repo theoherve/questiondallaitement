@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { EmailBlockEditor } from "@/components/editor/email-block-editor";
 import { toast } from "sonner";
 import type { JSONContent } from "@maily-to/render";
-import { ArrowLeft, Send, Save, Trash2, Clock } from "lucide-react";
+import { ArrowLeft, Send, Save, Trash2, Clock, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import {
   Dialog,
@@ -21,6 +21,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { EmailCampaign, ConsultantBrevoList } from "@/types/database";
 
 type CampaignFormProps = {
@@ -163,33 +169,6 @@ export const CampaignForm = ({
         </div>
         {isDraft && (
           <div className="flex items-center gap-2">
-            {isEdit && onDelete && (
-              <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="text-destructive">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Supprimer
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Supprimer la campagne ?</DialogTitle>
-                    <DialogDescription>
-                      Cette action est irréversible.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-                      Annuler
-                    </Button>
-                    <Button variant="destructive" onClick={handleDelete} disabled={isPending}>
-                      Supprimer
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
-
             <Button variant="outline" onClick={handleSave} disabled={isPending}>
               <Save className="mr-2 h-4 w-4" />
               Enregistrer
@@ -268,6 +247,54 @@ export const CampaignForm = ({
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+            )}
+
+            {/* Destructive + secondary actions grouped to reduce header noise */}
+            {isEdit && onDelete && (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      aria-label="Plus d'actions"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setShowDeleteDialog(true);
+                      }}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Supprimer
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Supprimer la campagne ?</DialogTitle>
+                      <DialogDescription>
+                        Cette action est irréversible.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                        Annuler
+                      </Button>
+                      <Button variant="destructive" onClick={handleDelete} disabled={isPending}>
+                        Supprimer
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </>
             )}
           </div>
         )}

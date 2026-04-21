@@ -53,7 +53,7 @@ const STATUS_CONFIG: Record<
 };
 
 const TYPE_LABELS: Record<string, string> = {
-  formation: "Formation",
+  formation: "Accompagnement",
   booking: "Consultation",
   event: "Événement",
 };

@@ -217,7 +217,7 @@ const AdminAnalyticsPage = async ({
     );
 
     topFormationsData = topFormationIds.map(([id, revenue]) => ({
-      name: titleMap.get(id) ?? "Formation supprimée",
+      name: titleMap.get(id) ?? "Accompagnement supprimé",
       value: revenue,
     }));
   }
@@ -304,7 +304,7 @@ const AdminAnalyticsPage = async ({
           icon={Users}
         />
         <StatCard
-          title="Formations publiées"
+          title="Accompagnements publiés"
           value={totalFormationsRes.count ?? 0}
           icon={BookOpen}
         />
@@ -354,7 +354,7 @@ const AdminAnalyticsPage = async ({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-serif text-lg">
               <Trophy className="h-5 w-5" />
-              Top formations (CA brut)
+              Top accompagnements (CA brut)
             </CardTitle>
           </CardHeader>
           <CardContent>

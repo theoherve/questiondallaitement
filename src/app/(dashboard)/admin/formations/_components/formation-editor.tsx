@@ -157,7 +157,7 @@ export const FormationEditor = ({
     setIsSaving(false);
 
     if (result.success) {
-      toast.success("Formation enregistrée");
+      toast.success("Accompagnement enregistré");
       router.refresh();
     } else {
       toast.error(result.error ?? "Erreur lors de la sauvegarde");
@@ -174,10 +174,10 @@ export const FormationEditor = ({
     if (result.success) {
       toast.success(
         newStatus === "published"
-          ? "Formation publiée"
+          ? "Accompagnement publié"
           : newStatus === "archived"
-            ? "Formation archivée"
-            : "Formation dépubliée"
+            ? "Accompagnement archivé"
+            : "Accompagnement dépublié"
       );
       router.refresh();
     } else {
@@ -190,7 +190,7 @@ export const FormationEditor = ({
     setDeleteDialogOpen(false);
 
     if (result.success) {
-      toast.success("Formation supprimée");
+      toast.success("Accompagnement supprimé");
       router.push("/admin/formations");
     } else {
       toast.error(result.error ?? "Erreur");
@@ -328,9 +328,9 @@ export const FormationEditor = ({
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Publier la formation ?</DialogTitle>
+              <DialogTitle>Publier l&apos;accompagnement ?</DialogTitle>
               <DialogDescription>
-                La formation sera visible publiquement.
+                L&apos;accompagnement sera visible publiquement.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -354,9 +354,9 @@ export const FormationEditor = ({
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Supprimer la formation ?</DialogTitle>
+              <DialogTitle>Supprimer l&apos;accompagnement ?</DialogTitle>
               <DialogDescription>
-                La formation sera archivée et ne sera plus visible.
+                L&apos;accompagnement sera archivé et ne sera plus visible.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -436,7 +436,7 @@ export const FormationEditor = ({
               <WysiwygEditor
                 initialContent={formation.long_description_html ?? ""}
                 onChange={setLongDescriptionHtml}
-                placeholder="Décrivez la formation en détail..."
+                placeholder="Décrivez l'accompagnement en détail..."
               />
             </div>
 

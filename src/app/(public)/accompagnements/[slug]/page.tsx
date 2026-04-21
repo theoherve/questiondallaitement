@@ -23,7 +23,7 @@ export const generateMetadata = async ({
     .eq("status", "published")
     .single();
 
-  if (!data) return { title: "Formation introuvable" };
+  if (!data) return { title: "Accompagnement introuvable" };
 
   return {
     title: data.title,

@@ -78,8 +78,8 @@ const AdminLabelsPage = async () => {
                   } | null;
                   const autoAssignDesc = rule?.trigger
                     ? rule.formation_ids?.length
-                      ? `À l'achat de ${rule.formation_ids.length} formation(s)`
-                      : "À l'achat de toute formation"
+                      ? `À l'achat de ${rule.formation_ids.length} accompagnement(s)`
+                      : "À l'achat de tout accompagnement"
                     : "—";
 
                   return (

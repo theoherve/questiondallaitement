@@ -26,11 +26,12 @@ export const metadata: Metadata = {
     template: "%s | Question d'Allaitement",
   },
   description:
-    "Plateforme de consultations et formations en lactation, sommeil et santé maternelle. Formations en ligne, consultations personnalisées et événements avec des professionnelles certifiées.",
+    "Plateforme de consultations et accompagnements en lactation, sommeil et santé maternelle. Accompagnements en ligne, consultations personnalisées et formations professionnelles avec des consultantes IBCLC certifiées.",
   keywords: [
     "allaitement",
     "lactation",
     "consultation",
+    "accompagnement",
     "formation",
     "IBCLC",
     "santé maternelle",
@@ -46,7 +47,7 @@ export const metadata: Metadata = {
     siteName: "Question d'Allaitement",
     title: "Question d'Allaitement — Accompagnement en lactation et parentalité",
     description:
-      "Formations en ligne, consultations personnalisées et événements avec des professionnelles certifiées en allaitement et parentalité.",
+      "Accompagnements en ligne, consultations personnalisées et formations professionnelles certifiées en allaitement et parentalité.",
     images: [
       {
         url: "/images/og-default.png",

@@ -237,7 +237,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
         <section className="mt-12">
           <h2 className="font-serif text-2xl font-semibold text-primary-green">
             <BookOpen className="mr-2 inline h-6 w-6" />
-            Formations
+            Accompagnements
           </h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {formations.map((formation) => (
