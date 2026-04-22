@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowLeft, BookOpen, Clock, Eye, Pencil, User } from "lucide-react";
-import { FormationReader } from "@/app/(public)/espace-client/formations/[id]/_components/formation-reader";
+import { FormationReader } from "@/app/(public)/espace-client/accompagnements/[id]/_components/formation-reader";
 
 type Props = {
   params: Promise<{ id: string }>;

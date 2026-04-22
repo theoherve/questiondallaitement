@@ -32,7 +32,7 @@ const FormationReaderPage = async ({ params }: Props) => {
     .eq("formation_id", id)
     .single();
 
-  if (!enrollment) redirect("/espace-client/formations");
+  if (!enrollment) redirect("/espace-client/accompagnements");
 
   const { data: formation } = await supabase
     .from("formations")
@@ -60,13 +60,24 @@ const FormationReaderPage = async ({ params }: Props) => {
 
   if (!formation) notFound();
 
-  const { data: progress } = await supabase
-    .from("formation_progress")
-    .select("block_id, completed")
-    .eq("enrollment_id", enrollment.id);
+  const [progressResult, bookmarksResult] = await Promise.all([
+    supabase
+      .from("formation_progress")
+      .select("block_id, completed")
+      .eq("enrollment_id", enrollment.id),
+    supabase
+      .from("formation_bookmarks")
+      .select("block_id")
+      .eq("enrollment_id", enrollment.id),
+  ]);
 
   const completedBlockIds = new Set(
-    (progress ?? []).filter((p) => p.completed).map((p) => p.block_id)
+    (progressResult.data ?? [])
+      .filter((p) => p.completed)
+      .map((p) => p.block_id)
+  );
+  const bookmarkedBlockIds = (bookmarksResult.data ?? []).map(
+    (b) => b.block_id
   );
 
   const sections = (formation.formation_sections ?? [])
@@ -90,7 +101,7 @@ const FormationReaderPage = async ({ params }: Props) => {
   const completedCount = completedBlockIds.size;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <FormationReader
         formation={{
           id: formation.id,
@@ -100,6 +111,7 @@ const FormationReaderPage = async ({ params }: Props) => {
         sections={sections}
         enrollmentId={enrollment.id}
         completedBlockIds={Array.from(completedBlockIds)}
+        bookmarkedBlockIds={bookmarkedBlockIds}
         totalBlocks={totalBlocks}
         completedCount={completedCount}
       />

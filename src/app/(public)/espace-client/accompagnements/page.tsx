@@ -1,13 +1,26 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { BookOpen, CheckCircle2, Play, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { ProgressRing } from "@/components/espace-client/progress-ring";
 
 export const metadata: Metadata = {
   title: "Mes accompagnements",
+};
+
+type FormationShape = {
+  id: string;
+  title: string;
+  slug: string;
+  short_description: string | null;
+  thumbnail_url: string | null;
+  formation_sections: { formation_blocks: { id: string }[] }[];
 };
 
 const ClientFormationsPage = async () => {
@@ -38,12 +51,13 @@ const ClientFormationsPage = async () => {
 
   const enrollmentIds = (enrollments ?? []).map((e) => e.id);
 
-  const { data: progressData } = enrollmentIds.length > 0
-    ? await supabase
-        .from("formation_progress")
-        .select("enrollment_id, block_id, completed")
-        .in("enrollment_id", enrollmentIds)
-    : { data: [] };
+  const { data: progressData } =
+    enrollmentIds.length > 0
+      ? await supabase
+          .from("formation_progress")
+          .select("enrollment_id, block_id, completed")
+          .in("enrollment_id", enrollmentIds)
+      : { data: [] };
 
   const progressByEnrollment = new Map<string, Set<string>>();
   (progressData ?? []).forEach((p) => {
@@ -54,24 +68,29 @@ const ClientFormationsPage = async () => {
   });
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="font-serif text-2xl font-bold text-primary-green">
-        Mes accompagnements
-      </h1>
+    <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+      <header className="flex flex-col gap-3 rounded-3xl bg-linear-to-br from-background-beige-dark/50 via-background-beige to-accent-peach-soft/60 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+        <div>
+          <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-primary-red">
+            <Sparkles className="h-3.5 w-3.5" aria-hidden />
+            Votre parcours
+          </div>
+          <h1 className="mt-2 font-serif text-2xl font-bold text-primary-green sm:text-3xl">
+            Mes accompagnements
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Avancez à votre rythme, tout est là quand vous en avez besoin.
+          </p>
+        </div>
+        <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-red/10 sm:flex">
+          <BookOpen className="h-6 w-6 text-primary-red" aria-hidden />
+        </div>
+      </header>
 
       {enrollments && enrollments.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {enrollments.map((enrollment) => {
-            const formation = enrollment.formations as unknown as {
-              id: string;
-              title: string;
-              slug: string;
-              short_description: string | null;
-              thumbnail_url: string | null;
-              formation_sections: {
-                formation_blocks: { id: string }[];
-              }[];
-            } | null;
+            const formation = enrollment.formations as unknown as FormationShape | null;
 
             if (!formation) return null;
 
@@ -85,61 +104,95 @@ const ClientFormationsPage = async () => {
               totalBlocks > 0
                 ? Math.round((completedBlocks / totalBlocks) * 100)
                 : 0;
+            const isComplete = progressPercent === 100;
+            const isNew = progressPercent === 0;
 
             return (
-              <Card key={enrollment.id} className="overflow-hidden">
-                <div className="aspect-video bg-background-beige-dark">
+              <Card
+                key={enrollment.id}
+                className="group overflow-hidden rounded-3xl border-border/50 pt-0 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg p-0"
+              >
+                <div className="relative aspect-video overflow-hidden bg-linear-to-br from-accent-peach-soft to-background-beige-dark">
                   {formation.thumbnail_url ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
+                    <Image
                       src={formation.thumbnail_url}
                       alt={formation.title}
-                      className="h-full w-full object-cover"
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center">
-                      <span className="text-primary-green/30">Accompagnement</span>
-                    </div>
-                  )}
-                </div>
-                <CardContent className="pt-4">
-                  <h3 className="font-serif font-semibold text-primary-green">
-                    {formation.title}
-                  </h3>
-                  {formation.short_description && (
-                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                      {formation.short_description}
-                    </p>
-                  )}
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Inscrit le{" "}
-                    {format(new Date(enrollment.enrolled_at), "d MMMM yyyy", {
-                      locale: fr,
-                    })}
-                  </p>
-
-                  {/* Progress bar */}
-                  <div className="mt-3 flex items-center gap-2">
-                    <div className="h-2 flex-1 rounded-full bg-muted">
-                      <div
-                        className="h-2 rounded-full bg-primary-red transition-all"
-                        style={{ width: `${progressPercent}%` }}
+                      <BookOpen
+                        className="h-10 w-10 text-primary-red/30"
+                        aria-hidden
                       />
                     </div>
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {progressPercent}%
+                  )}
+                  {isComplete && (
+                    <Badge className="absolute right-3 top-3 gap-1 bg-accent-sage text-primary-green hover:bg-accent-sage">
+                      <CheckCircle2 className="h-3 w-3" aria-hidden />
+                      Terminé
+                    </Badge>
+                  )}
+                  {isNew && (
+                    <Badge className="absolute right-3 top-3 bg-accent-honey text-primary-green hover:bg-accent-honey">
+                      Nouveau
+                    </Badge>
+                  )}
+                  <div className="absolute bottom-3 left-3">
+                    <ProgressRing
+                      value={progressPercent}
+                      size={52}
+                      strokeWidth={5}
+                      indicatorClassName={
+                        isComplete ? "stroke-accent-sage" : "stroke-primary-red"
+                      }
+                      trackClassName="stroke-white/70"
+                    >
+                      <span className="text-[11px] font-bold text-primary-green">
+                        {progressPercent}%
+                      </span>
+                    </ProgressRing>
+                  </div>
+                </div>
+                <CardContent className="space-y-3 p-5">
+                  <div>
+                    <h3 className="font-serif text-lg font-semibold leading-snug text-primary-green">
+                      {formation.title}
+                    </h3>
+                    {formation.short_description && (
+                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                        {formation.short_description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>
+                      {completedBlocks}/{totalBlocks} étapes
+                    </span>
+                    <span>
+                      {format(new Date(enrollment.enrolled_at), "d MMM yyyy", {
+                        locale: fr,
+                      })}
                     </span>
                   </div>
 
                   <Button
                     asChild
-                    className="mt-3 w-full bg-primary-red hover:bg-primary-red-dark"
+                    className="w-full rounded-xl bg-primary-red hover:bg-primary-red-dark"
                   >
                     <Link
-                      href={`/espace-client/formations/${formation.id}`}
+                      href={`/espace-client/accompagnements/${formation.id}`}
                       tabIndex={0}
                     >
-                      {progressPercent > 0 ? "Continuer" : "Commencer"}
+                      <Play className="h-4 w-4 fill-current" aria-hidden />
+                      {isComplete
+                        ? "Revoir"
+                        : isNew
+                          ? "Commencer"
+                          : "Continuer"}
                     </Link>
                   </Button>
                 </CardContent>
@@ -148,12 +201,18 @@ const ClientFormationsPage = async () => {
           })}
         </div>
       ) : (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">
+        <Card className="rounded-3xl border-dashed bg-background-beige">
+          <CardContent className="py-16 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-red/10">
+              <BookOpen className="h-6 w-6 text-primary-red" aria-hidden />
+            </div>
+            <p className="mt-4 text-base text-primary-green">
               Vous n&apos;êtes inscrit à aucun accompagnement.
             </p>
-            <Button asChild variant="outline" className="mt-4">
+            <p className="mt-1 text-sm text-muted-foreground">
+              Explorez la sélection pour démarrer votre parcours.
+            </p>
+            <Button asChild className="mt-5 rounded-xl">
               <Link href="/accompagnements" tabIndex={0}>
                 Découvrir les accompagnements
               </Link>

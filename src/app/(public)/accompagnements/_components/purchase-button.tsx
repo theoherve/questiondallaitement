@@ -21,7 +21,7 @@ export const PurchaseButton = ({
   if (isEnrolled) {
     return (
       <Button asChild className="w-full bg-green-600 hover:bg-green-700">
-        <a href={`/espace-client/formations/${formationId}`} tabIndex={0}>
+        <a href={`/espace-client/accompagnements/${formationId}`} tabIndex={0}>
           Accéder à l&apos;accompagnement
         </a>
       </Button>
