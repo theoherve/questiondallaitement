@@ -140,7 +140,7 @@ const insertEnrollmentAndNotify = async (args: {
   }
 
   const root = baseUrl();
-  const formationUrl = `${root}/espace-client/formations/${args.formationId}`;
+  const formationUrl = `${root}/espace-client/accompagnements/${args.formationId}`;
 
   // For new accounts, provision a password-setup token (same pattern as the
   // Wix-migration flow in (auth)/actions.ts) and build a `/reset-password?token=`

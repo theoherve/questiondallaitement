@@ -75,7 +75,7 @@ export const purchaseFormation = async (
           formation.price_cents * (consultant.commission_rate / 100),
         ).toString(),
       },
-      successUrl: `${siteConfig.url}/espace-client/formations?purchased=${formation.id}`,
+      successUrl: `${siteConfig.url}/espace-client/accompagnements?purchased=${formation.id}`,
       cancelUrl: `${siteConfig.url}/accompagnements/${formationId}?cancelled=true`,
     });
 

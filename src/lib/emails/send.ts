@@ -132,7 +132,7 @@ export const sendFormationAccess = async (
   if (!template) return;
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
-  const accessUrl = variables.access_url ?? `${siteUrl}/espace-client/formations`;
+  const accessUrl = variables.access_url ?? `${siteUrl}/espace-client/accompagnements`;
   const { subject, html } = await renderTemplateRow(template, {
     client_name: variables.client_name,
     formation_title: variables.formation_title,

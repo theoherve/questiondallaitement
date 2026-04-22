@@ -51,7 +51,7 @@ export const clientNav: NavItem[] = [
   },
   {
     title: "Mes accompagnements",
-    href: "/espace-client/formations",
+    href: "/espace-client/accompagnements",
     iconKey: "BookOpen",
   },
   {
