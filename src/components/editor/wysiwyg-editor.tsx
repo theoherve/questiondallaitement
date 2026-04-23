@@ -55,6 +55,10 @@ import {
   AlertTriangle,
   StickyNote,
   Crop,
+  MousePointerClick,
+  PanelRightClose,
+  PanelRightOpen,
+  Eye,
 } from "lucide-react";
 import { Editor } from "@tiptap/react";
 import {
@@ -62,8 +66,10 @@ import {
   Columns,
   Column,
   Callout,
+  CtaButton,
   blogImageUpload,
   type CalloutVariant,
+  type CtaVariant,
 } from "./wysiwyg-extensions";
 import { ImageCropDialog } from "./image-crop-dialog";
 
@@ -78,6 +84,11 @@ type ChainAny = {
   setColumns(): ChainAny;
   setColumns3(): ChainAny;
   setCallout(v: CalloutVariant): ChainAny;
+  setCtaButton(attrs: {
+    url?: string;
+    variant?: CtaVariant;
+    text?: string;
+  }): ChainAny;
   run(): boolean;
 };
 const columns = (editor: Editor, range: { from: number; to: number }) =>
@@ -94,15 +105,43 @@ const callout = (
     .deleteRange(range)
     .setCallout(variant)
     .run();
+const insertCtaButton = (
+  editor: Editor,
+  range: { from: number; to: number } | null,
+  variant: CtaVariant,
+) => {
+  const url = window.prompt("URL du bouton", "https://") ?? "";
+  if (!url) return false;
+  const chain = (editor.chain() as unknown as ChainAny).focus();
+  if (range) chain.deleteRange(range);
+  return chain.setCtaButton({ url, variant, text: "Découvrir" }).run();
+};
 import { handleImageDrop, handleImagePaste } from "novel";
 import { uploadFileAction } from "@/lib/storage/actions";
 import { toast } from "sonner";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { WysiwygSidebar, type SnippetItem } from "./wysiwyg-sidebar";
+import { WysiwygPreviewDialog } from "./wysiwyg-preview-dialog";
+import { useWysiwygSnippets } from "@/lib/wysiwyg-snippets/context";
 
 type WysiwygEditorProps = {
   initialContent?: string;
   onChange?: (html: string) => void;
   placeholder?: string;
   className?: string;
+  /** Show the right-hand blocks sidebar (default: true). */
+  sidebar?: boolean;
+  /** Show the Preview button in the toolbar (default: true). */
+  preview?: boolean;
+  /** Snippets to display in the sidebar "Snippets" section. */
+  snippets?: SnippetItem[];
+  /** If provided, adds a "Sauver" button to snapshot the current selection. */
+  onSaveSnippet?: (html: string) => void;
 };
 
 const extensions = [
@@ -136,6 +175,7 @@ const extensions = [
   Columns,
   Column,
   Callout,
+  CtaButton,
   Placeholder.configure({ placeholder: "Commencez à écrire..." }),
 ];
 
@@ -326,6 +366,33 @@ const slashCommandItems = createSuggestionItems([
       callout(editor, range, "note");
     },
   },
+  {
+    title: "Bouton d'action (primaire)",
+    description: "Bouton CTA rempli",
+    icon: <MousePointerClick className="h-4 w-4" />,
+    searchTerms: ["cta", "bouton", "action", "call to action"],
+    command: ({ editor, range }) => {
+      insertCtaButton(editor, range, "primary");
+    },
+  },
+  {
+    title: "Bouton d'action (secondaire)",
+    description: "Bouton CTA vert forêt",
+    icon: <MousePointerClick className="h-4 w-4" />,
+    searchTerms: ["cta", "bouton", "action", "secondaire"],
+    command: ({ editor, range }) => {
+      insertCtaButton(editor, range, "secondary");
+    },
+  },
+  {
+    title: "Bouton d'action (contour)",
+    description: "Bouton CTA outline",
+    icon: <MousePointerClick className="h-4 w-4" />,
+    searchTerms: ["cta", "bouton", "outline", "contour"],
+    command: ({ editor, range }) => {
+      insertCtaButton(editor, range, "outline");
+    },
+  },
 ]);
 
 const htmlToContent = (html: string): JSONContent | undefined => {
@@ -368,7 +435,21 @@ function ToolbarDivider() {
   return <div className="mx-1 h-6 w-px bg-gray-200" />;
 }
 
-function Toolbar({ editor }: { editor: Editor | null }) {
+function Toolbar({
+  editor,
+  onToggleSidebar,
+  sidebarOpen,
+  showSidebarToggle,
+  onOpenPreview,
+  showPreview,
+}: {
+  editor: Editor | null;
+  onToggleSidebar?: () => void;
+  sidebarOpen?: boolean;
+  showSidebarToggle?: boolean;
+  onOpenPreview?: () => void;
+  showPreview?: boolean;
+}) {
   const [linkUrl, setLinkUrl] = useState("");
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [cropOpen, setCropOpen] = useState(false);
@@ -421,7 +502,10 @@ function Toolbar({ editor }: { editor: Editor | null }) {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-0.5 border-b bg-gray-50/80 px-2 py-1.5 rounded-t-lg">
+    <div
+      className="sticky z-10 flex flex-wrap items-center gap-0.5 rounded-t-lg border-b bg-gray-50/95 px-2 py-1.5 backdrop-blur"
+      style={{ top: "var(--wysiwyg-toolbar-top, 0px)" }}
+    >
       {/* Undo / Redo */}
       <ToolbarButton
         onClick={() => editor.chain().focus().undo().run()}
@@ -700,6 +784,28 @@ function Toolbar({ editor }: { editor: Editor | null }) {
           )}
         </>
       )}
+
+      {(showPreview || showSidebarToggle) && <ToolbarDivider />}
+
+      {showPreview && onOpenPreview && (
+        <ToolbarButton onClick={onOpenPreview} ariaLabel="Aperçu">
+          <Eye className="h-4 w-4" />
+        </ToolbarButton>
+      )}
+
+      {showSidebarToggle && onToggleSidebar && (
+        <ToolbarButton
+          onClick={onToggleSidebar}
+          isActive={sidebarOpen}
+          ariaLabel={sidebarOpen ? "Masquer la bibliothèque" : "Afficher la bibliothèque de blocs"}
+        >
+          {sidebarOpen ? (
+            <PanelRightClose className="h-4 w-4" />
+          ) : (
+            <PanelRightOpen className="h-4 w-4" />
+          )}
+        </ToolbarButton>
+      )}
     </div>
   );
 }
@@ -709,12 +815,27 @@ export const WysiwygEditor = ({
   onChange,
   placeholder,
   className,
+  sidebar = true,
+  preview = true,
+  snippets = [],
+  onSaveSnippet,
 }: WysiwygEditorProps) => {
   const [editor, setEditor] = useState<Editor | null>(null);
+  const [currentHtml, setCurrentHtml] = useState(initialContent ?? "");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  const snippetsCtx = useWysiwygSnippets();
+  const effectiveSnippets = snippets.length > 0 ? snippets : snippetsCtx?.snippets ?? [];
+  const effectiveOnSave =
+    onSaveSnippet ?? snippetsCtx?.requestSave ?? undefined;
 
   const handleUpdate = useCallback(
     (editor: EditorInstance) => {
-      onChange?.(editor.getHTML());
+      const html = editor.getHTML();
+      setCurrentHtml(html);
+      onChange?.(html);
     },
     [onChange]
   );
@@ -729,10 +850,29 @@ export const WysiwygEditor = ({
       )
     : extensions;
 
+  const handleToggleSidebar = () => {
+    // Desktop: toggle inline sidebar. Mobile viewports prefer the Sheet.
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setMobileSidebarOpen((v) => !v);
+    } else {
+      setSidebarOpen((v) => !v);
+    }
+  };
+
   return (
     <EditorRoot>
-      <div className={`rounded-lg border bg-white focus-within:ring-2 focus-within:ring-primary-red/20 ${className ?? ""}`}>
-        <Toolbar editor={editor} />
+      <div
+        className={`flex rounded-lg border bg-white focus-within:ring-2 focus-within:ring-primary-red/20 ${className ?? ""}`}
+      >
+        <div className="flex min-w-0 flex-1 flex-col">
+        <Toolbar
+          editor={editor}
+          onToggleSidebar={sidebar ? handleToggleSidebar : undefined}
+          sidebarOpen={sidebarOpen}
+          showSidebarToggle={sidebar}
+          onOpenPreview={preview ? () => setPreviewOpen(true) : undefined}
+          showPreview={preview}
+        />
         <EditorContent
           className="prose prose-sm max-w-none p-4"
           extensions={allExtensions}
@@ -807,7 +947,49 @@ export const WysiwygEditor = ({
             </EditorCommandList>
           </EditorCommand>
         </EditorContent>
+        </div>
+
+        {/* Desktop inline sidebar */}
+        {sidebar && sidebarOpen && (
+          <div className="hidden w-64 shrink-0 border-l border-border/60 lg:block">
+            <WysiwygSidebar
+              editor={editor}
+              snippets={effectiveSnippets}
+              onSaveSnippet={effectiveOnSave}
+            />
+          </div>
+        )}
       </div>
+
+      {/* Mobile sidebar sheet */}
+      {sidebar && (
+        <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+          <SheetContent
+            side="right"
+            className="w-[85vw] max-w-xs overflow-y-auto bg-background-beige p-0"
+          >
+            <SheetHeader className="border-b border-border/50 px-4 py-3">
+              <SheetTitle className="font-serif text-primary-green">
+                Bibliothèque de blocs
+              </SheetTitle>
+            </SheetHeader>
+            <WysiwygSidebar
+              editor={editor}
+              snippets={effectiveSnippets}
+              onSaveSnippet={effectiveOnSave}
+            />
+          </SheetContent>
+        </Sheet>
+      )}
+
+      {/* Preview dialog */}
+      {preview && (
+        <WysiwygPreviewDialog
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          html={currentHtml}
+        />
+      )}
     </EditorRoot>
   );
 };

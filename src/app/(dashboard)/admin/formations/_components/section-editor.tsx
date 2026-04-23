@@ -109,7 +109,16 @@ export const SectionEditor = ({
   const [editTitle, setEditTitle] = useState(section.title);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [blocks, setBlocks] = useState(section.formation_blocks);
+  const [prevServerBlocks, setPrevServerBlocks] = useState(
+    section.formation_blocks
+  );
   const [isExpanded, setIsExpanded] = useState(true);
+
+  // Sync local state when server data changes (after router.refresh()).
+  if (prevServerBlocks !== section.formation_blocks) {
+    setPrevServerBlocks(section.formation_blocks);
+    setBlocks(section.formation_blocks);
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),

@@ -138,6 +138,123 @@ export const Columns = Node.create({
 // for `columns` with a different shape — declaring it again triggers TS2717.
 // Callers use `(editor as any).chain().setColumns()` instead.
 
+// ─── CTA button ─────────────────────────────────────────────
+
+export type CtaVariant = "primary" | "secondary" | "outline";
+
+const CTA_STYLES: Record<CtaVariant, string> = {
+  primary:
+    "inline-block rounded-xl bg-primary-red px-6 py-3 font-semibold text-primary-foreground no-underline shadow-sm transition-all hover:bg-primary-red-dark hover:shadow-md",
+  secondary:
+    "inline-block rounded-xl bg-primary-green px-6 py-3 font-semibold text-background-beige no-underline shadow-sm transition-all hover:opacity-90 hover:shadow-md",
+  outline:
+    "inline-block rounded-xl border-2 border-primary-red bg-transparent px-6 py-3 font-semibold text-primary-red no-underline transition-all hover:bg-primary-red/10",
+};
+
+export const CtaButton = Node.create({
+  name: "ctaButton",
+  group: "block",
+  content: "text*",
+  marks: "",
+  defining: true,
+  addAttributes() {
+    return {
+      url: {
+        default: "#",
+        parseHTML: (el) => el.getAttribute("href") ?? "#",
+        renderHTML: () => ({}),
+      },
+      variant: {
+        default: "primary" as CtaVariant,
+        parseHTML: (el) =>
+          (el.getAttribute("data-cta-variant") as CtaVariant) ?? "primary",
+        renderHTML: () => ({}),
+      },
+      align: {
+        default: "center" as "left" | "center" | "right",
+        parseHTML: (el) =>
+          (el.getAttribute("data-cta-align") as "left" | "center" | "right") ??
+          "center",
+        renderHTML: () => ({}),
+      },
+    };
+  },
+  parseHTML() {
+    return [
+      {
+        tag: "div[data-cta]",
+        getAttrs: (el) => {
+          const a = el.querySelector("a");
+          return {
+            url: a?.getAttribute("href") ?? "#",
+            variant:
+              (el.getAttribute("data-cta-variant") as CtaVariant) ?? "primary",
+            align:
+              (el.getAttribute("data-cta-align") as
+                | "left"
+                | "center"
+                | "right") ?? "center",
+          };
+        },
+      },
+    ];
+  },
+  renderHTML({ node }) {
+    const variant = (node.attrs.variant ?? "primary") as CtaVariant;
+    const align = (node.attrs.align ?? "center") as "left" | "center" | "right";
+    const url = (node.attrs.url as string) ?? "#";
+    const alignClass =
+      align === "left"
+        ? "text-left"
+        : align === "right"
+          ? "text-right"
+          : "text-center";
+    return [
+      "div",
+      {
+        "data-cta": "",
+        "data-cta-variant": variant,
+        "data-cta-align": align,
+        class: `my-4 not-prose ${alignClass}`,
+      },
+      [
+        "a",
+        {
+          href: url,
+          class: CTA_STYLES[variant],
+          target: "_blank",
+          rel: "noopener noreferrer",
+        },
+        0,
+      ],
+    ];
+  },
+  addCommands() {
+    return {
+      setCtaButton:
+        (
+          attrs: { url?: string; variant?: CtaVariant; text?: string } = {},
+        ) =>
+        ({
+          commands,
+        }: {
+          commands: { insertContent: (c: unknown) => boolean };
+        }) =>
+          commands.insertContent({
+            type: this.name,
+            attrs: {
+              url: attrs.url ?? "#",
+              variant: attrs.variant ?? "primary",
+              align: "center",
+            },
+            content: [{ type: "text", text: attrs.text ?? "Découvrir" }],
+          }),
+    } as Record<string, unknown> as Partial<
+      Record<string, (...args: unknown[]) => unknown>
+    >;
+  },
+});
+
 // ─── Callout / info box ─────────────────────────────────────
 
 export type CalloutVariant = "info" | "tip" | "warning" | "note";
