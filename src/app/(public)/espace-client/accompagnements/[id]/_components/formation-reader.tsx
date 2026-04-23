@@ -20,6 +20,7 @@ import { BlockStep } from "./block-step";
 import { BookmarkToggle } from "./bookmark-toggle";
 import { CompletionCelebration } from "./completion-celebration";
 import { FormationOnboarding } from "./formation-onboarding";
+import { ResourcesPanel, type FormationResource } from "./resources-panel";
 import { SectionSidebar, type SectionSummary } from "./section-sidebar";
 
 type Block = {
@@ -42,6 +43,7 @@ type FormationReaderProps = {
   enrollmentId?: string;
   completedBlockIds: string[];
   bookmarkedBlockIds?: string[];
+  resources?: FormationResource[];
   totalBlocks: number;
   completedCount?: number;
   readOnly?: boolean;
@@ -62,6 +64,7 @@ export const FormationReader = ({
   enrollmentId,
   completedBlockIds: initialCompleted,
   bookmarkedBlockIds = [],
+  resources = [],
   totalBlocks,
   readOnly = false,
   backHref = "/espace-client/accompagnements",
@@ -218,6 +221,11 @@ export const FormationReader = ({
               activeIdx={activeSection}
               onSelect={selectSection}
             />
+            {resources.length > 0 && (
+              <div className="mt-3 border-t border-border/50 pt-3">
+                <ResourcesPanel resources={resources} />
+              </div>
+            )}
           </div>
         </aside>
 
@@ -253,12 +261,17 @@ export const FormationReader = ({
                     Sommaire
                   </SheetTitle>
                 </SheetHeader>
-                <div className="p-4">
+                <div className="space-y-4 p-4">
                   <SectionSidebar
                     sections={sectionSummaries}
                     activeIdx={activeSection}
                     onSelect={selectSection}
                   />
+                  {resources.length > 0 && (
+                    <div className="border-t border-border/50 pt-3">
+                      <ResourcesPanel resources={resources} />
+                    </div>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>

@@ -100,6 +100,33 @@ const FormationReaderPage = async ({ params }: Props) => {
   );
   const completedCount = completedBlockIds.size;
 
+  type DownloadContent = {
+    url?: string;
+    filename?: string;
+    size_bytes?: number;
+  };
+  const resources = sections.flatMap(
+    (section: {
+      id: string;
+      title: string;
+      formation_blocks: { id: string; type: string; content: unknown }[];
+    }) =>
+      section.formation_blocks
+        .filter((b) => b.type === "download")
+        .map((b) => {
+          const c = (b.content ?? {}) as DownloadContent;
+          return {
+            blockId: b.id,
+            sectionId: section.id,
+            sectionTitle: section.title,
+            url: c.url ?? "",
+            filename: c.filename ?? "Fichier",
+            sizeBytes: c.size_bytes ?? 0,
+          };
+        })
+        .filter((r) => r.url)
+  );
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <FormationReader
@@ -112,6 +139,7 @@ const FormationReaderPage = async ({ params }: Props) => {
         enrollmentId={enrollment.id}
         completedBlockIds={Array.from(completedBlockIds)}
         bookmarkedBlockIds={bookmarkedBlockIds}
+        resources={resources}
         totalBlocks={totalBlocks}
         completedCount={completedCount}
       />
