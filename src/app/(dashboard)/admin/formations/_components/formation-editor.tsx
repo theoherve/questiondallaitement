@@ -217,7 +217,10 @@ export const FormationEditor = ({
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div
+      className="mx-auto max-w-4xl space-y-6"
+      style={{ ["--wysiwyg-toolbar-top" as string]: "64px" }}
+    >
       {/* Header — sticky for always-on-hand actions */}
       <div className="sticky top-0 z-20 -mx-4 border-b border-border/60 bg-background-beige/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background-beige/80">
         <div className="flex items-center gap-3">

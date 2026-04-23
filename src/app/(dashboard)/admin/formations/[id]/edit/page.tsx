@@ -9,6 +9,8 @@ import {
   type EnrollmentRow,
 } from "@/app/(dashboard)/admin/formations/_components/enrollments-sheet";
 import { getFormationCollaborators } from "@/app/(dashboard)/admin/formations/actions";
+import { listSnippets } from "@/lib/wysiwyg-snippets/actions";
+import { WysiwygSnippetsProvider } from "@/lib/wysiwyg-snippets/context";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -100,6 +102,7 @@ const AdminEditFormationPage = async ({ params }: Props) => {
     }));
 
   const collaborators = await getFormationCollaborators(id);
+  const snippets = await listSnippets();
 
   const { data: enrollmentsRaw } = await supabase
     .from("formation_enrollments")
@@ -131,7 +134,7 @@ const AdminEditFormationPage = async ({ params }: Props) => {
     }));
 
   return (
-    <>
+    <WysiwygSnippetsProvider initialSnippets={snippets}>
       <FormationEditor
         formation={{
           id: formation.id,
@@ -163,7 +166,7 @@ const AdminEditFormationPage = async ({ params }: Props) => {
           mainConsultantId={formation.consultant_id}
         />
       </div>
-    </>
+    </WysiwygSnippetsProvider>
   );
 };
 
