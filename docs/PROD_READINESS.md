@@ -33,7 +33,7 @@
 | Phase 0 — Prerequis externes            | ✅     | —          |
 | Phase 1 — Verification config Connect   | 🔶     | reste 1-6 (TVA) |
 | Phase 2 — E2E N1 (seed + webhook simule) | ✅    | —          |
-| Phase 3 — E2E N2 (Playwright navigateur) | 🔶     | reste 3-3 et 3-5 ; 3-6 bloque |
+| Phase 3 — E2E N2 (Playwright navigateur) | 🔶     | 3-1 a 3-5 faits ; 3-6 bloque |
 | Phase 4 — E2E N3 (consultante + refund)  | 🔶     | 4-7 / 4-8 faits, reste 4-1 a 4-6 |
 | Phase 5 — Durcissement avant live        | ⬜     | Phase 4    |
 | Phase 6 — Templates d'email en admin     | ✅     | —          |
@@ -262,9 +262,9 @@ et n'est jamais envoye a Stripe — N1 ne fait aucun appel reseau vers Stripe.
 | --- | ------------------------------------------------------------------------------------ | ------ | ----- |
 | 3-1 | `playwright.config.ts` + dossier `e2e/` + webServer Next                             | ✅     | 🔴 P0 |
 | 3-2 | A — Reservation : `/reserver` 8 steps → session Checkout verifiee cote API           | ✅     | 🔴 P0 |
-| 3-3 | B — Guest checkout : sans compte → creation auto + email "finalisez votre compte"    | ⬜     | 🟠 P1 |
+| 3-3 | B — Guest checkout : sans compte → creation auto + email "finalisez votre compte"    | ✅     | 🟠 P1 |
 | 3-4 | C — Accompagnement en ligne : `/accompagnements/[slug]` → achat → session Checkout    | ✅     | 🔴 P0 |
-| 3-5 | D — Booking `on_site` : pas de Stripe, confirmation manuelle consultante             | ⬜     | 🟠 P1 |
+| 3-5 | D — Booking `on_site` : pas de Stripe, confirmation manuelle consultante             | ✅     | 🟠 P1 |
 | 3-6 | Verification post-checkout en base (le webhook a bien tourne)                         | 🚫     | 🔴 P0 |
 
 ### Constats de la Phase 3 (2026-07-20)
@@ -330,6 +330,47 @@ upsert doivent porter exactement les memes cles.
 **N2 n'est pas en CI** (contrairement a N1, cf. 2-13) : le job aurait besoin d'un vrai
 compte Connect onboarde comme destinataire — Stripe rejette une session dont la
 destination est fictive — et de `E2E_CLIENT_PASSWORD`. A trancher avant le live.
+
+### Constats de 3-3 et 3-5 (2026-07-21)
+
+**🔴 Le parcours invitee ne fonctionnait pas du tout.** Trois defauts qui se composent,
+chacun suffisant a rendre le compte inaccessible :
+
+1. **L'email ne partait jamais aux clientes payant en ligne.** `createBooking` cree le
+   profil puis rend la main a Stripe ; l'envoi de `sendGuestAccountEmail` n'existait
+   que dans la branche « paiement sur place ». Une invitee payait, sa reservation
+   existait, un compte portait son adresse — et personne ne lui disait comment y
+   acceder. L'envoi part desormais du webhook, avec les autres emails de checkout.
+2. **Le lien de l'email etait mort.** Il pointait sur `/reset-password?email=...` alors
+   que la page ne lit que `token` : toutes les invitees tombaient sur « Lien invalide ».
+   Un vrai token a usage unique est maintenant pose sur le profil, valable 72 h.
+3. **Meme avec un lien valide, la connexion echouait.** Les profils invites naissent
+   `email_verified: false` et `handleResetPassword` ne touchait pas ce champ ; or
+   `handleLogin` refuse les comptes non verifies. L'invitee posait son mot de passe
+   puis se faisait renvoyer vers un email de confirmation qu'elle n'avait jamais recu.
+   Poser son mot de passe via un lien recu par email vaut preuve de possession de
+   l'adresse : le champ passe desormais a `true` a cette occasion.
+
+La decision d'envoi porte sur l'absence de `password_hash`, pas sur « le profil vient
+d'etre cree » : une cliente qui reserve deux fois en invitee sans finaliser son compte
+doit recevoir le lien les deux fois. La logique est isolee dans
+[`src/lib/auth/password-setup.ts`](../src/lib/auth/password-setup.ts), partagee par
+`createBooking` et le webhook.
+
+**🟠 Le paiement sur place etait propose en teleconsultation.** `createBooking` le
+refuse — il n'y a pas de « place » ou regler — mais `StepPayment` affichait les deux
+options quel que soit le lieu. La cliente ne decouvrait le refus qu'a la derniere
+etape, apres avoir tout saisi. L'option est desormais filtree.
+
+**Fixture ajoutee : `consultant_locations` (cabinet).** `/reserver` traite cette table
+comme la source de verite pour cabinet et domicile ; seule la teleconsultation s'en
+passe. Sans cette ligne, `available_locations` du type de consultation est filtre a
+vide et le scenario « paiement sur place » n'a aucun lieu ou se derouler.
+
+**Pourquoi 3-3 et 3-5 tiennent dans une seule passe** : `on_site` est le seul chemin ou
+tout se joue en synchrone — pas de Stripe, pas de webhook, la reservation et le compte
+existent des le retour de `createBooking`. Le meme parcours paye en ligne ne pourrait
+rien affirmer de plus au navigateur, son email de finalisation partant du webhook.
 
 **Utilisation** :
 

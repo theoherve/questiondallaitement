@@ -11,6 +11,7 @@ import { siteConfig } from "@/config/site";
 import { runAutomations } from "@/lib/automations/engine";
 import { createNotification } from "@/lib/notifications";
 import { autoAssignLabelsOnEnrollment } from "@/lib/admin-workflows/labels";
+import { sendGuestSetupEmailIfNeeded } from "@/lib/auth/password-setup";
 
 const getSupabase = () => createAdminClient();
 
@@ -463,13 +464,25 @@ const sendCheckoutEmails = async (
 
     const { data: clientProfile } = await supabase
       .from("profiles")
-      .select("email, first_name")
+      .select("email, first_name, password_hash")
       .eq("id", clientId)
       .single();
 
     if (!clientProfile?.email) return;
 
     const clientName = clientProfile.first_name ?? "";
+
+    // Reservation en invitee payee en ligne : `createBooking` a cree le profil
+    // avant de rediriger vers Checkout, mais il rend la main a Stripe et
+    // n'envoie rien. Sans cet appel, la cliente a paye, sa reservation existe,
+    // un compte porte son adresse — et personne ne lui a jamais dit comment y
+    // acceder. Le lien ne partait que sur le chemin « paiement sur place ».
+    await sendGuestSetupEmailIfNeeded(supabase, {
+      id: clientId,
+      email: clientProfile.email,
+      first_name: clientProfile.first_name,
+      password_hash: clientProfile.password_hash,
+    });
 
     if (type === "formation") {
       const { data: formation } = await supabase

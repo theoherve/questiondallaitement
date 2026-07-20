@@ -298,6 +298,7 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
             <StepPayment
               priceCents={state.priceCents + state.surchargeCents}
               currency={state.currency}
+              location={state.location}
               selected={state.paymentMethod}
               onSelect={(method) => {
                 setState({ ...state, paymentMethod: method });

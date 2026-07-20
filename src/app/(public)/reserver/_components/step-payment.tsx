@@ -1,11 +1,21 @@
 "use client";
 
 import { CreditCard, Banknote } from "lucide-react";
-import type { BookingPaymentMethod } from "@/types/database";
+import type {
+  BookingPaymentMethod,
+  ConsultationLocation,
+} from "@/types/database";
 
 type StepPaymentProps = {
   priceCents: number;
   currency: string;
+  /**
+   * `createBooking` refuse le paiement sur place en teleconsultation : il n'y a
+   * pas de « place » ou regler. Sans ce filtre l'option restait proposee, et la
+   * cliente ne decouvrait le refus qu'a la derniere etape, apres avoir tout
+   * saisi.
+   */
+  location: ConsultationLocation | null;
   selected: BookingPaymentMethod | null;
   onSelect: (method: BookingPaymentMethod) => void;
 };
@@ -38,9 +48,16 @@ const PAYMENT_OPTIONS: {
 export const StepPayment = ({
   priceCents,
   currency,
+  location,
   selected,
   onSelect,
-}: StepPaymentProps) => (
+}: StepPaymentProps) => {
+  const options = PAYMENT_OPTIONS.filter(
+    (option) =>
+      option.value !== "on_site" || location !== "teleconsultation",
+  );
+
+  return (
   <div className="space-y-4">
     <h2 className="font-serif text-xl font-semibold text-primary-green">
       Comment souhaitez-vous régler ?
@@ -51,7 +68,7 @@ export const StepPayment = ({
     </p>
 
     <div className="grid gap-3 sm:grid-cols-2">
-      {PAYMENT_OPTIONS.map((option) => (
+      {options.map((option) => (
         <button
           key={option.value}
           type="button"
@@ -77,4 +94,5 @@ export const StepPayment = ({
       ))}
     </div>
   </div>
-);
+  );
+};
