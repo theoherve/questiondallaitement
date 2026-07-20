@@ -327,11 +327,20 @@ d'excuse. Ecarte : creer la reservation en statut « conflit » pour traitement 
 
 | ID  | Tache                                                                            | Statut | Prio  |
 | --- | -------------------------------------------------------------------------------- | ------ | ----- |
-| 6-1 | Ecran admin : liste des `email_templates` (nom, type, date de modification)      | ⬜     | 🟠 P1 |
-| 6-2 | Edition avec le WYSIWYG des mails d'automation (editeur par blocs existant)      | ⬜     | 🟠 P1 |
-| 6-3 | Documenter les variables disponibles par template + previsualisation             | ⬜     | 🟠 P1 |
+> **Correction du 2026-07-20** : cette phase avait ete redigee en affirmant que
+> l'ecran d'administration des templates n'existait pas. **C'etait faux.** Il est en
+> place sous `/admin/marketing/templates`, avec liste, edition WYSIWYG et
+> previsualisation. Carole peut deja corriger un template. Le perimetre reel n'est
+> pas de construire cet ecran mais de le **proteger**.
+
+| ID  | Tache                                                                            | Statut | Prio  |
+| --- | -------------------------------------------------------------------------------- | ------ | ----- |
+| 6-1 | Ecran admin : liste des `email_templates`                                        | ✅     | 🟠 P1 |
+| 6-2 | Edition avec le WYSIWYG par blocs                                                | ✅     | 🟠 P1 |
+| 6-3 | Previsualisation                                                                 | ✅     | 🟠 P1 |
 | 6-4 | Garde-fou : empecher la suppression d'un template reference par le code          | ⬜     | 🔴 P0 |
 | 6-5 | Arbitrer migrations vs edition en base (une edition ne doit pas etre ecrasee)    | ✅     | 🔴 P0 |
+| 6-6 | `restoreDefaultTemplates` ecrase sans confirmation — contredit 6-5               | ⬜     | 🔴 P0 |
 
 ### Ce qui existe deja
 
@@ -341,7 +350,24 @@ d'excuse. Ecarte : creer la reservation en statut « conflit » pour traitement 
 | Editeur WYSIWYG par blocs     | ✅ `src/components/editor/` + `render-block-email.ts` |
 | Designs par defaut            | ✅ `src/lib/emails/default-template-designs.ts` |
 | Previsualisation              | ✅ `src/lib/emails/preview-action.ts` |
-| **Ecran admin de CRUD**       | ❌ **manquant — c'est tout l'objet de cette phase** |
+| Ecran admin liste + edition   | ✅ `/admin/marketing/templates` |
+
+### Ce qui manque reellement
+
+**6-4 — la suppression n'est pas protegee.** `deleteTemplate` supprime n'importe
+quelle ligne sans verifier si le code en depend. Les **7** templates presents sont
+tous references par `send.ts` : supprimer `booking_confirmation` fait echouer
+silencieusement l'email de confirmation — `.single()` renvoie `null`, l'email ne part
+pas, rien n'est journalise.
+
+**6-6 — `restoreDefaultTemplates` contredit la regle actee en 6-5.** Le bouton
+« restaurer les templates par defaut » fait un `UPDATE` sur les sept templates a
+partir de `DEFAULT_TEMPLATE_DESIGNS` : exactement ce que 6-5 interdit aux migrations,
+mais depuis l'interface de Carole. Le garde-fou de la PR #42 ne couvre que les
+fichiers de migration et ne voit pas ce chemin.
+
+> Conception detaillee :
+> [2026-07-20-protection-templates-email-design.md](./superpowers/specs/2026-07-20-protection-templates-email-design.md)
 
 > **6-5 — tranche le 2026-07-20 : les migrations creent, elles ne modifient pas.**
 >
