@@ -62,10 +62,13 @@ vi.mock("@/lib/stripe/connect", () => ({
   createRefund: (...args: unknown[]) => mockCreateRefund(...args),
 }));
 
+const mockSendSlotConflict = vi.fn().mockResolvedValue(undefined);
+
 vi.mock("@/lib/emails/send", () => ({
   sendFormationAccess: vi.fn().mockResolvedValue(undefined),
   sendBookingConfirmation: vi.fn().mockResolvedValue(undefined),
   sendBookingConfirmedToConsultant: vi.fn().mockResolvedValue(undefined),
+  sendBookingSlotConflict: (...args: unknown[]) => mockSendSlotConflict(...args),
 }));
 
 vi.mock("@/lib/automations/engine", () => ({
@@ -323,6 +326,25 @@ describe("handleCheckoutCompleted — type booking", () => {
 
     // Refund total : createRefund appele sans montant partiel.
     expect(mockCreateRefund).toHaveBeenCalledWith(PAYMENT_INTENT_ID);
+  });
+
+  it("previent la cliente quand son creneau a ete pris", async () => {
+    db["bookings"] = {
+      insertError: {
+        code: "23505",
+        message:
+          'duplicate key value violates unique constraint "bookings_consultant_slot_unique"',
+      },
+    };
+
+    await handleCheckoutCompleted(makeBookingSession());
+
+    // Rembourser sans prevenir laisse la cliente devant un debit puis un
+    // credit inexpliques, et un creneau qu'elle croit reserve.
+    expect(mockSendSlotConflict).toHaveBeenCalledTimes(1);
+    const [email, vars] = mockSendSlotConflict.mock.calls[0];
+    expect(email).toBe("client@test.fr");
+    expect(vars).toMatchObject({ amount_refunded: expect.any(String) });
   });
 
   it("n'enregistre pas le paiement comme encaisse en cas de conflit de creneau", async () => {

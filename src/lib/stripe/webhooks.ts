@@ -5,7 +5,9 @@ import {
   sendFormationAccess,
   sendBookingConfirmation,
   sendBookingConfirmedToConsultant,
+  sendBookingSlotConflict,
 } from "@/lib/emails/send";
+import { siteConfig } from "@/config/site";
 import { runAutomations } from "@/lib/automations/engine";
 import { createNotification } from "@/lib/notifications";
 import { autoAssignLabelsOnEnrollment } from "@/lib/admin-workflows/labels";
@@ -55,6 +57,7 @@ export const handleCheckoutCompleted = async (
   const slotConflict = bookingOutcome === "slot_conflict";
   if (slotConflict && paymentIntentId) {
     await createRefund(paymentIntentId);
+    await notifySlotConflict(session, client_id);
   }
 
   await getSupabase()
@@ -385,6 +388,52 @@ const handleBookingConfirmation = async (
   }
 
   return "created";
+};
+
+/**
+ * Previent la cliente que son creneau a ete pris et qu'elle a ete remboursee.
+ *
+ * Non bloquant : le remboursement est deja parti, et faire echouer le webhook
+ * ici ferait retenter Stripe sur un evenement dont la partie argent est faite.
+ */
+const notifySlotConflict = async (
+  session: Stripe.Checkout.Session,
+  clientId: string,
+) => {
+  try {
+    const meta = session.metadata ?? {};
+    const { data: profile } = await getSupabase()
+      .from("profiles")
+      .select("email, first_name")
+      .eq("id", clientId)
+      .single();
+
+    if (!profile?.email) return;
+
+    const startsAt = meta.starts_at ? new Date(meta.starts_at) : null;
+    const amount = ((session.amount_total ?? 0) / 100).toFixed(2);
+
+    await sendBookingSlotConflict(profile.email, {
+      client_name: profile.first_name ?? "",
+      date: startsAt
+        ? startsAt.toLocaleDateString("fr-FR", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          })
+        : "",
+      time: startsAt
+        ? startsAt.toLocaleTimeString("fr-FR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "",
+      amount_refunded: `${amount.replace(".", ",")} €`,
+      booking_url: `${siteConfig.url}/reserver`,
+    });
+  } catch {
+    // L'email est un pis-aller : son echec ne doit pas rejouer le webhook.
+  }
 };
 
 const handleEventRegistration = async (
