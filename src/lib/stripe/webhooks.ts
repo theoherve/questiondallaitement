@@ -1,6 +1,6 @@
 import type Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createTransfer } from "@/lib/stripe/connect";
+import { createTransfer, createRefund } from "@/lib/stripe/connect";
 import {
   sendFormationAccess,
   sendBookingConfirmation,
@@ -25,6 +25,8 @@ export const handleCheckoutCompleted = async (
       ? session.payment_intent
       : session.payment_intent?.id;
 
+  let bookingOutcome: BookingOutcome = "created";
+
   switch (type) {
     case "formation":
       await handleFormationPurchase(
@@ -34,7 +36,10 @@ export const handleCheckoutCompleted = async (
       );
       break;
     case "booking":
-      await handleBookingConfirmation(session, paymentIntentId ?? null);
+      bookingOutcome = await handleBookingConfirmation(
+        session,
+        paymentIntentId ?? null,
+      );
       break;
     case "event":
       await handleEventRegistration(
@@ -43,6 +48,13 @@ export const handleCheckoutCompleted = async (
         paymentIntentId ?? null,
       );
       break;
+  }
+
+  // Creneau vendu deux fois : la cliente a paye pour une consultation qui ne
+  // peut pas avoir lieu. On rembourse plutot que de garder l'argent.
+  const slotConflict = bookingOutcome === "slot_conflict";
+  if (slotConflict && paymentIntentId) {
+    await createRefund(paymentIntentId);
   }
 
   await getSupabase()
@@ -57,18 +69,25 @@ export const handleCheckoutCompleted = async (
         currency: session.currency ?? "eur",
         type: type as "formation" | "booking" | "event",
         reference_id,
-        status: "succeeded",
+        status: slotConflict ? "refunded" : "succeeded",
       },
       { onConflict: "stripe_payment_intent_id" },
     );
 
-  await logAudit(client_id, "payment_completed", type, reference_id, {
-    amount: session.amount_total,
-    payment_intent: paymentIntentId,
-  });
+  await logAudit(
+    client_id,
+    slotConflict ? "booking_slot_conflict_refunded" : "payment_completed",
+    type,
+    reference_id,
+    { amount: session.amount_total, payment_intent: paymentIntentId },
+  );
 
-  await sendCheckoutEmails(type, client_id, consultant_id, reference_id);
-  await fireCheckoutAutomations(type, client_id, consultant_id, reference_id);
+  // Confirmer une reservation qui n'existe pas serait pire que de ne rien
+  // envoyer. Idem pour une redelivery : les emails sont deja partis.
+  if (bookingOutcome === "created") {
+    await sendCheckoutEmails(type, client_id, consultant_id, reference_id);
+    await fireCheckoutAutomations(type, client_id, consultant_id, reference_id);
+  }
 };
 
 export const handlePaymentIntentSucceeded = async (
@@ -258,14 +277,28 @@ const processCollaboratorSplits = async (
   }
 };
 
+/** Nom de l'index unique garantissant qu'un creneau n'est vendu qu'une fois. */
+const SLOT_CONSTRAINT = "bookings_consultant_slot_unique";
+
+/** Code Postgres pour une violation de contrainte d'unicite. */
+const UNIQUE_VIOLATION = "23505";
+
+export type BookingOutcome =
+  /** Reservation creee. */
+  | "created"
+  /** Deja traitee : redelivery Stripe du meme evenement. */
+  | "duplicate"
+  /** Le creneau a ete vendu a quelqu'un d'autre entre le paiement et le fulfillment. */
+  | "slot_conflict";
+
 const handleBookingConfirmation = async (
   session: Stripe.Checkout.Session,
   paymentIntentId: string | null,
-) => {
+): Promise<BookingOutcome> => {
   const meta = session.metadata ?? {};
 
   // The booking was not pre-created — insert it now with confirmed status.
-  await getSupabase()
+  const { error } = await getSupabase()
     .from("bookings")
     .insert({
       id: meta.reference_id,
@@ -281,6 +314,21 @@ const handleBookingConfirmation = async (
       reason: meta.reason ?? "",
       stripe_payment_intent_id: paymentIntentId,
     });
+
+  if (error) {
+    if (error.code === UNIQUE_VIOLATION) {
+      // Deux violations d'unicite tres differentes se ressemblent ici : celle
+      // sur la cle primaire veut dire « deja fait », celle sur le creneau veut
+      // dire « vendu deux fois ». Les confondre, c'est soit boucler sur des
+      // redeliveries, soit encaisser une consultation impossible a honorer.
+      if (error.message.includes(SLOT_CONSTRAINT)) return "slot_conflict";
+      return "duplicate";
+    }
+
+    // Toute autre erreur doit remonter : sans ca, Stripe considere l'evenement
+    // traite alors que la reservation n'existe pas, et la cliente a paye pour rien.
+    throw new Error(`Insertion du booking echouee : ${error.message}`);
+  }
 
   // Create in-app notification for the client (non-blocking)
   try {
@@ -335,6 +383,8 @@ const handleBookingConfirmation = async (
       // Non-blocking: Zoom failure should never fail the booking
     }
   }
+
+  return "created";
 };
 
 const handleEventRegistration = async (

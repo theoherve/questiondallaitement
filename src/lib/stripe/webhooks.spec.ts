@@ -10,8 +10,11 @@ const state = {
   updateCalls: [] as Array<{ table: string; data: unknown }>,
 };
 
-// Config par table : { single?, list? }
-const db: Record<string, { single?: unknown; list?: unknown[] }> = {};
+// Config par table : { single?, list?, insertError? }
+const db: Record<
+  string,
+  { single?: unknown; list?: unknown[]; insertError?: { code: string; message: string } }
+> = {};
 
 const createChain = (table: string) => {
   const config = db[table] ?? {};
@@ -30,7 +33,7 @@ const createChain = (table: string) => {
     }),
     insert: vi.fn((data: unknown) => {
       state.insertCalls.push({ table, data });
-      return Promise.resolve({ error: null });
+      return Promise.resolve({ error: config.insertError ?? null });
     }),
     single: vi.fn().mockResolvedValue({ data: config.single ?? null, error: null }),
   };
@@ -52,9 +55,11 @@ vi.mock("@/lib/supabase/admin", () => ({
 // ─── Dépendances externes mockées ────────────────────────────
 
 const mockCreateTransfer = vi.fn().mockResolvedValue({ id: "tr_test" });
+const mockCreateRefund = vi.fn().mockResolvedValue({ id: "re_test" });
 
 vi.mock("@/lib/stripe/connect", () => ({
   createTransfer: (...args: unknown[]) => mockCreateTransfer(...args),
+  createRefund: (...args: unknown[]) => mockCreateRefund(...args),
 }));
 
 vi.mock("@/lib/emails/send", () => ({
@@ -271,6 +276,68 @@ describe("handleCheckoutCompleted — type booking", () => {
       type: "booking",
       status: "succeeded",
     });
+  });
+
+  // ─── Constat B : redelivery Stripe ──────────────────────────
+
+  it("reste silencieux quand le booking existe deja (redelivery Stripe)", async () => {
+    db["bookings"] = {
+      insertError: {
+        code: "23505",
+        message: 'duplicate key value violates unique constraint "bookings_pkey"',
+      },
+    };
+
+    // Une redelivery est normale : Stripe retente sur timeout. L'evenement a
+    // deja ete traite, il ne faut surtout pas remonter d'erreur — sinon Stripe
+    // retente en boucle un evenement qui n'echouera jamais autrement.
+    await expect(
+      handleCheckoutCompleted(makeBookingSession()),
+    ).resolves.not.toThrow();
+  });
+
+  it("propage une erreur d'insert inattendue pour que Stripe retente", async () => {
+    db["bookings"] = {
+      insertError: { code: "42501", message: "permission denied for table bookings" },
+    };
+
+    // Avaler cette erreur ferait croire a Stripe que le paiement est traite
+    // alors que la reservation n'existe pas : la cliente a paye pour rien.
+    await expect(
+      handleCheckoutCompleted(makeBookingSession()),
+    ).rejects.toThrow(/permission denied/);
+  });
+
+  // ─── Constat A : double booking ─────────────────────────────
+
+  it("rembourse la cliente quand le creneau a ete pris entre-temps", async () => {
+    db["bookings"] = {
+      insertError: {
+        code: "23505",
+        message:
+          'duplicate key value violates unique constraint "bookings_consultant_slot_unique"',
+      },
+    };
+
+    await handleCheckoutCompleted(makeBookingSession());
+
+    // Refund total : createRefund appele sans montant partiel.
+    expect(mockCreateRefund).toHaveBeenCalledWith(PAYMENT_INTENT_ID);
+  });
+
+  it("n'enregistre pas le paiement comme encaisse en cas de conflit de creneau", async () => {
+    db["bookings"] = {
+      insertError: {
+        code: "23505",
+        message:
+          'duplicate key value violates unique constraint "bookings_consultant_slot_unique"',
+      },
+    };
+
+    await handleCheckoutCompleted(makeBookingSession());
+
+    const payment = state.upsertCalls.find((c) => c.table === "payments");
+    expect(payment?.data).toMatchObject({ status: "refunded" });
   });
 });
 
