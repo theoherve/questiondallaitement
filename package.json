@@ -8,6 +8,8 @@
     "start": "next start",
     "test": "vitest run",
     "test:e2e:n1": "node scripts/e2e/run-n1.mjs",
+    "test:e2e:n2": "playwright test",
+    "test:e2e:n2:ui": "playwright test --ui",
     "e2e:seed": "node scripts/e2e/seed-test-data.mjs",
     "e2e:cleanup": "node scripts/e2e/cleanup-test-data.mjs",
     "lint": "eslint",
@@ -56,6 +58,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@tiptap/core": "^2.27.2",
     "@tiptap/react": "^2.27.2",
@@ -69,7 +72,6 @@
     "cheerio": "^1.2.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "playwright": "^1.58.2",
     "shadcn": "^3.8.5",
     "supabase": "^2.76.14",
     "tailwindcss": "^4",

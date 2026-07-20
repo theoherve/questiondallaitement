@@ -15,6 +15,8 @@ export const IDS = {
   event: id("500"),
   // Reference IDs carried in Stripe metadata
   booking: id("600"),
+  /** One weekly availability row per weekday, ids 701..705. */
+  availability: (dayOfWeek) => id(`70${dayOfWeek}`),
 };
 
 export const PREFIX = "e2e00000-0000-4000-8000-";
@@ -22,8 +24,17 @@ export const PREFIX = "e2e00000-0000-4000-8000-";
 export const CLIENT_EMAIL = "e2e-client@questiondallaitement.test";
 export const CONSULTANT_EMAIL = "e2e-consultante@questiondallaitement.test";
 
-/** Fake Connect account — never sent to Stripe, only stored in the DB. */
-export const CONSULTANT_STRIPE_ACCOUNT = "acct_e2e_test_consultant";
+/**
+ * Connect account backing the fixture consultant.
+ *
+ * Defaults to a fake ID: N1 replays signed payloads locally and never calls
+ * Stripe, so the account only ever needs to exist in the database. N2 drives a
+ * real Checkout, which Stripe rejects unless the destination is a genuine
+ * onboarded account with the `transfers` capability — so that suite overrides
+ * this with E2E_CONNECT_ACCOUNT.
+ */
+export const CONSULTANT_STRIPE_ACCOUNT =
+  process.env.E2E_CONNECT_ACCOUNT ?? "acct_e2e_test_consultant";
 
 export const COMMISSION_RATE = 15;
 

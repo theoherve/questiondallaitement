@@ -31,6 +31,8 @@ export const StepService = ({ services, selected, onSelect }: StepServiceProps) 
           <button
             key={service.title}
             type="button"
+            data-testid="step-service-option"
+            data-service={service.title}
             onClick={() => onSelect(service.title)}
             className={`cursor-pointer rounded-lg border-2 p-4 text-left transition-all hover:border-primary-red hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red/50 ${
               selected === service.title

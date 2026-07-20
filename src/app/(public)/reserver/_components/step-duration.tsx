@@ -67,6 +67,8 @@ export const StepDuration = ({
           <button
             key={d.duration_minutes}
             type="button"
+            data-testid="step-duration-option"
+            data-duration={d.duration_minutes}
             onClick={() => onSelect(d.duration_minutes)}
             className={`cursor-pointer rounded-lg border-2 p-4 text-left transition-all hover:border-primary-red hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red/50 ${
               selectedDuration === d.duration_minutes
