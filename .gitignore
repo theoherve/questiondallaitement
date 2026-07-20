@@ -45,3 +45,6 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Sessions E2E mises en cache par e2e/auth.setup.ts
+/e2e/.auth/

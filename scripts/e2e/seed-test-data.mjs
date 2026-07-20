@@ -15,11 +15,12 @@ const check = (label, { error }) => {
 };
 
 /**
- * Mot de passe de la cliente fixture, pour les scenarios N2 qui doivent etre
- * connectes (l'achat d'accompagnement refuse les anonymes).
+ * Mot de passe partage par les deux comptes fixtures (cliente et consultante),
+ * pour les scenarios N2 qui doivent etre connectes : l'achat d'accompagnement
+ * refuse les anonymes, et la boucle consultante suppose une session ouverte.
  *
  * Jamais de valeur en dur : les fixtures sont creees dans une vraie base, donc
- * un mot de passe connu publiquement ouvrirait ce compte a quiconque lit le
+ * un mot de passe connu publiquement ouvrirait ces comptes a quiconque lit le
  * depot. Absent, on ne pose pas de hash — N1 n'ouvre jamais de session et n'a
  * aucune raison d'exiger ce secret.
  */
@@ -61,11 +62,11 @@ export const seed = async () => {
           email: CONSULTANT_EMAIL,
           first_name: "Consultante",
           last_name: "E2E",
-          // Redondant pour la consultante, qui n'ouvre pas de session — mais
-          // PostgREST envoie les lignes d'un upsert en un seul INSERT et
-          // remplit par NULL les colonnes absentes des autres lignes. Omettre
-          // ce champ ici violerait la contrainte NOT NULL.
           email_verified: true,
+          // PostgREST envoie les lignes d'un upsert en un seul INSERT et
+          // remplit par NULL les colonnes absentes des autres lignes : les deux
+          // lignes doivent porter exactement les memes cles.
+          ...(password_hash ? { password_hash } : {}),
         },
       ],
       { onConflict: "id" },
