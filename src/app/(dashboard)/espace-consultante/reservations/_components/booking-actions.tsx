@@ -94,6 +94,7 @@ export const BookingActions = ({
             size="sm"
             onClick={handleConfirm}
             disabled={isPending}
+            data-testid="booking-confirm-action"
             className="bg-green-600 hover:bg-green-700"
           >
             {isPending ? (

@@ -3,7 +3,20 @@
 import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 import { formationSchema, sectionSchema } from "@/validations/formations";
 import { revalidatePath } from "next/cache";
+import {
+  canEditFormation,
+  canEditSection,
+  canEditBlock,
+} from "@/lib/formations/authorization";
 import type { ActionResult } from "@/types";
+
+/**
+ * Message unique pour tous les refus d'acces.
+ *
+ * Distinguer « ça n'existe pas » de « ça ne vous appartient pas » revient a
+ * confirmer l'existence d'un identifiant a qui n'y a pas droit.
+ */
+const FORBIDDEN = "Accès refusé à ce contenu";
 
 export const createFormation = async (
   data: unknown
@@ -92,7 +105,14 @@ export const createSection = async (
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const { supabase } = await getSupabaseAndUser();
+  const { supabase, user } = await getSupabaseAndUser();
+
+  // `formationId` vient du client : sans ce controle, on peut greffer une
+  // section dans l'accompagnement de n'importe quelle consultante.
+  if (!(await canEditFormation(supabase, formationId, user.id))) {
+    return { success: false, error: FORBIDDEN };
+  }
+
   const { data: section, error } = await supabase
     .from("formation_sections")
     .insert({
@@ -119,7 +139,12 @@ export const updateSection = async (
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const { supabase } = await getSupabaseAndUser();
+  const { supabase, user } = await getSupabaseAndUser();
+
+  if (!(await canEditSection(supabase, id, user.id))) {
+    return { success: false, error: FORBIDDEN };
+  }
+
   const { error } = await supabase
     .from("formation_sections")
     .update(parsed.data)
@@ -133,7 +158,12 @@ export const updateSection = async (
 };
 
 export const deleteSection = async (id: string): Promise<ActionResult> => {
-  const { supabase } = await getSupabaseAndUser();
+  const { supabase, user } = await getSupabaseAndUser();
+
+  if (!(await canEditSection(supabase, id, user.id))) {
+    return { success: false, error: FORBIDDEN };
+  }
+
   const { error } = await supabase
     .from("formation_sections")
     .delete()
@@ -152,7 +182,11 @@ export const createBlock = async (
   content: unknown,
   position: number
 ): Promise<ActionResult<{ id: string }>> => {
-  const { supabase } = await getSupabaseAndUser();
+  const { supabase, user } = await getSupabaseAndUser();
+
+  if (!(await canEditSection(supabase, sectionId, user.id))) {
+    return { success: false, error: FORBIDDEN };
+  }
 
   const { data: block, error } = await supabase
     .from("formation_blocks")
@@ -176,7 +210,11 @@ export const updateBlock = async (
   id: string,
   content: unknown
 ): Promise<ActionResult> => {
-  const { supabase } = await getSupabaseAndUser();
+  const { supabase, user } = await getSupabaseAndUser();
+
+  if (!(await canEditBlock(supabase, id, user.id))) {
+    return { success: false, error: FORBIDDEN };
+  }
 
   const { error } = await supabase
     .from("formation_blocks")
@@ -191,7 +229,12 @@ export const updateBlock = async (
 };
 
 export const deleteBlock = async (id: string): Promise<ActionResult> => {
-  const { supabase } = await getSupabaseAndUser();
+  const { supabase, user } = await getSupabaseAndUser();
+
+  if (!(await canEditBlock(supabase, id, user.id))) {
+    return { success: false, error: FORBIDDEN };
+  }
+
   const { error } = await supabase
     .from("formation_blocks")
     .delete()

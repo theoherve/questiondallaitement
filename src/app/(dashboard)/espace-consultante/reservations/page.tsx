@@ -88,7 +88,12 @@ const ConsultantReservationsPage = async () => {
     const isPast = new Date(booking.starts_at) < now;
 
     return (
-      <Card key={booking.id}>
+      <Card
+        key={booking.id}
+        data-testid="booking-card"
+        data-booking-id={booking.id}
+        data-status={booking.status}
+      >
         <CardContent className="pt-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2">

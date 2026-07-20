@@ -34,7 +34,15 @@ export default defineConfig({
     video: "retain-on-failure",
   },
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    // Ouvre une session par role et la range sur disque. Sans ce prealable,
+    // chaque scenario connecte rejouerait le formulaire et declencherait le
+    // rate limit de `handleLogin` (5 tentatives / 5 min).
+    { name: "setup", testMatch: /auth\.setup\.ts/ },
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
+      dependencies: ["setup"],
+    },
   ],
   // Reuse a dev server if one is already up, otherwise start one.
   webServer: {

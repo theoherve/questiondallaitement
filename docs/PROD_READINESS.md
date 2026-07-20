@@ -388,7 +388,7 @@ la session n'est jamais completee.
 
 | ID  | Scenario                                                                          | Statut | Prio  |
 | --- | --------------------------------------------------------------------------------- | ------ | ----- |
-| 4-1 | Login consultante → voit le RDV → confirme                                        | ⬜     | 🔴 P0 |
+| 4-1 | Login consultante → voit le RDV → confirme                                        | ✅     | 🔴 P0 |
 | 4-2 | Annulation ≥ 48 h → refund total, montant verifie via l'API Stripe (pas juste la DB) | ⬜   | 🔴 P0 |
 | 4-3 | Annulation < 48 h → penalite 50 %, montant verifie via l'API Stripe                | ⬜     | 🔴 P0 |
 | 4-4 | `charge.refunded` remet `payments` **et** `bookings` en coherence                  | ⬜     | 🔴 P0 |
@@ -429,6 +429,46 @@ est terminee.
 > templates homonymes — que `createTemplate` n'empechait pas — auraient fait echouer la
 > lecture, donc l'envoi, en silence. La migration 00049 ajoute
 > `email_templates_name_unique`.
+
+### Constats de 4-1 (2026-07-21)
+
+**🔴 `cancelBooking` n'appartenait a personne.** L'action chargeait la reservation par
+son seul ID :
+
+```ts
+.from("bookings").select(...).eq("id", bookingId).single()
+```
+
+`getSupabaseAndUser` ne verifie que l'authentification et rend un client **admin qui
+contourne les RLS** — son propre commentaire dit que c'est a l'appelant de filtrer.
+N'importe quel compte connecte, y compris une cliente, pouvait donc annuler la
+reservation d'autrui a partir de son identifiant, et **declencher un vrai
+remboursement Stripe**. `cancelBookingClient`, cote cliente, filtrait deja par
+`client_id` : le motif etait connu, il manquait a un seul endroit.
+
+Ajout de `.eq("consultant_id", user.id)`, plus le verrou de statut que la version
+cliente appliquait deja (`cancelled`, `completed`, `no_show`) — sans quoi une
+consultation honoree pouvait etre « annulee » et remboursee. La suppression de la
+reunion Zoom passe apres ce controle : elle s'executait meme quand l'annulation etait
+ensuite refusee.
+
+**🟠 Six actions du module formations acceptaient n'importe quel identifiant.**
+`createSection`, `updateSection`, `deleteSection`, `createBlock`, `updateBlock` et
+`deleteBlock` ne verifiaient aucune appartenance : on pouvait modifier ou supprimer le
+contenu de l'accompagnement d'une autre consultante. Meme cause, meme correctif —
+[`src/lib/formations/authorization.ts`](../src/lib/formations/authorization.ts). La
+regle autorise la proprietaire **ou** une collaboratrice declaree, ce que l'espace
+consultante affiche deja ; `formation_collaborators` n'a pas de niveau de permission.
+
+**Le rate limit de connexion cassait la suite.** `handleLogin` autorise 5 tentatives
+par 5 minutes. Avec un login par scenario, la cinquieme echouait et les tests suivants
+tombaient pour une raison etrangere a ce qu'ils verifiaient. `e2e/auth.setup.ts` ouvre
+desormais une session par role, une seule fois, et les specs la reutilisent via
+`storageState`. Deux passes consecutives tiennent.
+
+> **A traiter en Phase 5** : `/espace-consultante` est protege par le middleware
+> (`ROLE_ROUTE_MAP`), pas par son layout — celui-ci ne lit les roles que pour composer
+> la navigation. La protection tient, mais elle repose sur une seule couche.
 
 ---
 

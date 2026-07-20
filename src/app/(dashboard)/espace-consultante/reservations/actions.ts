@@ -72,17 +72,34 @@ export const cancelBooking = async (
 ): Promise<ActionResult> => {
   const { user } = await getSupabaseAndUser();
   const adminClient = createAdminClient();
+  // `getSupabaseAndUser` ne verifie que l'authentification et rend un client
+  // admin qui contourne les RLS : c'est a l'action de restreindre. Sans
+  // `consultant_id`, n'importe quel compte connecte pouvait annuler la
+  // reservation d'autrui a partir de son seul ID — et declencher un vrai
+  // remboursement Stripe. `cancelBookingClient` filtre deja par `client_id`.
   const { data: booking } = await adminClient
     .from("bookings")
     .select("*, payments(amount_cents, stripe_payment_intent_id)")
     .eq("id", bookingId)
+    .eq("consultant_id", user.id)
     .single();
 
   if (!booking) {
     return { success: false, error: "Réservation introuvable" };
   }
 
-  // Delete Zoom meeting if present (non-blocking)
+  // Statuts verrouilles avant toute action : une consultation honoree ou une
+  // cliente absente ne se rembourse pas, et une reservation deja annulee
+  // remboursee deux fois rend l'argent deux fois. Meme regle que cote cliente.
+  if (["cancelled", "completed", "no_show"].includes(booking.status)) {
+    return {
+      success: false,
+      error: "Cette réservation ne peut pas être annulée",
+    };
+  }
+
+  // Apres le controle de statut : supprimer la reunion Zoom d'une reservation
+  // qu'on refuse ensuite d'annuler laisserait un rendez-vous sans lien.
   if (booking.zoom_meeting_id) {
     try {
       const { deleteMeeting } = await import("@/lib/zoom/client");
@@ -90,10 +107,6 @@ export const cancelBooking = async (
     } catch {
       // Non-blocking
     }
-  }
-
-  if (booking.status === "cancelled") {
-    return { success: false, error: "Déjà annulée" };
   }
 
   const hoursUntil = differenceInHours(
