@@ -115,6 +115,31 @@ export const sendBookingReminder = async (
   await sendTransactionalEmail({ to: clientEmail, subject, html });
 };
 
+/**
+ * Le creneau a ete vendu deux fois : la cliente a paye, on l'a remboursee, et
+ * elle n'a pas de rendez-vous.
+ *
+ * Sans cet email elle constate un debit puis un credit qu'elle ne s'explique
+ * pas, et croit avoir une consultation reservee. L'envoi est donc obligatoire —
+ * pas de repli en dur : si le template manque, on veut le savoir.
+ */
+export const sendBookingSlotConflict = async (
+  clientEmail: string,
+  variables: {
+    client_name: string;
+    date: string;
+    time: string;
+    amount_refunded: string;
+    booking_url: string;
+  },
+) => {
+  const template = await getTemplate("booking_slot_conflict");
+  if (!template) return;
+
+  const { subject, html } = await renderTemplateRow(template, variables);
+  await sendTransactionalEmail({ to: clientEmail, subject, html });
+};
+
 export const sendBookingCancelled = async (
   clientEmail: string,
   variables: {

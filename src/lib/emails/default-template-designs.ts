@@ -493,6 +493,50 @@ export const DESIGN_MIGRATION_WELCOME = doc([
   brandFooter(),
 ]);
 
+/**
+ * Le creneau a ete vendu deux fois. La cliente a paye, elle est remboursee, et
+ * elle n'a pas de rendez-vous. Le ton compte ici : c'est notre erreur, pas la
+ * sienne, et le montant rembourse doit etre visible sans chercher.
+ */
+export const DESIGN_BOOKING_SLOT_CONFLICT = doc([
+  brandHeader(),
+  section(
+    [
+      heading(1, [text("Ce créneau vient d'être réservé")], "center"),
+      paragraph([text("Bonjour "), variable("client_name"), text(",")]),
+      paragraph([
+        text(
+          "Nous sommes vraiment désolées : le créneau que vous venez de réserver a été pris par une autre personne quelques instants avant la validation de votre paiement.",
+        ),
+      ]),
+      spacer(8),
+      detailsBox([
+        { label: "Créneau concerné :", value: [variable("date"), text(" à "), variable("time")] },
+        { label: "Montant remboursé :", value: [{ ...variable("amount_refunded"), marks: [{ type: "bold" }] }] },
+      ]),
+      paragraph([
+        text(
+          "Le remboursement a déjà été effectué. Il apparaîtra sur votre relevé sous 5 à 10 jours ouvrés selon votre banque — vous n'avez aucune démarche à faire.",
+        ),
+      ]),
+      spacer(20),
+      button("Choisir un autre créneau", "{{booking_url}}"),
+      spacer(16),
+      paragraph([
+        text(
+          "Encore toutes nos excuses pour ce contretemps. Si vous préférez en parler, répondez simplement à cet email.",
+        ),
+      ]),
+      paragraph(
+        [text("Avec toute notre attention,"), lineBreak(), text("L'équipe Question d'Allaitement")],
+        "center",
+      ),
+    ],
+    { bg: "#ffffff", padding: [32, 24], marginBottom: 0 },
+  ),
+  brandFooter(),
+]);
+
 export const DEFAULT_TEMPLATE_DESIGNS: Record<string, Node> = {
   booking_confirmation: DESIGN_BOOKING_CONFIRMATION,
   booking_reminder: DESIGN_BOOKING_REMINDER,
@@ -501,6 +545,7 @@ export const DEFAULT_TEMPLATE_DESIGNS: Record<string, Node> = {
   welcome: DESIGN_WELCOME,
   password_reset: DESIGN_PASSWORD_RESET,
   migration_welcome: DESIGN_MIGRATION_WELCOME,
+  booking_slot_conflict: DESIGN_BOOKING_SLOT_CONFLICT,
 };
 
 /**
@@ -521,6 +566,8 @@ export const TEMPLATE_DEFAULT_SUBJECTS: Record<string, string> = {
   welcome: "Bienvenue sur Question d'Allaitement",
   password_reset: "Réinitialisation de votre mot de passe",
   migration_welcome: "Votre espace Question d'Allaitement a migré",
+  booking_slot_conflict:
+    "Votre réservation n'a pas pu être confirmée — vous êtes remboursée",
 };
 
 export const TEMPLATE_DEFAULT_VARIABLES: Record<string, string[]> = {
@@ -539,4 +586,11 @@ export const TEMPLATE_DEFAULT_VARIABLES: Record<string, string[]> = {
   welcome: ["client_name", "dashboard_url"],
   password_reset: ["client_name", "reset_url"],
   migration_welcome: ["client_name", "setup_url"],
+  booking_slot_conflict: [
+    "client_name",
+    "date",
+    "time",
+    "amount_refunded",
+    "booking_url",
+  ],
 };

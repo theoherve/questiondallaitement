@@ -33,6 +33,15 @@ const REQUIRED_PLACEHOLDERS: Record<string, string[]> = {
   // compte migre, valable 72 h. Sans design, ce template restait bloque sur
   // l'apercu HTML en lecture seule dans l'admin.
   migration_welcome: ["client_name", "setup_url"],
+  // Creneau vendu deux fois : le montant rembourse doit apparaitre, sinon la
+  // cliente ne relie pas l'email au credit sur son relevé.
+  booking_slot_conflict: [
+    "client_name",
+    "date",
+    "time",
+    "amount_refunded",
+    "booking_url",
+  ],
 };
 
 describe("designs par defaut des templates d'email", () => {

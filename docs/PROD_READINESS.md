@@ -31,12 +31,12 @@
 | Phase                                   | Statut | Bloque par |
 | --------------------------------------- | ------ | ---------- |
 | Phase 0 — Prerequis externes            | ✅     | —          |
-| Phase 1 — Verification config Connect   | ⬜     | —          |
-| Phase 2 — E2E N1 (seed + webhook simule) | ✅     | —          |
-| Phase 3 — E2E N2 (Playwright navigateur) | ⬜     | Phase 0-2  |
-| Phase 4 — E2E N3 (consultante + refund)  | ⬜     | Phase 3    |
+| Phase 1 — Verification config Connect   | 🔶     | reste 1-6 (TVA) |
+| Phase 2 — E2E N1 (seed + webhook simule) | 🔶    | reste 2-13 (CI) |
+| Phase 3 — E2E N2 (Playwright navigateur) | 🔶     | reste 3-3 a 3-5 ; 3-6 bloque |
+| Phase 4 — E2E N3 (consultante + refund)  | 🔶     | 4-7 / 4-8 faits, reste 4-1 a 4-6 |
 | Phase 5 — Durcissement avant live        | ⬜     | Phase 4    |
-| Phase 6 — Templates d'email en admin     | ⬜     | —          |
+| Phase 6 — Templates d'email en admin     | ✅     | —          |
 
 ---
 
@@ -217,18 +217,20 @@ et n'est jamais envoye a Stripe — N1 ne fait aucun appel reseau vers Stripe.
 
 | # | Constat                                                                                              | A traiter en |
 | - | ---------------------------------------------------------------------------------------------------- | ------------ |
-| A | `handleBookingConfirmation` ne verifie pas que le creneau est toujours libre → double booking possible si deux clients paient le meme creneau | Phase 4      |
-| B | L'insert du booking utilise `.insert()` sans `onConflict`, et l'erreur retournee n'est pas lue : une redelivery Stripe echoue en silence | Phase 4      |
+| A | `handleBookingConfirmation` ne verifie pas que le creneau est toujours libre → double booking possible si deux clients paient le meme creneau | ✅ Phase 4 (4-7) |
+| B | L'insert du booking utilise `.insert()` sans `onConflict`, et l'erreur retournee n'est pas lue : une redelivery Stripe echoue en silence | ✅ Phase 4 (4-8) |
 | C | `/api/stripe/connect` ne verifie pas que l'utilisateur a le role consultante — il se contente de chercher la ligne `consultants` | Phase 5 (5-8) |
 
 ---
 
 ## Phase 3 — E2E N2 : Playwright navigateur
 
-> `playwright` est en devDependencies mais **aucun `playwright.config.ts` ni dossier
-> `e2e/` n'existe**. Tout est a creer.
+> Harnais en place : [playwright.config.ts](../playwright.config.ts), dossier `e2e/`,
+> `pnpm test:e2e:n2`. `@playwright/test` remplace le paquet `playwright` (les deux
+> cohabitaient en versions differentes, ce qui cassait la resolution du binaire).
 >
-> Necessite `stripe listen --forward-to localhost:3000/api/webhooks/stripe` en parallele.
+> `stripe listen` n'est necessaire que pour les scenarios qui completent un paiement —
+> ce que 3-2 ne fait pas (voir plus bas).
 
 | ID  | Scenario                                                                             | Statut | Prio  |
 | --- | ------------------------------------------------------------------------------------ | ------ | ----- |
@@ -292,8 +294,9 @@ la session n'est jamais completee.
 | 4-4 | `charge.refunded` remet `payments` **et** `bookings` en coherence                  | ⬜     | 🔴 P0 |
 | 4-5 | Onboarding Connect : `/api/stripe/connect` → Express test → `account.updated` → `active` | ⬜ | 🔴 P0 |
 | 4-6 | Splits collaborateurs (`processCollaboratorSplits`) sur achat d'accompagnement     | ⬜     | 🟠 P1 |
-| 4-7 | Constat A — double booking : contrainte d'unicite + remboursement automatique      | ⬜     | 🔴 P0 |
-| 4-8 | Constat B — l'insert du booking avale l'erreur : redelivery Stripe silencieuse     | ⬜     | 🔴 P0 |
+| 4-7 | Constat A — double booking : contrainte d'unicite + remboursement automatique      | ✅     | 🔴 P0 |
+| 4-8 | Constat B — l'insert du booking avale l'erreur : redelivery Stripe silencieuse     | ✅     | 🔴 P0 |
+| 4-9 | Email prevenant la cliente du conflit de creneau et du remboursement               | ✅     | 🔴 P0 |
 
 ### 4-7 / 4-8 — decision du 2026-07-20
 
@@ -311,11 +314,21 @@ creneau) pour les reservations actives.
 deja paye. Le webhook declenche un refund total via l'API Stripe et envoie un email
 d'excuse. Ecarte : creer la reservation en statut « conflit » pour traitement manuel.
 
-> ⚠️ **L'email de conflit doit etre un template en base, pas une chaine en dur** —
-> meme traitement que les mails d'automation, editable par Carole. La table
-> `email_templates` (`subject`, `body_html`, `variables`) existe deja et les templates
-> sont versionnes par migration (cf. 00034, 00045). Ce qui manque, c'est l'ecran admin
-> pour les editer : voir Phase 6.
+**4-9 — email de conflit, fait le 2026-07-21.** Le template `booking_slot_conflict`
+est cree par [migration 00049](../supabase/migrations/00049_booking_slot_conflict_template.sql)
+en **insertion seule** (regle 6-5), protege par `REQUIRED_TEMPLATES` (6-4), et editable
+depuis l'admin comme les autres. Il annonce le montant rembourse et propose de choisir
+un autre creneau.
+
+L'envoi est non bloquant : le remboursement est deja parti quand il se declenche, et
+faire echouer le webhook ferait retenter Stripe sur un evenement dont la partie argent
+est terminee.
+
+> **Trouve en ecrivant la migration** : `email_templates.name` n'avait **aucune
+> contrainte d'unicite**, alors que `getTemplate()` fait un `.single()` dessus. Deux
+> templates homonymes — que `createTemplate` n'empechait pas — auraient fait echouer la
+> lecture, donc l'envoi, en silence. La migration 00049 ajoute
+> `email_templates_name_unique`.
 
 ---
 
@@ -325,8 +338,6 @@ d'excuse. Ecarte : creer la reservation en statut « conflit » pour traitement 
 > **volontairement sortie du correctif de bug** : melanger un ecran admin a un fix
 > de flux d'argent rendrait la revue impossible.
 
-| ID  | Tache                                                                            | Statut | Prio  |
-| --- | -------------------------------------------------------------------------------- | ------ | ----- |
 > **Correction du 2026-07-20** : cette phase avait ete redigee en affirmant que
 > l'ecran d'administration des templates n'existait pas. **C'etait faux.** Il est en
 > place sous `/admin/marketing/templates`, avec liste, edition WYSIWYG et
@@ -353,13 +364,17 @@ d'excuse. Ecarte : creer la reservation en statut « conflit » pour traitement 
 | Previsualisation              | ✅ `src/lib/emails/preview-action.ts` |
 | Ecran admin liste + edition   | ✅ `/admin/marketing/templates` |
 
-### Ce qui manque reellement
+### Ce qui a ete corrige
 
-**6-4 — la suppression n'est pas protegee.** `deleteTemplate` supprime n'importe
-quelle ligne sans verifier si le code en depend. Les **7** templates presents sont
-tous references par `send.ts` : supprimer `booking_confirmation` fait echouer
-silencieusement l'email de confirmation — `.single()` renvoie `null`, l'email ne part
-pas, rien n'est journalise.
+**6-4 — suppression protegee.** `deleteTemplate` supprimait n'importe quelle ligne
+sans verifier si le code en dependait. Supprimer `booking_confirmation` faisait
+echouer l'email de confirmation en silence — `.single()` renvoie `null`, l'envoi est
+abandonne, rien n'est journalise. `REQUIRED_TEMPLATES` liste desormais les templates
+dont l'absence casse un envoi, et le refus nomme ce qui casserait.
+[required-templates.spec.ts](../src/lib/emails/required-templates.spec.ts) deduit cet
+ensemble de `send.ts` lui-meme : `if (!template) return` signale un envoi sans filet,
+`if (template) { ... }` un envoi avec repli. Lire la forme plutot que tenir une liste
+fait qu'un envoi perdant son repli rejoint automatiquement les proteges.
 
 **6-6 — verifie le 2026-07-20 : deja traite.** La confirmation existe, nomme les
 templates concernes et previent que toute personnalisation sera ecrasee ; la
