@@ -17,6 +17,10 @@ import {
 import { syncAllContactsToBrevo } from "@/lib/brevo/sync";
 import { renderBlockEmail } from "@/lib/emails/render-block-email";
 import {
+  isRequiredTemplate,
+  requiredTemplateReason,
+} from "@/lib/emails/required-templates";
+import {
   DEFAULT_TEMPLATE_DESIGNS,
   TEMPLATE_DEFAULT_SUBJECTS,
   TEMPLATE_DEFAULT_VARIABLES,
@@ -138,6 +142,29 @@ export const updateTemplate = async (
 export const deleteTemplate = async (id: string): Promise<ActionResult> => {
   await requireAdmin();
   const supabase = createAdminClient();
+
+  // Lire le nom avant de supprimer : l'id ne dit rien de la dependance, et une
+  // suppression a l'aveugle fait echouer un envoi en silence — `getTemplate`
+  // renvoie null, l'email ne part pas, rien n'est journalise.
+  const { data: template } = await supabase
+    .from("email_templates")
+    .select("name")
+    .eq("id", id)
+    .single();
+
+  if (!template) {
+    return { success: false, error: "Template introuvable." };
+  }
+
+  if (isRequiredTemplate(template.name)) {
+    return {
+      success: false,
+      error:
+        `« ${template.name} » ne peut pas être supprimé : ` +
+        `${requiredTemplateReason(template.name)} en dépend. ` +
+        `Pour en changer le contenu, modifiez-le.`,
+    };
+  }
 
   const { error } = await supabase
     .from("email_templates")
