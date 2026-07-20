@@ -46,3 +46,107 @@ jobs:
 
       - name: Tests
         run: pnpm test
+
+  e2e-n1:
+    name: E2E N1 — webhooks Stripe
+    runs-on: ubuntu-latest
+    # Le harnais seed des fixtures aux IDs fixes dans la base reelle : deux runs
+    # simultanes se marchent dessus, le nettoyage de l'un supprimant les lignes
+    # de l'autre. On serialise plutot que d'accepter une CI aleatoirement rouge.
+    # `cancel-in-progress: false` : un run interrompu en plein scenario laisse
+    # ses fixtures derriere lui.
+    concurrency:
+      group: e2e-n1
+      cancel-in-progress: false
+
+    # Les secrets ne sont pas exposes aux PR venant d'un fork.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "10.10.0"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.E2E_STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.E2E_STRIPE_WEBHOOK_SECRET }}
+          NEXTAUTH_SECRET: placeholder_nextauth_secret
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+      # Double du garde-fou de scripts/e2e/lib/env.mjs, place avant le demarrage
+      # de l'app : mieux vaut echouer ici que d'avoir seede la mauvaise base.
+      # Le secret passe par l'environnement, pas par une interpolation dans le
+      # script — une valeur contenant des metacaracteres serait executee.
+      - name: Refuser une cle Stripe live
+        env:
+          KEY: ${{ secrets.E2E_STRIPE_SECRET_KEY }}
+        run: |
+          case "$KEY" in
+            sk_live_*)
+              echo "STRIPE_SECRET_KEY est une cle LIVE — la suite E2E ecrit en base et rembourse."
+              exit 1
+              ;;
+            "")
+              echo "E2E_STRIPE_SECRET_KEY n'est pas configure dans les secrets du depot."
+              exit 1
+              ;;
+          esac
+
+      - name: Demarrer l'application
+        run: pnpm start &
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.E2E_STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.E2E_STRIPE_WEBHOOK_SECRET }}
+          NEXTAUTH_SECRET: placeholder_nextauth_secret
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+      - name: Attendre que l'application reponde
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://localhost:3000; then
+              echo "prete apres ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "l'application n'a pas repondu en 60s"
+          exit 1
+
+      - name: E2E N1
+        run: pnpm test:e2e:n1
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.E2E_STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.E2E_STRIPE_WEBHOOK_SECRET }}
+          E2E_APP_URL: http://localhost:3000
+
+      - name: Nettoyer les fixtures meme en cas d'echec
+        if: always()
+        run: pnpm e2e:cleanup
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.E2E_STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.E2E_STRIPE_WEBHOOK_SECRET }}

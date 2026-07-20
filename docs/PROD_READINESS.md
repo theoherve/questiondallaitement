@@ -187,7 +187,7 @@ A 15 % sur les prix reels du catalogue (27 € a 519 €), la marge est large :
 | 2-10 | Test signature invalide → 400 + mauvais secret → 400                          | ✅     | 🔴 P0 |
 | 2-11 | `scripts/e2e/cleanup-test-data.mjs` — suppression des fixtures                 | ✅     | 🟠 P1 |
 | 2-12 | Runner `scripts/e2e/run-n1.mjs` + script npm `test:e2e:n1`                     | ✅     | 🔴 P0 |
-| 2-13 | Ajouter `test:e2e:n1` a la CI GitHub Actions                                   | ⬜     | 🟠 P1 |
+| 2-13 | Ajouter `test:e2e:n1` a la CI GitHub Actions                                   | ✅     | 🟠 P1 |
 
 ### Utilisation
 
@@ -205,6 +205,32 @@ Variables optionnelles : `E2E_APP_URL` (defaut `http://localhost:3000`),
 Le harnais a ete valide par mutation : avec un `STRIPE_WEBHOOK_SECRET` errone,
 7 scenarios sur 9 tombent — les assertions mordent reellement, la suite n'est
 pas verte a vide.
+
+### N1 en CI (2-13, fait le 2026-07-21)
+
+Job `e2e-n1` dans [ci.yml](../.github/workflows/ci.yml), separe de `test` pour ne pas
+ralentir lint et build.
+
+> ⚠️ **N1 ecrit dans la base de production.** Il n'existe pas de base dediee aux
+> tests : le harnais seed ses fixtures dans `chhrhrijtelevozjccqj`, joue les scenarios
+> et nettoie. Deux consequences assumees le 2026-07-21 :
+>
+> - la `SUPABASE_SERVICE_ROLE_KEY` — celle qui contourne toutes les RLS — vit dans les
+>   secrets du depot, lisible par tout workflow ;
+> - les IDs de fixtures sont fixes, donc deux runs simultanes se marchent dessus. Le
+>   job declare `concurrency: e2e-n1` avec `cancel-in-progress: false` pour les
+>   serialiser — annuler un run en plein scenario laisserait ses fixtures derriere lui.
+>
+> L'alternative propre reste un projet Supabase dedie a la CI. Ecartee pour l'instant :
+> il faudrait y rejouer les migrations et maintenir deux schemas alignes.
+
+Le job refuse de demarrer sur une cle `sk_live_`, avant meme de lancer l'application,
+et nettoie les fixtures avec `if: always()` — un echec en plein scenario ne doit pas
+laisser de lignes derriere lui. Les PR venant d'un fork sont exclues : GitHub ne leur
+expose pas les secrets, le job echouerait sans raison utile.
+
+Secrets attendus : `E2E_SUPABASE_URL`, `E2E_SUPABASE_ANON_KEY`,
+`E2E_SUPABASE_SERVICE_ROLE_KEY`, `E2E_STRIPE_SECRET_KEY`, `E2E_STRIPE_WEBHOOK_SECRET`.
 
 ### Fixtures
 
