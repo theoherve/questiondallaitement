@@ -399,6 +399,81 @@ describe("handleChargeRefunded", () => {
     await handleChargeRefunded({ payment_intent: null, amount: 5000, amount_refunded: 5000 } as unknown as Stripe.Charge);
     expect(state.updateCalls).toHaveLength(0);
   });
+
+  // ─── 4-4 : coherence entre `payments` et `bookings` ─────────
+  //
+  // Un remboursement emis depuis le dashboard Stripe ne passe pas par
+  // `cancelBooking` : seul cet evenement en informe l'application. Tant qu'il
+  // ne touchait que `payments`, la reservation restait active — la consultante
+  // gardait un rendez-vous a son agenda, le creneau restait bloque par l'index
+  // d'unicite, et la cliente croyait sa place reservee alors qu'elle etait
+  // remboursee.
+
+  const bookingPayment = () => {
+    db["payments"] = { single: { type: "booking", reference_id: BOOKING_ID } };
+  };
+
+  it("annule la reservation quand le remboursement est integral", async () => {
+    bookingPayment();
+    db["bookings"] = { single: { id: BOOKING_ID, status: "confirmed" } };
+
+    await handleChargeRefunded(makeCharge(5000, 5000));
+
+    const call = state.updateCalls.find((c) => c.table === "bookings");
+    expect(call, "la reservation n'a pas ete mise a jour").toBeDefined();
+    expect(call!.data).toMatchObject({
+      status: "cancelled",
+      refund_amount_cents: 5000,
+    });
+  });
+
+  it("enregistre le montant sans annuler quand le remboursement est partiel", async () => {
+    // C'est la forme que prend la penalite d'annulation tardive : la
+    // reservation a deja ete traitee par l'application, l'evenement ne fait
+    // que confirmer le montant.
+    bookingPayment();
+    db["bookings"] = { single: { id: BOOKING_ID, status: "cancelled" } };
+
+    await handleChargeRefunded(makeCharge(5000, 2500));
+
+    const call = state.updateCalls.find((c) => c.table === "bookings");
+    expect(call!.data).toMatchObject({ refund_amount_cents: 2500 });
+    expect(call!.data).not.toHaveProperty("status");
+  });
+
+  it("ne ressuscite pas une reservation deja annulee", async () => {
+    // Chemin applicatif : `cancelBooking` a deja tout pose, puis Stripe emet
+    // l'evenement. Le reecrire en boucle doit rester sans effet de bord.
+    bookingPayment();
+    db["bookings"] = { single: { id: BOOKING_ID, status: "cancelled" } };
+
+    await handleChargeRefunded(makeCharge(5000, 5000));
+
+    const call = state.updateCalls.find((c) => c.table === "bookings");
+    expect(call!.data).not.toHaveProperty("cancelled_at");
+    expect(call!.data).toMatchObject({ refund_amount_cents: 5000 });
+  });
+
+  it("n'annule pas une consultation deja honoree", async () => {
+    // Rembourser apres coup est un geste commercial : la consultation a bien
+    // eu lieu, l'effacer de l'agenda serait faux.
+    bookingPayment();
+    db["bookings"] = { single: { id: BOOKING_ID, status: "completed" } };
+
+    await handleChargeRefunded(makeCharge(5000, 5000));
+
+    const call = state.updateCalls.find((c) => c.table === "bookings");
+    expect(call!.data).not.toHaveProperty("status");
+    expect(call!.data).toMatchObject({ refund_amount_cents: 5000 });
+  });
+
+  it("ne touche a aucune reservation pour un achat d'accompagnement", async () => {
+    db["payments"] = { single: { type: "formation", reference_id: FORMATION_ID } };
+
+    await handleChargeRefunded(makeCharge(5000, 5000));
+
+    expect(state.updateCalls.find((c) => c.table === "bookings")).toBeUndefined();
+  });
 });
 
 // ─── handleAccountUpdated ─────────────────────────────────────

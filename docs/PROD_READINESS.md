@@ -34,7 +34,7 @@
 | Phase 1 — Verification config Connect   | 🔶     | reste 1-6 (TVA) |
 | Phase 2 — E2E N1 (seed + webhook simule) | ✅    | —          |
 | Phase 3 — E2E N2 (Playwright navigateur) | 🔶     | 3-1 a 3-5 faits ; 3-6 bloque |
-| Phase 4 — E2E N3 (consultante + refund)  | 🔶     | 4-7 / 4-8 faits, reste 4-1 a 4-6 |
+| Phase 4 — E2E N3 (consultante + refund)  | 🔶     | reste 4-2, 4-3, 4-5, 4-6 |
 | Phase 5 — Durcissement avant live        | ⬜     | Phase 4    |
 | Phase 6 — Templates d'email en admin     | ✅     | —          |
 
@@ -391,7 +391,7 @@ la session n'est jamais completee.
 | 4-1 | Login consultante → voit le RDV → confirme                                        | ✅     | 🔴 P0 |
 | 4-2 | Annulation ≥ 48 h → refund total, montant verifie via l'API Stripe (pas juste la DB) | ⬜   | 🔴 P0 |
 | 4-3 | Annulation < 48 h → penalite 50 %, montant verifie via l'API Stripe                | ⬜     | 🔴 P0 |
-| 4-4 | `charge.refunded` remet `payments` **et** `bookings` en coherence                  | ⬜     | 🔴 P0 |
+| 4-4 | `charge.refunded` remet `payments` **et** `bookings` en coherence                  | ✅     | 🔴 P0 |
 | 4-5 | Onboarding Connect : `/api/stripe/connect` → Express test → `account.updated` → `active` | ⬜ | 🔴 P0 |
 | 4-6 | Splits collaborateurs (`processCollaboratorSplits`) sur achat d'accompagnement     | ⬜     | 🟠 P1 |
 | 4-7 | Constat A — double booking : contrainte d'unicite + remboursement automatique      | ✅     | 🔴 P0 |
@@ -469,6 +469,36 @@ desormais une session par role, une seule fois, et les specs la reutilisent via
 > **A traiter en Phase 5** : `/espace-consultante` est protege par le middleware
 > (`ROLE_ROUTE_MAP`), pas par son layout — celui-ci ne lit les roles que pour composer
 > la navigation. La protection tient, mais elle repose sur une seule couche.
+
+### 4-4 — coherence apres remboursement (2026-07-21)
+
+**🔴 `handleChargeRefunded` ne touchait que `payments`.** Un remboursement emis depuis
+le **dashboard Stripe** ne passe pas par `cancelBooking` : cet evenement est le seul a
+en informer l'application. La ligne `payments` passait bien en `refunded`, mais la
+reservation restait active — la consultante gardait le rendez-vous a son agenda, le
+creneau restait bloque par l'index d'unicite de 4-7, et la cliente croyait sa place
+reservee alors que son argent lui avait ete rendu.
+
+Regles retenues :
+
+| Cas                                       | Effet sur `bookings`                         |
+| ----------------------------------------- | -------------------------------------------- |
+| Remboursement **integral**, resa active    | `cancelled` + `cancelled_at` + montant        |
+| Remboursement **partiel**                  | montant seul — c'est la penalite d'annulation tardive, la consultation reste due |
+| Resa deja `cancelled`                      | montant seul (chemin applicatif, idempotent)  |
+| Resa `completed` / `no_show`               | montant seul — la consultation a eu lieu, l'effacer de l'agenda serait faux |
+| Paiement de type `formation` / `event`     | aucune reservation concernee                  |
+
+Couvert en unitaire (5 scenarios) **et** en N1, ou les deux scenarios de remboursement
+verifient desormais `bookings` en plus de `payments`. Verifie rouge en desactivant
+l'appel : 7/9.
+
+> **Effet de bord evite** : les scenarios de remboursement N1 visaient `IDS.booking`,
+> la reservation creee par un scenario anterieur. Depuis que `charge.refunded` annule,
+> le remboursement total aurait annule la reservation que le remboursement partiel
+> s'attend a trouver active — deux tests devenus dependants de leur ordre. Chacun a
+> maintenant sa propre reservation (`bookingRefundFull`, `bookingRefundPartial`), sur
+> des creneaux distincts pour ne pas heurter l'index d'unicite.
 
 ---
 
