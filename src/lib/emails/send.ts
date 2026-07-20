@@ -30,6 +30,19 @@ const renderTemplateRow = async (
   html: await resolveEmailHtml(tpl.body_design, tpl.body_html, variables),
 });
 
+/**
+ * Bouton « Rejoindre la reunion Zoom », ou chaine vide hors teleconsultation.
+ *
+ * Le fragment doit rester **inline** : il est injecte dans un paragraphe du
+ * design, et un <p> imbrique dans un <p> est du HTML invalide que les clients
+ * mail corrigent en refermant le paragraphe exterieur — ce qui casse
+ * l'espacement de tout ce qui suit.
+ */
+export const buildZoomBlock = (zoomJoinUrl?: string): string =>
+  zoomJoinUrl
+    ? `<a href="${zoomJoinUrl}" style="display:inline-block;margin-top:16px;padding:12px 24px;background-color:#a0283e;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:600;">Rejoindre la réunion Zoom</a>`
+    : "";
+
 export const sendBookingConfirmation = async (
   clientEmail: string,
   variables: {
@@ -43,9 +56,7 @@ export const sendBookingConfirmation = async (
   const template = await getTemplate("booking_confirmation");
   if (!template) return;
 
-  const zoom_block = variables.zoom_join_url
-    ? `<p style="margin-top:24px;"><a href="${variables.zoom_join_url}" style="display:inline-block;padding:12px 24px;background-color:#A0283E;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Rejoindre la réunion Zoom</a></p>`
-    : "";
+  const zoom_block = buildZoomBlock(variables.zoom_join_url);
 
   const { subject, html } = await renderTemplateRow(template, {
     client_name: variables.client_name,
