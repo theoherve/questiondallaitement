@@ -36,6 +36,7 @@
 | Phase 3 — E2E N2 (Playwright navigateur) | ⬜     | Phase 0-2  |
 | Phase 4 — E2E N3 (consultante + refund)  | ⬜     | Phase 3    |
 | Phase 5 — Durcissement avant live        | ⬜     | Phase 4    |
+| Phase 6 — Templates d'email en admin     | ⬜     | —          |
 
 ---
 
@@ -47,6 +48,7 @@
 | --- | ------------------------------------------------------------------------- | ------ | ----------- |
 | 0-1 | `/mcp` en session interactive → autoriser `plugin:stripe:stripe`          | 🔶     | Theo        |
 | 0-2 | `brew install stripe/stripe-cli/stripe` puis `stripe login`               | ✅     | Theo        |
+| 0-3 | Confirmer que les cles `sk_test_` / `whsec_` de `.env.local` sont les bonnes | ✅   | Theo        |
 | 0-4 | Recuperer la vraie `pk_test_` de la sandbox → `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | ✅ | Theo |
 
 > **0-1** : OAuth autorise sur une autre session, mais le serveur MCP n'est pas
@@ -67,8 +69,7 @@
 > dans le navigateur. La `pk_test_` du CLI (`pk_test_51TH8Bi…`) appartient au compte
 > parent — **ne pas l'utiliser** : il faut celle de la sandbox `acct_1TH8C3DSQDjxnDDN`,
 > a copier depuis le dashboard (Developers → API keys, sandbox selectionnee).
-| 0-3 | Confirmer que les cles `sk_test_` / `whsec_` de `.env.local` sont les bonnes | ✅   | Theo        |
-
+>
 > **0-3 verifie le 2026-07-20** : la cle `sk_test_` pointe sur `acct_1TH8C3DSQDjxnDDN`
 > — « Environnement de test caroleherve.fr (Theo) », `country: FR`, `default_currency: eur`,
 > email `carole.herve@questiondallaitement.com`. C'est bien le compte cible.
@@ -291,6 +292,64 @@ la session n'est jamais completee.
 | 4-4 | `charge.refunded` remet `payments` **et** `bookings` en coherence                  | ⬜     | 🔴 P0 |
 | 4-5 | Onboarding Connect : `/api/stripe/connect` → Express test → `account.updated` → `active` | ⬜ | 🔴 P0 |
 | 4-6 | Splits collaborateurs (`processCollaboratorSplits`) sur achat d'accompagnement     | ⬜     | 🟠 P1 |
+| 4-7 | Constat A — double booking : contrainte d'unicite + remboursement automatique      | ⬜     | 🔴 P0 |
+| 4-8 | Constat B — l'insert du booking avale l'erreur : redelivery Stripe silencieuse     | ⬜     | 🔴 P0 |
+
+### 4-7 / 4-8 — decision du 2026-07-20
+
+**4-8** : `handleBookingConfirmation` fait un `.insert()` sans lire `error`. Une
+redelivery Stripe (retry sur timeout, ou rejeu manuel) heurte la cle primaire et
+echoue en silence — Stripe croit l'evenement traite. Correctif : rendre l'insert
+idempotent et faire remonter toute autre erreur pour que Stripe retente.
+
+**4-7** : rien ne garantit que le creneau est encore libre au moment du fulfillment.
+Une verification applicative laisse une fenetre entre le `SELECT` et l'`INSERT` : le
+seul correctif etanche est une **contrainte d'unicite en base** sur (consultante,
+creneau) pour les reservations actives.
+
+**Tranche : remboursement automatique.** Quand le conflit est detecte, la cliente a
+deja paye. Le webhook declenche un refund total via l'API Stripe et envoie un email
+d'excuse. Ecarte : creer la reservation en statut « conflit » pour traitement manuel.
+
+> ⚠️ **L'email de conflit doit etre un template en base, pas une chaine en dur** —
+> meme traitement que les mails d'automation, editable par Carole. La table
+> `email_templates` (`subject`, `body_html`, `variables`) existe deja et les templates
+> sont versionnes par migration (cf. 00034, 00045). Ce qui manque, c'est l'ecran admin
+> pour les editer : voir Phase 6.
+
+---
+
+## Phase 6 — Repertoire des templates d'email en admin
+
+> Demande formulee le 2026-07-20 en tranchant 4-7. Feature a part entiere,
+> **volontairement sortie du correctif de bug** : melanger un ecran admin a un fix
+> de flux d'argent rendrait la revue impossible.
+
+| ID  | Tache                                                                            | Statut | Prio  |
+| --- | -------------------------------------------------------------------------------- | ------ | ----- |
+| 6-1 | Ecran admin : liste des `email_templates` (nom, type, date de modification)      | ⬜     | 🟠 P1 |
+| 6-2 | Edition avec le WYSIWYG des mails d'automation (editeur par blocs existant)      | ⬜     | 🟠 P1 |
+| 6-3 | Documenter les variables disponibles par template + previsualisation             | ⬜     | 🟠 P1 |
+| 6-4 | Garde-fou : empecher la suppression d'un template reference par le code          | ⬜     | 🔴 P0 |
+| 6-5 | Arbitrer migrations vs edition en base (une edition ne doit pas etre ecrasee)    | ⬜     | 🔴 P0 |
+
+### Ce qui existe deja
+
+| Brique                        | Etat |
+| ----------------------------- | ---- |
+| Table `email_templates`       | ✅ `subject`, `body_html`, `type`, `variables` (00008) |
+| Editeur WYSIWYG par blocs     | ✅ `src/components/editor/` + `render-block-email.ts` |
+| Designs par defaut            | ✅ `src/lib/emails/default-template-designs.ts` |
+| Previsualisation              | ✅ `src/lib/emails/preview-action.ts` |
+| **Ecran admin de CRUD**       | ❌ **manquant — c'est tout l'objet de cette phase** |
+
+> **6-5 est le point delicat**, a trancher avant d'ecrire l'ecran : aujourd'hui les
+> templates sont modifies par migration (00034 met a jour `booking_confirmation`,
+> 00045 `formation_access`). Si Carole edite un template dans l'admin et qu'une
+> migration ulterieure le reecrit, son travail disparait sans avertissement. Il faut
+> choisir : migrations reservees a la creation (jamais `UPDATE` sur un template
+> existant), ou colonne marquant les templates edites manuellement que les migrations
+> laissent tranquilles.
 
 ---
 
