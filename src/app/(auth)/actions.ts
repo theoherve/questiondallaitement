@@ -1,6 +1,7 @@
 "use server";
 
 import { hash } from "bcryptjs";
+import { AuthError } from "next-auth";
 import { signIn, signOut } from "@/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -109,13 +110,22 @@ export const handleLogin = async (formData: FormData): Promise<void> => {
     );
   }
 
-  const result = await signIn("credentials", {
-    email,
-    password: parsed.data.password,
-    redirect: false,
-  });
+  // NextAuth v5 leve une AuthError (CredentialsSignin) quand authorize()
+  // renvoie null : il ne retourne pas { error }. Le catch entoure uniquement
+  // signIn car redirect() leve NEXT_REDIRECT, qu'il ne faut pas avaler.
+  let signInFailed = false;
+  try {
+    await signIn("credentials", {
+      email,
+      password: parsed.data.password,
+      redirect: false,
+    });
+  } catch (err) {
+    if (!(err instanceof AuthError)) throw err;
+    signInFailed = true;
+  }
 
-  if (result?.error) {
+  if (signInFailed) {
     redirect(
       `/connexion?error=${encodeURIComponent("Email ou mot de passe incorrect")}`,
     );
