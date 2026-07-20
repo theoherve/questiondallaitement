@@ -77,11 +77,27 @@ export const resolveEmailHtml = async (
   variables?: Record<string, string>
 ): Promise<string> => {
   if (bodyDesign && typeof bodyDesign === "object" && "type" in bodyDesign) {
-    return renderBlockEmail(bodyDesign as JSONContent, { variables });
+    const rendered = await renderBlockEmail(bodyDesign as JSONContent, {
+      variables,
+    });
+    // Maily ne substitue que ses noeuds variable(). Un `{{x}}` ecrit en texte
+    // brut lui echappe — c'est le seul moyen d'injecter un fragment HTML, comme
+    // le bouton Zoom de booking_confirmation, qu'un noeud variable rendrait
+    // echappe. On reprend donc la substitution sur le HTML final, comme le fait
+    // le chemin legacy ci-dessous.
+    return substituteVariables(rendered, variables);
   }
   if (!bodyHtml) return "";
-  if (!variables) return bodyHtml;
-  let out = bodyHtml;
+  return substituteVariables(bodyHtml, variables);
+};
+
+/** Remplace les `{{cle}}` par leur valeur, telle quelle (HTML compris). */
+const substituteVariables = (
+  html: string,
+  variables?: Record<string, string>,
+): string => {
+  if (!variables) return html;
+  let out = html;
   for (const [key, value] of Object.entries(variables)) {
     out = out.replaceAll(`{{${key}}}`, value);
   }

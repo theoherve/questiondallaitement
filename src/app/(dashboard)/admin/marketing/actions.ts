@@ -16,7 +16,15 @@ import {
 } from "@/lib/brevo/client";
 import { syncAllContactsToBrevo } from "@/lib/brevo/sync";
 import { renderBlockEmail } from "@/lib/emails/render-block-email";
-import { DEFAULT_TEMPLATE_DESIGNS } from "@/lib/emails/default-template-designs";
+import {
+  isRequiredTemplate,
+  requiredTemplateReason,
+} from "@/lib/emails/required-templates";
+import {
+  DEFAULT_TEMPLATE_DESIGNS,
+  TEMPLATE_DEFAULT_SUBJECTS,
+  TEMPLATE_DEFAULT_VARIABLES,
+} from "@/lib/emails/default-template-designs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/types";
@@ -134,6 +142,29 @@ export const updateTemplate = async (
 export const deleteTemplate = async (id: string): Promise<ActionResult> => {
   await requireAdmin();
   const supabase = createAdminClient();
+
+  // Lire le nom avant de supprimer : l'id ne dit rien de la dependance, et une
+  // suppression a l'aveugle fait echouer un envoi en silence — `getTemplate`
+  // renvoie null, l'email ne part pas, rien n'est journalise.
+  const { data: template } = await supabase
+    .from("email_templates")
+    .select("name")
+    .eq("id", id)
+    .single();
+
+  if (!template) {
+    return { success: false, error: "Template introuvable." };
+  }
+
+  if (isRequiredTemplate(template.name)) {
+    return {
+      success: false,
+      error:
+        `« ${template.name} » ne peut pas être supprimé : ` +
+        `${requiredTemplateReason(template.name)} en dépend. ` +
+        `Pour en changer le contenu, modifiez-le.`,
+    };
+  }
 
   const { error } = await supabase
     .from("email_templates")
@@ -516,25 +547,6 @@ export const removeBrevoListFromConsultant = async (
 };
 
 // ─── Default transactional designs ──────────────────────────
-
-const TEMPLATE_DEFAULT_SUBJECTS: Record<string, string> = {
-  booking_confirmation: "Votre réservation est confirmée — {{date}}",
-  booking_reminder: "Rappel : votre consultation demain à {{time}}",
-  booking_cancelled: "Votre réservation du {{date}} a été annulée",
-  formation_access:
-    "Votre accompagnement « {{formation_title}} » est disponible",
-  welcome: "Bienvenue sur Question d'Allaitement",
-  password_reset: "Réinitialisation de votre mot de passe",
-};
-
-const TEMPLATE_DEFAULT_VARIABLES: Record<string, string[]> = {
-  booking_confirmation: ["client_name", "consultant_name", "date", "time"],
-  booking_reminder: ["client_name", "consultant_name", "time"],
-  booking_cancelled: ["client_name", "date", "refund_info"],
-  formation_access: ["client_name", "formation_title", "formation_url"],
-  welcome: ["client_name", "dashboard_url"],
-  password_reset: ["client_name", "reset_url"],
-};
 
 type SupabaseAdmin = ReturnType<typeof createAdminClient>;
 

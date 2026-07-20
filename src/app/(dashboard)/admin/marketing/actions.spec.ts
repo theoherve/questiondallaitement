@@ -43,7 +43,11 @@ vi.mock("@/lib/emails/render-block-email", () => ({
   renderBlockEmail: (...args: unknown[]) => mockRenderBlockEmail(...args),
 }));
 
-import { restoreTemplateDesign, restoreDefaultTemplates } from "./actions";
+import {
+  restoreTemplateDesign,
+  restoreDefaultTemplates,
+  deleteTemplate,
+} from "./actions";
 import { DEFAULT_TEMPLATE_DESIGNS } from "@/lib/emails/default-template-designs";
 import { getSessionUser } from "@/lib/auth";
 
@@ -198,5 +202,48 @@ describe("restoreDefaultTemplates", () => {
       data: { updated: expectedCount },
     });
     expect(mockRenderBlockEmail).toHaveBeenCalledTimes(expectedCount);
+  });
+});
+
+// ─── deleteTemplate — protection des templates requis (6-4) ───
+
+describe("deleteTemplate", () => {
+  const mockDelete = vi.fn();
+
+  const templateNamed = (name: string) => {
+    mockSingle.mockResolvedValue({ data: { name }, error: null });
+    mockDelete.mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
+    mockFrom.mockReturnValue({ ...buildChain(), delete: mockDelete });
+  };
+
+  it("refuse de supprimer un template dont le code depend", async () => {
+    templateNamed("booking_confirmation");
+
+    const result = await deleteTemplate(TEMPLATE_ID);
+
+    expect(result.success).toBe(false);
+    // Le message doit nommer ce qui casserait : « suppression interdite »
+    // laisserait chercher pourquoi.
+    expect(result.error).toContain("confirmation de réservation");
+    expect(mockDelete).not.toHaveBeenCalled();
+  });
+
+  it("laisse supprimer un template marketing cree par l'admin", async () => {
+    templateNamed("campagne_de_noel");
+
+    const result = await deleteTemplate(TEMPLATE_ID);
+
+    expect(result.success).toBe(true);
+    expect(mockDelete).toHaveBeenCalled();
+  });
+
+  it("refuse quand le template est introuvable plutot que de supprimer a l'aveugle", async () => {
+    mockSingle.mockResolvedValue({ data: null, error: null });
+    mockFrom.mockReturnValue({ ...buildChain(), delete: mockDelete });
+
+    const result = await deleteTemplate(TEMPLATE_ID);
+
+    expect(result.success).toBe(false);
+    expect(mockDelete).not.toHaveBeenCalled();
   });
 });

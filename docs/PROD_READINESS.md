@@ -327,11 +327,21 @@ d'excuse. Ecarte : creer la reservation en statut « conflit » pour traitement 
 
 | ID  | Tache                                                                            | Statut | Prio  |
 | --- | -------------------------------------------------------------------------------- | ------ | ----- |
-| 6-1 | Ecran admin : liste des `email_templates` (nom, type, date de modification)      | ⬜     | 🟠 P1 |
-| 6-2 | Edition avec le WYSIWYG des mails d'automation (editeur par blocs existant)      | ⬜     | 🟠 P1 |
-| 6-3 | Documenter les variables disponibles par template + previsualisation             | ⬜     | 🟠 P1 |
-| 6-4 | Garde-fou : empecher la suppression d'un template reference par le code          | ⬜     | 🔴 P0 |
+> **Correction du 2026-07-20** : cette phase avait ete redigee en affirmant que
+> l'ecran d'administration des templates n'existait pas. **C'etait faux.** Il est en
+> place sous `/admin/marketing/templates`, avec liste, edition WYSIWYG et
+> previsualisation. Carole peut deja corriger un template. Le perimetre reel n'est
+> pas de construire cet ecran mais de le **proteger**.
+
+| ID  | Tache                                                                            | Statut | Prio  |
+| --- | -------------------------------------------------------------------------------- | ------ | ----- |
+| 6-1 | Ecran admin : liste des `email_templates`                                        | ✅     | 🟠 P1 |
+| 6-2 | Edition avec le WYSIWYG par blocs                                                | ✅     | 🟠 P1 |
+| 6-3 | Previsualisation                                                                 | ✅     | 🟠 P1 |
+| 6-4 | Garde-fou : empecher la suppression d'un template reference par le code          | ✅     | 🔴 P0 |
 | 6-5 | Arbitrer migrations vs edition en base (une edition ne doit pas etre ecrasee)    | ✅     | 🔴 P0 |
+| 6-6 | `restoreDefaultTemplates` ecrase sans confirmation — contredit 6-5               | ✅     | 🔴 P0 |
+| 6-7 | Rendu des templates : `\n` sans effet, `<p>` imbrique, metadonnees desynchronisees | ✅   | 🔴 P0 |
 
 ### Ce qui existe deja
 
@@ -341,7 +351,43 @@ d'excuse. Ecarte : creer la reservation en statut « conflit » pour traitement 
 | Editeur WYSIWYG par blocs     | ✅ `src/components/editor/` + `render-block-email.ts` |
 | Designs par defaut            | ✅ `src/lib/emails/default-template-designs.ts` |
 | Previsualisation              | ✅ `src/lib/emails/preview-action.ts` |
-| **Ecran admin de CRUD**       | ❌ **manquant — c'est tout l'objet de cette phase** |
+| Ecran admin liste + edition   | ✅ `/admin/marketing/templates` |
+
+### Ce qui manque reellement
+
+**6-4 — la suppression n'est pas protegee.** `deleteTemplate` supprime n'importe
+quelle ligne sans verifier si le code en depend. Les **7** templates presents sont
+tous references par `send.ts` : supprimer `booking_confirmation` fait echouer
+silencieusement l'email de confirmation — `.single()` renvoie `null`, l'email ne part
+pas, rien n'est journalise.
+
+**6-6 — verifie le 2026-07-20 : deja traite.** La confirmation existe, nomme les
+templates concernes et previent que toute personnalisation sera ecrasee ; la
+restauration unitaire existe aussi (`restoreTemplateDesign`, sur la page d'edition
+de chaque template). Aucun developpement n'etait necessaire.
+
+**6-7 — trois defauts de rendu, trouves en envoyant les sept templates pour de vrai.**
+
+| Defaut | Consequence |
+| ------ | ----------- |
+| Maily ne substitue que ses noeuds `variable()` | un `{{x}}` en texte brut arrivait tel quel dans l'email ; c'est pourtant le seul moyen d'injecter un fragment HTML, un noeud `variable()` l'echapperait |
+| `\n` dans un noeud texte | « À bientôt,\nL'équipe » s'affichait sur une seule ligne — les sept designs concernes |
+| `zoom_block` etait un `<p>` injecte dans un `<p>` | HTML invalide ; les clients mail referment le paragraphe exterieur et decalent tout ce qui suit |
+
+Corriges respectivement dans `resolveEmailHtml` (substitution reprise sur le HTML
+final), par un noeud `hardBreak`, et par `buildZoomBlock` qui produit desormais de
+l'inline.
+
+**Metadonnees desynchronisees.** `restoreDefaultTemplates` fait
+`TEMPLATE_DEFAULT_SUBJECTS[name] ?? name` : un design sans entree voyait son objet
+remplace par son **nom brut**. Les deux tables vivent maintenant aupres des designs,
+et trois tests verifient qu'elles restent d'accord — chaque design a un objet et des
+variables, et les variables declarees correspondent aux placeholders reellement
+rendus. `booking_confirmation` n'avait pas `zoom_block` dans ses variables par
+defaut : une restauration l'aurait retire de l'editeur.
+
+> Conception detaillee :
+> [2026-07-20-protection-templates-email-design.md](./superpowers/specs/2026-07-20-protection-templates-email-design.md)
 
 > **6-5 — tranche le 2026-07-20 : les migrations creent, elles ne modifient pas.**
 >

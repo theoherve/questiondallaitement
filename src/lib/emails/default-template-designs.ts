@@ -18,6 +18,12 @@ type Node = Record<string, unknown>;
 const text = (t: string, marks?: { type: string }[]): Node =>
   marks ? { type: "text", text: t, marks } : { type: "text", text: t };
 
+/**
+ * Retour a la ligne explicite. Un "\n" dans un noeud texte ne produit rien :
+ * en HTML c'est un espace, et la signature se retrouve sur une seule ligne.
+ */
+const lineBreak = (): Node => ({ type: "hardBreak" });
+
 const variable = (id: string, fallback?: string): Node => ({
   type: "variable",
   attrs: { id, fallback: fallback ?? null, required: false },
@@ -180,6 +186,11 @@ export const DESIGN_BOOKING_CONFIRMATION = doc([
         { label: "Date :", value: [variable("date")] },
         { label: "Heure :", value: [variable("time")] },
       ]),
+      // zoom_block n'est pas une valeur mais un fragment HTML : sendBookingConfirmation
+      // y met le bouton « Rejoindre la reunion Zoom » pour les teleconsultations, et
+      // une chaine vide sinon. Il doit rester tel quel dans le rendu — d'ou un text()
+      // brut plutot qu'un variable(), qui produirait un noeud que Maily stylerait.
+      paragraph([text("{{zoom_block}}")]),
       paragraph(
         [
           text(
@@ -189,7 +200,7 @@ export const DESIGN_BOOKING_CONFIRMATION = doc([
       ),
       spacer(16),
       paragraph(
-        [text("À très bientôt,\nL'équipe Question d'Allaitement")],
+        [text("À très bientôt,"), lineBreak(), text("L'équipe Question d'Allaitement")],
         "center",
       ),
     ],
@@ -223,7 +234,7 @@ export const DESIGN_BOOKING_REMINDER = doc([
         ),
       ]),
       spacer(16),
-      paragraph([text("À demain,\nL'équipe Question d'Allaitement")], "center"),
+      paragraph([text("À demain,"), lineBreak(), text("L'équipe Question d'Allaitement")], "center"),
     ],
     { bg: "#ffffff", padding: [32, 24], marginBottom: 0 },
   ),
@@ -254,7 +265,7 @@ export const DESIGN_BOOKING_CANCELLED = doc([
       ]),
       spacer(16),
       paragraph(
-        [text("Prenez soin de vous,\nL'équipe Question d'Allaitement")],
+        [text("Prenez soin de vous,"), lineBreak(), text("L'équipe Question d'Allaitement")],
         "center",
       ),
     ],
@@ -341,7 +352,7 @@ export const DESIGN_FORMATION_ACCESS = doc([
       ]),
       spacer(20),
       paragraph(
-        [text("Avec douceur,\nL'équipe Question d'Allaitement")],
+        [text("Avec douceur,"), lineBreak(), text("L'équipe Question d'Allaitement")],
         "center",
       ),
     ],
@@ -380,7 +391,7 @@ export const DESIGN_WELCOME = doc([
       button("Découvrir mon espace", "{{dashboard_url}}"),
       spacer(16),
       paragraph(
-        [text("Avec douceur,\nL'équipe Question d'Allaitement")],
+        [text("Avec douceur,"), lineBreak(), text("L'équipe Question d'Allaitement")],
         "center",
       ),
     ],
@@ -420,7 +431,60 @@ export const DESIGN_PASSWORD_RESET = doc([
         },
       ),
       paragraph(
-        [text("À bientôt,\nL'équipe Question d'Allaitement")],
+        [text("À bientôt,"), lineBreak(), text("L'équipe Question d'Allaitement")],
+        "center",
+      ),
+    ],
+    { bg: "#ffffff", padding: [32, 24], marginBottom: 0 },
+  ),
+  brandFooter(),
+]);
+
+/**
+ * Reprend le contenu du template historique issu de la migration Wix, mis en
+ * blocs. Le delai de 72 h et le renvoi vers « Mot de passe oublie » sont des
+ * informations dont depend la cliente : ils sont conserves tels quels.
+ */
+export const DESIGN_MIGRATION_WELCOME = doc([
+  brandHeader(),
+  section(
+    [
+      heading(1, [text("Bienvenue sur votre nouvel espace")], "center"),
+      paragraph([text("Bonjour "), variable("client_name"), text(",")]),
+      paragraph([
+        text(
+          "Votre compte Question d'Allaitement a été transféré vers notre nouvelle plateforme.",
+        ),
+      ]),
+      paragraph([
+        text(
+          "Pour accéder à votre espace personnel, il vous suffit de définir votre mot de passe.",
+        ),
+      ]),
+      spacer(20),
+      button("Activer mon compte", "{{setup_url}}"),
+      spacer(20),
+      section(
+        [
+          paragraph([
+            text(
+              "Ce lien est valide pendant 72 heures. Passé ce délai, vous pourrez en demander un nouveau depuis la page de connexion en cliquant sur « Mot de passe oublié ».",
+              [{ type: "italic" }],
+            ),
+          ]),
+        ],
+        {
+          bg: "#f5ebe8",
+          padding: 16,
+          borderRadius: 8,
+          marginBottom: 16,
+        },
+      ),
+      paragraph([
+        text("Si vous avez des questions, n'hésitez pas à nous contacter."),
+      ]),
+      paragraph(
+        [text("À très bientôt,"), lineBreak(), text("L'équipe Question d'Allaitement")],
         "center",
       ),
     ],
@@ -436,4 +500,43 @@ export const DEFAULT_TEMPLATE_DESIGNS: Record<string, Node> = {
   formation_access: DESIGN_FORMATION_ACCESS,
   welcome: DESIGN_WELCOME,
   password_reset: DESIGN_PASSWORD_RESET,
+  migration_welcome: DESIGN_MIGRATION_WELCOME,
+};
+
+/**
+ * Objet et variables accompagnant chaque design par defaut.
+ *
+ * Vit ici plutot que dans les actions admin : c'est de la metadonnee de
+ * template, et la garder aupres des designs permet de verifier par test que les
+ * trois restent d'accord. `restoreDefaultTemplates` retombe sur le nom du
+ * template si l'objet manque — une cliente recevrait alors un email intitule
+ * « migration_welcome ».
+ */
+export const TEMPLATE_DEFAULT_SUBJECTS: Record<string, string> = {
+  booking_confirmation: "Votre réservation est confirmée — {{date}}",
+  booking_reminder: "Rappel : votre consultation demain à {{time}}",
+  booking_cancelled: "Votre réservation du {{date}} a été annulée",
+  formation_access:
+    "Votre accompagnement « {{formation_title}} » est disponible",
+  welcome: "Bienvenue sur Question d'Allaitement",
+  password_reset: "Réinitialisation de votre mot de passe",
+  migration_welcome: "Votre espace Question d'Allaitement a migré",
+};
+
+export const TEMPLATE_DEFAULT_VARIABLES: Record<string, string[]> = {
+  // zoom_block porte le bouton Zoom des teleconsultations : l'oublier ici le
+  // retirerait de la liste proposee dans l'editeur.
+  booking_confirmation: [
+    "client_name",
+    "consultant_name",
+    "date",
+    "time",
+    "zoom_block",
+  ],
+  booking_reminder: ["client_name", "consultant_name", "time"],
+  booking_cancelled: ["client_name", "date", "refund_info"],
+  formation_access: ["client_name", "formation_title", "formation_url"],
+  welcome: ["client_name", "dashboard_url"],
+  password_reset: ["client_name", "reset_url"],
+  migration_welcome: ["client_name", "setup_url"],
 };
