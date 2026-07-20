@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShoppingCart } from "lucide-react";
 import { purchaseFormation } from "../actions";
@@ -17,11 +17,16 @@ export const PurchaseButton = ({
   isEnrolled,
 }: PurchaseButtonProps) => {
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   if (isEnrolled) {
     return (
       <Button asChild className="w-full bg-green-600 hover:bg-green-700">
-        <a href={`/espace-client/accompagnements/${formationId}`} tabIndex={0}>
+        <a
+          href={`/espace-client/accompagnements/${formationId}`}
+          data-testid="purchase-access-cta"
+          tabIndex={0}
+        >
           Accéder à l&apos;accompagnement
         </a>
       </Button>
@@ -31,7 +36,11 @@ export const PurchaseButton = ({
   if (!isLoggedIn) {
     return (
       <Button asChild className="w-full bg-primary-red hover:bg-primary-red-dark">
-        <a href={`/connexion?redirect=/accompagnements/${formationId}`} tabIndex={0}>
+        <a
+          href={`/connexion?redirect=/accompagnements/${formationId}`}
+          data-testid="purchase-login-cta"
+          tabIndex={0}
+        >
           <ShoppingCart className="mr-2 h-4 w-4" />
           Se connecter pour acheter
         </a>
@@ -40,26 +49,47 @@ export const PurchaseButton = ({
   }
 
   const handlePurchase = () => {
+    setError(null);
     startTransition(async () => {
       const result = await purchaseFormation(formationId);
+
       if (result.success && result.data?.redirect_url) {
         window.location.href = result.data.redirect_url;
+        return;
       }
+
+      // `purchaseFormation` echoue sur six chemins distincts (deja inscrite,
+      // accompagnement depublie, consultante sans compte Connect, erreur
+      // Stripe…). Sans affichage, le bouton cesse simplement de tourner et la
+      // cliente reclique indefiniment sans jamais savoir pourquoi.
+      setError(result.error ?? "L'achat n'a pas pu démarrer. Réessayez.");
     });
   };
 
   return (
-    <Button
-      onClick={handlePurchase}
-      disabled={isPending}
-      className="w-full bg-primary-red hover:bg-primary-red-dark"
-    >
-      {isPending ? (
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-      ) : (
-        <ShoppingCart className="mr-2 h-4 w-4" />
+    <div className="space-y-2">
+      <Button
+        onClick={handlePurchase}
+        disabled={isPending}
+        data-testid="purchase-button"
+        className="w-full bg-primary-red hover:bg-primary-red-dark"
+      >
+        {isPending ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <ShoppingCart className="mr-2 h-4 w-4" />
+        )}
+        Acheter l&apos;accompagnement
+      </Button>
+      {error && (
+        <p
+          role="alert"
+          data-testid="purchase-error"
+          className="text-sm text-destructive"
+        >
+          {error}
+        </p>
       )}
-      Acheter l&apos;accompagnement
-    </Button>
+    </div>
   );
 };

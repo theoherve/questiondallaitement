@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import { supabase, assertTestMode } from "./lib/env.mjs";
 import {
   IDS,
@@ -13,9 +14,31 @@ const check = (label, { error }) => {
   console.log(`  ✓ ${label}`);
 };
 
+/**
+ * Mot de passe de la cliente fixture, pour les scenarios N2 qui doivent etre
+ * connectes (l'achat d'accompagnement refuse les anonymes).
+ *
+ * Jamais de valeur en dur : les fixtures sont creees dans une vraie base, donc
+ * un mot de passe connu publiquement ouvrirait ce compte a quiconque lit le
+ * depot. Absent, on ne pose pas de hash — N1 n'ouvre jamais de session et n'a
+ * aucune raison d'exiger ce secret.
+ */
+const clientPasswordHash = async () => {
+  const password = process.env.E2E_CLIENT_PASSWORD;
+  if (!password) return null;
+  return bcrypt.hash(password, 10);
+};
+
 export const seed = async () => {
   assertTestMode();
   console.log("Seed des fixtures E2E…");
+
+  const password_hash = await clientPasswordHash();
+  console.log(
+    password_hash
+      ? "  · mot de passe cliente pose (E2E_CLIENT_PASSWORD)"
+      : "  · E2E_CLIENT_PASSWORD absent — les scenarios connectes echoueront",
+  );
 
   check(
     "profiles (client + consultante)",
@@ -27,6 +50,10 @@ export const seed = async () => {
           email: CLIENT_EMAIL,
           first_name: "Camille",
           last_name: "E2E",
+          // `handleLogin` refuse les comptes non verifies avant meme d'appeler
+          // NextAuth : sans ce drapeau, la connexion boucle sur /connexion.
+          email_verified: true,
+          ...(password_hash ? { password_hash } : {}),
         },
         {
           id: IDS.consultantProfile,
@@ -34,6 +61,11 @@ export const seed = async () => {
           email: CONSULTANT_EMAIL,
           first_name: "Consultante",
           last_name: "E2E",
+          // Redondant pour la consultante, qui n'ouvre pas de session — mais
+          // PostgREST envoie les lignes d'un upsert en un seul INSERT et
+          // remplit par NULL les colonnes absentes des autres lignes. Omettre
+          // ce champ ici violerait la contrainte NOT NULL.
+          email_verified: true,
         },
       ],
       { onConflict: "id" },
