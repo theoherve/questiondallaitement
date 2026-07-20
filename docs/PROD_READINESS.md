@@ -331,7 +331,7 @@ d'excuse. Ecarte : creer la reservation en statut « conflit » pour traitement 
 | 6-2 | Edition avec le WYSIWYG des mails d'automation (editeur par blocs existant)      | ⬜     | 🟠 P1 |
 | 6-3 | Documenter les variables disponibles par template + previsualisation             | ⬜     | 🟠 P1 |
 | 6-4 | Garde-fou : empecher la suppression d'un template reference par le code          | ⬜     | 🔴 P0 |
-| 6-5 | Arbitrer migrations vs edition en base (une edition ne doit pas etre ecrasee)    | ⬜     | 🔴 P0 |
+| 6-5 | Arbitrer migrations vs edition en base (une edition ne doit pas etre ecrasee)    | ✅     | 🔴 P0 |
 
 ### Ce qui existe deja
 
@@ -343,13 +343,30 @@ d'excuse. Ecarte : creer la reservation en statut « conflit » pour traitement 
 | Previsualisation              | ✅ `src/lib/emails/preview-action.ts` |
 | **Ecran admin de CRUD**       | ❌ **manquant — c'est tout l'objet de cette phase** |
 
-> **6-5 est le point delicat**, a trancher avant d'ecrire l'ecran : aujourd'hui les
-> templates sont modifies par migration (00034 met a jour `booking_confirmation`,
-> 00045 `formation_access`). Si Carole edite un template dans l'admin et qu'une
-> migration ulterieure le reecrit, son travail disparait sans avertissement. Il faut
-> choisir : migrations reservees a la creation (jamais `UPDATE` sur un template
-> existant), ou colonne marquant les templates edites manuellement que les migrations
-> laissent tranquilles.
+> **6-5 — tranche le 2026-07-20 : les migrations creent, elles ne modifient pas.**
+>
+> Le probleme : aujourd'hui les templates sont modifies par migration (00034 met a
+> jour `booking_confirmation`, 00045 `formation_access`). Si Carole edite un template
+> dans l'admin et qu'une migration ulterieure le reecrit, son travail disparait au
+> deploiement suivant, sans avertissement, et personne ne le remarque avant qu'un
+> client recoive l'ancien contenu.
+>
+> Ecarte : une colonne marquant les templates edites manuellement. Deux sources de
+> verite pour le meme contenu, et la question « qui gagne » resurgit a chaque
+> migration.
+>
+> **Consequence pratique** : corriger un template se fait desormais dans l'admin.
+> Une migration ne peut qu'inserer un template absent (`ON CONFLICT DO NOTHING`).
+>
+> La regle est outillee, pas seulement ecrite :
+> [migration-guard.spec.ts](../src/lib/emails/migration-guard.spec.ts) fait echouer
+> la suite si une migration posterieure a 00048 contient un `UPDATE` ou un `DELETE`
+> sur `email_templates`. 00034 et 00045 sont explicitement tolerees — elles sont deja
+> appliquees en production, les reecrire ne changerait rien a l'etat de la base.
+>
+> Le detecteur est lui-meme teste (il doit mordre sur un `UPDATE`, ignorer le mot
+> dans un commentaire, laisser passer une insertion idempotente) pour qu'il ne
+> devienne pas un garde-fou toujours vert.
 
 ---
 
