@@ -32,8 +32,8 @@
 | --------------------------------------- | ------ | ---------- |
 | Phase 0 — Prerequis externes            | ✅     | —          |
 | Phase 1 — Verification config Connect   | 🔶     | reste 1-6 (TVA) |
-| Phase 2 — E2E N1 (seed + webhook simule) | 🔶    | reste 2-13 (CI) |
-| Phase 3 — E2E N2 (Playwright navigateur) | 🔶     | reste 3-3 a 3-5 ; 3-6 bloque |
+| Phase 2 — E2E N1 (seed + webhook simule) | ✅    | —          |
+| Phase 3 — E2E N2 (Playwright navigateur) | 🔶     | reste 3-3 et 3-5 ; 3-6 bloque |
 | Phase 4 — E2E N3 (consultante + refund)  | 🔶     | 4-7 / 4-8 faits, reste 4-1 a 4-6 |
 | Phase 5 — Durcissement avant live        | ⬜     | Phase 4    |
 | Phase 6 — Templates d'email en admin     | ✅     | —          |
@@ -263,7 +263,7 @@ et n'est jamais envoye a Stripe — N1 ne fait aucun appel reseau vers Stripe.
 | 3-1 | `playwright.config.ts` + dossier `e2e/` + webServer Next                             | ✅     | 🔴 P0 |
 | 3-2 | A — Reservation : `/reserver` 8 steps → session Checkout verifiee cote API           | ✅     | 🔴 P0 |
 | 3-3 | B — Guest checkout : sans compte → creation auto + email "finalisez votre compte"    | ⬜     | 🟠 P1 |
-| 3-4 | C — Accompagnement en ligne : `/accompagnements/[slug]` → achat → acces contenu      | ⬜     | 🔴 P0 |
+| 3-4 | C — Accompagnement en ligne : `/accompagnements/[slug]` → achat → session Checkout    | ✅     | 🔴 P0 |
 | 3-5 | D — Booking `on_site` : pas de Stripe, confirmation manuelle consultante             | ⬜     | 🟠 P1 |
 | 3-6 | Verification post-checkout en base (le webhook a bien tourne)                         | 🚫     | 🔴 P0 |
 
@@ -297,6 +297,39 @@ carte declenche le webhook. A lever manuellement une fois avant le live.
 **Piege d'enchainement** : N1 supprime les fixtures partagees en fin de passe, donc
 `test:e2e:n1` suivi de `test:e2e:n2` faisait echouer N2 sur une base vide — en timeout
 d'UI, pas en erreur explicite. `e2e/global-setup.ts` resseme avant chaque passe N2.
+
+### Constats de 3-4 (2026-07-21)
+
+**🟠 Bug corrige — l'achat d'accompagnement echouait en silence.**
+`purchase-button.tsx` faisait `if (result.success && ...) redirect` sans jamais lire
+le cas `success: false`. Or `purchaseFormation` echoue sur six chemins (deja inscrite,
+accompagnement depublie, consultante sans compte Connect, erreur Stripe…). Dans tous
+ces cas le bouton cessait simplement de tourner : aucun message, aucune trace. La
+cliente reclique indefiniment sans savoir pourquoi. Le composant affiche desormais
+`result.error` dans un `role="alert"` (`data-testid="purchase-error"`).
+
+Le scenario « consultante sans compte Connect » du spec existe pour prouver que ce
+garde-fou n'est pas du code mort : il a ete verifie rouge en desactivant l'affichage.
+
+**Connexion requise** : contrairement a la reservation, `purchaseFormation` refuse les
+anonymes. Le spec passe par le vrai formulaire `/connexion`, ce qui couvre au passage
+`handleLogin` → NextAuth. Deux consequences sur les fixtures :
+
+- La cliente fixture porte desormais `email_verified: true` — `handleLogin` refuse les
+  comptes non verifies avant meme d'appeler NextAuth.
+- Son `password_hash` vient de `E2E_CLIENT_PASSWORD`, **jamais d'une valeur en dur** :
+  les fixtures vivent dans une vraie base, donc un mot de passe lisible dans le depot
+  ouvrirait ce compte a quiconque le clone. Variable absente → pas de hash pose, et
+  seuls les scenarios connectes echouent (N1 n'ouvre jamais de session).
+
+**Piege PostgREST** : un `upsert` multi-lignes part en un seul INSERT, et les colonnes
+absentes d'une ligne y sont remplies par NULL. Ajouter `email_verified` a la seule
+cliente violait la contrainte NOT NULL sur la ligne consultante. Les deux lignes d'un
+upsert doivent porter exactement les memes cles.
+
+**N2 n'est pas en CI** (contrairement a N1, cf. 2-13) : le job aurait besoin d'un vrai
+compte Connect onboarde comme destinataire — Stripe rejette une session dont la
+destination est fictive — et de `E2E_CLIENT_PASSWORD`. A trancher avant le live.
 
 **Utilisation** :
 
