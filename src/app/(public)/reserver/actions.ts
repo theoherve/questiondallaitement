@@ -485,7 +485,7 @@ export const createBooking = async (
   // Fetch consultant for Stripe and emails
   const { data: consultant } = await supabase
     .from("consultants")
-    .select("stripe_account_id, commission_rate, profiles (first_name, last_name, email)")
+    .select("stripe_account_id, commission_rate, profiles!consultants_id_fkey (first_name, last_name, email)")
     .eq("id", formData.consultant_id)
     .single();
 

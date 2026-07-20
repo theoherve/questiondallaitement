@@ -319,7 +319,11 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
       </Card>
 
       {error && (
-        <p className="text-center text-sm font-medium text-destructive" role="alert">
+        <p
+          data-testid="booking-error"
+          className="text-center text-sm font-medium text-destructive"
+          role="alert"
+        >
           {error}
         </p>
       )}

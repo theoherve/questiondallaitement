@@ -82,7 +82,7 @@ const PaymentDetailPage = async ({ params }: Props) => {
         slug,
         commission_rate,
         stripe_account_id,
-        profiles (
+        profiles!consultants_id_fkey (
           first_name,
           last_name,
           email

@@ -135,6 +135,7 @@ export const StepConfirmation = ({
 
       <div className="flex gap-3">
         <Button
+          data-testid="booking-confirm"
           onClick={onConfirm}
           disabled={isPending}
           className="w-full bg-primary-red hover:bg-primary-red-dark"

@@ -133,6 +133,9 @@ export const StepCalendar = ({
                 <button
                   key={dateStr}
                   type="button"
+                  data-testid="step-calendar-day"
+                  data-date={dateStr}
+                  data-available={!isDisabled}
                   disabled={isDisabled}
                   onClick={() => handleDateClick(day)}
                   className={`rounded-lg py-2 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary-red/50 ${
@@ -177,6 +180,8 @@ export const StepCalendar = ({
                     <button
                       key={slot.start}
                       type="button"
+                      data-testid="step-calendar-slot"
+                      data-slot-start={slot.start}
                       onClick={() => onSelect(slot)}
                       className="cursor-pointer rounded-lg border-2 border-muted px-3 py-2 text-sm font-medium text-primary-green transition-all hover:border-primary-red hover:bg-primary-red/5 focus:outline-none focus:ring-2 focus:ring-primary-red/50"
                       tabIndex={0}

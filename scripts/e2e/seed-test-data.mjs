@@ -111,6 +111,23 @@ export const seed = async () => {
     ),
   );
 
+  // N1 never reads these — it injects `starts_at` straight into Stripe metadata.
+  // N2 drives the real calendar step, which renders nothing without them.
+  check(
+    "availabilities (lun-ven, 9h-18h)",
+    await supabase.from("availabilities").upsert(
+      [1, 2, 3, 4, 5].map((day) => ({
+        id: IDS.availability(day),
+        consultant_id: IDS.consultantProfile,
+        day_of_week: day,
+        start_time: "09:00:00",
+        end_time: "18:00:00",
+        is_active: true,
+      })),
+      { onConflict: "id" },
+    ),
+  );
+
   const eventStart = new Date(Date.now() + 14 * 24 * 3600 * 1000);
   const eventEnd = new Date(eventStart.getTime() + 90 * 60 * 1000);
 

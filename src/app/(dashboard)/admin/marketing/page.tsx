@@ -52,7 +52,7 @@ const MarketingPage = async () => {
   const [campaignsRes, templatesRes] = await Promise.all([
     supabase
       .from("email_campaigns")
-      .select("*, consultant:consultants(id, profiles(first_name, last_name))")
+      .select("*, consultant:consultants(id, profiles!consultants_id_fkey(first_name, last_name))")
       .order("created_at", { ascending: false }),
     supabase
       .from("email_templates")

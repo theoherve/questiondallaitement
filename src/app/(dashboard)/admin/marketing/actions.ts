@@ -156,7 +156,7 @@ export const getCampaigns = async () => {
 
   const { data, error } = await supabase
     .from("email_campaigns")
-    .select("*, consultant:consultants(id, profiles(first_name, last_name))")
+    .select("*, consultant:consultants(id, profiles!consultants_id_fkey(first_name, last_name))")
     .order("created_at", { ascending: false });
 
   if (error) return [];
