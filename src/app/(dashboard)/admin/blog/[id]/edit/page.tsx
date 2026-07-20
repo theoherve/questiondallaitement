@@ -28,7 +28,7 @@ const EditBlogPostPage = async ({ params }: Props) => {
       .order("position", { ascending: true }),
     supabase
       .from("consultants")
-      .select("id, slug, profiles(first_name, last_name)")
+      .select("id, slug, profiles!consultants_id_fkey(first_name, last_name)")
       .eq("is_active", true),
   ]);
 

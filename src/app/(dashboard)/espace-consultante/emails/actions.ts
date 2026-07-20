@@ -201,7 +201,7 @@ export const sendMyCampaign = async (id: string): Promise<ActionResult> => {
   // Get consultant info for sender name
   const { data: consultant } = await supabase
     .from("consultants")
-    .select("profiles(first_name, last_name, email)")
+    .select("profiles!consultants_id_fkey(first_name, last_name, email)")
     .eq("id", user.id)
     .single();
 

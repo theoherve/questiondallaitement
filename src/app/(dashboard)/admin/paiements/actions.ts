@@ -81,7 +81,7 @@ export const getPayments = async (
       ),
       consultant:consultants!payments_consultant_id_fkey (
         id,
-        profiles (
+        profiles!consultants_id_fkey (
           first_name,
           last_name,
           email

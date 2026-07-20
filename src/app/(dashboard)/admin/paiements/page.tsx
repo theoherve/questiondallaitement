@@ -87,7 +87,7 @@ const PaiementsPage = async ({
   const supabase = createAdminClient();
   const { data: consultants } = await supabase
     .from("consultants")
-    .select("id, profiles (first_name, last_name)")
+    .select("id, profiles!consultants_id_fkey (first_name, last_name)")
     .order("created_at", { ascending: false });
 
   const totalAmount = payments

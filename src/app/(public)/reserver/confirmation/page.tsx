@@ -47,7 +47,7 @@ const ConfirmationPage = async ({
         duration_minutes
       ),
       consultants (
-        profiles (
+        profiles!consultants_id_fkey (
           first_name,
           last_name
         )

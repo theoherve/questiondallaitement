@@ -163,7 +163,7 @@ export const cancelBooking = async (
 
     const { data: consultant } = await adminClient
       .from("consultants")
-      .select("profiles (email, first_name, last_name)")
+      .select("profiles!consultants_id_fkey (email, first_name, last_name)")
       .eq("id", booking.consultant_id)
       .single();
 
