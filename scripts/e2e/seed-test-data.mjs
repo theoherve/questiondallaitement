@@ -109,6 +109,28 @@ export const seed = async () => {
     ),
   );
 
+  // `/reserver` traite consultant_locations comme la source de verite pour
+  // cabinet et domicile : la teleconsultation seule se passe de cette ligne.
+  // Sans elle, `available_locations` du type de consultation est filtre et le
+  // scenario « paiement sur place » n'a aucun lieu ou se derouler.
+  check(
+    "consultant_locations (cabinet)",
+    await supabase.from("consultant_locations").upsert(
+      {
+        id: IDS.cabinetLocation,
+        consultant_id: IDS.consultantProfile,
+        location_type: "cabinet",
+        label: "Cabinet E2E",
+        address: "1 rue de Test",
+        city: "Nantes",
+        postal_code: "44000",
+        surcharge_cents: 0,
+        is_active: true,
+      },
+      { onConflict: "id" },
+    ),
+  );
+
   check(
     "consultation_type_durations",
     await supabase.from("consultation_type_durations").upsert(

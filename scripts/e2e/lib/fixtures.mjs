@@ -12,6 +12,7 @@ export const IDS = {
   consultationType: id("300"),
   durationOption: id("310"),
   formation: id("400"),
+  cabinetLocation: id("320"),
   event: id("500"),
   // Reference IDs carried in Stripe metadata
   booking: id("600"),
@@ -23,6 +24,15 @@ export const PREFIX = "e2e00000-0000-4000-8000-";
 
 export const CLIENT_EMAIL = "e2e-client@questiondallaitement.test";
 export const CONSULTANT_EMAIL = "e2e-consultante@questiondallaitement.test";
+
+/**
+ * Invitee du scenario guest checkout.
+ *
+ * Jamais seedee : son profil doit etre cree par `createBooking` lui-meme, c'est
+ * precisement ce que le scenario verifie. Elle est en revanche nettoyee, sinon
+ * la deuxieme passe emprunterait le chemin « profil existant ».
+ */
+export const GUEST_EMAIL = "e2e-guest@questiondallaitement.test";
 
 /**
  * Connect account backing the fixture consultant.

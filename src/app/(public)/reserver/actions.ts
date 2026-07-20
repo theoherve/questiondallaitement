@@ -8,9 +8,9 @@ import { computeBookingPrice } from "@/lib/booking/pricing";
 import { contactSchema } from "@/validations/bookings";
 import {
   sendBookingConfirmation,
-  sendGuestAccountEmail,
   sendNewBookingNotification,
 } from "@/lib/emails/send";
+import { sendGuestSetupEmailIfNeeded } from "@/lib/auth/password-setup";
 import { addMinutes, format, startOfDay, endOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { siteConfig } from "@/config/site";
@@ -446,17 +446,21 @@ export const createBooking = async (
 
   // Guest checkout: find or create profile
   let clientId: string;
-  let isNewAccount = false;
+  // Pilote l'invitation a definir un mot de passe : une cliente qui reserve en
+  // invitee pour la deuxieme fois sans avoir finalise son compte doit encore
+  // recevoir le lien.
+  let clientPasswordHash: string | null = null;
 
   const { data: existingProfile } = await supabase
     .from("profiles")
-    .select("id")
+    .select("id, password_hash")
     .eq("email", email.toLowerCase())
     .is("deleted_at", null)
     .single();
 
   if (existingProfile) {
     clientId = existingProfile.id;
+    clientPasswordHash = existingProfile.password_hash;
     await supabase
       .from("profiles")
       .update({ first_name, last_name, phone })
@@ -479,7 +483,6 @@ export const createBooking = async (
       return { success: false, error: "Erreur lors de la création du profil" };
     }
     clientId = newProfile.id;
-    isNewAccount = true;
   }
 
   // Fetch consultant for Stripe and emails
@@ -596,15 +599,18 @@ export const createBooking = async (
       });
     }
 
-    if (isNewAccount) {
-      await sendGuestAccountEmail(email, {
-        client_name: first_name,
-        setup_url: `${siteConfig.url}/reset-password?email=${encodeURIComponent(email)}`,
-      });
-    }
   } catch {
     // Non-blocking: emails can fail silently
   }
+
+  // Hors du try : un echec sur les emails ci-dessus ne doit pas priver la
+  // cliente du seul lien qui lui donne acces a son compte.
+  await sendGuestSetupEmailIfNeeded(supabase, {
+    id: clientId,
+    email,
+    first_name,
+    password_hash: clientPasswordHash,
+  });
 
   return { success: true, data: { booking_id: booking.id } };
 };

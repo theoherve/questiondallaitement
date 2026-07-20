@@ -342,6 +342,12 @@ export const handleResetPassword = async (
       password_hash,
       password_reset_token: null,
       password_reset_expires: null,
+      // Le lien a ete envoye a cette adresse : y repondre prouve qu'on la
+      // controle, exactement ce que verifie l'email de confirmation. Sans ce
+      // drapeau, une invitee — dont le compte a ete cree par une reservation,
+      // donc sans confirmation possible — posait son mot de passe puis se
+      // faisait refuser a la connexion.
+      email_verified: true,
     })
     .eq("id", profile.id);
 

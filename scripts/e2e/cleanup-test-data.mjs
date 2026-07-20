@@ -1,5 +1,5 @@
 import { supabase, assertTestMode } from "./lib/env.mjs";
-import { IDS, PI } from "./lib/fixtures.mjs";
+import { IDS, PI, GUEST_EMAIL } from "./lib/fixtures.mjs";
 
 const PAYMENT_INTENT_IDS = Object.values(PI);
 
@@ -11,7 +11,27 @@ export const cleanup = async () => {
   assertTestMode();
   console.log("Nettoyage des fixtures E2E…");
 
+  // L'invitee n'a pas d'ID fixe : son profil est cree par l'application. On le
+  // resout d'abord pour pouvoir supprimer ses reservations avant elle — la
+  // contrainte de cle etrangere refuserait l'inverse.
+  const { data: guest } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("email", GUEST_EMAIL)
+    .maybeSingle();
+
+  const guestSteps = guest
+    ? [
+        [
+          "bookings (invitee)",
+          supabase.from("bookings").delete().eq("client_id", guest.id),
+        ],
+        ["profiles (invitee)", supabase.from("profiles").delete().eq("id", guest.id)],
+      ]
+    : [];
+
   const steps = [
+    ...guestSteps,
     [
       "payments",
       supabase
@@ -57,6 +77,13 @@ export const cleanup = async () => {
     [
       "consultation_types",
       supabase.from("consultation_types").delete().eq("id", IDS.consultationType),
+    ],
+    [
+      "consultant_locations",
+      supabase
+        .from("consultant_locations")
+        .delete()
+        .eq("id", IDS.cabinetLocation),
     ],
     [
       "consultants",

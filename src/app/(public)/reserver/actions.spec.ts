@@ -25,9 +25,11 @@ vi.mock("@/lib/stripe/connect", () => ({
   createCheckoutSession: (...args: unknown[]) => mockCreateCheckoutSession(...args),
 }));
 
+const mockSendGuestAccountEmail = vi.fn().mockResolvedValue(undefined);
+
 vi.mock("@/lib/emails/send", () => ({
   sendBookingConfirmation: vi.fn().mockResolvedValue(undefined),
-  sendGuestAccountEmail: vi.fn().mockResolvedValue(undefined),
+  sendGuestAccountEmail: (...args: unknown[]) => mockSendGuestAccountEmail(...args),
   sendNewBookingNotification: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -332,5 +334,52 @@ describe("14-09 : createBooking — paiement sur place (on_site)", () => {
 
     expect(result.data?.booking_id).toBeTruthy();
     expect(result.data?.redirect_url).toBeUndefined();
+  });
+});
+
+// ─── 3-3 : lien de creation de compte pour une invitee ────────
+
+describe("3-3 : createBooking on_site — lien de creation de compte", () => {
+  const NEW_PROFILE_ID = "client-uuid-guest-on-site";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFrom.mockReset();
+    insertCalls.length = 0;
+
+    // Sequence on_site + domicile, cliente inconnue :
+    // 1. consultation_type_durations
+    // 2. consultation_types
+    // 3. consultant_locations → surcharge
+    // 4. profiles.select → null (aucun compte)
+    // 5. profiles.insert().select().single() → nouveau profil
+    // 6. consultants
+    // 7. bookings.insert().select().single()
+    // 8. profiles.update → pose du token de creation de mot de passe
+    mockFrom
+      .mockImplementationOnce((t: string) => createChain({ singleData: DURATION_OPTION }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTATION_TYPE }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: null }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: null }, t))
+      .mockImplementationOnce((t: string) =>
+        createChain({ singleData: null, insertSingleData: { id: NEW_PROFILE_ID } }, t),
+      )
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTANT }, t))
+      .mockImplementationOnce((t: string) => createChain({ insertSingleData: { id: "booking-1" } }, t))
+      .mockImplementation((t: string) => createChain({}, t));
+  });
+
+  it("envoie un lien porteur d'un token, pas de l'adresse email", async () => {
+    // Le lien pointait sur /reset-password?email=... ; la page ne lit que
+    // `token` et affichait « Lien invalide » a toutes les invitees. L'email
+    // partait, le compte existait, et il etait impossible d'y acceder.
+    await createBooking(
+      makeBookingForm({ payment_method: "on_site", location: "domicile" }),
+    );
+
+    expect(mockSendGuestAccountEmail).toHaveBeenCalledTimes(1);
+    const [to, variables] = mockSendGuestAccountEmail.mock.calls[0];
+    expect(to).toBe("marie@test.fr");
+    expect(variables.setup_url).toMatch(/\/reset-password\?token=[0-9a-f]{64}$/);
   });
 });
