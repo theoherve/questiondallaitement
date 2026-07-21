@@ -1,30 +1,26 @@
 import { headers } from "next/headers";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-type RateLimitEntry = {
-  count: number;
-  resetAt: number;
-};
-
-const store = new Map<string, RateLimitEntry>();
-
-const CLEANUP_INTERVAL_MS = 60_000;
-let lastCleanup = Date.now();
-
-const cleanup = () => {
-  const now = Date.now();
-  if (now - lastCleanup < CLEANUP_INTERVAL_MS) return;
-  lastCleanup = now;
-  for (const [key, entry] of store) {
-    if (entry.resetAt < now) store.delete(key);
-  }
-};
+/**
+ * Limitation de debit adossee a Postgres (5-1).
+ *
+ * L'implementation precedente comptait dans une `Map` en memoire. Sur Vercel,
+ * chaque instance a la sienne : la limite reelle vaut le seuil multiplie par le
+ * nombre d'instances, et repart a zero a chaque demarrage a froid. Une attaque
+ * par force brute n'a qu'a repartir ses tentatives.
+ *
+ * Le comptage vit desormais en base, ou toutes les instances le partagent.
+ * Supabase plutot qu'un Redis dedie : le besoin est un etat partage, et la base
+ * est de toute facon interrogee a chaque tentative de connexion — elle n'ajoute
+ * donc aucun nouveau mode de panne.
+ */
 
 type RateLimitConfig = {
-  /** Unique prefix for this limiter (e.g. "login", "forgot-password") */
+  /** Prefixe propre au limiteur (« login », « forgot-password »…). */
   prefix: string;
-  /** Max requests allowed in the window */
+  /** Nombre de requetes autorisees dans la fenetre. */
   limit: number;
-  /** Window duration in seconds */
+  /** Duree de la fenetre, en secondes. */
   windowSeconds: number;
 };
 
@@ -34,37 +30,53 @@ type RateLimitResult = {
   resetAt: number;
 };
 
+const clientIp = async (): Promise<string> => {
+  const headersList = await headers();
+
+  // `x-forwarded-for` accumule les proxies traverses. Seule la premiere
+  // adresse identifie l'appelant : garder la chaine entiere donnerait une cle
+  // differente selon le chemin reseau, et la limite ne mordrait plus.
+  return (
+    headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    headersList.get("x-real-ip") ??
+    "unknown"
+  );
+};
+
 export const rateLimit = async (
   config: RateLimitConfig,
 ): Promise<RateLimitResult> => {
-  cleanup();
+  const key = `${config.prefix}:${await clientIp()}`;
 
-  const headersList = await headers();
-  const ip =
-    headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    headersList.get("x-real-ip") ??
-    "unknown";
+  const { data, error } = await createAdminClient().rpc("check_rate_limit", {
+    p_key: key,
+    p_limit: config.limit,
+    p_window_seconds: config.windowSeconds,
+  });
 
-  const key = `${config.prefix}:${ip}`;
-  const now = Date.now();
-  const entry = store.get(key);
+  const row = Array.isArray(data) ? data[0] : data;
 
-  if (!entry || entry.resetAt < now) {
-    const resetAt = now + config.windowSeconds * 1000;
-    store.set(key, { count: 1, resetAt });
-    return { success: true, remaining: config.limit - 1, resetAt };
-  }
-
-  entry.count++;
-
-  if (entry.count > config.limit) {
-    return { success: false, remaining: 0, resetAt: entry.resetAt };
+  if (error || !row) {
+    // Choix assume : on laisse passer. Bloquer sur une panne de base
+    // verrouillerait la connexion pour tout le monde, et l'authentification
+    // interroge cette meme base juste apres — si elle est tombee, rien ne
+    // fonctionne de toute facon. On trace bruyamment pour que la degradation
+    // ne soit pas silencieuse.
+    console.error(
+      `[rateLimit] comptage indisponible pour ${key} — requete laissee passer`,
+      error,
+    );
+    return {
+      success: true,
+      remaining: config.limit,
+      resetAt: Date.now() + config.windowSeconds * 1000,
+    };
   }
 
   return {
-    success: true,
-    remaining: config.limit - entry.count,
-    resetAt: entry.resetAt,
+    success: row.allowed,
+    remaining: row.remaining,
+    resetAt: new Date(row.reset_at).getTime(),
   };
 };
 

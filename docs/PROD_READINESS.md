@@ -734,13 +734,13 @@ defaut : une restauration l'aurait retire de l'editeur.
 
 | ID  | Tache                                                                        | Statut | Prio  | Ref TASKLIST |
 | --- | ---------------------------------------------------------------------------- | ------ | ----- | ------------ |
-| 5-1 | Rate limiting : in-memory → Upstash (casse en serverless multi-instance)     | ⬜     | 🔴 P0 | 02-12        |
+| 5-1 | Rate limiting : in-memory → Postgres partage (casse en serverless multi-instance) | 🔶 | 🔴 P0 | 02-12        |
 | 5-2 | CSP (Content-Security-Policy) manquant                                       | ✅     | 🟠 P1 | 02-13        |
 | 5-3 | Validation MIME type sur les uploads Storage                                 | ⬜     | 🟡 P2 | 02-14        |
 | 5-4 | Seeds `consultant_locations` + `available_locations`                         | ⬜     | 🟠 P1 | 07-08        |
-| 5-5 | Cles live sur Vercel (`sk_live`, `pk_live`)                                  | ⬜     | 🔴 P0 | —            |
-| 5-6 | Webhook endpoint prod enregistre + `whsec_` prod                             | ⬜     | 🔴 P0 | —            |
-| 5-7 | CGV / mentions legales coherentes avec le modele commission                   | ⬜     | 🔴 P0 | —            |
+| 5-5 | Cles live sur Vercel (`sk_live`, `pk_live`)                                  | 🔶     | 🔴 P0 | guide : [GO_LIVE](./GO_LIVE.md) |
+| 5-6 | Webhook endpoint prod enregistre + `whsec_` prod                             | 🔶     | 🔴 P0 | guide : [GO_LIVE](./GO_LIVE.md) |
+| 5-7 | CGV / mentions legales coherentes avec le modele commission                   | 🔶     | 🔴 P0 | brouillon : [CGV](./CGV_MODELE_ECONOMIQUE.md) |
 | 5-8 | Relire `/api/stripe/connect` : pas de verification de role consultante        | ✅     | 🟠 P1 | fait en 4-5  |
 
 ### 5-2 — CSP posee et verifiee au navigateur (2026-07-21)
@@ -780,6 +780,38 @@ echouent sur la moindre violation signalee par le navigateur.
 > s'accumulait d'une passe a l'autre et repartait a zero au redemarrage. C'est le
 > defaut meme que 5-1 doit corriger, observe ici sur un seul processus ; en
 > production multi-instance, il rend la limite inoperante.
+
+### 5-1 — comptage partage entre instances (2026-07-21)
+
+**Ecarte : Upstash.** Le besoin est un **etat partage**, pas un produit particulier.
+Supabase est deja interroge a chaque tentative de connexion (lecture de `profiles`) :
+l'y adosser n'ajoute aucun nouveau mode de panne, aucun secret, aucun fournisseur — et
+surtout, rien a creer avant de pouvoir s'en servir. Le volume, quelques ecritures par
+tentative d'authentification, est sans commune mesure avec ce que Postgres encaisse.
+Basculer vers Redis reste possible si le trafic change : seul le corps de `rateLimit`
+bougerait.
+
+Le comptage tient dans un unique `INSERT ... ON CONFLICT DO UPDATE`
+([migration 00050](../supabase/migrations/00050_rate_limits.sql)). La ligne est
+verrouillee le temps de l'operation, donc deux requetes simultanees ne peuvent pas
+lire le meme compteur et se croire toutes deux sous la limite — ce qu'un `SELECT` puis
+`UPDATE` separes autoriseraient.
+
+**En cas d'indisponibilite de la base, la requete passe.** Choix assume : bloquer
+verrouillerait la connexion pour tout le monde, et l'authentification interroge cette
+meme base juste apres — si elle est tombee, rien ne fonctionne de toute facon. Un
+`console.error` explicite evite que la degradation soit silencieuse.
+
+> **⚠️ SQL non verifie a l'ecriture.** L'application de la migration en production est
+> une action protegee, et aucun Postgres local n'etait disponible (Docker absent). Le
+> SQL de 00050 est donc **relu mais jamais execute** au moment du commit.
+> [run-rate-limit.mjs](../scripts/e2e/run-rate-limit.mjs) (`pnpm test:rate-limit`)
+> existe pour lever ce doute des que `pnpm db:push` est passe : il verifie la limite,
+> la reouverture de la fenetre, l'independance des cles, et surtout l'atomicite — 20
+> appels simultanes sur une limite de 5 doivent en laisser passer exactement 5.
+>
+> Tant que la migration n'est pas appliquee, le limiteur laisse tout passer en
+> journalisant l'erreur : degrade, mais ni bloquant ni silencieux.
 
 ---
 
