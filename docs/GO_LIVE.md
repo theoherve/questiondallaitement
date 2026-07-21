@@ -32,13 +32,18 @@ ete construit en test, ce sont les **cles live de `caroleherve.fr`**
 > les cles **test**, ou sandbox et compte principal ont bien des cles
 > distinctes.
 
-⚠️ **A trancher avant d'aller plus loin.** Utiliser le compte `caroleherve.fr`
-signifie que **l'entite de Carole est la plateforme**. Elle est alors a la fois
-editrice — qui percoit la commission et supporte les chargebacks (constat 1-4) —
-et consultante qui la verse. C'est un montage valable, mais il doit correspondre
-a ce que disent les CGV et a l'entite que tu declares comme editrice. Si la
-plateforme doit etre une structure distincte, il faut son propre compte Stripe,
-et repartir de la.
+**Tranche le 2026-07-21 : l'entite de Carole est la plateforme.** Elle est a la
+fois editrice — qui percoit la commission et supporte les chargebacks
+(constat 1-4) — et consultante qui verse cette commission. Les consultantes
+qu'elle accueille ensuite sont des tiers onboardes en Connect Express.
+
+Deux consequences a repercuter :
+
+- les CGV doivent nommer **son entite** comme editrice
+  ([CGV_MODELE_ECONOMIQUE.md](./CGV_MODELE_ECONOMIQUE.md), point 1) ;
+- la commission qu'elle se verse a elle-meme n'a pas de sens economique, mais
+  elle a un sens **comptable** : elle transite par Stripe et apparait dans les
+  reversements. A cadrer avec le point TVA (1-6).
 
 ---
 
@@ -135,7 +140,36 @@ le CLI.
 
 ## 5. Endpoint webhook de production
 
-Stripe → **Developers → Webhooks → Add endpoint**, en **mode live** :
+> **Le `whsec_` ne se trouve pas, il se cree.** Il n'existe aucune page « secret
+> du webhook » dans Stripe : chaque endpoint enregistre a le sien, genere au
+> moment de sa creation. Tant que l'endpoint live n'existe pas, le secret non
+> plus. C'est pour ca qu'on ne le trouve nulle part dans le dashboard.
+
+### 🚨 A verifier avant tout : la production peut-elle deja encaisser ?
+
+Si `STRIPE_SECRET_KEY` vaut deja `sk_live_…` sur Vercel en Production **et**
+qu'aucun endpoint webhook live n'est enregistre, le site est dans un etat
+dangereux :
+
+1. une cliente reserve et paie — **le paiement est reel** ;
+2. la reservation n'est creee que par le webhook `checkout.session.completed`
+   (voir `createBooking`, qui ne cree rien avant) ;
+3. sans endpoint, ce webhook n'est envoye nulle part ;
+4. **la cliente est debitee, aucune reservation n'existe, aucun email ne part.**
+
+Le meme scenario vaut si l'endpoint existe mais que `STRIPE_WEBHOOK_SECRET`
+contient un secret de test : la signature ne correspond pas, la route repond
+`400`, Stripe reessaie puis abandonne.
+
+**Verification immediate** : Vercel → Settings → Environment Variables →
+Production → valeur de `STRIPE_SECRET_KEY`. Si elle commence par `sk_live_`,
+traite cette section en priorite, ou remets une cle de test le temps de finir la
+configuration.
+
+### Creation de l'endpoint
+
+Stripe → **Developers → Webhooks** → bouton **« Add endpoint »**, en **mode
+live** (bascule Test/Live en haut du dashboard) :
 
 - URL : `https://<ton-domaine>/api/webhooks/stripe`
 - Evenements a selectionner :
@@ -152,8 +186,26 @@ Ces cinq-la et pas d'autres : ce sont exactement ceux que
 [`route.ts`](../src/app/api/webhooks/stripe/route.ts) traite. En ajouter
 d'autres remplit les logs d'evenements ignores.
 
-Copie ensuite le **Signing secret** (`whsec_…`) dans `STRIPE_WEBHOOK_SECRET`
-sur Vercel, environnement Production, puis **redeploie**.
+Une fois l'endpoint cree, il apparait dans la liste. **Clique dessus** : le
+panneau de droite affiche **« Signing secret »** avec un lien **« Reveal »**.
+C'est cette valeur, en `whsec_…`, qui va dans `STRIPE_WEBHOOK_SECRET` sur
+Vercel, environnement **Production**.
+
+> Le secret est propre a cet endpoint. Si tu supprimes puis recrees l'endpoint,
+> le secret change et il faut le reporter a nouveau.
+
+Puis **redeploie** : les variables ne sont lues qu'au build.
+
+### Verifier que ca marche
+
+Depuis la page de l'endpoint, onglet **« Send test event »** → choisis
+`checkout.session.completed` → **Send test webhook**. La reponse doit etre
+`200`. Un `400` signifie que le secret sur Vercel ne correspond pas a cet
+endpoint.
+
+> Cet evenement de test ne cree rien en base : ses metadonnees sont vides, et
+> `handleCheckoutCompleted` sort immediatement. Il ne valide que la signature —
+> ce qui est precisement ce qu'on cherche a verifier ici.
 
 ---
 
