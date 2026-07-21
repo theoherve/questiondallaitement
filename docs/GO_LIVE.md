@@ -3,10 +3,17 @@
 > Ce que Claude ne peut pas faire a ta place : tout passe par les dashboards
 > Stripe, Vercel et Supabase.
 >
-> **Ordre imperatif.** Les CGV (etape 4) doivent etre en ligne **avant** la
-> bascule des cles live (etape 5). Encaisser sans conditions a jour t'expose,
-> et deux points du modele Connect ont un effet juridique direct — voir
+> **L'ordre compte, deux fois.**
+>
+> Les CGV (etape 3) doivent etre en ligne **avant** la bascule des cles live
+> (etape 4). Encaisser sans conditions a jour t'expose, et deux points du modele
+> Connect ont un effet juridique direct — voir
 > [CGV_MODELE_ECONOMIQUE.md](./CGV_MODELE_ECONOMIQUE.md).
+>
+> L'onboarding des consultantes (etape 7) vient **apres** la bascule, pas avant.
+> Les comptes Connect sont cloisonnes par environnement : un compte cree en mode
+> test n'existe pas en live. C'est aussi pourquoi l'etape 6 purge les
+> identifiants de test restes en base.
 
 ---
 
@@ -28,33 +35,7 @@ compteur n'est pas atomique et la limite ne protege de rien.
 
 ---
 
-## 2. Comptes Stripe des consultantes
-
-**A verifier en premier : aujourd'hui, personne ne peut etre paye.**
-
-| Consultante | `stripe_account_id` | Statut |
-| --- | --- | --- |
-| `a0eebc99-…380a11` | `null` | `pending` |
-| `31b9a2da-…0bbd22a` | `acct_1TO0AEDjYyOKzuau` | `pending` |
-
-Aucun compte n'est `active`, donc `charges_enabled` est faux : Stripe refusera
-toute charge destination. Chaque consultante doit terminer son onboarding
-Express depuis **Espace consultante → Parametres → Connecter mon compte
-Stripe**.
-
-Le statut se met a jour tout seul par le webhook `account.updated` (4-5). Pour
-verifier :
-
-```sql
-select id, stripe_account_id, stripe_account_status, onboarding_completed
-from consultants;
-```
-
-Attendu apres onboarding : `active` **et** `onboarding_completed = true`.
-
----
-
-## 3. Profil de la plateforme Stripe
+## 2. Profil de la plateforme Stripe
 
 Dans le dashboard Stripe, **en mode live** :
 
@@ -66,16 +47,16 @@ Dans le dashboard Stripe, **en mode live** :
 
 ---
 
-## 4. CGV et mentions legales
+## 3. CGV et mentions legales
 
 Voir [CGV_MODELE_ECONOMIQUE.md](./CGV_MODELE_ECONOMIQUE.md) — texte pret a
 relire, avec les points qui engagent juridiquement.
 
-**A faire avant l'etape 5.**
+**A faire avant l'etape 4.**
 
 ---
 
-## 5. Cles live sur Vercel
+## 4. Cles live sur Vercel
 
 Dans **Vercel → Project → Settings → Environment Variables**, environnement
 **Production** uniquement :
@@ -94,7 +75,7 @@ pas la bonne. Il faut celle du compte qui porte la plateforme.
 
 ---
 
-## 6. Endpoint webhook de production
+## 5. Endpoint webhook de production
 
 Stripe → **Developers → Webhooks → Add endpoint**, en **mode live** :
 
@@ -118,10 +99,83 @@ sur Vercel, puis **redeploie** — les variables ne sont lues qu'au build.
 
 ---
 
-## 7. Verification apres bascule
+## 6. Purger les comptes Connect de test
+
+> **A faire imperativement apres la bascule des cles, avant tout onboarding.**
+
+Les comptes Connect sont **cloisonnes par environnement** : un `acct_…` cree en
+mode test n'existe pas en mode live. Or la colonne `consultants.stripe_account_id`
+ne distingue pas les deux — elle contient aujourd'hui `acct_1TO0AEDjYyOKzuau`,
+un compte **de test** dont l'onboarding n'a meme pas ete termine.
+
+Laisse tel quel, l'application enverrait cet identifiant a Stripe en live, qui
+ne le connait pas : les paiements echouent sur un « No such destination
+account » sans rapport apparent avec la cause.
+
+```sql
+-- A executer une fois les cles live en place.
+update consultants
+set stripe_account_id = null,
+    stripe_account_status = 'pending',
+    onboarding_completed = false;
+```
+
+Verifier ensuite :
+
+```bash
+pnpm check:connect
+```
+
+Le script interroge Stripe pour chaque identifiant enregistre et signale ceux
+qui n'existent pas dans le mode courant — exactement le piege decrit ci-dessus.
+Il verifie aussi que le statut en base correspond a ce que Stripe repond, ce qui
+revele un webhook `account.updated` mal branche.
+
+Aujourd'hui, en mode test, il repond :
+
+```
+· a0eebc99  pas de compte (consultante inactive)
+✗ 31b9a2da  acct_1TO0AEDjYyOKzuau existe mais n'encaisse pas
+```
+
+---
+
+## 7. Onboarding Stripe des consultantes
+
+**Maintenant seulement**, et pas avant : un onboarding fait en mode test est du
+travail jete, puisque le compte n'existera pas en live.
+
+Chaque consultante se connecte et va dans **Espace consultante → Parametres →
+Connecter mon compte Stripe**. Elle aura besoin de ses vraies coordonnees
+bancaires et d'une piece d'identite — c'est un onboarding reel, avec verification
+par Stripe, qui peut prendre quelques jours.
+
+Le statut se met a jour tout seul par le webhook `account.updated` (4-5) :
+
+```sql
+select id, stripe_account_id, stripe_account_status, onboarding_completed
+from consultants;
+```
+
+Attendu : `active` **et** `onboarding_completed = true`. Tant que ce n'est pas le
+cas, `charges_enabled` est faux cote Stripe et **aucune reservation payante ne
+peut aboutir** pour cette consultante.
+
+> **Pour exercer le parcours sans attendre** : l'onboarding fonctionne aussi en
+> mode test, avec des donnees fictives — la fixture E2E
+> (`acct_1TvClsDt4jjyHCRs`) est un compte Express complet, `charges_enabled` et
+> `payouts_enabled` a vrai. Utile pour verifier l'ecran et le webhook, mais le
+> compte obtenu est a jeter.
+
+---
+
+## 8. Verification apres bascule
 
 Dans cet ordre :
 
+0. `pnpm check:connect` doit repondre **« Tous les comptes sont coherents »**.
+   Tant que ce n'est pas le cas, inutile d'aller plus loin : les paiements
+   echoueront.
 1. **Un achat reel de bout en bout**, avec une vraie carte et un petit montant.
    C'est le trou de couverture assume de 3-6 : aucun test automatise ne verifie
    qu'un vrai paiement carte declenche le webhook.
