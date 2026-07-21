@@ -738,9 +738,9 @@ defaut : une restauration l'aurait retire de l'editeur.
 | 5-2 | CSP (Content-Security-Policy) manquant                                       | ✅     | 🟠 P1 | 02-13        |
 | 5-3 | Validation MIME type sur les uploads Storage                                 | ⬜     | 🟡 P2 | 02-14        |
 | 5-4 | Seeds `consultant_locations` + `available_locations`                         | ⬜     | 🟠 P1 | 07-08        |
-| 5-5 | Cles live sur Vercel (`sk_live`, `pk_live`)                                  | ⬜     | 🔴 P0 | —            |
-| 5-6 | Webhook endpoint prod enregistre + `whsec_` prod                             | ⬜     | 🔴 P0 | —            |
-| 5-7 | CGV / mentions legales coherentes avec le modele commission                   | ⬜     | 🔴 P0 | —            |
+| 5-5 | Cles live sur Vercel (`sk_live`, `pk_live`)                                  | 🔶     | 🔴 P0 | guide : [GO_LIVE](./GO_LIVE.md) |
+| 5-6 | Webhook endpoint prod enregistre + `whsec_` prod                             | 🔶     | 🔴 P0 | guide : [GO_LIVE](./GO_LIVE.md) |
+| 5-7 | CGV / mentions legales coherentes avec le modele commission                   | 🔶     | 🔴 P0 | brouillon : [CGV](./CGV_MODELE_ECONOMIQUE.md) |
 | 5-8 | Relire `/api/stripe/connect` : pas de verification de role consultante        | ✅     | 🟠 P1 | fait en 4-5  |
 
 ### 5-2 — CSP posee et verifiee au navigateur (2026-07-21)
