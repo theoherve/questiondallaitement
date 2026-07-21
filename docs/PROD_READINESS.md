@@ -35,7 +35,7 @@
 | Phase 2 — E2E N1 (seed + webhook simule) | ✅    | —          |
 | Phase 3 — E2E N2 (Playwright navigateur) | 🔶     | 3-1 a 3-5 faits ; 3-6 bloque |
 | Phase 4 — E2E N3 (consultante + refund)  | ✅     | —          |
-| Phase 5 — Durcissement avant live        | ⬜     | Phase 4    |
+| Phase 5 — Durcissement avant live        | 🔶     | 5-2 fait ; 5-5/5-6/5-7 dependent de Theo |
 | Phase 6 — Templates d'email en admin     | ✅     | —          |
 
 ---
@@ -735,13 +735,51 @@ defaut : une restauration l'aurait retire de l'editeur.
 | ID  | Tache                                                                        | Statut | Prio  | Ref TASKLIST |
 | --- | ---------------------------------------------------------------------------- | ------ | ----- | ------------ |
 | 5-1 | Rate limiting : in-memory → Upstash (casse en serverless multi-instance)     | ⬜     | 🔴 P0 | 02-12        |
-| 5-2 | CSP (Content-Security-Policy) manquant                                       | ⬜     | 🟠 P1 | 02-13        |
+| 5-2 | CSP (Content-Security-Policy) manquant                                       | ✅     | 🟠 P1 | 02-13        |
 | 5-3 | Validation MIME type sur les uploads Storage                                 | ⬜     | 🟡 P2 | 02-14        |
 | 5-4 | Seeds `consultant_locations` + `available_locations`                         | ⬜     | 🟠 P1 | 07-08        |
 | 5-5 | Cles live sur Vercel (`sk_live`, `pk_live`)                                  | ⬜     | 🔴 P0 | —            |
 | 5-6 | Webhook endpoint prod enregistre + `whsec_` prod                             | ⬜     | 🔴 P0 | —            |
 | 5-7 | CGV / mentions legales coherentes avec le modele commission                   | ⬜     | 🔴 P0 | —            |
 | 5-8 | Relire `/api/stripe/connect` : pas de verification de role consultante        | ✅     | 🟠 P1 | fait en 4-5  |
+
+### 5-2 — CSP posee et verifiee au navigateur (2026-07-21)
+
+**Portee reelle, pour ne pas se raconter d'histoires.** `script-src` autorise
+`'unsafe-inline'` : sans lui, le bootstrap inline de Next.js ne s'execute pas. Cette
+politique **n'arrete donc pas une injection de script inline**. Ce qu'elle ferme
+quand meme :
+
+- `connect-src` — une charge utile injectee ne peut exfiltrer que vers Supabase ou
+  Stripe, pas vers un domaine arbitraire ;
+- `frame-ancestors` / `object-src` / `base-uri` — clickjacking, plugins, detournement
+  des URL relatives ;
+- `form-action` — un formulaire injecte ne peut pas poster ailleurs.
+
+Passer aux nonces via le middleware permettrait de retirer `'unsafe-inline'` et de
+couvrir reellement le XSS. C'est le palier suivant, laisse de cote volontairement :
+mal pose, un nonce casse le rendu statique.
+
+**`img-src https:`** plutot qu'une liste d'hotes : les visuels importes depuis Wix
+pointent sur des domaines quelconques, et une image bloquee laisse une page trouee
+sans erreur visible.
+
+**Verifiee au navigateur** ([csp.spec.ts](../e2e/csp.spec.ts)) : une CSP trop stricte
+ne leve pas d'erreur, elle bloque discretement une ressource et la page s'affiche de
+travers. Les scenarios parcourent les pages portant des dependances externes et
+echouent sur la moindre violation signalee par le navigateur.
+
+> **La verification a mordu deux fois.** D'abord sur le websocket de rafraichissement
+> a chaud, bloque par `connect-src` — corrige par une exception limitee au
+> developpement. Ensuite parce que la politique de developpement n'est pas celle de
+> production : la suite a ete rejouee contre `pnpm build && pnpm start`, ou
+> `'unsafe-eval'` et le websocket disparaissent. 10/10 dans les deux modes.
+
+> **Constat annexe, qui renforce 5-1** : les passes repetees faisaient echouer la
+> connexion des fixtures. Cause — le rate limit en memoire du processus, qui
+> s'accumulait d'une passe a l'autre et repartait a zero au redemarrage. C'est le
+> defaut meme que 5-1 doit corriger, observe ici sur un seul processus ; en
+> production multi-instance, il rend la limite inoperante.
 
 ---
 
