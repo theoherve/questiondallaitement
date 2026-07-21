@@ -113,10 +113,51 @@ export const createCheckoutSession = async ({
   return session;
 };
 
+/**
+ * Rembourse une cliente en defaisant l'ensemble du flux d'argent.
+ *
+ * Sur une charge destination, `refunds.create({ payment_intent })` seul ne
+ * rembourse que la cliente, depuis le solde de la **plateforme**. Le virement
+ * vers la consultante n'est pas renverse et la commission n'est pas rendue.
+ * Mesure sur Stripe en mode test, pour une reservation de 80 € remboursee :
+ * la plateforme perdait 68 € et la consultante conservait les 80 €, pour une
+ * consultation qui n'avait pas lieu.
+ *
+ * Deux corrections :
+ *
+ * - `reverse_transfer` recupere aupres de la consultante ce qui est rendu a la
+ *   cliente, au prorata du montant rembourse ;
+ * - la commission plateforme est rendue **en entier**, y compris sur un
+ *   remboursement partiel. C'est la regle produit retenue : la plateforme ne
+ *   preleve rien sur une annulation, la penalite revient integralement a la
+ *   consultante. `refund_application_fee: true` ne conviendrait pas — il
+ *   rembourse la commission au prorata, laissant une part a la plateforme.
+ */
 export const createRefund = async (
   paymentIntentId: string,
   amountInCents?: number
 ) => {
+  const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+  // La charge imbriquee dans un PaymentIntent ne porte ni `transfer` ni
+  // `application_fee`, meme en demandant `expand: ["latest_charge.transfer"]` :
+  // ces champs n'apparaissent qu'en recuperant la charge directement. Les lire
+  // sur l'objet imbrique renvoie toujours `undefined`, et le remboursement
+  // repart alors en silence sur l'ancien comportement — sans rien renverser.
+  const chargeId =
+    typeof intent.latest_charge === "string"
+      ? intent.latest_charge
+      : intent.latest_charge?.id;
+
+  const charge = chargeId
+    ? await stripe.charges.retrieve(chargeId, {
+        expand: ["transfer", "application_fee"],
+      })
+    : null;
+
+  const transfer = charge?.transfer as Stripe.Transfer | null;
+  const applicationFee = charge?.application_fee as Stripe.ApplicationFee | null;
+
   const refundParams: Stripe.RefundCreateParams = {
     payment_intent: paymentIntentId,
   };
@@ -125,7 +166,31 @@ export const createRefund = async (
     refundParams.amount = amountInCents;
   }
 
+  // Un paiement sans compte connecte n'a rien a renverser, et le parametre
+  // ferait echouer l'appel.
+  if (transfer) {
+    refundParams.reverse_transfer = true;
+  }
+
   const refund = await stripe.refunds.create(refundParams);
+
+  const feeOutstanding = applicationFee
+    ? applicationFee.amount - applicationFee.amount_refunded
+    : 0;
+
+  if (applicationFee && feeOutstanding > 0) {
+    try {
+      await stripe.applicationFees.createRefund(applicationFee.id, {
+        amount: feeOutstanding,
+      });
+    } catch (err) {
+      // L'argent de la cliente prime : il est deja parti. Laisser remonter
+      // l'erreur ferait echouer l'annulation apres coup, avec une reservation
+      // annulee et un remboursement qu'on croirait perdu.
+      console.error("[createRefund] remboursement de la commission", err);
+    }
+  }
+
   return refund;
 };
 

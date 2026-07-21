@@ -34,7 +34,7 @@
 | Phase 1 — Verification config Connect   | 🔶     | reste 1-6 (TVA) |
 | Phase 2 — E2E N1 (seed + webhook simule) | ✅    | —          |
 | Phase 3 — E2E N2 (Playwright navigateur) | 🔶     | 3-1 a 3-5 faits ; 3-6 bloque |
-| Phase 4 — E2E N3 (consultante + refund)  | 🔶     | reste 4-2, 4-3, 4-6 |
+| Phase 4 — E2E N3 (consultante + refund)  | 🔶     | reste 4-6 |
 | Phase 5 — Durcissement avant live        | ⬜     | Phase 4    |
 | Phase 6 — Templates d'email en admin     | ✅     | —          |
 
@@ -389,8 +389,8 @@ la session n'est jamais completee.
 | ID  | Scenario                                                                          | Statut | Prio  |
 | --- | --------------------------------------------------------------------------------- | ------ | ----- |
 | 4-1 | Login consultante → voit le RDV → confirme                                        | ✅     | 🔴 P0 |
-| 4-2 | Annulation ≥ 48 h → refund total, montant verifie via l'API Stripe (pas juste la DB) | ⬜   | 🔴 P0 |
-| 4-3 | Annulation < 48 h → penalite 50 %, montant verifie via l'API Stripe                | ⬜     | 🔴 P0 |
+| 4-2 | Annulation ≥ 48 h → refund total, montant verifie via l'API Stripe (pas juste la DB) | ✅   | 🔴 P0 |
+| 4-3 | Annulation < 48 h → penalite 50 %, montant verifie via l'API Stripe                | ✅     | 🔴 P0 |
 | 4-4 | `charge.refunded` remet `payments` **et** `bookings` en coherence                  | ✅     | 🔴 P0 |
 | 4-5 | Onboarding Connect : `/api/stripe/connect` → Express test → `account.updated` → `active` | ✅ | 🔴 P0 |
 | 4-6 | Splits collaborateurs (`processCollaboratorSplits`) sur achat d'accompagnement     | ⬜     | 🟠 P1 |
@@ -499,6 +499,55 @@ l'appel : 7/9.
 > s'attend a trouver active — deux tests devenus dependants de leur ordre. Chacun a
 > maintenant sa propre reservation (`bookingRefundFull`, `bookingRefundPartial`), sur
 > des creneaux distincts pour ne pas heurter l'index d'unicite.
+
+### 4-2 / 4-3 — remboursements verifies chez Stripe (2026-07-21)
+
+**🔴 Chaque remboursement coutait a la plateforme 85 % de la reservation.**
+`createRefund` se contentait de `refunds.create({ payment_intent })`. Sur une charge
+destination, cela rembourse la cliente **depuis le solde de la plateforme** : le
+virement vers la consultante n'est pas renverse, la commission n'est pas rendue.
+
+Mesure sur Stripe en mode test, reservation de 80 € avec 15 % de commission :
+
+| | Rembourse a la cliente | Transfert renverse | Commission rendue | Plateforme | Consultante |
+| --- | --- | --- | --- | --- | --- |
+| **Avant** | 8000 | **0** / 8000 | **0** / 1200 | **−6800** | **8000** |
+| **Apres** | 8000 | 8000 / 8000 | 1200 / 1200 | 0 | 0 |
+
+La consultante encaissait l'integralite d'une consultation qui n'avait pas lieu, et la
+plateforme payait la difference. Les trois chemins de remboursement etaient touches :
+annulation consultante, annulation cliente, et le remboursement automatique de conflit
+de creneau (4-7).
+
+**Regle produit tranchee le 2026-07-21 : la plateforme ne preleve rien sur une
+annulation.** Sur une annulation tardive de 80 €, la penalite de 40 € revient
+integralement a la consultante. `refund_application_fee: true` ne convenait pas — il
+rembourse la commission au prorata et laisserait 6 € a la plateforme. La commission est
+donc rendue en entier par un appel explicite, et seul le solde restant est demande pour
+qu'un second remboursement sur le meme paiement n'echoue pas.
+
+> **🔴 Piege d'API — la premiere version du correctif ne corrigeait rien.**
+> La charge imbriquee dans un PaymentIntent ne porte **ni `transfer` ni
+> `application_fee`**, meme avec `expand: ["latest_charge.transfer"]`. Ces champs
+> n'existent qu'en recuperant la charge via `charges.retrieve`. Le code lisait donc
+> toujours `undefined`, n'ajoutait jamais `reverse_transfer`, et repartait en silence
+> sur l'ancien comportement.
+>
+> **Les tests unitaires passaient** : ils mockaient la forme supposee. Seule la suite
+> sur charges reelles l'a vu — c'est exactement ce que 4-2/4-3 demandaient en exigeant
+> une verification « via l'API Stripe, pas juste la DB ». Le mock reproduit desormais
+> la forme reelle.
+
+**`pnpm test:e2e:refunds`** ([run-refunds.mjs](../scripts/e2e/run-refunds.mjs)) cree de
+vrais PaymentIntents en mode test sur le compte connecte de la fixture, appelle le
+`createRefund` de l'application via `jiti`, puis relit les objets Stripe pour verifier
+la repartition de chaque centime. Un troisieme scenario verifie que la somme des trois
+parts egale toujours le montant encaisse : une repartition qui ne boucle pas signifie
+que de l'argent a ete cree ou detruit.
+
+La suite n'ecrit rien en base. Elle exige `E2E_CONNECT_ACCOUNT` pointant sur un compte
+reellement onboarde — Stripe refuse une charge destination vers un compte fictif — et
+refuse de demarrer sur une cle `sk_live_`.
 
 ### Constats de 4-5 (2026-07-21)
 
