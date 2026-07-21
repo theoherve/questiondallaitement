@@ -66,6 +66,8 @@ export const createCheckoutSession = async ({
   metadata,
   successUrl,
   cancelUrl,
+  holdOnPlatform,
+  transferGroup,
 }: {
   consultantStripeAccountId: string;
   commissionRate: number;
@@ -77,10 +79,31 @@ export const createCheckoutSession = async ({
   metadata: Record<string, string>;
   successUrl: string;
   cancelUrl: string;
+  /**
+   * Encaisse sur la plateforme au lieu de virer directement a la consultante.
+   *
+   * Necessaire des qu'une vente doit se partager entre plusieurs comptes : une
+   * charge destination verse tout au destinataire, et la plateforme n'a plus
+   * les fonds pour payer les autres parts. Les virements se font ensuite en
+   * citant la charge source (`source_transaction`).
+   */
+  holdOnPlatform?: boolean;
+  /** Rattache charge et virements, pour les retrouver au remboursement. */
+  transferGroup?: string;
 }) => {
   const applicationFeeAmount = Math.round(
     priceInCents * (commissionRate / 100)
   );
+
+  const paymentIntentData: Stripe.Checkout.SessionCreateParams.PaymentIntentData =
+    holdOnPlatform
+      ? { metadata, ...(transferGroup ? { transfer_group: transferGroup } : {}) }
+      : {
+          application_fee_amount: applicationFeeAmount,
+          transfer_data: { destination: consultantStripeAccountId },
+          metadata,
+          ...(transferGroup ? { transfer_group: transferGroup } : {}),
+        };
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -98,13 +121,7 @@ export const createCheckoutSession = async ({
         quantity: 1,
       },
     ],
-    payment_intent_data: {
-      application_fee_amount: applicationFeeAmount,
-      transfer_data: {
-        destination: consultantStripeAccountId,
-      },
-      metadata,
-    },
+    payment_intent_data: paymentIntentData,
     metadata,
     success_url: successUrl,
     cancel_url: cancelUrl,
@@ -191,20 +208,92 @@ export const createRefund = async (
     }
   }
 
+  // Vente repartie entre plusieurs comptes : `reverse_transfer` ne connait que
+  // le transfert porte par la charge, et une charge encaissee par la
+  // plateforme n'en a pas. Les parts versees separement doivent etre reprises
+  // une a une, sinon la plateforme rembourse la cliente pendant que les deux
+  // consultantes gardent la leur.
+  if (!transfer && charge) {
+    await reverseGroupedTransfers(paymentIntentId, charge.amount, refund.amount);
+  }
+
   return refund;
+};
+
+/**
+ * Reprend, au prorata du remboursement, les virements rattaches au paiement.
+ *
+ * Les virements de repartition portent `transfer_group = payment_intent_id`,
+ * seul lien disponible : Stripe ne permet pas de filtrer par
+ * `source_transaction`.
+ */
+const reverseGroupedTransfers = async (
+  paymentIntentId: string,
+  chargeAmount: number,
+  refundedAmount: number
+) => {
+  if (chargeAmount <= 0) return;
+
+  try {
+    const transfers = await stripe.transfers.list({
+      transfer_group: paymentIntentId,
+    });
+
+    for (const grouped of transfers.data) {
+      const reversible = grouped.amount - grouped.amount_reversed;
+      if (reversible <= 0) continue;
+
+      const share = Math.min(
+        Math.round(grouped.amount * (refundedAmount / chargeAmount)),
+        reversible
+      );
+      if (share <= 0) continue;
+
+      await stripe.transfers.createReversal(grouped.id, { amount: share });
+    }
+  } catch (err) {
+    // Comme pour la commission : la cliente est deja remboursee, et faire
+    // echouer l'annulation ici la laisserait dans un etat pire.
+    console.error("[createRefund] reprise des parts reparties", err);
+  }
 };
 
 export const createTransfer = async (
   amountInCents: number,
   destinationAccountId: string,
-  metadata: Record<string, string>
+  metadata: Record<string, string>,
+  options: {
+    /**
+     * Charge dont provient l'argent. Sans elle, Stripe puise dans le solde
+     * disponible de la plateforme — qui, sur un modele de charges destination,
+     * est vide : le virement echoue en `balance_insufficient`.
+     */
+    sourceTransaction?: string;
+    transferGroup?: string;
+    /**
+     * Rend le virement rejouable sans danger. Stripe peut redelivrer un
+     * evenement ; sans cette cle, la meme part serait versee deux fois.
+     */
+    idempotencyKey?: string;
+  } = {}
 ) => {
-  const transfer = await stripe.transfers.create({
-    amount: amountInCents,
-    currency: "eur",
-    destination: destinationAccountId,
-    metadata,
-  });
+  const transfer = await stripe.transfers.create(
+    {
+      amount: amountInCents,
+      currency: "eur",
+      destination: destinationAccountId,
+      metadata,
+      ...(options.sourceTransaction
+        ? { source_transaction: options.sourceTransaction }
+        : {}),
+      ...(options.transferGroup
+        ? { transfer_group: options.transferGroup }
+        : {}),
+    },
+    options.idempotencyKey
+      ? { idempotencyKey: options.idempotencyKey }
+      : undefined
+  );
 
   return transfer;
 };

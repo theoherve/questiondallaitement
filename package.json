@@ -10,6 +10,7 @@
     "test:e2e:n1": "node scripts/e2e/run-n1.mjs",
     "test:e2e:n2": "playwright test",
     "test:e2e:refunds": "node scripts/e2e/run-refunds.mjs",
+    "test:e2e:splits": "node scripts/e2e/run-splits.mjs",
     "test:e2e:n2:ui": "playwright test --ui",
     "e2e:seed": "node scripts/e2e/seed-test-data.mjs",
     "e2e:cleanup": "node scripts/e2e/cleanup-test-data.mjs",
