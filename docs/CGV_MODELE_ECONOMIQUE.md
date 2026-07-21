@@ -116,7 +116,46 @@ percoit aucune commission sur une annulation.
 Les remboursements sont effectues sur le moyen de paiement d'origine. Le delai
 de restitution depend de l'etablissement bancaire.
 
-⚠️ **A trancher — droit de retractation.** Pour une prestation de services
+**Droit de retractation — formulation adoptee le 2026-07-21.**
+
+Deux cas distincts, car le code de la consommation ne les traite pas pareil.
+
+**a) Consultation reservee a moins de quatorze jours** — case a cocher
+obligatoire a l'etape de confirmation :
+
+> Je demande expressement que la consultation ait lieu a la date choisie, avant
+> l'expiration du delai de retractation de quatorze jours. Je reconnais qu'une
+> fois la consultation pleinement executee, je ne pourrai plus exercer ce droit.
+
+**b) Accompagnement en ligne, accessible immediatement** — case a cocher
+obligatoire avant paiement :
+
+> Je demande a acceder immediatement au contenu et renonce expressement a mon
+> droit de retractation de quatorze jours, que je perds des le debut de
+> l'execution.
+
+**Article correspondant :**
+
+> Conformement aux articles L221-18 et suivants du code de la consommation, la
+> cliente dispose d'un delai de quatorze jours pour se retracter.
+>
+> Ce delai ne s'applique pas lorsqu'elle a demande expressement l'execution de
+> la prestation avant son expiration et renonce a ce droit dans les conditions
+> prevues aux articles L221-25 et L221-28. Cette demande et cette renonciation
+> sont recueillies au moment de la reservation ou de l'achat, et conservees.
+>
+> Hors de ces cas, la retractation s'exerce par simple demande a
+> [**⚠️ A trancher** : adresse email de contact], sans avoir a se justifier. Le
+> remboursement intervient dans les quatorze jours suivant la demande.
+
+**Ce que ca demande cote code**, et qui reste a faire :
+
+- une case obligatoire, decochee par defaut, aux deux endroits ;
+- la trace en base — date, version du texte accepte — car en cas de litige c'est
+  a la plateforme de prouver que la renonciation a ete recueillie ;
+- le blocage de la validation tant que la case n'est pas cochee.
+
+⚠️ **Ancienne note, conservee pour memoire.** Pour une prestation de services
 vendue a distance a un consommateur, le code de la consommation prevoit un delai
 de retractation de quatorze jours. Ce delai ne s'eteint que si la prestation a
 ete pleinement executee avec l'accord expres de la cliente et sa renonciation
