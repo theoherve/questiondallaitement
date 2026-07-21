@@ -3,6 +3,10 @@
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createCheckoutSession } from "@/lib/stripe/connect";
+import {
+  routeSale,
+  isPlatformOwnerConsultant,
+} from "@/lib/stripe/sale-routing";
 import { siteConfig } from "@/config/site";
 import type { ActionResult } from "@/types";
 
@@ -50,12 +54,6 @@ export const purchaseFormation = async (
     .eq("id", formation.consultant_id)
     .single();
 
-  if (!consultant?.stripe_account_id) {
-    return {
-      success: false,
-      error: "Le paiement n'est pas disponible pour cet accompagnement",
-    };
-  }
 
   // Une vente a partager ne peut pas etre versee directement a la
   // proprietaire : la plateforme n'aurait plus les fonds pour payer les
@@ -69,11 +67,35 @@ export const purchaseFormation = async (
 
   const hasCollaborators = (collaboratorCount ?? 0) > 0;
 
+  // Ou vont les fonds : chez la consultante, sur la plateforme le temps d'etre
+  // repartis, ou sur la plateforme definitivement quand c'est sa proprietaire
+  // qui vend (voir sale-routing.ts).
+  const isPlatformOwner = await isPlatformOwnerConsultant(
+    supabase,
+    formation.consultant_id,
+  );
+
+  const routing = consultant
+    ? routeSale({
+        isPlatformOwner,
+        stripeAccountId: consultant.stripe_account_id,
+        commissionRate: consultant.commission_rate,
+        hasCollaborators,
+      })
+    : null;
+
+  if (!routing) {
+    return {
+      success: false,
+      error: "Le paiement n'est pas disponible pour cet accompagnement",
+    };
+  }
+
   try {
     const session = await createCheckoutSession({
-      holdOnPlatform: hasCollaborators,
-      consultantStripeAccountId: consultant.stripe_account_id,
-      commissionRate: consultant.commission_rate,
+      holdOnPlatform: routing.holdOnPlatform,
+      consultantStripeAccountId: routing.destinationAccountId ?? undefined,
+      commissionRate: routing.commissionRate,
       priceInCents: formation.price_cents,
       currency: formation.currency,
       productName: formation.title,
@@ -85,7 +107,7 @@ export const purchaseFormation = async (
         client_id: user.id,
         consultant_id: formation.consultant_id,
         platform_fee_cents: Math.round(
-          formation.price_cents * (consultant.commission_rate / 100),
+          formation.price_cents * (routing.commissionRate / 100),
         ).toString(),
       },
       successUrl: `${siteConfig.url}/espace-client/accompagnements?purchased=${formation.id}`,
