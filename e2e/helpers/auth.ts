@@ -1,4 +1,9 @@
 import type { Page } from "@playwright/test";
+// Importe pour son effet de bord : c'est ce module qui lit `.env.local`.
+// Sans lui, `E2E_CLIENT_PASSWORD` n'est defini que si un autre fichier de la
+// passe l'a charge en premier — ce qui n'arrive pas dans le projet `setup`,
+// qui ne charge que `auth.setup.ts`.
+import "./env";
 
 /**
  * Connecte la cliente fixture via le vrai formulaire `/connexion`.
