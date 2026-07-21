@@ -7,15 +7,30 @@ import {
   routeSale,
   isPlatformOwnerConsultant,
 } from "@/lib/stripe/sale-routing";
+import { recordWithdrawalWaiver } from "@/lib/legal/record-waiver";
 import { siteConfig } from "@/config/site";
 import type { ActionResult } from "@/types";
 
 export const purchaseFormation = async (
   formationId: string,
+  // Renonciation au droit de retractation. Toujours requise : l'acces au
+  // contenu est immediat, donc l'execution commence des le paiement.
+  withdrawalWaiverAccepted = false,
 ): Promise<ActionResult<{ redirect_url: string }>> => {
   const user = await getSessionUser();
   if (!user) {
     return { success: false, error: "Vous devez être connecté pour acheter" };
+  }
+
+  // Verifie cote serveur : une server action est un endpoint POST, appelable
+  // sans passer par l'interface.
+  if (withdrawalWaiverAccepted !== true) {
+    return {
+      success: false,
+      error:
+        "Vous devez accepter l'accès immédiat au contenu et la renonciation " +
+        "au droit de rétractation.",
+    };
   }
 
   const supabase = createAdminClient();
@@ -88,6 +103,21 @@ export const purchaseFormation = async (
     return {
       success: false,
       error: "Le paiement n'est pas disponible pour cet accompagnement",
+    };
+  }
+
+  const recorded = await recordWithdrawalWaiver(supabase, {
+    clientId: user.id,
+    context: "formation",
+    referenceId: formation.id,
+  });
+
+  // Sans trace, la plateforme ne pourrait pas prouver la renonciation en cas
+  // de litige. Mieux vaut refuser la vente que d'encaisser sans preuve.
+  if (!recorded) {
+    return {
+      success: false,
+      error: "Impossible d'enregistrer votre accord. Réessayez.",
     };
   }
 

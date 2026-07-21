@@ -118,6 +118,9 @@ const makeBookingForm = (
     reason: "Difficultés d'allaitement",
   },
   payment_method: "online",
+  // La date fixe des fixtures est dans le passe, donc toujours dans le delai
+  // de retractation : sans cet accord, chaque scenario serait refuse.
+  withdrawal_waiver_accepted: true,
   ...overrides,
 });
 
@@ -327,7 +330,9 @@ describe("14-09 : createBooking — paiement sur place (on_site)", () => {
       .mockImplementationOnce((t: string) => createChain({ singleData: { id: "client-uuid-001" } }, t))
       .mockImplementationOnce((t: string) => createChain({}, t))
       .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTANT }, t))
-      .mockImplementationOnce((t: string) => createChain({ insertSingleData: { id: BOOKING_ID } }, t));
+      .mockImplementationOnce((t: string) => createChain({ insertSingleData: { id: BOOKING_ID } }, t))
+      // Ecriture de la renonciation au droit de retractation.
+      .mockImplementation((t: string) => createChain({}, t));
   });
 
   it("crée le booking directement en DB avec status pending", async () => {
@@ -347,6 +352,76 @@ describe("14-09 : createBooking — paiement sur place (on_site)", () => {
 
     expect(result.data?.booking_id).toBeTruthy();
     expect(result.data?.redirect_url).toBeUndefined();
+  });
+});
+
+// ─── Renonciation au droit de retractation ───────────────────
+
+describe("createBooking — droit de retractation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFrom.mockReset();
+    insertCalls.length = 0;
+
+    mockFrom
+      .mockImplementationOnce((t: string) => createChain({ singleData: DURATION_OPTION }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTATION_TYPE }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: { id: "client-uuid-existing" } }, t))
+      .mockImplementationOnce((t: string) => createChain({}, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTANT }, t))
+      .mockImplementation((t: string) => createChain({ singleData: {} }, t));
+
+    mockCreateCheckoutSession.mockResolvedValue({ url: "https://checkout.stripe.com/x" });
+  });
+
+  it("refuse une consultation proche sans renonciation", async () => {
+    // Une server action est un endpoint POST : la case du formulaire ne
+    // protege rien, seule cette verification compte.
+    const result = await createBooking(
+      makeBookingForm({ withdrawal_waiver_accepted: false }),
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/rétractation/i);
+    expect(mockCreateCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it("refuse aussi quand le champ est absent", async () => {
+    // Un appelant qui ignore ce champ ne doit pas passer par defaut.
+    const form = makeBookingForm();
+    delete (form as { withdrawal_waiver_accepted?: boolean })
+      .withdrawal_waiver_accepted;
+
+    const result = await createBooking(form);
+
+    expect(result.success).toBe(false);
+  });
+
+  it("consigne la renonciation avant de creer la session de paiement", async () => {
+    // En cas de litige, c'est a la plateforme de prouver que l'accord a ete
+    // recueilli — et il doit l'etre avant l'encaissement, pas apres.
+    await createBooking(makeBookingForm());
+
+    const waiver = insertCalls.find((c) => c.table === "withdrawal_waivers");
+    expect(waiver).toBeDefined();
+    expect(waiver!.data).toMatchObject({
+      context: "booking",
+      client_id: "client-uuid-existing",
+    });
+  });
+
+  it("n'exige rien pour une consultation au-dela du delai", async () => {
+    const farAway = new Date(Date.now() + 40 * 24 * 3600 * 1000).toISOString();
+
+    const result = await createBooking(
+      makeBookingForm({
+        starts_at: farAway,
+        withdrawal_waiver_accepted: false,
+      }),
+    );
+
+    expect(result.success).toBe(true);
+    expect(insertCalls.find((c) => c.table === "withdrawal_waivers")).toBeUndefined();
   });
 });
 

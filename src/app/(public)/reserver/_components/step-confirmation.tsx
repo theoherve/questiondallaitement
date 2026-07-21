@@ -13,12 +13,17 @@ import {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { BookingState } from "./booking-wizard";
+import { WITHDRAWAL_TEXTS } from "@/lib/legal/withdrawal";
 
 type StepConfirmationProps = {
   state: BookingState;
   services: { title: string; description: string | null }[];
   onConfirm: () => void;
   isPending: boolean;
+  /** La consultation a lieu dans les quatorze jours : accord obligatoire. */
+  waiverRequired: boolean;
+  waiverAccepted: boolean;
+  onWaiverChange: (accepted: boolean) => void;
 };
 
 const formatPrice = (cents: number, currency: string): string =>
@@ -49,6 +54,9 @@ export const StepConfirmation = ({
   state,
   onConfirm,
   isPending,
+  waiverRequired,
+  waiverAccepted,
+  onWaiverChange,
 }: StepConfirmationProps) => {
   const totalPrice = state.priceCents + state.surchargeCents;
   const slotDate = state.selectedSlot
@@ -133,11 +141,26 @@ export const StepConfirmation = ({
         </div>
       </div>
 
+      {waiverRequired && (
+        <div className="rounded-lg border border-muted bg-muted/30 p-4">
+          <label className="flex cursor-pointer items-start gap-3 text-sm text-primary-green">
+            <input
+              type="checkbox"
+              checked={waiverAccepted}
+              onChange={(e) => onWaiverChange(e.target.checked)}
+              data-testid="withdrawal-waiver"
+              className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-primary-red"
+            />
+            <span>{WITHDRAWAL_TEXTS.booking}</span>
+          </label>
+        </div>
+      )}
+
       <div className="flex gap-3">
         <Button
           data-testid="booking-confirm"
           onClick={onConfirm}
-          disabled={isPending}
+          disabled={isPending || (waiverRequired && !waiverAccepted)}
           className="w-full bg-primary-red hover:bg-primary-red-dark"
         >
           {isPending ? (

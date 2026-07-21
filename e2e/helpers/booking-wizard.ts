@@ -103,15 +103,39 @@ export const fillBookingWizard = async (
     )
     .click();
 
-  // Step 7 — confirmation
+  // Step 7 — confirmation.
+  //
+  // La renonciation au droit de retractation n'apparait que pour une
+  // consultation dans les quatorze jours. Le harnais prend toujours le premier
+  // creneau libre, donc elle est presente en pratique — mais on ne la suppose
+  // pas : un jour ou le calendrier n'offrirait que des dates lointaines, ce
+  // `count()` evite un echec incomprehensible.
+  const waiver = page.getByTestId("withdrawal-waiver");
+  if ((await waiver.count()) > 0) {
+    await waiver.check();
+  }
+
   await page.getByTestId("booking-confirm").click();
 
   // Le wizard rend ses erreurs serveur dans un role="alert" et reste sur place.
   // Sans ce garde-fou, l'echec remonte en « timeout de navigation », ce qui
   // masque la vraie cause (c'est ainsi que le bug PGRST201 s'etait deguise).
+  //
+  // On sonde en boucle plutot qu'avec `isVisible({ timeout })` : ce dernier
+  // ignore son timeout et repond immediatement, donc il ratait les erreurs
+  // arrivant apres l'aller-retour serveur. Le garde-fou existait mais ne
+  // servait a rien — c'est ce qui a masque l'absence de la table
+  // `withdrawal_waivers`.
   const alert = page.getByTestId("booking-error");
-  if (await alert.isVisible({ timeout: 3_000 }).catch(() => false)) {
-    throw new Error(`createBooking a echoue : ${await alert.textContent()}`);
+  const startedAt = page.url();
+
+  for (let i = 0; i < 20; i++) {
+    if (await alert.isVisible().catch(() => false)) {
+      throw new Error(`createBooking a echoue : ${await alert.textContent()}`);
+    }
+    // La navigation a commence : plus rien a attendre ici.
+    if (page.url() !== startedAt) break;
+    await page.waitForTimeout(250);
   }
 
   return slotStart as string;

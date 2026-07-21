@@ -12,6 +12,7 @@ import { StepCalendar } from "./step-calendar";
 import { StepContact } from "./step-contact";
 import { StepPayment } from "./step-payment";
 import { StepConfirmation } from "./step-confirmation";
+import { bookingRequiresWaiver } from "@/lib/legal/withdrawal";
 import { createBooking, computeSlotPrice, type BookingFormData } from "../actions";
 import type { ConsultationLocation, BookingPaymentMethod, LocationConfig } from "@/types/database";
 
@@ -85,6 +86,7 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
   const [step, setStep] = useState(0);
   const [state, setState] = useState<BookingState>(initialState);
   const [error, setError] = useState<string | null>(null);
+  const [waiverAccepted, setWaiverAccepted] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const handleBack = () => {
@@ -116,6 +118,7 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
         starts_at: state.selectedSlot!.start,
         contact: state.contact!,
         payment_method: state.paymentMethod!,
+        withdrawal_waiver_accepted: waiverAccepted,
       };
 
       const result = await createBooking(formData);
@@ -314,6 +317,12 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
               services={services}
               onConfirm={handleSubmit}
               isPending={isPending}
+              waiverRequired={
+                !!state.selectedSlot &&
+                bookingRequiresWaiver(new Date(state.selectedSlot.start))
+              }
+              waiverAccepted={waiverAccepted}
+              onWaiverChange={setWaiverAccepted}
             />
           )}
         </CardContent>
