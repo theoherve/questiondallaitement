@@ -62,6 +62,17 @@ vi.mock("@/lib/stripe/connect", () => ({
   createRefund: (...args: unknown[]) => mockCreateRefund(...args),
 }));
 
+const mockChargeRetrieve = vi.fn();
+
+vi.mock("@/lib/stripe/client", () => ({
+  stripe: {
+    paymentIntents: {
+      retrieve: vi.fn().mockResolvedValue({ latest_charge: "ch_test_001" }),
+    },
+    charges: { retrieve: (...a: unknown[]) => mockChargeRetrieve(...a) },
+  },
+}));
+
 const mockSendSlotConflict = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/lib/emails/send", () => ({
@@ -146,7 +157,13 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
     db["payments"] = {};
     db["audit_logs"] = {};
     db["profiles"] = { single: { email: "client@test.fr", first_name: "Marie" } };
-    db["formations"] = { single: { title: "Formation allaitement" } };
+    db["formations"] = {
+      single: { title: "Formation allaitement", consultant_id: CONSULTANT_ID },
+    };
+    db["consultants"] = { list: [] };
+    // Charge restee sur la plateforme : pas de transfert attache, donc les
+    // fonds sont disponibles pour etre repartis.
+    mockChargeRetrieve.mockResolvedValue({ id: "ch_test_001", transfer: null });
   });
 
   it("crée un enrollment (upsert formation_enrollments)", async () => {
@@ -180,7 +197,11 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
     expect(mockCreateTransfer).not.toHaveBeenCalled();
   });
 
-  it("crée un transfer pour un collaborateur avec Stripe actif", async () => {
+  it("repartit la vente entre collaboratrice et proprietaire", async () => {
+    // Modele « separate charges and transfers » : la charge reste sur la
+    // plateforme et chaque part est virée en citant la charge source. Avant,
+    // la proprietaire recevait tout par charge destination et la plateforme
+    // payait la collaboratrice de son propre solde — quand elle le pouvait.
     db["formation_collaborators"] = {
       list: [
         {
@@ -193,18 +214,96 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
         },
       ],
     };
-    db["payments"] = {
-      single: { amount_cents: 5000, platform_fee_cents: 500 },
+    db["payments"] = { single: { amount_cents: 5000, platform_fee_cents: 500 } };
+    db["consultants"] = {
+      list: [
+        { id: "collab-uuid-001", stripe_account_id: "acct_collab001", stripe_account_status: "active" },
+        { id: CONSULTANT_ID, stripe_account_id: "acct_owner", stripe_account_status: "active" },
+      ],
     };
 
     await handleCheckoutCompleted(makeFormationSession());
 
-    // Net = 5000 - 500 = 4500 ; 30% = 1350
+    // Net = 5000 - 500 = 4500 ; collaboratrice 30 % = 1350, proprietaire 3150.
     expect(mockCreateTransfer).toHaveBeenCalledWith(
       1350,
       "acct_collab001",
       expect.objectContaining({ formation_id: FORMATION_ID }),
+      expect.objectContaining({ sourceTransaction: "ch_test_001" }),
     );
+    expect(mockCreateTransfer).toHaveBeenCalledWith(
+      3150,
+      "acct_owner",
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
+  it("rend chaque virement rejouable sans doubler la mise", async () => {
+    // Stripe redelivre volontiers un evenement. Sans cle d'idempotence, la
+    // repartition entiere serait versee une seconde fois.
+    db["formation_collaborators"] = {
+      list: [
+        {
+          consultant_id: "collab-uuid-001",
+          revenue_share: 30,
+          consultants: {
+            stripe_account_id: "acct_collab001",
+            stripe_account_status: "active",
+          },
+        },
+      ],
+    };
+    db["payments"] = { single: { amount_cents: 5000, platform_fee_cents: 500 } };
+    db["consultants"] = {
+      list: [
+        { id: "collab-uuid-001", stripe_account_id: "acct_collab001", stripe_account_status: "active" },
+      ],
+    };
+
+    await handleCheckoutCompleted(makeFormationSession());
+
+    expect(mockCreateTransfer).toHaveBeenCalledWith(
+      expect.any(Number),
+      "acct_collab001",
+      expect.anything(),
+      expect.objectContaining({
+        idempotencyKey: `split:${PAYMENT_INTENT_ID}:collab-uuid-001`,
+      }),
+    );
+  });
+
+  it("ne repartit rien si les fonds sont deja partis chez la consultante", async () => {
+    // Vente creee avant la bascule de modele : la charge porte un transfert,
+    // la plateforme n'a plus les fonds. Tenter un virement echouerait en
+    // `balance_insufficient` ; on trace au lieu de bruler l'argent.
+    db["formation_collaborators"] = {
+      list: [
+        {
+          consultant_id: "collab-uuid-001",
+          revenue_share: 30,
+          consultants: {
+            stripe_account_id: "acct_collab001",
+            stripe_account_status: "active",
+          },
+        },
+      ],
+    };
+    db["payments"] = { single: { amount_cents: 5000, platform_fee_cents: 500 } };
+    mockChargeRetrieve.mockResolvedValue({
+      id: "ch_test_001",
+      transfer: { id: "tr_existant" },
+    });
+
+    await handleCheckoutCompleted(makeFormationSession());
+
+    expect(mockCreateTransfer).not.toHaveBeenCalled();
+    const log = state.insertCalls.find(
+      (c) =>
+        c.table === "audit_logs" &&
+        (c.data as { action: string }).action === "collaborator_split_impossible",
+    );
+    expect(log).toBeDefined();
   });
 
   it("skip le transfer si le collaborateur n'a pas de Stripe actif", async () => {
@@ -220,10 +319,12 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
         },
       ],
     };
-    // Le payment doit exister pour que processCollaboratorSplits n'en sorte pas prématurément
     db["payments"] = {
       single: { amount_cents: 5000, platform_fee_cents: 500 },
     };
+    // Aucun compte actif : la part de la collaboratrice revient a la
+    // proprietaire, qui n'a pas de compte non plus dans ce scenario.
+    db["consultants"] = { list: [] };
 
     await handleCheckoutCompleted(makeFormationSession());
 

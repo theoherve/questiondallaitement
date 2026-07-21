@@ -34,7 +34,7 @@
 | Phase 1 — Verification config Connect   | 🔶     | reste 1-6 (TVA) |
 | Phase 2 — E2E N1 (seed + webhook simule) | ✅    | —          |
 | Phase 3 — E2E N2 (Playwright navigateur) | 🔶     | 3-1 a 3-5 faits ; 3-6 bloque |
-| Phase 4 — E2E N3 (consultante + refund)  | 🔶     | reste 4-6 |
+| Phase 4 — E2E N3 (consultante + refund)  | ✅     | —          |
 | Phase 5 — Durcissement avant live        | ⬜     | Phase 4    |
 | Phase 6 — Templates d'email en admin     | ✅     | —          |
 
@@ -393,7 +393,7 @@ la session n'est jamais completee.
 | 4-3 | Annulation < 48 h → penalite 50 %, montant verifie via l'API Stripe                | ✅     | 🔴 P0 |
 | 4-4 | `charge.refunded` remet `payments` **et** `bookings` en coherence                  | ✅     | 🔴 P0 |
 | 4-5 | Onboarding Connect : `/api/stripe/connect` → Express test → `account.updated` → `active` | ✅ | 🔴 P0 |
-| 4-6 | Splits collaborateurs (`processCollaboratorSplits`) sur achat d'accompagnement     | ⬜     | 🟠 P1 |
+| 4-6 | Splits collaborateurs sur achat d'accompagnement                                   | ✅     | 🟠 P1 |
 | 4-7 | Constat A — double booking : contrainte d'unicite + remboursement automatique      | ✅     | 🔴 P0 |
 | 4-8 | Constat B — l'insert du booking avale l'erreur : redelivery Stripe silencieuse     | ✅     | 🔴 P0 |
 | 4-9 | Email prevenant la cliente du conflit de creneau et du remboursement               | ✅     | 🔴 P0 |
@@ -548,6 +548,53 @@ que de l'argent a ete cree ou detruit.
 La suite n'ecrit rien en base. Elle exige `E2E_CONNECT_ACCOUNT` pointant sur un compte
 reellement onboarde — Stripe refuse une charge destination vers un compte fictif — et
 refuse de demarrer sur une cle `sk_live_`.
+
+### 4-6 — repartition entre plusieurs comptes (2026-07-21)
+
+**🔴 Les splits collaborateurs ne fonctionnaient pas, et l'echec etait muet.**
+L'achat etait une charge destination versant tout le net a la proprietaire ; la
+plateforme virait ensuite la part des collaboratrices **depuis son propre solde**.
+Or ce solde est vide par construction — les fonds sont partis avec la charge.
+
+Mesure en mode test : `transfers.create` echoue en `balance_insufficient`. L'erreur
+etait capturee et ecrite dans `audit_logs` comme `collaborator_transfer_failed`, que
+personne ne lit. La collaboratrice n'etait jamais payee, sans alerte ni relance. Et si
+le solde avait suffi, la plateforme aurait finance la part de sa poche : sur un
+accompagnement a 99 €, commission 1485 contre 2525 verses, soit **−1040 par vente**.
+
+**Fonctionnalite jamais utilisee** : zero ligne dans `formation_collaborators`, zero
+entree d'audit. Le premier ajout d'une collaboratrice aurait revele le probleme en
+production.
+
+**Bascule de modele tranchee le 2026-07-21.** Une vente **avec** collaboratrices est
+desormais encaissee par la plateforme (`holdOnPlatform`), puis chaque part est virée en
+citant la charge source (`source_transaction`). Sans collaboratrice, la charge
+destination actuelle est conservee — le modele ne change que la ou il le faut.
+
+> **A retenir avant le live** : sur ces ventes partagees, la plateforme devient
+> *merchant of record*. Chargebacks et libelle de releve la concernent directement. A
+> repercuter dans les CGV (5-7), au meme titre que le constat 1-4.
+
+Trois proprietes du nouveau modele, verifiees sur charges reelles
+([run-splits.mjs](../scripts/e2e/run-splits.mjs), `pnpm test:e2e:splits`) :
+
+- chaque part atteint son compte **en citant la charge source** — un virement sans
+  `source_transaction` retomberait dans le `balance_insufficient` d'origine ;
+- la plateforme conserve exactement sa commission, ni plus ni moins ;
+- une redelivery Stripe ne verse pas les parts deux fois, grace a une cle
+  d'idempotence par `(paiement, consultante)`.
+
+Le calcul des parts est isole dans
+[`revenue-split.ts`](../src/lib/stripe/revenue-split.ts), teste a l'unite : la
+proprietaire prend le **reste** plutot qu'un pourcentage recalcule, de sorte que les
+arrondis ne fassent jamais depasser le total de la charge — ce que Stripe refuserait
+sur le dernier virement. Une repartition depassant 100 % est rejetee avant tout appel.
+
+**Trou referme dans la foulee** : `reverse_transfer` ne connait que le transfert porte
+par la charge, et une charge encaissee par la plateforme n'en a pas. Un remboursement
+aurait donc rendu l'argent a la cliente pendant que les deux consultantes gardaient
+leur part. `createRefund` reprend maintenant les virements du `transfer_group`, au
+prorata du montant rembourse et sans jamais depasser ce qui reste sur chacun.
 
 ### Constats de 4-5 (2026-07-21)
 

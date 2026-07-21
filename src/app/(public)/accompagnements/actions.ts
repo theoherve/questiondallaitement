@@ -57,8 +57,21 @@ export const purchaseFormation = async (
     };
   }
 
+  // Une vente a partager ne peut pas etre versee directement a la
+  // proprietaire : la plateforme n'aurait plus les fonds pour payer les
+  // collaboratrices, et le virement echouerait en `balance_insufficient`.
+  // Elle est donc encaissee par la plateforme, qui repartit ensuite chaque
+  // part en citant la charge source (voir distributeFormationRevenue).
+  const { count: collaboratorCount } = await supabase
+    .from("formation_collaborators")
+    .select("consultant_id", { count: "exact", head: true })
+    .eq("formation_id", formation.id);
+
+  const hasCollaborators = (collaboratorCount ?? 0) > 0;
+
   try {
     const session = await createCheckoutSession({
+      holdOnPlatform: hasCollaborators,
       consultantStripeAccountId: consultant.stripe_account_id,
       commissionRate: consultant.commission_rate,
       priceInCents: formation.price_cents,

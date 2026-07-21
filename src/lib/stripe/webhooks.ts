@@ -1,6 +1,11 @@
 import type Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createTransfer, createRefund } from "@/lib/stripe/connect";
+import { stripe as stripeClient } from "@/lib/stripe/client";
+import {
+  splitFormationRevenue,
+  type Collaborator,
+} from "@/lib/stripe/revenue-split";
 import {
   sendFormationAccess,
   sendBookingConfirmation,
@@ -246,7 +251,7 @@ const handleFormationPurchase = async (
   );
 
   // 2. Process collaborator revenue splits
-  await processCollaboratorSplits(formationId, paymentIntentId);
+  await distributeFormationRevenue(formationId, paymentIntentId);
 
   // 3. Auto-assign platform labels
   await autoAssignLabelsOnEnrollment(clientId, formationId).catch(
@@ -261,13 +266,21 @@ const handleFormationPurchase = async (
  *
  * Revenue share is calculated from the net amount (after platform fee).
  */
-const processCollaboratorSplits = async (
+/**
+ * Repartit le produit d'une vente entre proprietaire et collaboratrices.
+ *
+ * Ne fait rien sur une charge destination : la consultante a deja recu les
+ * fonds directement. La repartition ne concerne que les ventes encaissees par
+ * la plateforme, c'est-a-dire celles qui ont des collaboratrices.
+ */
+const distributeFormationRevenue = async (
   formationId: string,
   paymentIntentId: string | null,
 ) => {
+  if (!paymentIntentId) return;
+
   const supabase = getSupabase();
 
-  // Get collaborators with their Stripe accounts
   const { data: collaborators } = await supabase
     .from("formation_collaborators")
     .select(
@@ -277,7 +290,14 @@ const processCollaboratorSplits = async (
 
   if (!collaborators?.length) return;
 
-  // Get payment info to compute net amount
+  const { data: formation } = await supabase
+    .from("formations")
+    .select("consultant_id")
+    .eq("id", formationId)
+    .single();
+
+  if (!formation) return;
+
   const { data: payment } = await supabase
     .from("payments")
     .select("amount_cents, platform_fee_cents")
@@ -286,7 +306,27 @@ const processCollaboratorSplits = async (
 
   if (!payment) return;
 
-  const netAmountCents = payment.amount_cents - payment.platform_fee_cents;
+  // La charge doit etre restee sur la plateforme pour qu'il y ait quelque
+  // chose a repartir. Si elle a ete versee directement a la consultante, la
+  // vente a ete creee avant la bascule de modele : on le signale plutot que de
+  // tenter un virement qui echouerait faute de fonds.
+  const charge = await getPlatformCharge(paymentIntentId);
+
+  if (!charge) {
+    await logAudit(
+      formation.consultant_id,
+      "collaborator_split_impossible",
+      "formation",
+      formationId,
+      {
+        reason: "charge_versee_directement_a_la_consultante",
+        payment_intent_id: paymentIntentId,
+      },
+    );
+    return;
+  }
+
+  const eligible: Collaborator[] = [];
 
   for (const collab of collaborators) {
     const consultant = collab.consultants as unknown as {
@@ -298,7 +338,8 @@ const processCollaboratorSplits = async (
       !consultant?.stripe_account_id ||
       consultant.stripe_account_status !== "active"
     ) {
-      // Log but don't block — the collaborator hasn't connected Stripe
+      // Sa part reste a la proprietaire : la laisser sur la plateforme
+      // reviendrait a garder de l'argent qui ne lui appartient pas.
       await logAudit(
         collab.consultant_id,
         "collaborator_transfer_skipped",
@@ -312,46 +353,114 @@ const processCollaboratorSplits = async (
       continue;
     }
 
-    const transferAmountCents = Math.round(
-      netAmountCents * (Number(collab.revenue_share) / 100),
-    );
+    eligible.push({
+      consultantId: collab.consultant_id,
+      revenueShare: Number(collab.revenue_share),
+    });
+  }
 
-    if (transferAmountCents <= 0) continue;
+  let parts;
+  try {
+    parts = splitFormationRevenue({
+      amountCents: payment.amount_cents,
+      platformFeeCents: payment.platform_fee_cents,
+      ownerId: formation.consultant_id,
+      collaborators: eligible,
+    });
+  } catch (error) {
+    await logAudit(
+      formation.consultant_id,
+      "collaborator_split_invalid",
+      "formation",
+      formationId,
+      { error: error instanceof Error ? error.message : "Unknown error" },
+    );
+    return;
+  }
+
+  const accounts = await stripeAccountsFor(parts.map((p) => p.consultantId));
+
+  for (const part of parts) {
+    const account = accounts.get(part.consultantId);
+    if (!account) continue;
 
     try {
-      await createTransfer(transferAmountCents, consultant.stripe_account_id, {
-        type: "formation_collaborator_split",
-        formation_id: formationId,
-        consultant_id: collab.consultant_id,
-        payment_intent_id: paymentIntentId ?? "",
-        revenue_share: collab.revenue_share.toString(),
-      });
+      await createTransfer(
+        part.amountCents,
+        account,
+        {
+          type: "formation_revenue_split",
+          formation_id: formationId,
+          consultant_id: part.consultantId,
+          payment_intent_id: paymentIntentId,
+        },
+        {
+          sourceTransaction: charge,
+          transferGroup: paymentIntentId,
+          // Une redelivery Stripe rejouerait la repartition : sans cette cle,
+          // chaque part serait versee une seconde fois.
+          idempotencyKey: `split:${paymentIntentId}:${part.consultantId}`,
+        },
+      );
 
       await logAudit(
-        collab.consultant_id,
+        part.consultantId,
         "collaborator_transfer_completed",
         "formation",
         formationId,
-        {
-          amount_cents: transferAmountCents,
-          revenue_share: collab.revenue_share,
-          stripe_account_id: consultant.stripe_account_id,
-        },
+        { amount_cents: part.amountCents },
       );
     } catch (error) {
       await logAudit(
-        collab.consultant_id,
+        part.consultantId,
         "collaborator_transfer_failed",
         "formation",
         formationId,
         {
           error: error instanceof Error ? error.message : "Unknown error",
-          amount_cents: transferAmountCents,
-          revenue_share: collab.revenue_share,
+          amount_cents: part.amountCents,
         },
       );
     }
   }
+};
+
+/** Identifiant de la charge si elle est restee sur la plateforme, sinon null. */
+const getPlatformCharge = async (
+  paymentIntentId: string,
+): Promise<string | null> => {
+  const intent = await stripeClient.paymentIntents.retrieve(paymentIntentId);
+  const chargeId =
+    typeof intent.latest_charge === "string"
+      ? intent.latest_charge
+      : intent.latest_charge?.id;
+
+  if (!chargeId) return null;
+
+  const charge = await stripeClient.charges.retrieve(chargeId, {
+    expand: ["transfer"],
+  });
+
+  // Une charge destination porte deja un transfert : les fonds sont partis.
+  return charge.transfer ? null : chargeId;
+};
+
+/** Comptes Stripe actifs des consultantes concernees, indexes par identifiant. */
+const stripeAccountsFor = async (
+  consultantIds: string[],
+): Promise<Map<string, string>> => {
+  const { data } = await getSupabase()
+    .from("consultants")
+    .select("id, stripe_account_id, stripe_account_status")
+    .in("id", consultantIds);
+
+  const accounts = new Map<string, string>();
+  for (const row of data ?? []) {
+    if (row.stripe_account_id && row.stripe_account_status === "active") {
+      accounts.set(row.id, row.stripe_account_id);
+    }
+  }
+  return accounts;
 };
 
 /** Nom de l'index unique garantissant qu'un creneau n'est vendu qu'une fois. */

@@ -6,6 +6,8 @@ const mockRefundsCreate = vi.fn();
 const mockPaymentIntentsRetrieve = vi.fn();
 const mockChargesRetrieve = vi.fn();
 const mockApplicationFeesCreateRefund = vi.fn();
+const mockTransfersList = vi.fn();
+const mockTransferReversal = vi.fn();
 
 vi.mock("./client", () => ({
   stripe: {
@@ -14,6 +16,10 @@ vi.mock("./client", () => ({
       retrieve: (...a: unknown[]) => mockPaymentIntentsRetrieve(...a),
     },
     charges: { retrieve: (...a: unknown[]) => mockChargesRetrieve(...a) },
+    transfers: {
+      list: (...a: unknown[]) => mockTransfersList(...a),
+      createReversal: (...a: unknown[]) => mockTransferReversal(...a),
+    },
     applicationFees: {
       createRefund: (...a: unknown[]) => mockApplicationFeesCreateRefund(...a),
     },
@@ -43,6 +49,7 @@ const destinationCharge = ({
   hasTransfer = true,
 } = {}) => ({
   id: "ch_test_001",
+  amount: 8000,
   transfer: hasTransfer ? { id: "tr_test_001", amount: 8000 } : null,
   application_fee: feeAmount
     ? { id: "fee_test_001", amount: feeAmount, amount_refunded: feeRefunded }
@@ -59,6 +66,8 @@ describe("createRefund", () => {
     });
     mockChargesRetrieve.mockResolvedValue(destinationCharge());
     mockApplicationFeesCreateRefund.mockResolvedValue({ id: "fr_test" });
+    mockTransfersList.mockResolvedValue({ data: [] });
+    mockTransferReversal.mockResolvedValue({ id: "trr_test" });
   });
 
   it("renverse le transfert vers la consultante", async () => {
@@ -151,5 +160,65 @@ describe("createRefund", () => {
 
     expect(refund).toMatchObject({ id: "re_test" });
     expect(mockRefundsCreate).toHaveBeenCalled();
+  });
+
+  // ─── Ventes reparties entre plusieurs comptes ──────────────
+
+  it("reprend les parts versees quand la charge est restee sur la plateforme", async () => {
+    // `reverse_transfer` ne connait que le transfert porte par la charge. Une
+    // vente repartie n'en a pas : sans reprise explicite, la plateforme
+    // rembourse la cliente pendant que les deux consultantes gardent leur part.
+    mockChargesRetrieve.mockResolvedValue(
+      destinationCharge({ hasTransfer: false, feeAmount: 0 }),
+    );
+    mockTransfersList.mockResolvedValue({
+      data: [
+        { id: "tr_collab", amount: 2400, amount_reversed: 0 },
+        { id: "tr_owner", amount: 5600, amount_reversed: 0 },
+      ],
+    });
+
+    await createRefund(PI);
+
+    expect(mockTransferReversal).toHaveBeenCalledWith("tr_collab", { amount: 2400 });
+    expect(mockTransferReversal).toHaveBeenCalledWith("tr_owner", { amount: 5600 });
+  });
+
+  it("ne reprend que la fraction remboursee", async () => {
+    mockChargesRetrieve.mockResolvedValue(
+      destinationCharge({ hasTransfer: false, feeAmount: 0 }),
+    );
+    mockRefundsCreate.mockResolvedValue({ id: "re_test", amount: 4000 });
+    mockTransfersList.mockResolvedValue({
+      data: [{ id: "tr_collab", amount: 2400, amount_reversed: 0 }],
+    });
+
+    await createRefund(PI, 4000);
+
+    // 50 % rembourse sur 8000 → on reprend la moitie de chaque part.
+    expect(mockTransferReversal).toHaveBeenCalledWith("tr_collab", { amount: 1200 });
+  });
+
+  it("ne reprend jamais plus que ce qui reste sur un virement", async () => {
+    // Deuxieme remboursement : demander a nouveau la part entiere ferait
+    // echouer l'appel Stripe.
+    mockChargesRetrieve.mockResolvedValue(
+      destinationCharge({ hasTransfer: false, feeAmount: 0 }),
+    );
+    mockTransfersList.mockResolvedValue({
+      data: [{ id: "tr_collab", amount: 2400, amount_reversed: 2000 }],
+    });
+
+    await createRefund(PI);
+
+    expect(mockTransferReversal).toHaveBeenCalledWith("tr_collab", { amount: 400 });
+  });
+
+  it("ne touche pas aux virements groupes sur une charge destination", async () => {
+    // Les fonds sont deja repris par `reverse_transfer` : y ajouter une
+    // reprise manuelle reprendrait deux fois.
+    await createRefund(PI);
+
+    expect(mockTransferReversal).not.toHaveBeenCalled();
   });
 });
