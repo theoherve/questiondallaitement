@@ -39,6 +39,8 @@ test.describe("N2 — achat d'accompagnement", () => {
 
     await expect(page.getByTestId("purchase-login-cta")).toBeVisible();
     await expect(page.getByTestId("purchase-button")).toHaveCount(0);
+    // Pas de case non plus : rien a renoncer tant qu'on ne peut pas acheter.
+    await expect(page.getByTestId("withdrawal-waiver")).toHaveCount(0);
 
     await context.close();
   });

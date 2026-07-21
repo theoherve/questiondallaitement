@@ -7,6 +7,8 @@ import {
   routeSale,
   isPlatformOwnerConsultant,
 } from "@/lib/stripe/sale-routing";
+import { bookingRequiresWaiver } from "@/lib/legal/withdrawal";
+import { recordWithdrawalWaiver } from "@/lib/legal/record-waiver";
 import { computeAvailableSlots } from "@/lib/booking/slots";
 import { computeBookingPrice } from "@/lib/booking/pricing";
 import { contactSchema } from "@/validations/bookings";
@@ -35,6 +37,13 @@ export type BookingFormData = {
     reason: string;
   };
   payment_method: BookingPaymentMethod;
+  /**
+   * Renonciation au droit de retractation, recueillie a la confirmation.
+   *
+   * Obligatoire des lors que la consultation a lieu dans les quatorze jours :
+   * la prestation serait executee avant l'expiration du delai legal.
+   */
+  withdrawal_waiver_accepted?: boolean;
 };
 
 // ─── Public queries ──────────────────────────────────────────
@@ -448,6 +457,18 @@ export const createBooking = async (
   const totalPriceCents = priceResult.totalCents;
   const endsAt = addMinutes(startsAt, durationOption.duration_minutes);
 
+  // Verifie cote serveur, et pas seulement dans le formulaire : une server
+  // action est un endpoint POST, appelable sans passer par l'interface.
+  const waiverRequired = bookingRequiresWaiver(startsAt);
+  if (waiverRequired && formData.withdrawal_waiver_accepted !== true) {
+    return {
+      success: false,
+      error:
+        "Vous devez accepter que la consultation ait lieu avant la fin du " +
+        "délai de rétractation de quatorze jours.",
+    };
+  }
+
   // Guest checkout: find or create profile
   let clientId: string;
   // Pilote l'invitation a definir un mot de passe : une cliente qui reserve en
@@ -539,6 +560,23 @@ export const createBooking = async (
     // checkouts never leave orphan bookings in the database.
     const bookingId = crypto.randomUUID();
 
+    if (waiverRequired) {
+      const recorded = await recordWithdrawalWaiver(supabase, {
+        clientId,
+        context: "booking",
+        referenceId: bookingId,
+      });
+
+      // Sans trace, la plateforme ne pourrait pas prouver la renonciation en
+      // cas de litige. Mieux vaut refuser la vente que d'encaisser sans preuve.
+      if (!recorded) {
+        return {
+          success: false,
+          error: "Impossible d'enregistrer votre accord. Réessayez.",
+        };
+      }
+    }
+
     try {
       const session = await createCheckoutSession({
         consultantStripeAccountId: routing.destinationAccountId ?? undefined,
@@ -599,6 +637,14 @@ export const createBooking = async (
 
   if (bookingError || !booking) {
     return { success: false, error: "Erreur lors de la création de la réservation" };
+  }
+
+  if (waiverRequired) {
+    await recordWithdrawalWaiver(supabase, {
+      clientId,
+      context: "booking",
+      referenceId: booking.id,
+    });
   }
 
   const dateFormatted = format(startsAt, "EEEE d MMMM yyyy", { locale: fr });
