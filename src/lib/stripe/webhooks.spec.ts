@@ -514,6 +514,28 @@ describe("handleAccountUpdated", () => {
     await handleAccountUpdated({ metadata: {} } as unknown as Stripe.Account);
     expect(state.updateCalls).toHaveLength(0);
   });
+
+  // ─── 4-5 : `onboarding_completed` suit l'etat reel chez Stripe ─────
+
+  it("marque l'onboarding termine quand le compte peut encaisser", async () => {
+    // `onboarding_completed` etait lu par l'admin (badge « onboarding non
+    // termine ») mais ecrit nulle part : il restait `false` a vie, y compris
+    // pour une consultante parfaitement operationnelle. Seul cet evenement
+    // sait quand Stripe a fini de valider le compte.
+    await handleAccountUpdated(makeAccount(true, true));
+
+    const call = state.updateCalls.find((c) => c.table === "consultants");
+    expect(call!.data).toMatchObject({ onboarding_completed: true });
+  });
+
+  it("ne declare pas l'onboarding termine tant que l'encaissement est bloque", async () => {
+    // `details_submitted` signifie « formulaire envoye », pas « valide ».
+    // Stripe peut encore reclamer des pieces.
+    await handleAccountUpdated(makeAccount(false, true));
+
+    const call = state.updateCalls.find((c) => c.table === "consultants");
+    expect(call!.data).toMatchObject({ onboarding_completed: false });
+  });
 });
 
 // ─── handleAccountDeauthorized ────────────────────────────────
@@ -536,5 +558,17 @@ describe("handleAccountDeauthorized", () => {
       stripe_account_status: "deauthorized",
       is_active: false,
     });
+  });
+
+  it("remet l'onboarding a refaire", async () => {
+    // Le compte Stripe est parti : laisser `onboarding_completed` a true
+    // afficherait une consultante prete a encaisser alors qu'elle n'a plus
+    // aucun compte destinataire.
+    await handleAccountDeauthorized({
+      metadata: { consultant_id: CONSULTANT_ID },
+    } as unknown as Stripe.Account);
+
+    const call = state.updateCalls.find((c) => c.table === "consultants");
+    expect(call!.data).toMatchObject({ onboarding_completed: false });
   });
 });

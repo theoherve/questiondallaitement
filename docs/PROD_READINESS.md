@@ -34,7 +34,7 @@
 | Phase 1 — Verification config Connect   | 🔶     | reste 1-6 (TVA) |
 | Phase 2 — E2E N1 (seed + webhook simule) | ✅    | —          |
 | Phase 3 — E2E N2 (Playwright navigateur) | 🔶     | 3-1 a 3-5 faits ; 3-6 bloque |
-| Phase 4 — E2E N3 (consultante + refund)  | 🔶     | reste 4-2, 4-3, 4-5, 4-6 |
+| Phase 4 — E2E N3 (consultante + refund)  | 🔶     | reste 4-2, 4-3, 4-6 |
 | Phase 5 — Durcissement avant live        | ⬜     | Phase 4    |
 | Phase 6 — Templates d'email en admin     | ✅     | —          |
 
@@ -245,7 +245,7 @@ et n'est jamais envoye a Stripe — N1 ne fait aucun appel reseau vers Stripe.
 | - | ---------------------------------------------------------------------------------------------------- | ------------ |
 | A | `handleBookingConfirmation` ne verifie pas que le creneau est toujours libre → double booking possible si deux clients paient le meme creneau | ✅ Phase 4 (4-7) |
 | B | L'insert du booking utilise `.insert()` sans `onConflict`, et l'erreur retournee n'est pas lue : une redelivery Stripe echoue en silence | ✅ Phase 4 (4-8) |
-| C | `/api/stripe/connect` ne verifie pas que l'utilisateur a le role consultante — il se contente de chercher la ligne `consultants` | Phase 5 (5-8) |
+| C | `/api/stripe/connect` ne verifie pas que l'utilisateur a le role consultante — il se contente de chercher la ligne `consultants` | ✅ 4-5 |
 
 ---
 
@@ -392,7 +392,7 @@ la session n'est jamais completee.
 | 4-2 | Annulation ≥ 48 h → refund total, montant verifie via l'API Stripe (pas juste la DB) | ⬜   | 🔴 P0 |
 | 4-3 | Annulation < 48 h → penalite 50 %, montant verifie via l'API Stripe                | ⬜     | 🔴 P0 |
 | 4-4 | `charge.refunded` remet `payments` **et** `bookings` en coherence                  | ✅     | 🔴 P0 |
-| 4-5 | Onboarding Connect : `/api/stripe/connect` → Express test → `account.updated` → `active` | ⬜ | 🔴 P0 |
+| 4-5 | Onboarding Connect : `/api/stripe/connect` → Express test → `account.updated` → `active` | ✅ | 🔴 P0 |
 | 4-6 | Splits collaborateurs (`processCollaboratorSplits`) sur achat d'accompagnement     | ⬜     | 🟠 P1 |
 | 4-7 | Constat A — double booking : contrainte d'unicite + remboursement automatique      | ✅     | 🔴 P0 |
 | 4-8 | Constat B — l'insert du booking avale l'erreur : redelivery Stripe silencieuse     | ✅     | 🔴 P0 |
@@ -499,6 +499,39 @@ l'appel : 7/9.
 > s'attend a trouver active — deux tests devenus dependants de leur ordre. Chacun a
 > maintenant sa propre reservation (`bookingRefundFull`, `bookingRefundPartial`), sur
 > des creneaux distincts pour ne pas heurter l'index d'unicite.
+
+### Constats de 4-5 (2026-07-21)
+
+**🟠 `onboarding_completed` etait lu partout, ecrit nulle part.** Trois ecrans admin
+affichent un badge « onboarding termine / non termine » a partir de cette colonne. Rien
+dans l'application ne l'ecrivait : elle restait a `false` a vie, y compris pour une
+consultante encaissant deja. Seul `account.updated` sait quand Stripe a fini de valider
+le compte — c'est desormais lui qui la met a jour.
+
+Le drapeau se cale sur `charges_enabled`, pas sur `details_submitted` : le second veut
+dire « formulaire envoye », pas « valide ». Stripe peut encore reclamer des pieces, et
+le compte n'encaisse rien entre-temps. `account.application.deauthorized` le remet a
+`false` — sans compte destinataire, afficher une consultante prete a encaisser serait
+faux.
+
+**Constat C / 5-8 traite.** `/api/stripe/connect` ne verifiait aucun role. La ligne
+`consultants` peut survivre a une retrogradation : s'y fier revenait a rouvrir un
+onboarding de paiement a quelqu'un qui n'est plus consultante. La route exige maintenant
+`consultant` ou `consultant_limited`.
+
+Deux autres fragilites de la meme route, sans test jusqu'ici :
+
+- **`NEXT_PUBLIC_APP_URL!`** — l'assertion non-nulle fabriquait des URL de retour
+  `undefined/espace-consultante…` que Stripe rejette avec un message sans rapport avec
+  la cause. La variable est lue et validee avant tout appel a Stripe.
+- **Aucune capture d'erreur** — une panne Stripe remontait en page 500. La consultante
+  cliquait sur « connecter mon compte » et tombait sur un ecran illisible, sans rien a
+  rapporter. La route renvoie desormais 502 avec un message exploitable.
+
+> **Verifie, contrairement a ce que je supposais** : `createConnectAccount` enregistre
+> bien `stripe_account_id` sur la fiche, et la route reutilise le compte existant. Les
+> deux comptes Express orphelins de la sandbox ne viennent donc pas d'une creation en
+> boucle. Un test fige ce comportement.
 
 ---
 
@@ -612,7 +645,7 @@ defaut : une restauration l'aurait retire de l'editeur.
 | 5-5 | Cles live sur Vercel (`sk_live`, `pk_live`)                                  | ⬜     | 🔴 P0 | —            |
 | 5-6 | Webhook endpoint prod enregistre + `whsec_` prod                             | ⬜     | 🔴 P0 | —            |
 | 5-7 | CGV / mentions legales coherentes avec le modele commission                   | ⬜     | 🔴 P0 | —            |
-| 5-8 | Relire `/api/stripe/connect` : pas de verification de role consultante        | ⬜     | 🟠 P1 | —            |
+| 5-8 | Relire `/api/stripe/connect` : pas de verification de role consultante        | ✅     | 🟠 P1 | fait en 4-5  |
 
 ---
 

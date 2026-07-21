@@ -195,7 +195,18 @@ export const handleAccountUpdated = async (account: Stripe.Account) => {
 
   await getSupabase()
     .from("consultants")
-    .update({ stripe_account_status: status })
+    .update({
+      stripe_account_status: status,
+      // `onboarding_completed` etait lu par l'admin — badge « onboarding non
+      // termine » — mais ecrit nulle part : il restait `false` a vie, meme
+      // pour une consultante parfaitement operationnelle. Seul cet evenement
+      // sait quand Stripe a fini de valider le compte.
+      //
+      // On se cale sur `charges_enabled` et non sur `details_submitted` :
+      // le second veut dire « formulaire envoye », pas « valide ». Stripe peut
+      // encore reclamer des pieces, et le compte ne peut rien encaisser.
+      onboarding_completed: account.charges_enabled === true,
+    })
     .eq("id", consultantId);
 };
 
@@ -209,6 +220,9 @@ export const handleAccountDeauthorized = async (account: Stripe.Account) => {
       stripe_account_id: null,
       stripe_account_status: "deauthorized",
       is_active: false,
+      // Le compte destinataire a disparu : la laisser « onboardee » afficherait
+      // une consultante prete a encaisser alors qu'elle n'a plus ou recevoir.
+      onboarding_completed: false,
     })
     .eq("id", consultantId);
 };

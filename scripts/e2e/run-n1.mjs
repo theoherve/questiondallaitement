@@ -330,6 +330,11 @@ const scenarioAccountUpdated = async () => {
   );
   let consultant = await one("consultants", "id", IDS.consultantProfile);
   assertEqual(consultant.stripe_account_status, "pending", "statut initial");
+  assertEqual(
+    consultant.onboarding_completed,
+    false,
+    "onboarding_completed initial",
+  );
 
   // details submitted but charges still off → pending_verification
   await postEvent(
@@ -349,6 +354,13 @@ const scenarioAccountUpdated = async () => {
     "pending_verification",
     "statut apres soumission",
   );
+  // `details_submitted` veut dire « formulaire envoye », pas « valide » :
+  // Stripe peut encore reclamer des pieces, le compte n'encaisse rien.
+  assertEqual(
+    consultant.onboarding_completed,
+    false,
+    "onboarding_completed apres soumission",
+  );
 
   // charges enabled → active
   await postEvent(
@@ -364,6 +376,13 @@ const scenarioAccountUpdated = async () => {
   );
   consultant = await one("consultants", "id", IDS.consultantProfile);
   assertEqual(consultant.stripe_account_status, "active", "statut final");
+  // 4-5 : l'admin lit ce drapeau pour afficher « onboarding termine ». Il
+  // n'etait ecrit nulle part et restait faux a vie.
+  assertEqual(
+    consultant.onboarding_completed,
+    true,
+    "onboarding_completed final",
+  );
 };
 
 const scenarioInvalidSignature = async () => {
