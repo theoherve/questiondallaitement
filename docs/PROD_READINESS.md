@@ -49,7 +49,7 @@
 | 0-1 | `/mcp` en session interactive → autoriser `plugin:stripe:stripe`          | 🔶     | Theo        |
 | 0-2 | `brew install stripe/stripe-cli/stripe` puis `stripe login`               | ✅     | Theo        |
 | 0-3 | Confirmer que les cles `sk_test_` / `whsec_` de `.env.local` sont les bonnes | ✅   | Theo        |
-| 0-4 | Recuperer la vraie `pk_test_` de la sandbox → `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | ✅ | Theo |
+| 0-4 | ~~Recuperer la vraie `pk_test_` de la sandbox~~ — **sans objet**, la variable n'est jamais lue | ✅ | Theo |
 
 > **0-1** : OAuth autorise sur une autre session, mais le serveur MCP n'est pas
 > rebranche sur la session courante. Non bloquant : tout ce que demande la Phase 1
@@ -734,7 +734,7 @@ defaut : une restauration l'aurait retire de l'editeur.
 
 | ID  | Tache                                                                        | Statut | Prio  | Ref TASKLIST |
 | --- | ---------------------------------------------------------------------------- | ------ | ----- | ------------ |
-| 5-1 | Rate limiting : in-memory → Postgres partage (casse en serverless multi-instance) | 🔶 | 🔴 P0 | 02-12        |
+| 5-1 | Rate limiting : in-memory → Postgres partage (casse en serverless multi-instance) | ✅ | 🔴 P0 | 02-12        |
 | 5-2 | CSP (Content-Security-Policy) manquant                                       | ✅     | 🟠 P1 | 02-13        |
 | 5-3 | Validation MIME type sur les uploads Storage                                 | ⬜     | 🟡 P2 | 02-14        |
 | 5-4 | Seeds `consultant_locations` + `available_locations`                         | ⬜     | 🟠 P1 | 07-08        |
@@ -802,6 +802,10 @@ verrouillerait la connexion pour tout le monde, et l'authentification interroge 
 meme base juste apres — si elle est tombee, rien ne fonctionne de toute facon. Un
 `console.error` explicite evite que la degradation soit silencieuse.
 
+> **✅ SQL verifie le 2026-07-21**, migration appliquee : `4/4 scenarios passes`,
+> dont l'atomicite (20 appels simultanes contre une limite de 5 n'en laissent
+> passer que 5). Le doute ci-dessous est leve, l'historique est conserve.
+>
 > **⚠️ SQL non verifie a l'ecriture.** L'application de la migration en production est
 > une action protegee, et aucun Postgres local n'etait disponible (Docker absent). Le
 > SQL de 00050 est donc **relu mais jamais execute** au moment du commit.

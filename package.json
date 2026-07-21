@@ -12,6 +12,7 @@
     "test:e2e:refunds": "node scripts/e2e/run-refunds.mjs",
     "test:e2e:splits": "node scripts/e2e/run-splits.mjs",
     "test:rate-limit": "node scripts/e2e/run-rate-limit.mjs",
+    "check:connect": "node scripts/check-connect-accounts.mjs",
     "test:e2e:n2:ui": "playwright test --ui",
     "e2e:seed": "node scripts/e2e/seed-test-data.mjs",
     "e2e:cleanup": "node scripts/e2e/cleanup-test-data.mjs",
