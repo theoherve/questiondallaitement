@@ -16,6 +16,16 @@ export const IDS = {
   event: id("500"),
   // Reference IDs carried in Stripe metadata
   booking: id("600"),
+  /**
+   * Reservations propres aux scenarios de remboursement.
+   *
+   * Distinctes de `booking` : depuis que `charge.refunded` annule la
+   * reservation, viser la meme ligne rendrait les scenarios dependants de leur
+   * ordre d'execution — le remboursement total annulerait la reservation que
+   * le remboursement partiel s'attend a trouver active.
+   */
+  bookingRefundFull: id("601"),
+  bookingRefundPartial: id("602"),
   /** One weekly availability row per weekday, ids 701..705. */
   availability: (dayOfWeek) => id(`70${dayOfWeek}`),
 };

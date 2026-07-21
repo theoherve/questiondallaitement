@@ -209,9 +209,38 @@ const seedPaymentRow = async (paymentIntentId, amountCents, type, referenceId) =
   if (error) throw new Error(`preparation payments : ${error.message}`);
 };
 
+/**
+ * Seeds a booking for the refund scenarios to act on.
+ *
+ * `daysAhead` keeps each booking on its own slot: the partial unique index on
+ * (consultant_id, starts_at) rejects two active bookings sharing one.
+ */
+const seedBookingRow = async (bookingId, status, daysAhead) => {
+  const startsAt = new Date(Date.now() + daysAhead * 24 * 3600 * 1000);
+  const endsAt = new Date(startsAt.getTime() + 60 * 60 * 1000);
+
+  await supabase.from("bookings").delete().eq("id", bookingId);
+
+  const { error } = await supabase.from("bookings").insert({
+    id: bookingId,
+    client_id: IDS.clientProfile,
+    consultant_id: IDS.consultantProfile,
+    consultation_type_id: IDS.consultationType,
+    duration_option_id: IDS.durationOption,
+    starts_at: startsAt.toISOString(),
+    ends_at: endsAt.toISOString(),
+    status,
+    location: "cabinet",
+    payment_method: "online",
+    reason: "Test E2E N1 — remboursement",
+  });
+  if (error) throw new Error(`preparation bookings : ${error.message}`);
+};
+
 const scenarioRefundFull = async () => {
   const amount = PRICES.booking;
-  await seedPaymentRow(PI.refundFull, amount, "booking", IDS.booking);
+  await seedBookingRow(IDS.bookingRefundFull, "confirmed", 30);
+  await seedPaymentRow(PI.refundFull, amount, "booking", IDS.bookingRefundFull);
 
   const event = buildEvent(
     "charge.refunded",
@@ -229,12 +258,26 @@ const scenarioRefundFull = async () => {
   assertEqual(payment.status, "refunded", "payments.status");
   assertEqual(payment.refund_amount_cents, amount, "payments.refund_amount_cents");
   assert(payment.refunded_at, "refunded_at non renseigne");
+
+  // 4-4 : le remboursement doit aussi liberer la reservation. Un remboursement
+  // emis depuis le dashboard Stripe ne passe pas par `cancelBooking` — sans
+  // cela, la consultante garde le rendez-vous et le creneau reste bloque.
+  const booking = await one("bookings", "id", IDS.bookingRefundFull);
+  assertEqual(booking.status, "cancelled", "bookings.status");
+  assertEqual(booking.refund_amount_cents, amount, "bookings.refund_amount_cents");
+  assert(booking.cancelled_at, "bookings.cancelled_at non renseigne");
 };
 
 const scenarioRefundPartial = async () => {
   const amount = PRICES.booking;
   const refunded = Math.round(amount / 2);
-  await seedPaymentRow(PI.refundPartial, amount, "booking", IDS.booking);
+  await seedBookingRow(IDS.bookingRefundPartial, "confirmed", 31);
+  await seedPaymentRow(
+    PI.refundPartial,
+    amount,
+    "booking",
+    IDS.bookingRefundPartial,
+  );
 
   const event = buildEvent(
     "charge.refunded",
@@ -258,6 +301,17 @@ const scenarioRefundPartial = async () => {
     payment.refund_amount_cents,
     refunded,
     "payments.refund_amount_cents",
+  );
+
+  // Un remboursement partiel enregistre le montant mais laisse la reservation
+  // en place : c'est la forme que prend la penalite d'annulation tardive, et
+  // la consultation reste due.
+  const booking = await one("bookings", "id", IDS.bookingRefundPartial);
+  assertEqual(booking.status, "confirmed", "bookings.status");
+  assertEqual(
+    booking.refund_amount_cents,
+    refunded,
+    "bookings.refund_amount_cents",
   );
 };
 
@@ -379,8 +433,8 @@ const main = async () => {
   await test("reservation → booking confirme + payment", scenarioBooking);
   await test("inscription evenement → registration", scenarioEvent);
   await test("payment_intent.succeeded → payment succeeded", scenarioPaymentIntentSucceeded);
-  await test("refund total → payment refunded", scenarioRefundFull);
-  await test("refund partiel → payment partially_refunded", scenarioRefundPartial);
+  await test("refund total → payment refunded + booking annule", scenarioRefundFull);
+  await test("refund partiel → montant enregistre, booking maintenu", scenarioRefundPartial);
   await test("account.updated → statut Connect", scenarioAccountUpdated);
   await test("signature invalide → 400, rien en base", scenarioInvalidSignature);
   await test("mauvais secret webhook → 400", scenarioWrongSecret);

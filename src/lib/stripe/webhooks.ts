@@ -113,8 +113,9 @@ export const handleChargeRefunded = async (charge: Stripe.Charge) => {
 
   const refundedAmount = charge.amount_refunded;
   const isFullRefund = refundedAmount === charge.amount;
+  const supabase = getSupabase();
 
-  await getSupabase()
+  await supabase
     .from("payments")
     .update({
       status: isFullRefund ? "refunded" : "partially_refunded",
@@ -122,6 +123,64 @@ export const handleChargeRefunded = async (charge: Stripe.Charge) => {
       refunded_at: new Date().toISOString(),
     })
     .eq("stripe_payment_intent_id", paymentIntentId);
+
+  await syncBookingAfterRefund(paymentIntentId, refundedAmount, isFullRefund);
+};
+
+/** Reservations que le remboursement peut encore annuler. */
+const ACTIVE_BOOKING_STATUSES = ["pending", "confirmed"];
+
+/**
+ * Repercute un remboursement sur la reservation qu'il concerne.
+ *
+ * Un remboursement emis depuis le dashboard Stripe ne passe pas par
+ * `cancelBooking` : cet evenement est le seul a en informer l'application.
+ * Tant qu'il ne touchait que `payments`, la reservation restait active — la
+ * consultante gardait le rendez-vous a son agenda, le creneau restait bloque
+ * par l'index d'unicite, et la cliente croyait sa place reservee alors que son
+ * argent lui avait ete rendu.
+ *
+ * Le montant est toujours enregistre ; l'annulation, elle, n'a lieu que si la
+ * reservation est encore active. Rembourser une consultation honoree est un
+ * geste commercial : elle a bien eu lieu, l'effacer de l'agenda serait faux.
+ */
+const syncBookingAfterRefund = async (
+  paymentIntentId: string,
+  refundedAmount: number,
+  isFullRefund: boolean,
+) => {
+  const supabase = getSupabase();
+
+  const { data: payment } = await supabase
+    .from("payments")
+    .select("type, reference_id")
+    .eq("stripe_payment_intent_id", paymentIntentId)
+    .single();
+
+  if (payment?.type !== "booking" || !payment.reference_id) return;
+
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select("status")
+    .eq("id", payment.reference_id)
+    .single();
+
+  if (!booking) return;
+
+  const updates: Record<string, unknown> = {
+    refund_amount_cents: refundedAmount,
+  };
+
+  if (isFullRefund && ACTIVE_BOOKING_STATUSES.includes(booking.status)) {
+    updates.status = "cancelled";
+    updates.cancelled_at = new Date().toISOString();
+    updates.cancellation_reason = "Remboursement integral enregistre chez Stripe";
+  }
+
+  await supabase
+    .from("bookings")
+    .update(updates)
+    .eq("id", payment.reference_id);
 };
 
 export const handleAccountUpdated = async (account: Stripe.Account) => {
