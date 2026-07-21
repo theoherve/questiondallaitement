@@ -79,6 +79,12 @@ const createChain = (opts: {
       // Retourne le même chain pour permettre .select().single()
       return chain;
     }),
+    maybeSingle: vi.fn().mockImplementation(() =>
+      Promise.resolve({
+        data: opts.singleData ?? null,
+        error: opts.insertError ?? null,
+      }),
+    ),
     single: vi.fn().mockImplementation(() => {
       // Si des données d'insert existent, c'est probablement un insert().select().single()
       return Promise.resolve({
@@ -161,7 +167,10 @@ describe("14-06 : createBooking — paiement en ligne", () => {
       .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTATION_TYPE }, t))
       .mockImplementationOnce((t: string) => createChain({ singleData: { id: "client-uuid-existing" } }, t))
       .mockImplementationOnce((t: string) => createChain({}, t))
-      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTANT }, t));
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTANT }, t))
+      // Lecture de `is_platform_owner`, faite a part pour ne pas dependre de
+      // l'ordre entre migration et deploiement.
+      .mockImplementation((t: string) => createChain({ singleData: {} }, t));
 
     mockCreateCheckoutSession.mockResolvedValue({ url: "https://checkout.stripe.com/session_test" });
   });
@@ -196,7 +205,10 @@ describe("14-06 : createBooking — paiement en ligne", () => {
       .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTATION_TYPE }, t))
       .mockImplementationOnce((t: string) => createChain({ singleData: { id: "client-uuid-existing" } }, t))
       .mockImplementationOnce((t: string) => createChain({}, t))
-      .mockImplementationOnce((t: string) => createChain({ singleData: { ...CONSULTANT, stripe_account_id: null } }, t));
+      .mockImplementationOnce((t: string) => createChain({ singleData: { ...CONSULTANT, stripe_account_id: null } }, t))
+      // Consultante tierce : le drapeau proprietaire est faux, donc l'absence
+      // de compte connecte reste bloquante.
+      .mockImplementation((t: string) => createChain({ singleData: {} }, t));
 
     const result = await createBooking(makeBookingForm());
 
@@ -255,7 +267,8 @@ describe("14-07 : createBooking — flow guest (sans compte)", () => {
       .mockImplementationOnce((t: string) =>
         createChain({ singleData: null, insertSingleData: { id: NEW_PROFILE_ID } }, t),
       )
-      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTANT }, t));
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTANT }, t))
+      .mockImplementation((t: string) => createChain({ singleData: {} }, t));
 
     mockCreateCheckoutSession.mockResolvedValue({ url: "https://checkout.stripe.com/guest_session" });
   });
@@ -334,6 +347,68 @@ describe("14-09 : createBooking — paiement sur place (on_site)", () => {
 
     expect(result.data?.booking_id).toBeTruthy();
     expect(result.data?.redirect_url).toBeUndefined();
+  });
+});
+
+// ─── Consultante proprietaire de la plateforme ────────────────
+
+describe("createBooking — consultante proprietaire de la plateforme", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFrom.mockReset();
+    insertCalls.length = 0;
+
+    mockFrom
+      .mockImplementationOnce((t: string) => createChain({ singleData: DURATION_OPTION }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTATION_TYPE }, t))
+      .mockImplementationOnce((t: string) => createChain({ singleData: { id: "client-uuid-existing" } }, t))
+      .mockImplementationOnce((t: string) => createChain({}, t))
+      .mockImplementationOnce((t: string) =>
+        createChain(
+          {
+            singleData: {
+              ...CONSULTANT,
+              // Carole est la plateforme : pas de compte connecte, et le taux
+              // de sa fiche ne doit pas s'appliquer.
+              stripe_account_id: null,
+              is_platform_owner: true,
+            },
+          },
+          t,
+        ),
+      )
+      .mockImplementation((t: string) =>
+        createChain({ singleData: { is_platform_owner: true } }, t),
+      );
+
+    mockCreateCheckoutSession.mockResolvedValue({ url: "https://checkout.stripe.com/owner" });
+  });
+
+  it("encaisse sur la plateforme sans compte connecte", async () => {
+    // Avant, l'absence de `stripe_account_id` faisait echouer la reservation
+    // avec « La consultante n'a pas configure son compte Stripe ».
+    const result = await createBooking(makeBookingForm());
+
+    expect(result.success).toBe(true);
+    expect(mockCreateCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        holdOnPlatform: true,
+        consultantStripeAccountId: undefined,
+      }),
+    );
+  });
+
+  it("ne preleve aucune commission", async () => {
+    // Une commission qu'elle se verse a elle-meme n'a pas de sens, et elle
+    // apparaitrait dans les reversements Stripe comme un flux reel.
+    await createBooking(makeBookingForm());
+
+    expect(mockCreateCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        commissionRate: 0,
+        metadata: expect.objectContaining({ platform_fee_cents: "0" }),
+      }),
+    );
   });
 });
 

@@ -69,7 +69,12 @@ export const createCheckoutSession = async ({
   holdOnPlatform,
   transferGroup,
 }: {
-  consultantStripeAccountId: string;
+  /**
+   * Destinataire de la charge. Optionnel : une vente encaissee par la
+   * plateforme (`holdOnPlatform`) n'en a pas — soit parce qu'elle sera
+   * repartie ensuite, soit parce que la vendeuse *est* la plateforme.
+   */
+  consultantStripeAccountId?: string;
   commissionRate: number;
   priceInCents: number;
   currency: string;
@@ -100,7 +105,7 @@ export const createCheckoutSession = async ({
       ? { metadata, ...(transferGroup ? { transfer_group: transferGroup } : {}) }
       : {
           application_fee_amount: applicationFeeAmount,
-          transfer_data: { destination: consultantStripeAccountId },
+          transfer_data: { destination: consultantStripeAccountId as string },
           metadata,
           ...(transferGroup ? { transfer_group: transferGroup } : {}),
         };

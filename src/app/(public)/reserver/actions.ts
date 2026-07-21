@@ -3,6 +3,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createCheckoutSession } from "@/lib/stripe/connect";
+import {
+  routeSale,
+  isPlatformOwnerConsultant,
+} from "@/lib/stripe/sale-routing";
 import { computeAvailableSlots } from "@/lib/booking/slots";
 import { computeBookingPrice } from "@/lib/booking/pricing";
 import { contactSchema } from "@/validations/bookings";
@@ -488,7 +492,9 @@ export const createBooking = async (
   // Fetch consultant for Stripe and emails
   const { data: consultant } = await supabase
     .from("consultants")
-    .select("stripe_account_id, commission_rate, profiles!consultants_id_fkey (first_name, last_name, email)")
+    .select(
+      "stripe_account_id, commission_rate, profiles!consultants_id_fkey (first_name, last_name, email)",
+    )
     .eq("id", formData.consultant_id)
     .single();
 
@@ -507,7 +513,23 @@ export const createBooking = async (
   }
 
   if (formData.payment_method === "online") {
-    if (!consultant?.stripe_account_id) {
+    // Ou vont les fonds : chez la consultante, ou sur la plateforme quand
+    // c'est sa proprietaire qui consulte (voir sale-routing.ts).
+    const isPlatformOwner = await isPlatformOwnerConsultant(
+      supabase,
+      formData.consultant_id,
+    );
+
+    const routing = consultant
+      ? routeSale({
+          isPlatformOwner,
+          stripeAccountId: consultant.stripe_account_id,
+          commissionRate: consultant.commission_rate,
+          hasCollaborators: false,
+        })
+      : null;
+
+    if (!routing) {
       return { success: false, error: "La consultante n'a pas configuré son compte Stripe" };
     }
 
@@ -519,8 +541,10 @@ export const createBooking = async (
 
     try {
       const session = await createCheckoutSession({
-        consultantStripeAccountId: consultant.stripe_account_id,
-        commissionRate: consultant.commission_rate,
+        consultantStripeAccountId: routing.destinationAccountId ?? undefined,
+        holdOnPlatform: routing.holdOnPlatform,
+        transferGroup: bookingId,
+        commissionRate: routing.commissionRate,
         priceInCents: totalPriceCents,
         currency: consultationType.currency,
         productName: consultationType.title,
@@ -538,7 +562,7 @@ export const createBooking = async (
           location: formData.location,
           reason: reason.substring(0, 500),
           platform_fee_cents: Math.round(
-            totalPriceCents * (consultant.commission_rate / 100)
+            totalPriceCents * (routing.commissionRate / 100)
           ).toString(),
         },
         successUrl: `${siteConfig.url}/reserver/confirmation?booking_id=${bookingId}`,
