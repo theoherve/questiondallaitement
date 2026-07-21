@@ -3,98 +3,137 @@
 > Ce que Claude ne peut pas faire a ta place : tout passe par les dashboards
 > Stripe, Vercel et Supabase.
 >
-> **Ordre imperatif.** Les CGV (etape 4) doivent etre en ligne **avant** la
-> bascule des cles live (etape 5). Encaisser sans conditions a jour t'expose,
-> et deux points du modele Connect ont un effet juridique direct — voir
+> **L'ordre compte, deux fois.**
+>
+> Les CGV (etape 3) doivent etre en ligne **avant** la bascule des cles live
+> (etape 4). Encaisser sans conditions a jour t'expose, et deux points du modele
+> Connect ont un effet juridique direct — voir
 > [CGV_MODELE_ECONOMIQUE.md](./CGV_MODELE_ECONOMIQUE.md).
+>
+> L'onboarding des consultantes (etape 7) vient **apres** la bascule, pas avant.
+> Les comptes Connect sont cloisonnes par environnement : un compte cree en mode
+> test n'existe pas en live. C'est aussi pourquoi l'etape 6 purge les
+> identifiants de test restes en base.
 
 ---
 
-## 1. Migration du limiteur de debit
+## Quel compte Stripe ?
+
+La cle de test actuelle appartient a `acct_1TH8C3DSQDjxnDDN`, nomme
+« **Environnement de test** caroleherve.fr (Théo) ». C'est le **sandbox** du
+compte `caroleherve.fr`.
+
+Un sandbox Stripe n'a pas de mode live : le pendant production de tout ce qui a
+ete construit en test, ce sont les **cles live de `caroleherve.fr`**
+(`acct_1TH8Bi…`, cles en `pk_live_51TH8Bi…` / `sk_live_…`).
+
+> Une version precedente de ce document disait le contraire — « la cle live du
+> compte parent n'est pas la bonne ». C'etait faux : cette remarque valait pour
+> les cles **test**, ou sandbox et compte principal ont bien des cles
+> distinctes.
+
+⚠️ **A trancher avant d'aller plus loin.** Utiliser le compte `caroleherve.fr`
+signifie que **l'entite de Carole est la plateforme**. Elle est alors a la fois
+editrice — qui percoit la commission et supporte les chargebacks (constat 1-4) —
+et consultante qui la verse. C'est un montage valable, mais il doit correspondre
+a ce que disent les CGV et a l'entite que tu declares comme editrice. Si la
+plateforme doit etre une structure distincte, il faut son propre compte Stripe,
+et repartir de la.
+
+---
+
+## 1. Migration du limiteur de debit ✅
 
 ```bash
 pnpm db:push        # applique 00050_rate_limits.sql
 pnpm test:rate-limit
 ```
 
-Attendu : `4/4 scenarios passes.`
+**Fait le 2026-07-21** : `4/4 scenarios passes.`
 
-Le dernier scenario est celui qui compte : 20 appels simultanes contre une
-limite de 5 doivent en laisser passer **exactement 5**. S'il en passe plus, le
-compteur n'est pas atomique et la limite ne protege de rien.
-
-> Tant que la migration n'est pas appliquee, le limiteur laisse tout passer en
-> journalisant l'erreur. Degrade, mais ni bloquant ni silencieux.
+Le scenario qui compte est le troisieme : 20 appels simultanes contre une limite
+de 5 n'en laissent passer que 5. Le compteur est bien atomique.
 
 ---
 
-## 2. Comptes Stripe des consultantes
-
-**A verifier en premier : aujourd'hui, personne ne peut etre paye.**
-
-| Consultante | `stripe_account_id` | Statut |
-| --- | --- | --- |
-| `a0eebc99-…380a11` | `null` | `pending` |
-| `31b9a2da-…0bbd22a` | `acct_1TO0AEDjYyOKzuau` | `pending` |
-
-Aucun compte n'est `active`, donc `charges_enabled` est faux : Stripe refusera
-toute charge destination. Chaque consultante doit terminer son onboarding
-Express depuis **Espace consultante → Parametres → Connecter mon compte
-Stripe**.
-
-Le statut se met a jour tout seul par le webhook `account.updated` (4-5). Pour
-verifier :
-
-```sql
-select id, stripe_account_id, stripe_account_status, onboarding_completed
-from consultants;
-```
-
-Attendu apres onboarding : `active` **et** `onboarding_completed = true`.
-
----
-
-## 3. Profil de la plateforme Stripe
+## 2. Profil de la plateforme Stripe
 
 Dans le dashboard Stripe, **en mode live** :
 
+- **Connect** doit etre active en live. Il l'est en sandbox, ce qui ne prejuge
+  de rien : Stripe demande un questionnaire de profil plateforme avant de
+  l'ouvrir en production. A faire en premier, c'est ce qui peut prendre du
+  temps.
 - **Settings → Branding** : `display_name`, logo et icone. C'est ce que voit la
   consultante pendant l'onboarding Express — vide, ca fait suspect.
-- **Settings → Public details** : `statement_descriptor`. Il vaut aujourd'hui
-  `ENVIRONNEMENT DE TEST`, ce qui apparaitrait tel quel sur les releves
-  bancaires des clientes.
+- **Settings → Public details** : `statement_descriptor`. Il vaut
+  `ENVIRONNEMENT DE TEST` en sandbox ; verifie ce qu'il vaut en live, c'est ce
+  qui apparait sur les releves bancaires des clientes.
 
 ---
 
-## 4. CGV et mentions legales
+## 3. CGV et mentions legales
 
 Voir [CGV_MODELE_ECONOMIQUE.md](./CGV_MODELE_ECONOMIQUE.md) — texte pret a
 relire, avec les points qui engagent juridiquement.
 
-**A faire avant l'etape 5.**
+**A faire avant l'etape 4.**
 
 ---
 
-## 5. Cles live sur Vercel
+## 4. Variables d'environnement sur Vercel
 
-Dans **Vercel → Project → Settings → Environment Variables**, environnement
-**Production** uniquement :
+### Ce que l'application lit reellement
 
-| Variable | Valeur |
-| --- | --- |
-| `STRIPE_SECRET_KEY` | `sk_live_…` (Stripe → Developers → API keys, **mode live**) |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | `pk_live_…` |
-| `STRIPE_WEBHOOK_SECRET` | `whsec_…` de l'endpoint prod — **etape 6** |
+| Variable | Production | Preview / Development |
+| --- | --- | --- |
+| `STRIPE_SECRET_KEY` | **`sk_live_…`** (a ecraser) | `sk_test_…` du sandbox — **ne pas toucher** |
+| `STRIPE_WEBHOOK_SECRET` | **`whsec_…` de l'endpoint live** (etape 5) | `whsec_…` de test — **ne pas toucher** |
+| `NEXT_PUBLIC_SUPABASE_URL` | inchange | inchange |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | inchange | inchange |
+| `SUPABASE_SERVICE_ROLE_KEY` | inchange | inchange |
+| `AUTH_SECRET` | inchange | inchange |
+| `AUTH_URL` | doit valoir le domaine de production | l'URL de preview |
+| `NEXT_PUBLIC_APP_URL` | domaine de production | — |
+| `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_FROM_NAME` | inchange | inchange |
+| `BREVO_API_KEY` | inchange | inchange |
+| `ZOOM_CLIENT_ID`, `ZOOM_CLIENT_SECRET`, `ZOOM_REDIRECT_URI` | inchange | inchange |
+| `CRON_SECRET` | inchange | inchange |
+
+### `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` : inutile
+
+Cette variable est presente dans `.env.local` mais **l'application ne la lit
+jamais**. Le paiement passe par le Checkout heberge de Stripe — une simple
+redirection — et non par Stripe.js ou Elements, qui sont les seuls a en avoir
+besoin. Il n'y a aucune dependance a `@stripe/stripe-js` dans le projet.
+
+Tu peux la supprimer de Vercel, ou la laisser : elle ne sert a rien dans les
+deux cas. Ne perds pas de temps a chercher la bonne valeur.
+
+> Cela rend l'item 0-4 de la Phase 0 sans objet : la « vraie `pk_test_` du
+> sandbox » ne servait a rien non plus.
+
+### Variables qui ne doivent **pas** exister sur Vercel
+
+`E2E_CLIENT_PASSWORD`, `E2E_CONNECT_ACCOUNT` et tous les `E2E_*` sont propres au
+poste de developpement et a la CI GitHub. Ils n'ont rien a faire dans les
+variables du projet Vercel.
+
+### Points d'attention
 
 ⚠️ **Ne touche pas aux environnements Preview et Development.** Ils doivent
 rester en cles test, sinon une PR de preview encaisse pour de vrai.
 
-⚠️ La cle live du compte **parent** (`acct_1TH8Bi…`, « caroleherve.fr ») n'est
-pas la bonne. Il faut celle du compte qui porte la plateforme.
+⚠️ La cle `rk_live_…` visible dans le dashboard (« CLI key for jaj-mac… »,
+expire dans 89 jours) vient de `stripe login`. Elle sert au CLI en local, pas a
+l'application. Ne la mets nulle part ; tu peux la revoquer si tu n'utilises plus
+le CLI.
+
+⚠️ **Redeploie apres modification.** Les variables ne sont lues qu'au build.
 
 ---
 
-## 6. Endpoint webhook de production
+## 5. Endpoint webhook de production
 
 Stripe → **Developers → Webhooks → Add endpoint**, en **mode live** :
 
@@ -114,14 +153,89 @@ Ces cinq-la et pas d'autres : ce sont exactement ceux que
 d'autres remplit les logs d'evenements ignores.
 
 Copie ensuite le **Signing secret** (`whsec_…`) dans `STRIPE_WEBHOOK_SECRET`
-sur Vercel, puis **redeploie** — les variables ne sont lues qu'au build.
+sur Vercel, environnement Production, puis **redeploie**.
 
 ---
 
-## 7. Verification apres bascule
+## 6. Purger les comptes Connect de test
+
+> **A faire imperativement apres la bascule des cles, avant tout onboarding.**
+
+Les comptes Connect sont **cloisonnes par environnement** : un `acct_…` cree en
+mode test n'existe pas en mode live. Or la colonne
+`consultants.stripe_account_id` ne distingue pas les deux — elle contient
+aujourd'hui `acct_1TO0AEDjYyOKzuau`, un compte **de test** dont l'onboarding n'a
+meme pas ete termine.
+
+Laisse tel quel, l'application enverrait cet identifiant a Stripe en live, qui
+ne le connait pas : les paiements echouent sur un « No such destination
+account » sans rapport apparent avec la cause.
+
+```sql
+-- A executer une fois les cles live en place.
+update consultants
+set stripe_account_id = null,
+    stripe_account_status = 'pending',
+    onboarding_completed = false;
+```
+
+Verifier ensuite :
+
+```bash
+pnpm check:connect
+```
+
+Le script interroge Stripe pour chaque identifiant enregistre et signale ceux
+qui n'existent pas dans le mode courant — exactement le piege decrit ci-dessus.
+Il verifie aussi que le statut en base correspond a ce que Stripe repond, ce qui
+revele un webhook `account.updated` mal branche.
+
+En mode test, aujourd'hui, il repond :
+
+```
+· a0eebc99  pas de compte (consultante inactive)
+✗ 31b9a2da  acct_1TO0AEDjYyOKzuau existe mais n'encaisse pas
+```
+
+---
+
+## 7. Onboarding Stripe des consultantes
+
+**Maintenant seulement**, et pas avant : un onboarding fait en mode test est du
+travail jete, puisque le compte n'existera pas en live.
+
+Chaque consultante se connecte et va dans **Espace consultante → Parametres →
+Connecter mon compte Stripe**. Elle aura besoin de ses vraies coordonnees
+bancaires et d'une piece d'identite — c'est un onboarding reel, avec verification
+par Stripe, qui peut prendre plusieurs jours. **Ce n'est pas une etape a
+decouvrir la veille du lancement.**
+
+Le statut se met a jour tout seul par le webhook `account.updated` (4-5) :
+
+```sql
+select id, stripe_account_id, stripe_account_status, onboarding_completed
+from consultants;
+```
+
+Attendu : `active` **et** `onboarding_completed = true`. Tant que ce n'est pas le
+cas, `charges_enabled` est faux cote Stripe et **aucune reservation payante ne
+peut aboutir** pour cette consultante.
+
+> **Pour exercer le parcours sans attendre** : l'onboarding fonctionne aussi en
+> mode test, avec des donnees fictives — la fixture E2E
+> (`acct_1TvClsDt4jjyHCRs`) est un compte Express complet, `charges_enabled` et
+> `payouts_enabled` a vrai. Utile pour verifier l'ecran et le webhook avant
+> d'engager quelqu'un dans un vrai onboarding, mais le compte obtenu est a jeter.
+
+---
+
+## 8. Verification apres bascule
 
 Dans cet ordre :
 
+0. `pnpm check:connect` doit repondre **« Tous les comptes sont coherents »**.
+   Tant que ce n'est pas le cas, inutile d'aller plus loin : les paiements
+   echoueront.
 1. **Un achat reel de bout en bout**, avec une vraie carte et un petit montant.
    C'est le trou de couverture assume de 3-6 : aucun test automatise ne verifie
    qu'un vrai paiement carte declenche le webhook.
@@ -140,6 +254,7 @@ sans revenir.
 | Sujet | Ou |
 | --- | --- |
 | TVA sur la commission plateforme | 1-6 |
+| Renonciation au droit de retractation (demande du code) | CGV, point 4 |
 | Validation MIME des uploads | 5-3 |
 | Seeds `consultant_locations` | 5-4 |
 | CSP sans `'unsafe-inline'` (nonces) | 5-2, palier suivant |
