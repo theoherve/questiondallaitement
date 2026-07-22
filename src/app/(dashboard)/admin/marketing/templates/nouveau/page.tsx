@@ -14,6 +14,7 @@ const NewTemplatePage = async () => {
 
   return (
     <TemplateForm
+      defaultTestEmail={user.email ?? ""}
       onSave={async (data) => {
         "use server";
         return createTemplate(data);
