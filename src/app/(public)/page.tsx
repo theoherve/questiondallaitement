@@ -10,6 +10,7 @@ import { NewsletterForm } from "./_components/newsletter-form";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { features } from "@/config/features";
+import { PACK_SALES_PATH } from "@/config/navigation";
 
 /* ─── Static data ─── */
 
@@ -19,10 +20,6 @@ const BIO_STATS = [
   { value: "3", label: "livres publiés" },
   { value: "IBCLC", label: "Certification internationale" },
 ];
-
-// En mode formations-only (booking désactivé), les CTA de prise de RDV
-// pointent vers la page de vente du pack (offre en ligne phare).
-const PACK_SALES_PATH = "/accompagnements/pack-essentiel-allaitement";
 
 type HomePageProps = {
   searchParams: Promise<Record<string, string | undefined>>;
@@ -148,6 +145,14 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
   const visibleServices = features.bookingEnabled
     ? SERVICES
     : SERVICES.filter((s) => s.href !== "/reserver");
+  // Grille adaptée au nombre de services : 4 colonnes pleines, sinon centrée
+  // sur une largeur réduite pour que 2–3 cartes restent équilibrées.
+  const servicesGridClass =
+    visibleServices.length >= 4
+      ? "sm:grid-cols-2 lg:grid-cols-4"
+      : visibleServices.length === 3
+        ? "sm:grid-cols-2 lg:grid-cols-3"
+        : "sm:grid-cols-2 mx-auto max-w-4xl";
   const featuredFormation = allFormations.find(
     (f) => f.slug === "pack-essentiel-allaitement"
   );
@@ -301,7 +306,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
             </div>
           </ScrollReveal>
 
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className={`mt-14 grid gap-5 ${servicesGridClass}`}>
             {visibleServices.map((service, i) => {
               const Icon = service.icon;
               return (

@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { publicNav, clientNav } from "@/config/navigation";
+import { publicNav, clientNav, PACK_SALES_PATH } from "@/config/navigation";
 import { features } from "@/config/features";
 import { getNavIcon } from "@/config/navigation-icons";
 import {
@@ -225,27 +225,31 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
                 </Link>
               </Button>
             )}
-            {features.bookingEnabled && (
-              <Button
-                asChild
-                className="bg-primary-red px-6 hover:bg-primary-red-dark"
-              >
+            <Button
+              asChild
+              className="bg-primary-red px-6 hover:bg-primary-red-dark"
+            >
+              {features.bookingEnabled ? (
                 <Link href="/reserver">Prendre RDV</Link>
-              </Button>
-            )}
+              ) : (
+                <Link href={PACK_SALES_PATH}>Découvrir le pack</Link>
+              )}
+            </Button>
           </div>
 
-          {/* Mobile right — CTA RDV + hamburger (always visible) */}
+          {/* Mobile right — CTA (RDV ou pack) + hamburger (always visible) */}
           <div className="flex items-center gap-2 lg:hidden">
-            {features.bookingEnabled && (
-              <Button
-                asChild
-                size="sm"
-                className="bg-primary-red hover:bg-primary-red-dark"
-              >
+            <Button
+              asChild
+              size="sm"
+              className="bg-primary-red hover:bg-primary-red-dark"
+            >
+              {features.bookingEnabled ? (
                 <Link href="/reserver">RDV</Link>
-              </Button>
-            )}
+              ) : (
+                <Link href={PACK_SALES_PATH}>Le pack</Link>
+              )}
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -364,19 +368,23 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
                   Connexion
                 </Link>
                 <div className="mt-4 flex flex-col gap-3">
-                  {features.bookingEnabled && (
-                    <Button
-                      asChild
-                      className="w-full bg-primary-red hover:bg-primary-red-dark"
-                    >
-                      <Link
-                        href="/reserver"
-                        onClick={() => setMenuOpen(false)}
-                      >
+                  <Button
+                    asChild
+                    className="w-full bg-primary-red hover:bg-primary-red-dark"
+                  >
+                    {features.bookingEnabled ? (
+                      <Link href="/reserver" onClick={() => setMenuOpen(false)}>
                         Prendre rendez-vous
                       </Link>
-                    </Button>
-                  )}
+                    ) : (
+                      <Link
+                        href={PACK_SALES_PATH}
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Découvrir le pack
+                      </Link>
+                    )}
+                  </Button>
                   <Button asChild variant="outline" className="w-full">
                     <Link
                       href="/inscription"

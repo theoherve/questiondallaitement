@@ -24,6 +24,12 @@ export const publicNav: PublicNavItem[] = [
   { title: "À propos", href: "/a-propos" },
 ];
 
+/**
+ * Page de vente du pack phare (offre en ligne). Sert de cible aux CTA de
+ * conversion quand la réservation de RDV est désactivée (mode formations-only).
+ */
+export const PACK_SALES_PATH = "/accompagnements/pack-essentiel-allaitement";
+
 /** Social links — used in footer. */
 export const socialLinks = [
   {
