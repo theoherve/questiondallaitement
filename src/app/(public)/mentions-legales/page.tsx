@@ -21,22 +21,22 @@ const MentionsLegalesPage = () => (
         </h2>
         <div className="mt-3 space-y-1 text-sm">
           <p>
-            <strong>Raison sociale :</strong> [Nom de la société / Auto-entrepreneur]
+            <strong>Raison sociale :</strong> Carole HERVÉ
           </p>
           <p>
-            <strong>Forme juridique :</strong> [SAS / SARL / Auto-entrepreneur]
+            <strong>Forme juridique :</strong> Entreprise individuelle (EI)
           </p>
           <p>
-            <strong>Siège social :</strong> [Adresse complète]
+            <strong>Siège social :</strong> 43 rue Guy Môquet, 75017 Paris
           </p>
           <p>
-            <strong>SIRET :</strong> [Numéro SIRET]
+            <strong>SIRET :</strong> 540 075 819 00016
           </p>
           <p>
             <strong>N° TVA intracommunautaire :</strong> FR94540075819
           </p>
           <p>
-            <strong>Directeur de la publication :</strong> [Prénom Nom]
+            <strong>Directeur de la publication :</strong> Carole HERVÉ
           </p>
           <p>
             <strong>Contact :</strong> contact@questiondallaitement.fr
