@@ -343,6 +343,8 @@ const BookingDetailPage = async ({ params }: Props) => {
         bookingId={booking.id}
         status={booking.status as BookingStatus}
         isPast={isPast}
+        paymentMethod={booking.payment_method}
+        isPaid={payments.some((p) => p.status === "succeeded")}
       />
     </div>
   );

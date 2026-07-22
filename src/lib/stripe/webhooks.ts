@@ -67,7 +67,7 @@ export const handleCheckoutCompleted = async (
     await notifySlotConflict(session, client_id);
   }
 
-  await getSupabase()
+  const { data: paymentRow } = await getSupabase()
     .from("payments")
     .upsert(
       {
@@ -82,13 +82,15 @@ export const handleCheckoutCompleted = async (
         status: slotConflict ? "refunded" : "succeeded",
       },
       { onConflict: "stripe_payment_intent_id" },
-    );
+    )
+    .select("id")
+    .maybeSingle();
 
   // Emission de la facture, une fois le paiement enregistre. Rien pour un
   // creneau vendu deux fois : la cliente est remboursee, il n'y a pas de vente
   // a facturer. L'emission est idempotente et ne leve jamais.
-  if (!slotConflict && paymentIntentId) {
-    await emitInvoiceForPayment(getSupabase(), paymentIntentId);
+  if (!slotConflict && paymentRow?.id) {
+    await emitInvoiceForPayment(getSupabase(), paymentRow.id);
   }
 
   await logAudit(

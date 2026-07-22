@@ -29,13 +29,26 @@ const createChain = (table: string) => {
     }),
     upsert: vi.fn((data: unknown, opts?: unknown) => {
       state.upsertCalls.push({ table, data, opts });
-      return Promise.resolve({ error: null });
+      // Upsert-returning : le webhook chaine `.select("id").maybeSingle()` pour
+      // recuperer l'id du paiement et emettre sa facture. On rend un id
+      // synthetique, tout en restant awaitable pour les upserts sans select.
+      const returning = { data: { id: `${table}-id` }, error: null };
+      const upsertChain: Record<string, unknown> = {
+        select: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue(returning),
+        single: vi.fn().mockResolvedValue(returning),
+      };
+      (upsertChain as { then?: (o: (v: unknown) => unknown) => unknown }).then = (
+        onFulfilled: (value: unknown) => unknown,
+      ) => Promise.resolve({ error: null }).then(onFulfilled);
+      return upsertChain;
     }),
     insert: vi.fn((data: unknown) => {
       state.insertCalls.push({ table, data });
       return Promise.resolve({ error: config.insertError ?? null });
     }),
     single: vi.fn().mockResolvedValue({ data: config.single ?? null, error: null }),
+    maybeSingle: vi.fn().mockResolvedValue({ data: config.single ?? null, error: null }),
   };
 
   // Thenable pour les requêtes sans .single() (ex: .select().eq() await)
