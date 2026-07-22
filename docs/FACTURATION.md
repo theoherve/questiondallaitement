@@ -105,8 +105,29 @@ double encaissement. Le gate de facturation s'y applique aussi : pas
 d'encaissement possible sans profil complet. La comptabilite est ainsi sans
 trou, ligne et en ligne comme sur place.
 
-## Ce qui reste (PR 3/3 — espace facturation)
+**PR 3/3a — espace facturation (consultation + document) :**
+- [invoice-view.ts](../src/lib/invoicing/invoice-view.ts) — modele d'affichage
+  (montants, taux, date), teste ;
+- `/factures/[id]` — document imprimable avec toutes les mentions obligatoires,
+  accessible a la cliente concernee, a l'emettrice et a l'admin ; export PDF via
+  l'impression du navigateur (le HTML fait foi) ;
+- listes dediees : « Facturation » cote consultante, « Mes factures » cote
+  cliente, chacune liee au document.
 
-1. consulter chaque achat avec sa facture rattachee (cliente et consultante) ;
-2. gabarit HTML imprimable + export PDF, avec toutes les mentions obligatoires ;
-3. correction d'une facture emise = avoir + facture corrigee, puis renvoi.
+**PR 3/3b — envoi a la cliente :**
+- [invoice-pdf.tsx](../src/lib/invoicing/invoice-pdf.tsx) — rendu PDF via
+  @react-pdf (pur JS, serverless, pas de Chromium), a partir du meme modele que
+  le HTML ;
+- [send-invoice-email.ts](../src/lib/invoicing/send-invoice-email.ts) — email a
+  la cliente avec **lien vers son espace ET PDF en piece jointe** (choix acte) ;
+- envoi **automatique a l'emission**, une seule fois : `emailed_at`
+  ([00056](../supabase/migrations/00056_invoice_emailed_at.sql)) rend l'envoi
+  idempotent (une redelivery ne redouble pas le mail ; un envoi echoue reste
+  retentable) ;
+- **renvoi manuel** par la consultante depuis « Facturation », qui envoie
+  toujours et horodate.
+
+## Ce qui reste (PR 3/3c — correction)
+
+1. correction d'une facture emise = **avoir + facture corrigee** (immuabilite),
+   puis renvoi a la cliente (l'envoi est deja en place).

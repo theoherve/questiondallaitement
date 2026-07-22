@@ -29,6 +29,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@maily-to/core": "^0.3.7",
     "@maily-to/render": "^0.2.3",
+    "@react-pdf/renderer": "^4.5.1",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.97.0",
     "@tanstack/react-query": "^5.90.21",

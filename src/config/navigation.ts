@@ -59,6 +59,11 @@ export const clientNav: NavItem[] = [
     href: "/espace-client/reservations",
     iconKey: "CalendarDays",
   },
+  {
+    title: "Mes factures",
+    href: "/espace-client/factures",
+    iconKey: "FileText",
+  },
   { title: "Mon profil", href: "/espace-client/profil", iconKey: "Settings" },
 ];
 
@@ -94,6 +99,11 @@ export const consultantNav: NavItem[] = [
     title: "Analytics",
     href: "/espace-consultante/analytics",
     iconKey: "BarChart3",
+  },
+  {
+    title: "Facturation",
+    href: "/espace-consultante/facturation",
+    iconKey: "FileText",
   },
   {
     title: "Paramètres",
