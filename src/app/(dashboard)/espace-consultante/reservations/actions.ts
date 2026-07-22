@@ -8,7 +8,11 @@ import { revalidatePath } from "next/cache";
 import { siteConfig } from "@/config/site";
 import { runAutomations } from "@/lib/automations/engine";
 import { createNotification } from "@/lib/notifications";
+import { computeBookingPrice } from "@/lib/booking/pricing";
+import { consultantCanSell } from "@/lib/invoicing/consultant-billing";
+import { emitInvoiceForPayment } from "@/lib/invoicing/emit";
 import type { ActionResult } from "@/types";
+import type { ConsultationTypeDuration } from "@/types/database";
 
 export const confirmBooking = async (
   bookingId: string
@@ -239,6 +243,145 @@ export const completeBooking = async (
   }
 
   revalidatePath("/espace-consultante/reservations");
+  return { success: true };
+};
+
+/**
+ * Enregistre l'encaissement d'une reservation reglee sur place, et emet sa
+ * facture.
+ *
+ * Le paiement en ligne cree sa ligne `payments` (et sa facture) via le webhook
+ * Stripe ; le sur-place, lui, n'avait aucun moment « encaisse » — la vente
+ * restait donc hors comptabilite et sans facture. Cette action comble ce trou :
+ * la consultante confirme l'encaissement, une ligne `payments` est creee et la
+ * facture emise, exactement comme pour une vente en ligne.
+ *
+ * Le montant n'est pas saisi mais recalcule a partir de l'option de duree, du
+ * lieu et de la date : c'est le prix affiche a la cliente, donc celui qu'elle a
+ * regle. Un cas particulier se corrige ensuite par avoir (espace facturation).
+ */
+export const markBookingPaid = async (
+  bookingId: string
+): Promise<ActionResult> => {
+  const { user } = await getSupabaseAndUser();
+  // Client admin (contourne les RLS) mais action scoppee au consultant_id : une
+  // consultante ne peut encaisser que ses propres reservations.
+  const admin = createAdminClient();
+
+  const { data: booking } = await admin
+    .from("bookings")
+    .select(
+      "id, client_id, consultant_id, duration_option_id, location, starts_at, payment_method, status"
+    )
+    .eq("id", bookingId)
+    .eq("consultant_id", user.id)
+    .single();
+
+  if (!booking) {
+    return { success: false, error: "Réservation introuvable" };
+  }
+
+  if (booking.payment_method !== "on_site") {
+    return {
+      success: false,
+      error:
+        "Seules les réservations réglées sur place peuvent être encaissées ici.",
+    };
+  }
+
+  // Une consultation annulee ou une cliente absente ne s'encaisse pas.
+  if (["cancelled", "no_show"].includes(booking.status)) {
+    return {
+      success: false,
+      error: "Cette réservation ne peut pas être encaissée.",
+    };
+  }
+
+  // Sans profil de facturation complet, aucune facture conforme : on refuse
+  // plutot que d'encaisser sans pouvoir facturer.
+  if (!(await consultantCanSell(admin, user.id))) {
+    return {
+      success: false,
+      error:
+        "Complétez vos informations de facturation avant d'encaisser une " +
+        "réservation.",
+    };
+  }
+
+  // Le booking ne stocke pas le montant : on le recalcule (prix affiche).
+  const { data: durationOption } = await admin
+    .from("consultation_type_durations")
+    .select("*")
+    .eq("id", booking.duration_option_id)
+    .single();
+
+  if (!durationOption) {
+    return {
+      success: false,
+      error: "Option de durée introuvable pour cette réservation.",
+    };
+  }
+
+  let surchargeCents = 0;
+  if (booking.location === "domicile") {
+    const { data: loc } = await admin
+      .from("consultant_locations")
+      .select("surcharge_cents")
+      .eq("consultant_id", booking.consultant_id)
+      .eq("location_type", "domicile")
+      .eq("is_active", true)
+      .maybeSingle();
+    surchargeCents = loc?.surcharge_cents ?? 0;
+  }
+
+  const price = computeBookingPrice({
+    duration: durationOption as ConsultationTypeDuration,
+    date: new Date(booking.starts_at),
+    location: booking.location,
+    surchargeCents,
+  });
+
+  const { data: payment, error: payErr } = await admin
+    .from("payments")
+    .insert({
+      stripe_payment_intent_id: null,
+      client_id: booking.client_id,
+      consultant_id: booking.consultant_id,
+      amount_cents: price.totalCents,
+      // Aucune commission plateforme sur un encaissement sur place : la
+      // plateforme ne touche pas ces fonds.
+      platform_fee_cents: 0,
+      currency: "eur",
+      type: "booking",
+      reference_id: bookingId,
+      status: "succeeded",
+    })
+    .select("id")
+    .single();
+
+  if (payErr || !payment) {
+    // 23505 : double encaissement rattrape par l'index unique partiel (00055).
+    if ((payErr as { code?: string } | null)?.code === "23505") {
+      return { success: false, error: "Cette réservation est déjà encaissée." };
+    }
+    return {
+      success: false,
+      error: "Erreur lors de l'enregistrement de l'encaissement.",
+    };
+  }
+
+  await emitInvoiceForPayment(admin, payment.id);
+
+  await admin.from("audit_logs").insert({
+    user_id: user.id,
+    action: "booking_marked_paid",
+    entity_type: "booking",
+    entity_id: bookingId,
+    metadata: { amount_cents: price.totalCents, payment_id: payment.id },
+  });
+
+  revalidatePath("/espace-consultante/reservations");
+  revalidatePath(`/espace-consultante/reservations/${bookingId}`);
   return { success: true };
 };
 

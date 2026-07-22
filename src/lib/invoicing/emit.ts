@@ -8,19 +8,20 @@ type Reader = SupabaseClient;
 type PaymentType = "formation" | "booking" | "event";
 
 /**
- * Emet la facture d'un paiement en ligne confirme.
+ * Emet la facture d'un paiement confirme, designe par son identifiant.
  *
- * Appelee par le webhook une fois le paiement enregistre. Idempotente : la
- * fonction `create_invoice` renvoie la facture existante sans consommer de
- * numero si l'evenement est rejoue.
+ * Appelee apres l'enregistrement du paiement — depuis le webhook pour une vente
+ * en ligne, depuis « marquer comme encaisse » pour un paiement sur place.
+ * Idempotente : la fonction `create_invoice` renvoie la facture existante sans
+ * consommer de numero si elle est rappelee sur le meme paiement.
  *
- * Ne leve jamais : l'argent est deja encaisse et la reservation/formation deja
- * traitee. Un echec de facturation est trace (audit) mais ne doit pas faire
- * rejouer le webhook, ce qui doublerait emails et notifications.
+ * Ne leve jamais : l'argent est deja encaisse et la vente deja traitee. Un
+ * echec de facturation est trace (audit) mais ne doit pas faire rejouer le
+ * webhook, ce qui doublerait emails et notifications.
  */
 export const emitInvoiceForPayment = async (
   supabase: Reader,
-  paymentIntentId: string,
+  paymentId: string,
 ): Promise<void> => {
   try {
     const { data: payment } = await supabase
@@ -28,7 +29,7 @@ export const emitInvoiceForPayment = async (
       .select(
         "id, client_id, consultant_id, amount_cents, currency, type, reference_id, status",
       )
-      .eq("stripe_payment_intent_id", paymentIntentId)
+      .eq("id", paymentId)
       .maybeSingle();
 
     // Pas de facture pour un paiement absent, echoue ou rembourse : on ne
@@ -44,7 +45,7 @@ export const emitInvoiceForPayment = async (
         payment.consultant_id,
         payment.reference_id,
         "billing_profile_incomplete",
-        paymentIntentId,
+        paymentId,
       );
       return;
     }
@@ -87,7 +88,7 @@ export const emitInvoiceForPayment = async (
         payment.consultant_id,
         payment.reference_id,
         error.message,
-        paymentIntentId,
+        paymentId,
       );
     }
   } catch (err) {
@@ -140,13 +141,13 @@ const logInvoiceIssue = async (
   consultantId: string,
   referenceId: string,
   reason: string,
-  paymentIntentId: string,
+  paymentId: string,
 ): Promise<void> => {
   await supabase.from("audit_logs").insert({
     user_id: consultantId,
     action: "invoice_emission_failed",
     entity_type: "invoice",
     entity_id: referenceId,
-    metadata: { reason, payment_intent_id: paymentIntentId },
+    metadata: { reason, payment_id: paymentId },
   });
 };

@@ -93,16 +93,20 @@ HT + TVA = TTC au centime, y compris sur les montants impairs.
   si le profil de facturation de la consultante est incomplet
   ([consultant-billing.ts](../src/lib/invoicing/consultant-billing.ts)).
 
-**Paiement sur place** : pas de facture automatique. Il n'existe aujourd'hui
-aucun moment « encaissement confirme » cote sur-place (le booking reste
-`pending`, aucune ligne `payments` n'est creee). Emettre une facture a la
-creation du rendez-vous serait facturer une prestation non encore payee. Ce cas
-sera traite avec l'espace facturation (PR 3/3) : emission manuelle par la
-consultante quand elle a encaisse.
+**Paiement sur place — « marquer comme encaisse » :** le sur-place n'a pas de
+moment « paye » spontane (le booking reste `pending`, aucune ligne `payments`
+n'existe). Plutot que d'emettre une facture a la creation du rendez-vous — ce
+qui facturerait une prestation non encore reglee — la consultante confirme
+l'encaissement depuis la fiche de reservation : une ligne `payments` est creee
+(montant recalcule = prix affiche, pas de commission plateforme) et la facture
+emise, exactement comme pour une vente en ligne. Un index unique partiel
+([00055](../supabase/migrations/00055_onsite_payment_unique.sql)) interdit le
+double encaissement. Le gate de facturation s'y applique aussi : pas
+d'encaissement possible sans profil complet. La comptabilite est ainsi sans
+trou, ligne et en ligne comme sur place.
 
 ## Ce qui reste (PR 3/3 — espace facturation)
 
 1. consulter chaque achat avec sa facture rattachee (cliente et consultante) ;
 2. gabarit HTML imprimable + export PDF, avec toutes les mentions obligatoires ;
-3. correction d'une facture emise = avoir + facture corrigee, puis renvoi ;
-4. emission manuelle pour un encaissement sur place.
+3. correction d'une facture emise = avoir + facture corrigee, puis renvoi.

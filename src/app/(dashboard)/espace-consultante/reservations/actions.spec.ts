@@ -8,6 +8,9 @@ const insertCalls: Array<{ table: string; data: unknown }> = [];
 /** Ligne renvoyee par table, ou null. */
 const db: Record<string, Record<string, unknown> | null> = {};
 
+/** Erreur simulee sur l'insert d'une table (ex. 23505 sur payments). */
+const insertErrors: Record<string, { code?: string } | null> = {};
+
 /**
  * Chain Supabase qui honore reellement les `.eq()`.
  *
@@ -31,6 +34,10 @@ const createChain = (table: string) => {
 
   const chain: Record<string, unknown> = {
     select: vi.fn().mockReturnThis(),
+    is: vi.fn((column: string, value: unknown) => {
+      filters.push([column, value]);
+      return chain;
+    }),
     eq: vi.fn((column: string, value: unknown) => {
       filters.push([column, value]);
       return chain;
@@ -41,9 +48,26 @@ const createChain = (table: string) => {
     }),
     insert: vi.fn((data: unknown) => {
       insertCalls.push({ table, data });
-      return Promise.resolve({ error: null });
+      // Insert-returning : `.insert(...).select(...).single()` rend la ligne
+      // inseree, avec un id, comme PostgREST. Une erreur simulee (ex. 23505)
+      // court-circuite la donnee.
+      const err = insertErrors[table] ?? null;
+      const inserted = { id: `${table}-inserted-id`, ...(data as object) };
+      const result = { data: err ? null : inserted, error: err };
+      const insertChain: Record<string, unknown> = {
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn(() => Promise.resolve(result)),
+        maybeSingle: vi.fn(() => Promise.resolve(result)),
+      };
+      (insertChain as { then?: (o: (v: unknown) => unknown) => unknown }).then = (
+        onFulfilled: (value: unknown) => unknown,
+      ) => Promise.resolve({ data: null, error: err }).then(onFulfilled);
+      return insertChain;
     }),
     single: vi.fn(() =>
+      Promise.resolve({ data: matches() ? row : null, error: null }),
+    ),
+    maybeSingle: vi.fn(() =>
       Promise.resolve({ data: matches() ? row : null, error: null }),
     ),
   };
@@ -86,7 +110,26 @@ vi.mock("@/lib/notifications", () => ({
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-import { cancelBooking } from "./actions";
+const mockEmitInvoice = vi.fn().mockResolvedValue(undefined);
+vi.mock("@/lib/invoicing/emit", () => ({
+  emitInvoiceForPayment: (...args: unknown[]) => mockEmitInvoice(...args),
+}));
+
+const mockConsultantCanSell = vi.fn().mockResolvedValue(true);
+vi.mock("@/lib/invoicing/consultant-billing", () => ({
+  consultantCanSell: (...args: unknown[]) => mockConsultantCanSell(...args),
+}));
+
+vi.mock("@/lib/booking/pricing", () => ({
+  computeBookingPrice: vi.fn().mockReturnValue({
+    basePriceCents: 9000,
+    isWeekendOrHoliday: false,
+    surchargeCents: 0,
+    totalCents: 9000,
+  }),
+}));
+
+import { cancelBooking, markBookingPaid } from "./actions";
 import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 
 // ─── Fixtures ─────────────────────────────────────────────────
@@ -241,5 +284,122 @@ describe("cancelBooking (espace consultante)", () => {
       action: "booking_cancelled",
       entity_id: BOOKING_ID,
     });
+  });
+});
+
+// ─── markBookingPaid : encaissement sur place ─────────────────
+
+const makeOnSiteBooking = (overrides: Record<string, unknown> = {}) => ({
+  id: BOOKING_ID,
+  client_id: "client-uuid-001",
+  consultant_id: CONSULTANT_ID,
+  duration_option_id: "do-uuid-001",
+  location: "teleconsultation",
+  starts_at: "2024-01-20T10:00:00.000Z",
+  payment_method: "on_site",
+  status: "confirmed",
+  ...overrides,
+});
+
+describe("markBookingPaid (encaissement sur place)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    updateCalls.length = 0;
+    insertCalls.length = 0;
+    for (const key of Object.keys(db)) delete db[key];
+    for (const key of Object.keys(insertErrors)) delete insertErrors[key];
+
+    mockEmitInvoice.mockResolvedValue(undefined);
+    mockConsultantCanSell.mockResolvedValue(true);
+
+    // Option de duree pour le recalcul du prix ; aucun paiement existant.
+    db.consultation_type_durations = {
+      id: "do-uuid-001",
+      duration_minutes: 60,
+      price_cents: 9000,
+      weekend_price_cents: null,
+    };
+
+    vi.mocked(getSupabaseAndUser).mockResolvedValue({
+      supabase: { from: mockFrom },
+      user: { id: CONSULTANT_ID, email: "c@test.fr", roles: ["consultant"] },
+    } as unknown as Awaited<ReturnType<typeof getSupabaseAndUser>>);
+  });
+
+  it("enregistre le paiement recalcule et emet la facture", async () => {
+    db.bookings = makeOnSiteBooking();
+
+    const result = await markBookingPaid(BOOKING_ID);
+
+    expect(result.success).toBe(true);
+    const payment = insertCalls.find((c) => c.table === "payments");
+    expect(payment!.data).toMatchObject({
+      amount_cents: 9000,
+      // Aucune commission plateforme sur un encaissement sur place.
+      platform_fee_cents: 0,
+      status: "succeeded",
+      stripe_payment_intent_id: null,
+      type: "booking",
+      reference_id: BOOKING_ID,
+    });
+    expect(mockEmitInvoice).toHaveBeenCalledWith(
+      expect.anything(),
+      "payments-inserted-id",
+    );
+    const audit = insertCalls.find((c) => c.table === "audit_logs");
+    expect(audit!.data).toMatchObject({ action: "booking_marked_paid" });
+  });
+
+  it("refuse une reservation reglee en ligne", async () => {
+    db.bookings = makeOnSiteBooking({ payment_method: "online" });
+
+    const result = await markBookingPaid(BOOKING_ID);
+
+    expect(result.success).toBe(false);
+    expect(insertCalls.find((c) => c.table === "payments")).toBeUndefined();
+    expect(mockEmitInvoice).not.toHaveBeenCalled();
+  });
+
+  it("refuse la reservation d'une autre consultante", async () => {
+    db.bookings = makeOnSiteBooking({ consultant_id: AUTRE_CONSULTANTE });
+
+    const result = await markBookingPaid(BOOKING_ID);
+
+    expect(result.success).toBe(false);
+    expect(insertCalls.find((c) => c.table === "payments")).toBeUndefined();
+  });
+
+  it("refuse une reservation annulee ou une cliente absente", async () => {
+    db.bookings = makeOnSiteBooking({ status: "cancelled" });
+
+    const result = await markBookingPaid(BOOKING_ID);
+
+    expect(result.success).toBe(false);
+    expect(insertCalls.find((c) => c.table === "payments")).toBeUndefined();
+  });
+
+  it("refuse d'encaisser sans profil de facturation complet", async () => {
+    // Encaisser sans pouvoir facturer laisserait une vente sans facture : le
+    // trou meme que cette action est censee eviter.
+    db.bookings = makeOnSiteBooking();
+    mockConsultantCanSell.mockResolvedValue(false);
+
+    const result = await markBookingPaid(BOOKING_ID);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("facturation");
+    expect(insertCalls.find((c) => c.table === "payments")).toBeUndefined();
+    expect(mockEmitInvoice).not.toHaveBeenCalled();
+  });
+
+  it("rattrape un double encaissement (contrainte d'unicite)", async () => {
+    db.bookings = makeOnSiteBooking();
+    insertErrors.payments = { code: "23505" };
+
+    const result = await markBookingPaid(BOOKING_ID);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("déjà encaissée");
+    expect(mockEmitInvoice).not.toHaveBeenCalled();
   });
 });
