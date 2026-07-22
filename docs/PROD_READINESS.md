@@ -736,7 +736,7 @@ defaut : une restauration l'aurait retire de l'editeur.
 | --- | ---------------------------------------------------------------------------- | ------ | ----- | ------------ |
 | 5-1 | Rate limiting : in-memory → Postgres partage (casse en serverless multi-instance) | ✅ | 🔴 P0 | 02-12        |
 | 5-2 | CSP (Content-Security-Policy) manquant                                       | ✅     | 🟠 P1 | 02-13        |
-| 5-3 | Validation MIME type sur les uploads Storage                                 | ⬜     | 🟡 P2 | 02-14        |
+| 5-3 | Validation MIME type sur les uploads Storage                                 | ✅     | 🟡 P2 | 02-14        |
 | 5-4 | Seeds `consultant_locations` + `available_locations`                         | ⬜     | 🟠 P1 | 07-08        |
 | 5-5 | Cles live sur Vercel (`sk_live`, `pk_live`)                                  | 🔶     | 🔴 P0 | guide : [GO_LIVE](./GO_LIVE.md) |
 | 5-6 | Webhook endpoint prod enregistre + `whsec_` prod                             | 🔶     | 🔴 P0 | guide : [GO_LIVE](./GO_LIVE.md) |
