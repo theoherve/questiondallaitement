@@ -86,6 +86,12 @@ export const seed = async () => {
         commission_rate: COMMISSION_RATE,
         is_active: true,
         onboarding_completed: true,
+        // Profil de facturation complet : le gate d'emission (PR B) refuse la
+        // vente en ligne sans lui, ce qui casserait les scenarios de paiement.
+        billing_legal_name: "Consultante E2E",
+        billing_address: "1 rue de Test, 44000 Nantes",
+        billing_siren: "000000000",
+        billing_vat_number: "FR00000000000",
       },
       { onConflict: "id" },
     ),

@@ -7,6 +7,41 @@ import type { ConsultationLocation } from "@/types/database";
 
 const REVALIDATE_PATH = "/espace-consultante/parametres";
 
+// ---- Facturation ----
+
+/**
+ * Enregistre l'identite de facturation. Ces mentions figurent sur chaque
+ * facture emise par la consultante ; sans elles, aucune vente en ligne ne peut
+ * aboutir (gate a l'emission). Le SIREN est laisse libre car pre-rempli depuis
+ * le numero de TVA a la migration.
+ */
+export const updateBillingProfile = async (
+  formData: FormData,
+): Promise<ActionResult> => {
+  const { supabase, user } = await getSupabaseAndUser();
+
+  const value = (key: string) =>
+    ((formData.get(key) as string) || "").trim() || null;
+
+  const { error } = await supabase
+    .from("consultants")
+    .update({
+      billing_legal_name: value("billing_legal_name"),
+      billing_address: value("billing_address"),
+      billing_siren: value("billing_siren"),
+      billing_vat_number: value("billing_vat_number"),
+      billing_legal_form: value("billing_legal_form"),
+    })
+    .eq("id", user.id);
+
+  if (error) {
+    return { success: false, error: "Erreur lors de l'enregistrement." };
+  }
+
+  revalidatePath(REVALIDATE_PATH);
+  return { success: true };
+};
+
 // ---- Profile (08-11) ----
 
 export const updateProfile = async (

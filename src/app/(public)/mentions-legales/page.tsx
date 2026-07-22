@@ -33,7 +33,7 @@ const MentionsLegalesPage = () => (
             <strong>SIRET :</strong> [Numéro SIRET]
           </p>
           <p>
-            <strong>N° TVA intracommunautaire :</strong> [Numéro TVA]
+            <strong>N° TVA intracommunautaire :</strong> FR94540075819
           </p>
           <p>
             <strong>Directeur de la publication :</strong> [Prénom Nom]

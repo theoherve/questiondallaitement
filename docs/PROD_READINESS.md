@@ -96,7 +96,7 @@
 | 1-3 | Verifier que `commission_rate` couvre les frais Stripe (1,5 % + 0,25 €)                 | ✅     | 🔴 P0 |
 | 1-4 | Definir la responsabilite des pertes / chargebacks (plateforme sur destination charge)   | ✅     | 🔴 P0 |
 | 1-5 | Calendrier de payout des comptes Express                                                 | ✅     | 🟠 P1 |
-| 1-6 | TVA sur la commission plateforme + facturation                                           | ⬜     | 🟠 P1 |
+| 1-6 | TVA (20 %) + facturation par la consultante — conception : [FACTURATION](./FACTURATION.md) | 🔶 | 🔴 P0 |
 
 > **1-2 note** : [connect.ts](../src/lib/stripe/connect.ts) force `business_type: "individual"`.
 > Une consultante en societe fera echouer l'onboarding Express → rendre le champ dynamique.

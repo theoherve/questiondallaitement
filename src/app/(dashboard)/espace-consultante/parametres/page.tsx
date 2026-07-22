@@ -7,6 +7,7 @@ import { ConsultationTypesTab } from "./_components/consultation-types-tab";
 import { AvailabilitiesTab } from "./_components/availabilities-tab";
 import { ExceptionsTab } from "./_components/exceptions-tab";
 import { IntegrationsTab } from "./_components/integrations-tab";
+import { BillingTab } from "./_components/billing-tab";
 import {
   getLocations,
   getConsultationTypes,
@@ -50,6 +51,7 @@ const ConsultantSettingsPage = async () => {
           <TabsTrigger value="consultations">Consultations</TabsTrigger>
           <TabsTrigger value="disponibilites">Disponibilités</TabsTrigger>
           <TabsTrigger value="exceptions">Exceptions</TabsTrigger>
+          <TabsTrigger value="facturation">Facturation</TabsTrigger>
           <TabsTrigger value="integrations">Intégrations</TabsTrigger>
         </TabsList>
 
@@ -71,6 +73,18 @@ const ConsultantSettingsPage = async () => {
 
         <TabsContent value="exceptions" className="mt-6">
           <ExceptionsTab exceptions={exceptions} />
+        </TabsContent>
+
+        <TabsContent value="facturation" className="mt-6">
+          <BillingTab
+            billing={{
+              billing_legal_name: consultant?.billing_legal_name ?? null,
+              billing_address: consultant?.billing_address ?? null,
+              billing_siren: consultant?.billing_siren ?? null,
+              billing_vat_number: consultant?.billing_vat_number ?? null,
+              billing_legal_form: consultant?.billing_legal_form ?? null,
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="integrations" className="mt-6">
