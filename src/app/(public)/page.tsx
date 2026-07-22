@@ -9,6 +9,7 @@ import { TestimonialCarousel } from "./_components/testimonial-carousel";
 import { NewsletterForm } from "./_components/newsletter-form";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { features } from "@/config/features";
 
 /* ─── Static data ─── */
 
@@ -140,6 +141,9 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       cta: "En savoir plus",
     },
   ];
+  const visibleServices = features.bookingEnabled
+    ? SERVICES
+    : SERVICES.filter((s) => s.href !== "/reserver");
   const featuredFormation = allFormations.find(
     (f) => f.slug === "pack-essentiel-allaitement"
   );
@@ -223,14 +227,16 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                 </Link>
               </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="border-2 border-white bg-transparent text-white hover:bg-white/10 hover:text-white"
-              >
-                <Link href="/reserver">Prendre rendez-vous</Link>
-              </Button>
+              {features.bookingEnabled && (
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-2 border-white bg-transparent text-white hover:bg-white/10 hover:text-white"
+                >
+                  <Link href="/reserver">Prendre rendez-vous</Link>
+                </Button>
+              )}
             </div>
 
             {/* Floating trust card — desktop only */}
@@ -290,7 +296,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
           </ScrollReveal>
 
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {SERVICES.map((service, i) => {
+            {visibleServices.map((service, i) => {
               const Icon = service.icon;
               return (
                 <ScrollReveal key={service.title} delay={i * 80}>
@@ -796,22 +802,29 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
               d&apos;être accompagné.
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-background-beige/70">
-              Prenez rendez-vous pour une consultation personnalisée, ou
-              explorez nos accompagnements à votre rythme.
+              {features.bookingEnabled
+                ? "Prenez rendez-vous pour une consultation personnalisée, ou explorez nos accompagnements à votre rythme."
+                : "Explorez nos accompagnements et formations en ligne, à votre rythme."}
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+              {features.bookingEnabled && (
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-primary-red px-8 hover:bg-primary-red-dark"
+                >
+                  <Link href="/reserver">Prendre rendez-vous</Link>
+                </Button>
+              )}
               <Button
                 asChild
                 size="lg"
-                className="bg-primary-red px-8 hover:bg-primary-red-dark"
-              >
-                <Link href="/reserver">Prendre rendez-vous</Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="border-2 border-background-beige/30 bg-transparent text-background-beige hover:bg-background-beige/10 hover:text-background-beige"
+                variant={features.bookingEnabled ? "outline" : "default"}
+                className={
+                  features.bookingEnabled
+                    ? "border-2 border-background-beige/30 bg-transparent text-background-beige hover:bg-background-beige/10 hover:text-background-beige"
+                    : "bg-primary-red px-8 hover:bg-primary-red-dark"
+                }
               >
                 <Link href="/accompagnements">
                   Découvrir les accompagnements
