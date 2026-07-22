@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { publicNav, clientNav } from "@/config/navigation";
+import { features } from "@/config/features";
 import { getNavIcon } from "@/config/navigation-icons";
 import {
   isConsultant,
@@ -224,23 +225,27 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
                 </Link>
               </Button>
             )}
-            <Button
-              asChild
-              className="bg-primary-red px-6 hover:bg-primary-red-dark"
-            >
-              <Link href="/reserver">Prendre RDV</Link>
-            </Button>
+            {features.bookingEnabled && (
+              <Button
+                asChild
+                className="bg-primary-red px-6 hover:bg-primary-red-dark"
+              >
+                <Link href="/reserver">Prendre RDV</Link>
+              </Button>
+            )}
           </div>
 
           {/* Mobile right — CTA RDV + hamburger (always visible) */}
           <div className="flex items-center gap-2 lg:hidden">
-            <Button
-              asChild
-              size="sm"
-              className="bg-primary-red hover:bg-primary-red-dark"
-            >
-              <Link href="/reserver">RDV</Link>
-            </Button>
+            {features.bookingEnabled && (
+              <Button
+                asChild
+                size="sm"
+                className="bg-primary-red hover:bg-primary-red-dark"
+              >
+                <Link href="/reserver">RDV</Link>
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -359,17 +364,19 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
                   Connexion
                 </Link>
                 <div className="mt-4 flex flex-col gap-3">
-                  <Button
-                    asChild
-                    className="w-full bg-primary-red hover:bg-primary-red-dark"
-                  >
-                    <Link
-                      href="/reserver"
-                      onClick={() => setMenuOpen(false)}
+                  {features.bookingEnabled && (
+                    <Button
+                      asChild
+                      className="w-full bg-primary-red hover:bg-primary-red-dark"
                     >
-                      Prendre rendez-vous
-                    </Link>
-                  </Button>
+                      <Link
+                        href="/reserver"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Prendre rendez-vous
+                      </Link>
+                    </Button>
+                  )}
                   <Button asChild variant="outline" className="w-full">
                     <Link
                       href="/inscription"
