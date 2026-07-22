@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
+import { features } from "@/config/features";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -415,16 +416,18 @@ const ClientDashboardPage = async () => {
                 <p className="text-sm text-muted-foreground">
                   Aucun rendez-vous à venir.
                 </p>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="mt-4 rounded-xl"
-                >
-                  <Link href="/reserver" tabIndex={0}>
-                    Prendre rendez-vous
-                  </Link>
-                </Button>
+                {features.bookingEnabled && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 rounded-xl"
+                  >
+                    <Link href="/reserver" tabIndex={0}>
+                      Prendre rendez-vous
+                    </Link>
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { Button } from "@/components/ui/button";
 import { TestimonialCarousel } from "@/app/(public)/_components/testimonial-carousel";
+import { features } from "@/config/features";
 import {
   ArrowRight,
   Heart,
@@ -94,14 +95,16 @@ const AProposPage = () => {
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
-                  <Button
-                    asChild
-                    size="lg"
-                    variant="outline"
-                    className="border-primary-green/20 text-primary-green hover:bg-primary-green/5"
-                  >
-                    <Link href="/reserver">Prendre rendez-vous</Link>
-                  </Button>
+                  {features.bookingEnabled && (
+                    <Button
+                      asChild
+                      size="lg"
+                      variant="outline"
+                      className="border-primary-green/20 text-primary-green hover:bg-primary-green/5"
+                    >
+                      <Link href="/reserver">Prendre rendez-vous</Link>
+                    </Button>
+                  )}
                 </div>
               </div>
             </ScrollReveal>
@@ -452,14 +455,16 @@ const AProposPage = () => {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="border-2 border-background-beige bg-transparent text-background-beige hover:bg-background-beige/10 hover:text-background-beige"
-              >
-                <Link href="/reserver">Prendre rendez-vous</Link>
-              </Button>
+              {features.bookingEnabled && (
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-2 border-background-beige bg-transparent text-background-beige hover:bg-background-beige/10 hover:text-background-beige"
+                >
+                  <Link href="/reserver">Prendre rendez-vous</Link>
+                </Button>
+              )}
             </div>
           </ScrollReveal>
         </div>

@@ -13,7 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { publicNav, clientNav } from "@/config/navigation";
+import { publicNav, clientNav, PACK_SALES_PATH } from "@/config/navigation";
+import { features } from "@/config/features";
 import { getNavIcon } from "@/config/navigation-icons";
 import {
   isConsultant,
@@ -228,18 +229,26 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
               asChild
               className="bg-primary-red px-6 hover:bg-primary-red-dark"
             >
-              <Link href="/reserver">Prendre RDV</Link>
+              {features.bookingEnabled ? (
+                <Link href="/reserver">Prendre RDV</Link>
+              ) : (
+                <Link href={PACK_SALES_PATH}>Découvrir le pack</Link>
+              )}
             </Button>
           </div>
 
-          {/* Mobile right — CTA RDV + hamburger (always visible) */}
+          {/* Mobile right — CTA (RDV ou pack) + hamburger (always visible) */}
           <div className="flex items-center gap-2 lg:hidden">
             <Button
               asChild
               size="sm"
               className="bg-primary-red hover:bg-primary-red-dark"
             >
-              <Link href="/reserver">RDV</Link>
+              {features.bookingEnabled ? (
+                <Link href="/reserver">RDV</Link>
+              ) : (
+                <Link href={PACK_SALES_PATH}>Le pack</Link>
+              )}
             </Button>
             <Button
               variant="ghost"
@@ -363,12 +372,18 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
                     asChild
                     className="w-full bg-primary-red hover:bg-primary-red-dark"
                   >
-                    <Link
-                      href="/reserver"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      Prendre rendez-vous
-                    </Link>
+                    {features.bookingEnabled ? (
+                      <Link href="/reserver" onClick={() => setMenuOpen(false)}>
+                        Prendre rendez-vous
+                      </Link>
+                    ) : (
+                      <Link
+                        href={PACK_SALES_PATH}
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Découvrir le pack
+                      </Link>
+                    )}
                   </Button>
                   <Button asChild variant="outline" className="w-full">
                     <Link

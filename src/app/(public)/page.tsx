@@ -9,6 +9,8 @@ import { TestimonialCarousel } from "./_components/testimonial-carousel";
 import { NewsletterForm } from "./_components/newsletter-form";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { features } from "@/config/features";
+import { PACK_SALES_PATH } from "@/config/navigation";
 
 /* ─── Static data ─── */
 
@@ -140,6 +142,17 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       cta: "En savoir plus",
     },
   ];
+  const visibleServices = features.bookingEnabled
+    ? SERVICES
+    : SERVICES.filter((s) => s.href !== "/reserver");
+  // Grille adaptée au nombre de services : 4 colonnes pleines, sinon centrée
+  // sur une largeur réduite pour que 2–3 cartes restent équilibrées.
+  const servicesGridClass =
+    visibleServices.length >= 4
+      ? "sm:grid-cols-2 lg:grid-cols-4"
+      : visibleServices.length === 3
+        ? "sm:grid-cols-2 lg:grid-cols-3"
+        : "sm:grid-cols-2 mx-auto max-w-4xl";
   const featuredFormation = allFormations.find(
     (f) => f.slug === "pack-essentiel-allaitement"
   );
@@ -229,7 +242,11 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                 variant="outline"
                 className="border-2 border-white bg-transparent text-white hover:bg-white/10 hover:text-white"
               >
-                <Link href="/reserver">Prendre rendez-vous</Link>
+                {features.bookingEnabled ? (
+                  <Link href="/reserver">Prendre rendez-vous</Link>
+                ) : (
+                  <Link href={PACK_SALES_PATH}>Découvrir le pack</Link>
+                )}
               </Button>
             </div>
 
@@ -289,8 +306,8 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
             </div>
           </ScrollReveal>
 
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {SERVICES.map((service, i) => {
+          <div className={`mt-14 grid gap-5 ${servicesGridClass}`}>
+            {visibleServices.map((service, i) => {
               const Icon = service.icon;
               return (
                 <ScrollReveal key={service.title} delay={i * 80}>
@@ -796,8 +813,9 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
               d&apos;être accompagné.
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-background-beige/70">
-              Prenez rendez-vous pour une consultation personnalisée, ou
-              explorez nos accompagnements à votre rythme.
+              {features.bookingEnabled
+                ? "Prenez rendez-vous pour une consultation personnalisée, ou explorez nos accompagnements à votre rythme."
+                : "Explorez nos accompagnements et formations en ligne, à votre rythme."}
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Button
@@ -805,7 +823,11 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                 size="lg"
                 className="bg-primary-red px-8 hover:bg-primary-red-dark"
               >
-                <Link href="/reserver">Prendre rendez-vous</Link>
+                {features.bookingEnabled ? (
+                  <Link href="/reserver">Prendre rendez-vous</Link>
+                ) : (
+                  <Link href={PACK_SALES_PATH}>Découvrir le pack</Link>
+                )}
               </Button>
               <Button
                 asChild

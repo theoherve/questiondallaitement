@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { features } from "@/config/features";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -182,7 +183,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
 
       <Separator className="my-8" />
 
-      {consultationTypes.length > 0 && (
+      {features.bookingEnabled && consultationTypes.length > 0 && (
         <section>
           <h2 className="font-serif text-2xl font-semibold text-primary-green">
             <CalendarDays className="mr-2 inline h-6 w-6" />
