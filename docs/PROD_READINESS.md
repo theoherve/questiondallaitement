@@ -747,7 +747,7 @@ defaut : une restauration l'aurait retire de l'editeur.
 | 5-1 | Rate limiting : in-memory → Postgres partage (casse en serverless multi-instance) | ✅ | 🔴 P0 | 02-12        |
 | 5-2 | CSP (Content-Security-Policy) manquant                                       | ✅     | 🟠 P1 | 02-13        |
 | 5-3 | Validation MIME type sur les uploads Storage                                 | ✅     | 🟡 P2 | 02-14        |
-| 5-4 | Seeds `consultant_locations` + `available_locations`                         | ⬜     | 🟠 P1 | 07-08        |
+| 5-4 | Seeds `consultant_locations` + `available_locations`                         | ✅     | 🟠 P1 | 07-08 ; prod : lieux reels via l'onglet « Lieux » |
 | 5-5 | Cles live sur Vercel (`sk_live`, `pk_live`)                                  | ✅     | 🔴 P0 | configure par Theo (session juillet) |
 | 5-6 | Webhook endpoint prod enregistre + `whsec_` prod                             | ✅     | 🔴 P0 | configure par Theo (session juillet) |
 | 5-7 | CGV / mentions legales coherentes avec le modele commission                   | 🔶     | 🔴 P0 | texte pret [CGV](./CGV_MODELE_ECONOMIQUE.md) ; publication a valider |

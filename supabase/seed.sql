@@ -99,6 +99,33 @@ WHERE c.slug = 'carole-herve'
     WHERE ct.consultant_id = c.id
       AND ct.title = t.title
   );
+-- 2b. Lieux de consultation (07-08). Sans ces lignes, `/reserver` filtre cabinet
+-- et domicile a vide : seule la teleconsultation (qui ne depend d'aucune ligne)
+-- reste reservable. Valeurs d'exemple pour le seed — la consultante ajuste ses
+-- vraies adresses, rayons et majorations depuis l'onglet « Lieux ».
+INSERT INTO consultant_locations (
+    consultant_id, location_type, label, address, city, postal_code,
+    radius_km, surcharge_cents, is_active
+  )
+SELECT c.id, v.location_type::consultation_location, v.label, v.address, v.city,
+  v.postal_code, v.radius_km, v.surcharge_cents, true
+FROM consultants c
+  CROSS JOIN (
+    VALUES
+      ('cabinet', 'Cabinet', '1 rue des Lilas', 'Nantes', '44000', NULL::int, 0),
+      ('teleconsultation', 'Téléconsultation', NULL, NULL, NULL, NULL::int, 0),
+      ('domicile', 'À domicile', NULL, 'Nantes', '44000', 20, 2000)
+  ) AS v(location_type, label, address, city, postal_code, radius_km, surcharge_cents)
+WHERE c.slug = 'carole-herve'
+ON CONFLICT (consultant_id, location_type) DO NOTHING;
+-- 2c. Rendre les consultations de Carole reservables sur les trois lieux (par
+-- defaut, la colonne ne porte que la teleconsultation).
+UPDATE consultation_types ct
+SET available_locations =
+    ARRAY['teleconsultation', 'cabinet', 'domicile']::consultation_location[]
+FROM consultants c
+WHERE ct.consultant_id = c.id
+  AND c.slug = 'carole-herve';
 -- 3. Formations (9: 1 pack + 8 modules) — fixed UUIDs for pack sections reference
 INSERT INTO formations (
     id,
