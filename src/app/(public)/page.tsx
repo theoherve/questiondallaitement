@@ -20,6 +20,10 @@ const BIO_STATS = [
   { value: "IBCLC", label: "Certification internationale" },
 ];
 
+// En mode formations-only (booking désactivé), les CTA de prise de RDV
+// pointent vers la page de vente du pack (offre en ligne phare).
+const PACK_SALES_PATH = "/accompagnements/pack-essentiel-allaitement";
+
 type HomePageProps = {
   searchParams: Promise<Record<string, string | undefined>>;
 };
@@ -227,16 +231,18 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                   <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                 </Link>
               </Button>
-              {features.bookingEnabled && (
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="border-2 border-white bg-transparent text-white hover:bg-white/10 hover:text-white"
-                >
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-2 border-white bg-transparent text-white hover:bg-white/10 hover:text-white"
+              >
+                {features.bookingEnabled ? (
                   <Link href="/reserver">Prendre rendez-vous</Link>
-                </Button>
-              )}
+                ) : (
+                  <Link href={PACK_SALES_PATH}>Découvrir le pack</Link>
+                )}
+              </Button>
             </div>
 
             {/* Floating trust card — desktop only */}
@@ -807,24 +813,22 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                 : "Explorez nos accompagnements et formations en ligne, à votre rythme."}
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              {features.bookingEnabled && (
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-primary-red px-8 hover:bg-primary-red-dark"
-                >
-                  <Link href="/reserver">Prendre rendez-vous</Link>
-                </Button>
-              )}
               <Button
                 asChild
                 size="lg"
-                variant={features.bookingEnabled ? "outline" : "default"}
-                className={
-                  features.bookingEnabled
-                    ? "border-2 border-background-beige/30 bg-transparent text-background-beige hover:bg-background-beige/10 hover:text-background-beige"
-                    : "bg-primary-red px-8 hover:bg-primary-red-dark"
-                }
+                className="bg-primary-red px-8 hover:bg-primary-red-dark"
+              >
+                {features.bookingEnabled ? (
+                  <Link href="/reserver">Prendre rendez-vous</Link>
+                ) : (
+                  <Link href={PACK_SALES_PATH}>Découvrir le pack</Link>
+                )}
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-2 border-background-beige/30 bg-transparent text-background-beige hover:bg-background-beige/10 hover:text-background-beige"
               >
                 <Link href="/accompagnements">
                   Découvrir les accompagnements

@@ -49,8 +49,10 @@ Un seul module, importé partout. Aucun `process.env` dispersé dans les composa
 | 2 | Nav header desktop | `src/components/layout/header.tsx` | ~231 | Lien "Prendre RDV" enveloppé dans `{features.bookingEnabled && ...}` |
 | 3 | Nav header mobile (icône) | `src/components/layout/header.tsx` | ~242 | idem (masqué) |
 | 4 | Nav header menu mobile | `src/components/layout/header.tsx` | ~367 | idem (masqué) |
-| 5 | CTA hero home (secondaire) | `src/app/(public)/page.tsx` | 226-233 | Bouton outline "Prendre rendez-vous" (`/reserver`) masqué. Le CTA primaire L221 pointe déjà vers `/accompagnements` → reste. |
-| 6 | CTA home bas de page | `src/app/(public)/page.tsx` | ~808 | "Prendre rendez-vous" remplacé par CTA "Découvrir les accompagnements" → `/accompagnements` |
+| 5 | CTA hero home (secondaire) | `src/app/(public)/page.tsx` | ~230 | Bouton outline **repointé** : "Découvrir le pack" → `PACK_SALES_PATH` (`/accompagnements/pack-essentiel-allaitement`). Reste visible. Le CTA primaire pointe déjà vers `/accompagnements`. |
+| 6 | CTA home bas de page | `src/app/(public)/page.tsx` | ~810 | Bouton primaire rouge **repointé** : "Découvrir le pack" → `PACK_SALES_PATH`. Le bouton outline "Découvrir les accompagnements" (`/accompagnements`) reste. |
+
+> **Révision (2026-07-22, post-test dev) :** les 2 CTA RDV de la home ne sont plus masqués mais **repointés** vers la page de vente du pack (`/accompagnements/pack-essentiel-allaitement`, constante `PACK_SALES_PATH`) en mode formations-only. Un site formations-only garde ainsi un CTA de conversion fort. Le reste du gating (header, consultantes, à-propos, espace-client, sitemap, redirect `/reserver`, cards services) reste masqué/redirigé.
 | 7 | Cards services home | `src/app/(public)/page.tsx` | SERVICES L97-121 | Entrées `href: "/reserver"` (Cabinet L107, Téléconsultation L119) filtrées de la liste rendue. Grid se recompose sur les cards restantes (Accompagnement en ligne, Formations Pro). |
 
 ### Non touché
