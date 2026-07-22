@@ -31,12 +31,13 @@
 | Phase                                   | Statut | Bloque par |
 | --------------------------------------- | ------ | ---------- |
 | Phase 0 — Prerequis externes            | ✅     | —          |
-| Phase 1 — Verification config Connect   | 🔶     | reste 1-6 (TVA) |
+| Phase 1 — Verification config Connect   | ✅     | 1-6 (TVA/facturation) livre ; 1-2 dynamique = futur |
 | Phase 2 — E2E N1 (seed + webhook simule) | ✅    | —          |
 | Phase 3 — E2E N2 (Playwright navigateur) | 🔶     | 3-1 a 3-5 faits ; 3-6 bloque |
 | Phase 4 — E2E N3 (consultante + refund)  | ✅     | —          |
-| Phase 5 — Durcissement avant live        | 🔶     | 5-2 fait ; 5-5/5-6/5-7 dependent de Theo |
-| Phase 6 — Templates d'email en admin     | ✅     | —          |
+| Phase 5 — Durcissement avant live        | 🔶     | 5-1/5-2/5-3/5-8 faits ; reste 5-4 ; 5-7 (CGV) a valider |
+| Phase 6 — Templates d'email en admin     | ✅     | reste : mail de test depuis l'editeur |
+| Facturation (TVA, emission, envoi, avoir) | ✅   | complete — voir [FACTURATION](./FACTURATION.md) |
 
 ---
 
@@ -96,7 +97,7 @@
 | 1-3 | Verifier que `commission_rate` couvre les frais Stripe (1,5 % + 0,25 €)                 | ✅     | 🔴 P0 |
 | 1-4 | Definir la responsabilite des pertes / chargebacks (plateforme sur destination charge)   | ✅     | 🔴 P0 |
 | 1-5 | Calendrier de payout des comptes Express                                                 | ✅     | 🟠 P1 |
-| 1-6 | TVA (20 %) + facturation par la consultante — conception : [FACTURATION](./FACTURATION.md) | 🔶 | 🔴 P0 |
+| 1-6 | TVA (20 %) + facturation par la consultante — voir [FACTURATION](./FACTURATION.md) | ✅ | 🔴 P0 |
 
 > **1-2 note** : [connect.ts](../src/lib/stripe/connect.ts) force `business_type: "individual"`.
 > Une consultante en societe fera echouer l'onboarding Express → rendre le champ dynamique.
@@ -119,6 +120,14 @@ A repercuter dans les CGV (5-7).
 
 **1-5 — tranche** : payout `interval: daily`, `delay_days: 7` sur les comptes Express
 (defaut FR). Cote plateforme : `daily` / `delay_days: 3`. Rien a changer.
+
+**1-6 — livre.** Carole HERVÉ (IBCLC seule) applique la TVA a 20 %. La facturation
+est complete : profil de facturation par consultante (raison sociale, adresse,
+SIREN, n° TVA `FR94540075819`), emission automatique a chaque encaissement (en
+ligne **et** sur place via « marquer comme encaisse »), numerotation legale sans
+trou (`AAAA-MM-NNNN`), envoi a la cliente (PDF + lien), espace de consultation,
+impression, et correction par avoir. Detail et conception dans
+[FACTURATION](./FACTURATION.md). PR #60 a #65.
 
 **1-3 — calcul.** Frais Stripe cartes EEE : 1,5 % + 0,25 €, a la charge de la plateforme
 (`controller.fees.payer = "application_express"`). Net plateforme :
@@ -652,6 +661,7 @@ Deux autres fragilites de la meme route, sans test jusqu'ici :
 | 6-5 | Arbitrer migrations vs edition en base (une edition ne doit pas etre ecrasee)    | ✅     | 🔴 P0 |
 | 6-6 | `restoreDefaultTemplates` ecrase sans confirmation — contredit 6-5               | ✅     | 🔴 P0 |
 | 6-7 | Rendu des templates : `\n` sans effet, `<p>` imbrique, metadonnees desynchronisees | ✅   | 🔴 P0 |
+| 6-8 | Envoi d'un email de test depuis l'editeur (demande d'origine)                    | 🔶     | 🟡 P2 |
 
 ### Ce qui existe deja
 
@@ -738,9 +748,9 @@ defaut : une restauration l'aurait retire de l'editeur.
 | 5-2 | CSP (Content-Security-Policy) manquant                                       | ✅     | 🟠 P1 | 02-13        |
 | 5-3 | Validation MIME type sur les uploads Storage                                 | ✅     | 🟡 P2 | 02-14        |
 | 5-4 | Seeds `consultant_locations` + `available_locations`                         | ⬜     | 🟠 P1 | 07-08        |
-| 5-5 | Cles live sur Vercel (`sk_live`, `pk_live`)                                  | 🔶     | 🔴 P0 | guide : [GO_LIVE](./GO_LIVE.md) |
-| 5-6 | Webhook endpoint prod enregistre + `whsec_` prod                             | 🔶     | 🔴 P0 | guide : [GO_LIVE](./GO_LIVE.md) |
-| 5-7 | CGV / mentions legales coherentes avec le modele commission                   | 🔶     | 🔴 P0 | brouillon : [CGV](./CGV_MODELE_ECONOMIQUE.md) |
+| 5-5 | Cles live sur Vercel (`sk_live`, `pk_live`)                                  | ✅     | 🔴 P0 | configure par Theo (session juillet) |
+| 5-6 | Webhook endpoint prod enregistre + `whsec_` prod                             | ✅     | 🔴 P0 | configure par Theo (session juillet) |
+| 5-7 | CGV / mentions legales coherentes avec le modele commission                   | 🔶     | 🔴 P0 | texte pret [CGV](./CGV_MODELE_ECONOMIQUE.md) ; publication a valider |
 | 5-8 | Relire `/api/stripe/connect` : pas de verification de role consultante        | ✅     | 🟠 P1 | fait en 4-5  |
 
 ### 5-2 — CSP posee et verifiee au navigateur (2026-07-21)
