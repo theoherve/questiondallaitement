@@ -13,6 +13,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { features } from "@/config/features";
 
 type CompletionCelebrationProps = {
   open: boolean;
@@ -120,14 +121,16 @@ export const CompletionCelebration = ({
           </div>
 
           <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-            <Button
-              asChild
-              className="flex-1 rounded-2xl bg-primary-red hover:bg-primary-red-dark"
-            >
-              <Link href="/reserver" tabIndex={0}>
-                Prendre un rendez-vous
-              </Link>
-            </Button>
+            {features.bookingEnabled && (
+              <Button
+                asChild
+                className="flex-1 rounded-2xl bg-primary-red hover:bg-primary-red-dark"
+              >
+                <Link href="/reserver" tabIndex={0}>
+                  Prendre un rendez-vous
+                </Link>
+              </Button>
+            )}
             <Button
               asChild
               variant="outline"

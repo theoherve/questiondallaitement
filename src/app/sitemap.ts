@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { features } from "@/config/features";
 
 export const dynamic = "force-dynamic";
 
@@ -60,12 +61,16 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
       changeFrequency: "monthly",
       priority: 0.7,
     },
-    {
-      url: `${BASE_URL}/reserver`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
+    ...(features.bookingEnabled
+      ? [
+          {
+            url: `${BASE_URL}/reserver`,
+            lastModified: now,
+            changeFrequency: "monthly" as const,
+            priority: 0.8,
+          },
+        ]
+      : []),
     {
       url: `${BASE_URL}/mentions-legales`,
       lastModified: now,
