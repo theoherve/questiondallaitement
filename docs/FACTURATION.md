@@ -105,8 +105,17 @@ double encaissement. Le gate de facturation s'y applique aussi : pas
 d'encaissement possible sans profil complet. La comptabilite est ainsi sans
 trou, ligne et en ligne comme sur place.
 
-## Ce qui reste (PR 3/3 — espace facturation)
+**PR 3/3a — espace facturation (consultation + document) :**
+- [invoice-view.ts](../src/lib/invoicing/invoice-view.ts) — modele d'affichage
+  (montants, taux, date), teste ;
+- `/factures/[id]` — document imprimable avec toutes les mentions obligatoires,
+  accessible a la cliente concernee, a l'emettrice et a l'admin ; export PDF via
+  l'impression du navigateur (le HTML fait foi) ;
+- listes dediees : « Facturation » cote consultante, « Mes factures » cote
+  cliente, chacune liee au document.
 
-1. consulter chaque achat avec sa facture rattachee (cliente et consultante) ;
-2. gabarit HTML imprimable + export PDF, avec toutes les mentions obligatoires ;
-3. correction d'une facture emise = avoir + facture corrigee, puis renvoi.
+## Ce qui reste (PR 3/3b — correction et renvoi)
+
+1. correction d'une facture emise = avoir + facture corrigee (immuabilite) ;
+2. renvoi a la cliente — **decision ouverte** : lien vers le document ou piece
+   jointe PDF a l'email.
