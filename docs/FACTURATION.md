@@ -72,13 +72,37 @@ HT + TVA = TTC au centime, y compris sur les montants impairs.
 
 ## Ce qui est deja fait
 
+**PR 1/3 — fondations :**
 - [vat.ts](../src/lib/invoicing/vat.ts) — decomposition TTC → HT + TVA, testee,
-  taux nul gere (future consultante exoneree).
+  taux nul gere (future consultante exoneree) ;
+- [billing-profile.ts](../src/lib/invoicing/billing-profile.ts) — identite de
+  facturation par consultante, saisie depuis l'onglet « Facturation ».
 
-## Ce qui reste, une fois les donnees et decisions ci-dessus obtenues
+**PR 2/3 — emission et numerotation :**
+- [numbering.ts](../src/lib/invoicing/numbering.ts) — rendu `AAAA-MM-NNNN`, teste ;
+- [00054_invoices.sql](../supabase/migrations/00054_invoices.sql) — tables
+  `invoices` (immuable : ni UPDATE ni DELETE) et `invoice_sequences`, plus la
+  fonction atomique `create_invoice` (existence + sequence + insertion dans une
+  seule transaction → numerotation sans trou ni doublon, idempotente face aux
+  redeliveries) ;
+- [build-invoice.ts](../src/lib/invoicing/build-invoice.ts) — contenu de la
+  facture avec snapshot fige de l'emettrice, teste ;
+- [emit.ts](../src/lib/invoicing/emit.ts) — emission automatique branchee sur le
+  webhook `checkout.session.completed`, apres l'enregistrement du paiement ;
+- gate : la vente en ligne (reservation, accompagnement, evenement) est refusee
+  si le profil de facturation de la consultante est incomplet
+  ([consultant-billing.ts](../src/lib/invoicing/consultant-billing.ts)).
 
-1. table `invoices` + compteur atomique par annee ;
-2. emission depuis le webhook et le paiement sur place ;
-3. ecran admin : liste, brouillon editable, emission, avoir ;
-4. gabarit HTML imprimable avec toutes les mentions obligatoires ;
-5. remplissage du vrai n° de TVA dans les mentions legales.
+**Paiement sur place** : pas de facture automatique. Il n'existe aujourd'hui
+aucun moment « encaissement confirme » cote sur-place (le booking reste
+`pending`, aucune ligne `payments` n'est creee). Emettre une facture a la
+creation du rendez-vous serait facturer une prestation non encore payee. Ce cas
+sera traite avec l'espace facturation (PR 3/3) : emission manuelle par la
+consultante quand elle a encaisse.
+
+## Ce qui reste (PR 3/3 — espace facturation)
+
+1. consulter chaque achat avec sa facture rattachee (cliente et consultante) ;
+2. gabarit HTML imprimable + export PDF, avec toutes les mentions obligatoires ;
+3. correction d'une facture emise = avoir + facture corrigee, puis renvoi ;
+4. emission manuelle pour un encaissement sur place.

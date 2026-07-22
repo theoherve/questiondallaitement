@@ -3,6 +3,7 @@
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createCheckoutSession } from "@/lib/stripe/connect";
+import { consultantCanSell } from "@/lib/invoicing/consultant-billing";
 import { siteConfig } from "@/config/site";
 import type { ActionResult } from "@/types";
 
@@ -93,6 +94,16 @@ export const registerForEvent = async (
     return {
       success: false,
       error: "Le paiement n'est pas disponible pour cet événement",
+    };
+  }
+
+  // Pas de vente en ligne sans pouvoir facturer (voir consultant-billing).
+  if (!(await consultantCanSell(supabase, event.consultant_id))) {
+    return {
+      success: false,
+      error:
+        "L'inscription en ligne est momentanément indisponible pour cet " +
+        "événement.",
     };
   }
 

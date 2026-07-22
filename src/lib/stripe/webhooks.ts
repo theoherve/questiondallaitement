@@ -17,6 +17,7 @@ import { runAutomations } from "@/lib/automations/engine";
 import { createNotification } from "@/lib/notifications";
 import { autoAssignLabelsOnEnrollment } from "@/lib/admin-workflows/labels";
 import { sendGuestSetupEmailIfNeeded } from "@/lib/auth/password-setup";
+import { emitInvoiceForPayment } from "@/lib/invoicing/emit";
 
 const getSupabase = () => createAdminClient();
 
@@ -82,6 +83,13 @@ export const handleCheckoutCompleted = async (
       },
       { onConflict: "stripe_payment_intent_id" },
     );
+
+  // Emission de la facture, une fois le paiement enregistre. Rien pour un
+  // creneau vendu deux fois : la cliente est remboursee, il n'y a pas de vente
+  // a facturer. L'emission est idempotente et ne leve jamais.
+  if (!slotConflict && paymentIntentId) {
+    await emitInvoiceForPayment(getSupabase(), paymentIntentId);
+  }
 
   await logAudit(
     client_id,
