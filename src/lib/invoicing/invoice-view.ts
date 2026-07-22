@@ -21,6 +21,7 @@ export type InvoiceRecord = {
   issuer_vat_number: string;
   issuer_legal_form: string | null;
   status: string;
+  document_type?: string;
 };
 
 const CURRENCY_CODES: Record<string, string> = { eur: "EUR" };
@@ -57,6 +58,9 @@ export type InvoiceView = {
   vat: string;
   ttc: string;
   isCancelled: boolean;
+  isCreditNote: boolean;
+  /** Titre du document : « Facture » ou « Avoir ». */
+  documentLabel: string;
   client: { name: string; email: string };
   issuer: {
     legalName: string;
@@ -76,6 +80,8 @@ export const buildInvoiceView = (record: InvoiceRecord): InvoiceView => ({
   vat: formatMoneyCents(record.amount_vat_cents, record.currency),
   ttc: formatMoneyCents(record.amount_ttc_cents, record.currency),
   isCancelled: record.status === "cancelled",
+  isCreditNote: record.document_type === "credit_note",
+  documentLabel: record.document_type === "credit_note" ? "Avoir" : "Facture",
   client: { name: record.client_name, email: record.client_email },
   issuer: {
     legalName: record.issuer_legal_name,

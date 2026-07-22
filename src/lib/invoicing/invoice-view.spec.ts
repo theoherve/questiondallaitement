@@ -59,6 +59,13 @@ describe("buildInvoiceView", () => {
     );
   });
 
+  it("intitule le document selon son type", () => {
+    expect(buildInvoiceView(record).documentLabel).toBe("Facture");
+    const avoir = buildInvoiceView({ ...record, document_type: "credit_note" });
+    expect(avoir.documentLabel).toBe("Avoir");
+    expect(avoir.isCreditNote).toBe(true);
+  });
+
   it("gere un taux de TVA a virgule sans zero superflu", () => {
     const view = buildInvoiceView({ ...record, vat_rate: 5.5 });
     expect(view.vatRateLabel).toBe("5,5 %");

@@ -95,11 +95,13 @@ const InvoicePdf = ({ view }: { view: InvoiceView }) => (
     author={view.issuer.legalName}
   >
     <Page size="A4" style={s.page}>
-      {view.isCancelled && <Text style={s.cancelled}>Facture annulée</Text>}
+      {view.isCancelled && (
+        <Text style={s.cancelled}>{view.documentLabel} annulée</Text>
+      )}
 
       <View style={s.headerRow}>
         <View>
-          <Text style={s.title}>Facture</Text>
+          <Text style={s.title}>{view.documentLabel}</Text>
           <Text style={s.muted}>N° {view.number}</Text>
         </View>
         <Text style={s.muted}>Émise le {view.issuedDate}</Text>

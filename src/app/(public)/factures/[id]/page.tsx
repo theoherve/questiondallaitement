@@ -9,7 +9,7 @@ import { PrintButton } from "./_components/print-button";
 type Props = { params: Promise<{ id: string }> };
 
 const INVOICE_FIELDS =
-  "number, issued_at, type, currency, vat_rate, amount_ht_cents, amount_vat_cents, amount_ttc_cents, description, client_name, client_email, issuer_legal_name, issuer_address, issuer_siren, issuer_vat_number, issuer_legal_form, status, client_id, consultant_id";
+  "number, issued_at, type, currency, vat_rate, amount_ht_cents, amount_vat_cents, amount_ttc_cents, description, client_name, client_email, issuer_legal_name, issuer_address, issuer_siren, issuer_vat_number, issuer_legal_form, status, document_type, client_id, consultant_id";
 
 /**
  * Facture consultable par les deux parties et l'administration. Le client
