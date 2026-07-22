@@ -92,7 +92,35 @@ prestation payee en ligne, retenue lors du reversement a la consultante. Elle
 remunere la mise a disposition de la plateforme, la gestion des paiements et le
 support.
 
-⚠️ **A trancher — TVA (point 1-6, non traite).** La commission est une
+**TVA — tranche le 2026-07-21 : Carole HERVÉ applique la TVA.**
+
+Elle est IBCLC sans profession de sante reglementee, donc l'exoneration des
+actes medicaux et paramedicaux ne s'applique pas, et elle n'est pas en franchise
+en base. Consequences :
+
+- **les prix affiches sont des prix TTC**, TVA comprise. C'est deja le cas dans
+  le code : les montants en base sont ceux payes par la cliente, et rien ne
+  calcule ni n'ajoute de taxe ;
+- **les mentions legales doivent porter le vrai numero de TVA
+  intracommunautaire** — le fichier contient encore `[Numéro TVA]` ;
+- **les documents de vente doivent faire apparaitre le detail de la TVA** : base
+  hors taxe, taux, montant. Aucun document de ce type n'est genere aujourd'hui,
+  ni par l'application ni via Stripe.
+
+> **Ce qui reste a decider**, et qui commande du developpement : qui emet la
+> facture a la cliente ? Trois options — Stripe Invoicing, une generation
+> maison, ou rien du tout dans un premier temps si les consultations relevent
+> d'un regime ou la facture n'est pas systematiquement exigee. Tant que ce point
+> n'est pas tranche, la TVA est correctement **collectee** mais n'apparait
+> nulle part par ecrit.
+
+> **Point de vigilance pour la suite** : la commission facturee aux futures
+> consultantes est une prestation de services soumise a TVA. Elle demandera une
+> facture par consultante, avec TVA. Sans objet aujourd'hui — Carole etant la
+> plateforme, elle ne se facture rien a elle-meme (voir la bascule du
+> 2026-07-21).
+
+⚠️ **Ancienne note, conservee pour memoire.** La commission est une
 prestation de services entre la plateforme et la consultante : elle est en
 principe soumise a la TVA, et doit donner lieu a facturation. Selon le regime de
 la plateforme (franchise en base ou non) et le statut de chaque consultante, le

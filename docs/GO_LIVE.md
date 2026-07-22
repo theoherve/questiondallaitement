@@ -255,11 +255,20 @@ account » sans rapport apparent avec la cause.
 
 ```sql
 -- A executer une fois les cles live en place.
+--
+-- Le WHERE n'est pas optionnel : sans lui, la fixture E2E
+-- (`consultante-e2e`, prefixe e2e00000-…) est purgee elle aussi, et toute la
+-- suite navigateur tombe. C'est exactement l'erreur commise le 2026-07-21.
 update consultants
 set stripe_account_id = null,
     stripe_account_status = 'pending',
-    onboarding_completed = false;
+    onboarding_completed = false
+where stripe_account_id is not null
+  and id::text not like 'e2e00000-%';
 ```
+
+**Fait le 2026-07-21** : `carole-herve` purgee. Elle est desormais proprietaire
+de la plateforme et n'a plus besoin de compte connecte du tout.
 
 Verifier ensuite :
 

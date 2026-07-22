@@ -65,7 +65,9 @@ const main = async () => {
 
   const { data: consultants, error } = await supabase
     .from("consultants")
-    .select("id, stripe_account_id, stripe_account_status, is_active");
+    .select(
+      "id, stripe_account_id, stripe_account_status, is_active, is_platform_owner",
+    );
 
   if (error) {
     console.error(`Lecture des consultantes impossible : ${error.message}`);
@@ -76,6 +78,18 @@ const main = async () => {
 
   for (const consultant of consultants ?? []) {
     const label = consultant.id.slice(0, 8);
+
+    // La proprietaire de la plateforme encaisse sur le compte plateforme :
+    // ne pas avoir de compte connecte est son etat nominal, pas un defaut.
+    if (consultant.is_platform_owner) {
+      console.log(
+        `  ✓ ${label}  proprietaire de la plateforme — encaisse directement` +
+          (consultant.stripe_account_id
+            ? `, compte connecte ${consultant.stripe_account_id} inutile`
+            : ""),
+      );
+      continue;
+    }
 
     if (!consultant.stripe_account_id) {
       const note = consultant.is_active
