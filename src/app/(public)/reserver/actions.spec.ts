@@ -149,6 +149,18 @@ const CONSULTANT = {
   },
 };
 
+// Requetes lues a part sur `consultants` (drapeau proprietaire, puis profil de
+// facturation) : un meme objet satisfait les deux. Le profil est complet, sans
+// quoi le gate de facturation refuserait la vente en ligne.
+const CONSULTANT_EXTRA = {
+  is_platform_owner: false,
+  billing_legal_name: "Sophie Martin",
+  billing_address: "1 rue des Lilas, 44000 Nantes",
+  billing_siren: "540075819",
+  billing_vat_number: "FR94540075819",
+  billing_legal_form: "Entreprise individuelle",
+};
+
 // ─── 14-06 : Flow réservation en ligne ────────────────────────
 
 describe("14-06 : createBooking — paiement en ligne", () => {
@@ -173,7 +185,7 @@ describe("14-06 : createBooking — paiement en ligne", () => {
       .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTANT }, t))
       // Lecture de `is_platform_owner`, faite a part pour ne pas dependre de
       // l'ordre entre migration et deploiement.
-      .mockImplementation((t: string) => createChain({ singleData: {} }, t));
+      .mockImplementation((t: string) => createChain({ singleData: CONSULTANT_EXTRA }, t));
 
     mockCreateCheckoutSession.mockResolvedValue({ url: "https://checkout.stripe.com/session_test" });
   });
@@ -211,7 +223,7 @@ describe("14-06 : createBooking — paiement en ligne", () => {
       .mockImplementationOnce((t: string) => createChain({ singleData: { ...CONSULTANT, stripe_account_id: null } }, t))
       // Consultante tierce : le drapeau proprietaire est faux, donc l'absence
       // de compte connecte reste bloquante.
-      .mockImplementation((t: string) => createChain({ singleData: {} }, t));
+      .mockImplementation((t: string) => createChain({ singleData: CONSULTANT_EXTRA }, t));
 
     const result = await createBooking(makeBookingForm());
 
@@ -271,7 +283,7 @@ describe("14-07 : createBooking — flow guest (sans compte)", () => {
         createChain({ singleData: null, insertSingleData: { id: NEW_PROFILE_ID } }, t),
       )
       .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTANT }, t))
-      .mockImplementation((t: string) => createChain({ singleData: {} }, t));
+      .mockImplementation((t: string) => createChain({ singleData: CONSULTANT_EXTRA }, t));
 
     mockCreateCheckoutSession.mockResolvedValue({ url: "https://checkout.stripe.com/guest_session" });
   });
@@ -369,7 +381,7 @@ describe("createBooking — droit de retractation", () => {
       .mockImplementationOnce((t: string) => createChain({ singleData: { id: "client-uuid-existing" } }, t))
       .mockImplementationOnce((t: string) => createChain({}, t))
       .mockImplementationOnce((t: string) => createChain({ singleData: CONSULTANT }, t))
-      .mockImplementation((t: string) => createChain({ singleData: {} }, t));
+      .mockImplementation((t: string) => createChain({ singleData: CONSULTANT_EXTRA }, t));
 
     mockCreateCheckoutSession.mockResolvedValue({ url: "https://checkout.stripe.com/x" });
   });
@@ -453,7 +465,10 @@ describe("createBooking — consultante proprietaire de la plateforme", () => {
         ),
       )
       .mockImplementation((t: string) =>
-        createChain({ singleData: { is_platform_owner: true } }, t),
+        createChain(
+          { singleData: { ...CONSULTANT_EXTRA, is_platform_owner: true } },
+          t,
+        ),
       );
 
     mockCreateCheckoutSession.mockResolvedValue({ url: "https://checkout.stripe.com/owner" });

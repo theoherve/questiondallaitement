@@ -7,6 +7,7 @@ import {
   routeSale,
   isPlatformOwnerConsultant,
 } from "@/lib/stripe/sale-routing";
+import { consultantCanSell } from "@/lib/invoicing/consultant-billing";
 import { recordWithdrawalWaiver } from "@/lib/legal/record-waiver";
 import { siteConfig } from "@/config/site";
 import type { ActionResult } from "@/types";
@@ -103,6 +104,16 @@ export const purchaseFormation = async (
     return {
       success: false,
       error: "Le paiement n'est pas disponible pour cet accompagnement",
+    };
+  }
+
+  // Pas de vente en ligne sans pouvoir facturer (voir consultant-billing).
+  if (!(await consultantCanSell(supabase, formation.consultant_id))) {
+    return {
+      success: false,
+      error:
+        "L'achat en ligne est momentanément indisponible pour cet " +
+        "accompagnement.",
     };
   }
 

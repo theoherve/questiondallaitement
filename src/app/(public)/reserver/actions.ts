@@ -7,6 +7,7 @@ import {
   routeSale,
   isPlatformOwnerConsultant,
 } from "@/lib/stripe/sale-routing";
+import { consultantCanSell } from "@/lib/invoicing/consultant-billing";
 import { bookingRequiresWaiver } from "@/lib/legal/withdrawal";
 import { recordWithdrawalWaiver } from "@/lib/legal/record-waiver";
 import { computeAvailableSlots } from "@/lib/booking/slots";
@@ -552,6 +553,19 @@ export const createBooking = async (
 
     if (!routing) {
       return { success: false, error: "La consultante n'a pas configuré son compte Stripe" };
+    }
+
+    // Pas de vente en ligne sans pouvoir facturer : la facture est emise a
+    // l'encaissement, et une facture sans les mentions obligatoires de
+    // l'emettrice n'a aucune valeur. On refuse plutot que d'encaisser sans
+    // pouvoir facturer.
+    if (!(await consultantCanSell(supabase, formData.consultant_id))) {
+      return {
+        success: false,
+        error:
+          "La consultante n'a pas complété ses informations de facturation. " +
+          "La réservation en ligne est momentanément indisponible.",
+      };
     }
 
     // Pre-generate a booking ID to use in the success URL and Stripe metadata.
