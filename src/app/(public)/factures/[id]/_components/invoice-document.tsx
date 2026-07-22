@@ -12,14 +12,14 @@ export const InvoiceDocument = ({ view }: { view: InvoiceView }) => (
   >
     {view.isCancelled && (
       <p className="mb-6 rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-center font-semibold uppercase tracking-wide text-destructive">
-        Facture annulée
+        {view.documentLabel} annulée
       </p>
     )}
 
     <div className="flex items-start justify-between">
       <div>
         <h1 className="font-serif text-2xl font-bold text-primary-green">
-          Facture
+          {view.documentLabel}
         </h1>
         <p className="mt-1 text-gray-600">N° {view.number}</p>
       </div>

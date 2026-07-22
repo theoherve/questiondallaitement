@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { formatMoneyCents } from "@/lib/invoicing/invoice-view";
 import { ResendInvoiceButton } from "./_components/resend-button";
+import { CorrectInvoiceButton } from "./_components/correct-button";
 
 export const metadata: Metadata = {
   title: "Facturation",
@@ -26,7 +27,7 @@ const ConsultantInvoicesPage = async () => {
   const { data: invoices } = await supabase
     .from("invoices")
     .select(
-      "id, number, issued_at, type, amount_ttc_cents, currency, client_name, status, emailed_at",
+      "id, number, issued_at, type, amount_ttc_cents, currency, client_name, status, emailed_at, document_type, description",
     )
     .eq("consultant_id", user.id)
     .order("issued_at", { ascending: false });
@@ -61,6 +62,9 @@ const ConsultantInvoicesPage = async () => {
               >
                 <div className="min-w-0">
                   <p className="font-medium">
+                    {invoice.document_type === "credit_note"
+                      ? "Avoir"
+                      : "Facture"}{" "}
                     N° {invoice.number}
                     {invoice.status === "cancelled" && (
                       <Badge variant="destructive" className="ml-2">
@@ -85,6 +89,16 @@ const ConsultantInvoicesPage = async () => {
                   <span className="font-medium text-primary-green">
                     {formatMoneyCents(invoice.amount_ttc_cents, invoice.currency)}
                   </span>
+                  {invoice.document_type === "invoice" &&
+                    invoice.status === "issued" && (
+                      <CorrectInvoiceButton
+                        invoiceId={invoice.id}
+                        defaultDescription={invoice.description}
+                        defaultTtcEuros={(
+                          invoice.amount_ttc_cents / 100
+                        ).toFixed(2)}
+                      />
+                    )}
                   <ResendInvoiceButton
                     invoiceId={invoice.id}
                     alreadySent={Boolean(invoice.emailed_at)}

@@ -127,7 +127,20 @@ trou, ligne et en ligne comme sur place.
 - **renvoi manuel** par la consultante depuis « Facturation », qui envoie
   toujours et horodate.
 
-## Ce qui reste (PR 3/3c — correction)
+**PR 3/3c — correction par avoir :**
+- [correction.ts](../src/lib/invoicing/correction.ts) — decoupe du nouveau TTC,
+  teste ;
+- fonction `correct_invoice`
+  ([00057](../supabase/migrations/00057_invoice_corrections.sql)) : dans une
+  seule transaction, emet l'avoir qui annule l'originale, marque celle-ci
+  annulee, emet la facture corrigee — numerotation continue ;
+- modele multi-documents : `document_type` (facture / avoir) et liens de
+  correction ; l'unicite « une facture par paiement » devient « une facture
+  *active* par paiement », ce qui preserve l'idempotence de l'emission
+  automatique tout en autorisant l'annulation-remplacement ;
+- « Corriger » depuis « Facturation » : la consultante ajuste designation et
+  montant, la corrigee est emise puis envoyee (l'envoi de 3/3b).
 
-1. correction d'une facture emise = **avoir + facture corrigee** (immuabilite),
-   puis renvoi a la cliente (l'envoi est deja en place).
+**La facturation est complete.** Emission automatique (en ligne et sur place),
+numerotation legale, envoi a la cliente (PDF + lien), consultation, impression,
+et correction par avoir.
