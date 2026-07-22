@@ -661,7 +661,7 @@ Deux autres fragilites de la meme route, sans test jusqu'ici :
 | 6-5 | Arbitrer migrations vs edition en base (une edition ne doit pas etre ecrasee)    | ✅     | 🔴 P0 |
 | 6-6 | `restoreDefaultTemplates` ecrase sans confirmation — contredit 6-5               | ✅     | 🔴 P0 |
 | 6-7 | Rendu des templates : `\n` sans effet, `<p>` imbrique, metadonnees desynchronisees | ✅   | 🔴 P0 |
-| 6-8 | Envoi d'un email de test depuis l'editeur (demande d'origine)                    | 🔶     | 🟡 P2 |
+| 6-8 | Envoi d'un email de test depuis l'editeur (demande d'origine)                    | ✅     | 🟡 P2 |
 
 ### Ce qui existe deja
 

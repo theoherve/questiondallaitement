@@ -92,6 +92,7 @@ const ConsultantSettingsPage = async () => {
             stripeStatus={consultant?.stripe_account_status ?? "pending"}
             zoomConnected={!!consultant?.zoom_access_token}
             zoomAuthUrl={getAuthorizationUrl(user.id)}
+            isPlatformOwner={consultant?.is_platform_owner === true}
           />
         </TabsContent>
       </Tabs>
