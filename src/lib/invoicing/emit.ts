@@ -2,6 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildInvoiceContent } from "./build-invoice";
 import { getConsultantBilling } from "./consultant-billing";
 import { isBillingComplete } from "./billing-profile";
+import {
+  sendInvoiceEmail,
+  type InvoiceEmailRecord,
+} from "./send-invoice-email";
 
 type Reader = SupabaseClient;
 
@@ -78,7 +82,7 @@ export const emitInvoiceForPayment = async (
       issuer: billing,
     });
 
-    const { error } = await supabase.rpc("create_invoice", {
+    const { data: created, error } = await supabase.rpc("create_invoice", {
       p_content: content,
     });
 
@@ -90,6 +94,28 @@ export const emitInvoiceForPayment = async (
         error.message,
         paymentId,
       );
+      return;
+    }
+
+    // Envoi automatique a la cliente, une seule fois : `emailed_at` nul signale
+    // une facture pas encore envoyee. Une redelivery retombe sur la facture
+    // deja envoyee et ne redouble pas le mail ; un premier envoi echoue laisse
+    // la colonne nulle, donc retentable.
+    const invoice = created as
+      | (InvoiceEmailRecord & { emailed_at: string | null })
+      | null;
+    if (invoice && !invoice.emailed_at) {
+      try {
+        await sendInvoiceEmail(invoice);
+        await supabase
+          .from("invoices")
+          .update({ emailed_at: new Date().toISOString() })
+          .eq("id", invoice.id);
+      } catch (mailErr) {
+        // L'email est un plus : son echec ne doit ni bloquer ni rejouer le
+        // webhook. La facture reste consultable et renvoyable manuellement.
+        console.error("[emitInvoiceForPayment] envoi email", mailErr);
+      }
     }
   } catch (err) {
     // Jamais laisser une erreur de facturation faire echouer le webhook.

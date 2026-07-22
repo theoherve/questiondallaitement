@@ -8,6 +8,7 @@ import { FileText, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { formatMoneyCents } from "@/lib/invoicing/invoice-view";
+import { ResendInvoiceButton } from "./_components/resend-button";
 
 export const metadata: Metadata = {
   title: "Facturation",
@@ -25,7 +26,7 @@ const ConsultantInvoicesPage = async () => {
   const { data: invoices } = await supabase
     .from("invoices")
     .select(
-      "id, number, issued_at, type, amount_ttc_cents, currency, client_name, status",
+      "id, number, issued_at, type, amount_ttc_cents, currency, client_name, status, emailed_at",
     )
     .eq("consultant_id", user.id)
     .order("issued_at", { ascending: false });
@@ -74,11 +75,20 @@ const ConsultantInvoicesPage = async () => {
                       locale: fr,
                     })}
                   </p>
+                  <p className="text-xs text-muted-foreground">
+                    {invoice.emailed_at
+                      ? `Envoyée le ${format(new Date(invoice.emailed_at), "d MMM yyyy", { locale: fr })}`
+                      : "Pas encore envoyée"}
+                  </p>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <span className="font-medium text-primary-green">
                     {formatMoneyCents(invoice.amount_ttc_cents, invoice.currency)}
                   </span>
+                  <ResendInvoiceButton
+                    invoiceId={invoice.id}
+                    alreadySent={Boolean(invoice.emailed_at)}
+                  />
                   <Button asChild variant="outline" size="sm">
                     <Link href={`/factures/${invoice.id}`}>
                       <Eye className="mr-1 h-4 w-4" />

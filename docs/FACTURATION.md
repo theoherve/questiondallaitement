@@ -114,8 +114,20 @@ trou, ligne et en ligne comme sur place.
 - listes dediees : « Facturation » cote consultante, « Mes factures » cote
   cliente, chacune liee au document.
 
-## Ce qui reste (PR 3/3b — correction et renvoi)
+**PR 3/3b — envoi a la cliente :**
+- [invoice-pdf.tsx](../src/lib/invoicing/invoice-pdf.tsx) — rendu PDF via
+  @react-pdf (pur JS, serverless, pas de Chromium), a partir du meme modele que
+  le HTML ;
+- [send-invoice-email.ts](../src/lib/invoicing/send-invoice-email.ts) — email a
+  la cliente avec **lien vers son espace ET PDF en piece jointe** (choix acte) ;
+- envoi **automatique a l'emission**, une seule fois : `emailed_at`
+  ([00056](../supabase/migrations/00056_invoice_emailed_at.sql)) rend l'envoi
+  idempotent (une redelivery ne redouble pas le mail ; un envoi echoue reste
+  retentable) ;
+- **renvoi manuel** par la consultante depuis « Facturation », qui envoie
+  toujours et horodate.
 
-1. correction d'une facture emise = avoir + facture corrigee (immuabilite) ;
-2. renvoi a la cliente — **decision ouverte** : lien vers le document ou piece
-   jointe PDF a l'email.
+## Ce qui reste (PR 3/3c — correction)
+
+1. correction d'une facture emise = **avoir + facture corrigee** (immuabilite),
+   puis renvoi a la cliente (l'envoi est deja en place).

@@ -12,11 +12,18 @@ const DEFAULT_FROM =
   process.env.RESEND_FROM ??
   `${process.env.RESEND_FROM_NAME ?? "Question d'Allaitement"} <${process.env.RESEND_FROM_EMAIL ?? "noreply@formation-allaitement.com"}>`;
 
+export type EmailAttachment = {
+  filename: string;
+  /** Contenu binaire de la piece jointe. */
+  content: Buffer;
+};
+
 type SendEmailParams = {
   to: string;
   subject: string;
   html: string;
   from?: string;
+  attachments?: EmailAttachment[];
 };
 
 export const sendTransactionalEmail = async ({
@@ -24,6 +31,7 @@ export const sendTransactionalEmail = async ({
   subject,
   html,
   from = DEFAULT_FROM,
+  attachments,
 }: SendEmailParams) => {
   const resend = getResend();
   const { data, error } = await resend.emails.send({
@@ -31,6 +39,7 @@ export const sendTransactionalEmail = async ({
     to,
     subject,
     html,
+    ...(attachments?.length ? { attachments } : {}),
   });
 
   if (error) {
