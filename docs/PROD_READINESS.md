@@ -750,7 +750,7 @@ defaut : une restauration l'aurait retire de l'editeur.
 | 5-4 | Seeds `consultant_locations` + `available_locations`                         | ⬜     | 🟠 P1 | 07-08        |
 | 5-5 | Cles live sur Vercel (`sk_live`, `pk_live`)                                  | ✅     | 🔴 P0 | configure par Theo (session juillet) |
 | 5-6 | Webhook endpoint prod enregistre + `whsec_` prod                             | ✅     | 🔴 P0 | configure par Theo (session juillet) |
-| 5-7 | CGV / mentions legales coherentes avec le modele commission                   | 🔶     | 🔴 P0 | texte pret [CGV](./CGV_MODELE_ECONOMIQUE.md) ; publication a valider |
+| 5-7 | CGV / mentions legales coherentes avec le modele commission                   | 🔶     | 🔴 P0 | CGV publiees (/cgv) ; reste identite editeur + mediateur + relecture juridique |
 | 5-8 | Relire `/api/stripe/connect` : pas de verification de role consultante        | ✅     | 🟠 P1 | fait en 4-5  |
 
 ### 5-2 — CSP posee et verifiee au navigateur (2026-07-21)
