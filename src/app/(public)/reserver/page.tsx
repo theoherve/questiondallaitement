@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BookingWizard } from "./_components/booking-wizard";
 import { getLocationConfigs } from "@/app/(dashboard)/admin/reservation/actions";
+import { redirect } from "next/navigation";
+import { features } from "@/config/features";
 
 export const metadata: Metadata = {
   title: "Réserver une consultation — Question d'Allaitement",
@@ -13,6 +15,10 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const ReserverPage = async () => {
+  if (!features.bookingEnabled) {
+    redirect("/accompagnements");
+  }
+
   type ConsultationTypeRow = {
     id: string;
     consultant_id: string;
