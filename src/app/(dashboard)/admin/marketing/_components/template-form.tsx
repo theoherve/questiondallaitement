@@ -19,7 +19,10 @@ import {
   FileCode,
   AlertCircle,
   MoreHorizontal,
+  Send,
+  Loader2,
 } from "lucide-react";
+import { sendTestEmail } from "@/lib/emails/send-test-action";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import {
@@ -55,6 +58,8 @@ type TemplateFormProps = {
   onDelete?: (id: string) => Promise<{ success: boolean; error?: string }>;
   /** Optional per-template restore — applies the bundled default to this row. */
   onRestoreDefault?: () => Promise<{ success: boolean; error?: string }>;
+  /** Adresse pre-remplie pour l'email de test (celle de l'admin connecte). */
+  defaultTestEmail?: string;
 };
 
 export const TemplateForm = ({
@@ -63,10 +68,14 @@ export const TemplateForm = ({
   onSave,
   onDelete,
   onRestoreDefault,
+  defaultTestEmail = "",
 }: TemplateFormProps) => {
   const isEdit = !!template;
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isTestPending, startTestTransition] = useTransition();
+  const [showTestDialog, setShowTestDialog] = useState(false);
+  const [testEmail, setTestEmail] = useState(defaultTestEmail);
 
   const [formData, setFormData] = useState({
     name: template?.name ?? "",
@@ -116,6 +125,23 @@ export const TemplateForm = ({
         }
       } else {
         toast.error(result.error ?? "Erreur.");
+      }
+    });
+  };
+
+  const handleSendTest = () => {
+    startTestTransition(async () => {
+      const result = await sendTestEmail({
+        to: testEmail,
+        subject: formData.subject,
+        design: formData.body_design as Record<string, unknown> | null,
+        bodyHtml: formData.body_html,
+      });
+      if (result.success) {
+        toast.success(`Email de test envoyé à ${testEmail}.`);
+        setShowTestDialog(false);
+      } else {
+        toast.error(result.error ?? "Envoi échoué.");
       }
     });
   };
@@ -187,10 +213,58 @@ export const TemplateForm = ({
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowTestDialog(true)}
+            disabled={isPending}
+          >
+            <Send className="mr-2 h-4 w-4" />
+            Envoyer un test
+          </Button>
           <Button onClick={handleSave} disabled={isPending}>
             <Save className="mr-2 h-4 w-4" />
             Enregistrer
           </Button>
+
+          <Dialog open={showTestDialog} onOpenChange={setShowTestDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Envoyer un email de test</DialogTitle>
+                <DialogDescription>
+                  Le template est rendu avec des valeurs d&apos;exemple (comme
+                  l&apos;aperçu) et envoyé à l&apos;adresse ci-dessous. L&apos;objet
+                  est préfixé « [Test] ». Inutile d&apos;enregistrer d&apos;abord.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2">
+                <Label htmlFor="test-email">Adresse de destination</Label>
+                <Input
+                  id="test-email"
+                  type="email"
+                  value={testEmail}
+                  onChange={(e) => setTestEmail(e.target.value)}
+                  placeholder="vous@exemple.fr"
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowTestDialog(false)}
+                  disabled={isTestPending}
+                >
+                  Annuler
+                </Button>
+                <Button onClick={handleSendTest} disabled={isTestPending}>
+                  {isTestPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="mr-2 h-4 w-4" />
+                  )}
+                  Envoyer
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           {isEdit && onDelete && (
             <>

@@ -32,6 +32,7 @@ const EditTemplatePage = async ({
     <TemplateForm
       template={template}
       hasDefaultDesign={hasDefaultDesign}
+      defaultTestEmail={user.email ?? ""}
       onSave={async (data) => {
         "use server";
         return updateTemplate(id, data);
