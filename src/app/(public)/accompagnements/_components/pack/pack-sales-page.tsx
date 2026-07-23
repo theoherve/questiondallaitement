@@ -80,6 +80,9 @@ export function PackSalesPage({
         sectionsCount={sectionsCount}
         lessonsCount={lessonsCount}
         instructorName={instructorName}
+        formationId={formation.id}
+        isLoggedIn={isLoggedIn}
+        isEnrolled={isEnrolled}
       />
       <PackHero
         title={formation.title}
