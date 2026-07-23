@@ -1,15 +1,30 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, ChevronRight, Clock, Layers, User } from "lucide-react";
 import { getSessionUser } from "@/lib/auth";
 import { PurchaseButton } from "../_components/purchase-button";
+import { PACK_SLUG } from "@/config/accompagnements";
+import {
+  PackSalesPage,
+  fetchPackModuleRows,
+} from "../_components/pack/pack-sales-page";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
+type PackSalesPageConsultant = {
+  bio: string | null;
+  profiles: {
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+  } | null;
+} | null;
 
 export const generateMetadata = async ({
   params,
@@ -90,15 +105,49 @@ const FormationDetailPage = async ({ params }: Props) => {
 
   if (!formation) notFound();
 
+  // L'appli s'authentifie via NextAuth, pas Supabase Auth : `auth.uid()` est
+  // toujours nul cote RLS. Le client RLS (`createClient`) ne verrait donc jamais
+  // l'inscription. On lit via le client admin, borne au client courant — comme
+  // le reste des lectures authentifiees (voir getSupabaseAndUser, purchaseFormation).
   let isEnrolled = false;
   if (currentUser) {
-    const { data: enrollment } = await supabase
+    const admin = createAdminClient();
+    const { data: enrollment } = await admin
       .from("formation_enrollments")
       .select("id")
       .eq("client_id", currentUser.id)
       .eq("formation_id", formation.id)
-      .single();
+      .maybeSingle();
     isEnrolled = !!enrollment;
+  }
+
+  if (slug === PACK_SLUG) {
+    const moduleRows = await fetchPackModuleRows();
+    const packSections = (formation.formation_sections ?? []) as {
+      formation_blocks?: unknown[];
+    }[];
+    const sectionsCount = packSections.length;
+    const lessonsCount = packSections.reduce(
+      (acc, s) => acc + (s.formation_blocks?.length ?? 0),
+      0
+    );
+    return (
+      <PackSalesPage
+        formation={{
+          id: formation.id,
+          title: formation.title,
+          price_cents: formation.price_cents,
+          currency: formation.currency,
+          thumbnail_url: formation.thumbnail_url,
+          consultants: formation.consultants as PackSalesPageConsultant,
+        }}
+        sectionsCount={sectionsCount}
+        lessonsCount={lessonsCount}
+        moduleRows={moduleRows}
+        isLoggedIn={!!currentUser}
+        isEnrolled={isEnrolled}
+      />
+    );
   }
 
   const sections = (formation.formation_sections ?? []).sort(
