@@ -70,7 +70,7 @@ export function PackSideCta({
       <aside
         aria-label="Rejoindre le pack"
         className={cn(
-          "fixed right-5 top-1/2 z-40 hidden w-80 -translate-y-1/2 transition-all duration-500 xl:block",
+          "fixed right-5 top-1/2 z-40 hidden w-72 -translate-y-1/2 transition-all duration-500 2xl:block",
           visible
             ? "translate-x-0 opacity-100"
             : "pointer-events-none translate-x-8 opacity-0"
@@ -134,7 +134,7 @@ export function PackSideCta({
       {/* Mobile / tablette — barre CTA fixe en bas */}
       <div
         className={cn(
-          "fixed inset-x-0 bottom-0 z-40 border-t border-primary-green/10 bg-background-beige/95 backdrop-blur-md transition-all duration-300 xl:hidden",
+          "fixed inset-x-0 bottom-0 z-40 border-t border-primary-green/10 bg-background-beige/95 backdrop-blur-md transition-all duration-300 2xl:hidden",
           visible
             ? "translate-y-0 opacity-100"
             : "pointer-events-none translate-y-full opacity-0"
