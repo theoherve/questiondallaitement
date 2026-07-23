@@ -73,58 +73,42 @@ export function PackSalesPage({
 
   return (
     <>
-      {/* Hero pleine largeur, au-dessus de la lane */}
+      <PackSideCta
+        title={formation.title}
+        priceLabel={priceLabel}
+        imageUrl={formation.thumbnail_url}
+        sectionsCount={sectionsCount}
+        lessonsCount={lessonsCount}
+        instructorName={instructorName}
+        formationId={formation.id}
+        isLoggedIn={isLoggedIn}
+        isEnrolled={isEnrolled}
+      />
       <PackHero
         title={formation.title}
         priceLabel={priceLabel}
         imageUrl={formation.thumbnail_url}
       />
-
-      {/* Corps : contenu + carte-produit sticky dans sa propre lane (desktop).
-          Sous xl, la lane disparaît ; la section Tarif inline sert de CTA. */}
-      <div className="relative mx-auto max-w-400 xl:grid xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="min-w-0">
-          <PackProblem />
-          <PackPromise />
-          <PackModules modules={modules} />
-          <PackHowItWorks />
-          <PackForWho />
-          <PackInstructor
-            name={instructorName}
-            bio={formation.consultants?.bio ?? null}
-            avatarUrl={profile?.avatar_url ?? null}
-          />
-          <PackTestimonials />
-          <PackPricing
-            priceLabel={priceLabel}
-            formationId={formation.id}
-            isLoggedIn={isLoggedIn}
-            isEnrolled={isEnrolled}
-          />
-          <section
-            id="faq"
-            className="scroll-mt-20 bg-background-beige px-4 py-16 sm:px-6 sm:py-20"
-          >
-            <PackFaq />
-          </section>
-        </div>
-
-        <aside className="hidden xl:block">
-          <div className="sticky top-24 p-6">
-            <PackSideCta
-              priceLabel={priceLabel}
-              imageUrl={formation.thumbnail_url}
-              sectionsCount={sectionsCount}
-              lessonsCount={lessonsCount}
-              instructorName={instructorName}
-              formationId={formation.id}
-              isLoggedIn={isLoggedIn}
-              isEnrolled={isEnrolled}
-            />
-          </div>
-        </aside>
-      </div>
-
+      <PackProblem />
+      <PackPromise />
+      <PackModules modules={modules} />
+      <PackHowItWorks />
+      <PackForWho />
+      <PackInstructor
+        name={instructorName}
+        bio={formation.consultants?.bio ?? null}
+        avatarUrl={profile?.avatar_url ?? null}
+      />
+      <PackTestimonials />
+      <PackPricing
+        priceLabel={priceLabel}
+        formationId={formation.id}
+        isLoggedIn={isLoggedIn}
+        isEnrolled={isEnrolled}
+      />
+      <section id="faq" className="scroll-mt-20 bg-background-beige px-4 py-16 sm:px-6 sm:py-20">
+        <PackFaq />
+      </section>
       <PackFinalCta />
     </>
   );
