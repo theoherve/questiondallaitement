@@ -6,10 +6,24 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, ChevronRight, Clock, Layers, User } from "lucide-react";
 import { getSessionUser } from "@/lib/auth";
 import { PurchaseButton } from "../_components/purchase-button";
+import { PACK_SLUG } from "@/config/accompagnements";
+import {
+  PackSalesPage,
+  fetchPackModuleRows,
+} from "../_components/pack/pack-sales-page";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
+type PackSalesPageConsultant = {
+  bio: string | null;
+  profiles: {
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+  } | null;
+} | null;
 
 export const generateMetadata = async ({
   params,
@@ -99,6 +113,24 @@ const FormationDetailPage = async ({ params }: Props) => {
       .eq("formation_id", formation.id)
       .single();
     isEnrolled = !!enrollment;
+  }
+
+  if (slug === PACK_SLUG) {
+    const moduleRows = await fetchPackModuleRows();
+    return (
+      <PackSalesPage
+        formation={{
+          id: formation.id,
+          title: formation.title,
+          price_cents: formation.price_cents,
+          currency: formation.currency,
+          consultants: formation.consultants as PackSalesPageConsultant,
+        }}
+        moduleRows={moduleRows}
+        isLoggedIn={!!currentUser}
+        isEnrolled={isEnrolled}
+      />
+    );
   }
 
   const sections = (formation.formation_sections ?? []).sort(
