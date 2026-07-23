@@ -1,21 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
+import { BookOpen, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Props = { title: string; priceLabel: string };
-
-const ANCHORS = [
-  { href: "#programme", label: "Programme" },
-  { href: "#temoignages", label: "Témoignages" },
-  { href: "#faq", label: "FAQ" },
-];
+type Props = {
+  title: string;
+  priceLabel: string;
+  imageUrl: string | null;
+  sectionsCount: number;
+  lessonsCount: number;
+  instructorName: string;
+};
 
 /**
- * CTA fixe au scroll : carte verticale a droite sur desktop, barre en bas sur
- * mobile. Apparait apres le hero pour ne pas surcharger le haut de page.
+ * CTA fixe au scroll : carte-produit verticale a droite sur desktop
+ * (image + prix + meta + achat), barre compacte en bas sur mobile. Apparait
+ * apres le hero pour ne pas surcharger le haut de page.
  */
-export function PackSideCta({ title, priceLabel }: Props) {
+export function PackSideCta({
+  title,
+  priceLabel,
+  imageUrl,
+  sectionsCount,
+  lessonsCount,
+  instructorName,
+}: Props) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -25,53 +36,74 @@ export function PackSideCta({ title, priceLabel }: Props) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const meta = [
+    {
+      icon: BookOpen,
+      text:
+        `${sectionsCount} section${sectionsCount > 1 ? "s" : ""}` +
+        ` · ${lessonsCount} leçon${lessonsCount > 1 ? "s" : ""}`,
+      show: sectionsCount > 0 || lessonsCount > 0,
+    },
+    { icon: Clock, text: "Accès illimité", show: true },
+    { icon: User, text: `Par ${instructorName}`, show: true },
+  ].filter((m) => m.show);
+
   return (
     <>
-      {/* Desktop — carte verticale fixe a droite */}
+      {/* Desktop — carte-produit fixe a droite */}
       <aside
         aria-label="Rejoindre le pack"
         className={cn(
-          "fixed right-4 top-1/2 z-40 hidden w-56 -translate-y-1/2 transition-all duration-300 xl:block",
+          "fixed right-5 top-1/2 z-40 hidden w-64 -translate-y-1/2 transition-all duration-500 xl:block",
           visible
             ? "translate-x-0 opacity-100"
-            : "pointer-events-none translate-x-6 opacity-0"
+            : "pointer-events-none translate-x-8 opacity-0"
         )}
       >
-        <div className="rounded-xl border border-primary-green/10 bg-white/95 p-5 shadow-lg backdrop-blur-md">
-          <p className="font-serif text-sm font-semibold text-primary-green">
-            {title}
-          </p>
-          <p className="mt-1 font-serif text-2xl font-bold text-primary-red">
-            {priceLabel}
-          </p>
-          <a
-            href="#tarif"
-            className="mt-3 block rounded-md bg-primary-red px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-primary-red-dark"
-          >
-            Rejoindre le pack
-          </a>
-          <nav className="mt-4 space-y-2 border-t border-primary-green/10 pt-3">
-            {ANCHORS.map((a) => (
-              <a
-                key={a.href}
-                href={a.href}
-                className="flex items-center gap-2 text-sm text-primary-green/70 transition-colors hover:text-primary-green"
-              >
-                <span
-                  className="h-1 w-1 rounded-full bg-primary-red"
-                  aria-hidden
-                />
-                {a.label}
-              </a>
-            ))}
-          </nav>
+        <div className="overflow-hidden rounded-2xl border border-primary-green/10 bg-white shadow-xl">
+          {imageUrl && (
+            <div className="relative aspect-4/3 w-full bg-background-beige-dark">
+              <Image
+                src={imageUrl}
+                alt=""
+                fill
+                sizes="256px"
+                className="object-cover"
+              />
+            </div>
+          )}
+          <div className="p-5">
+            <p className="font-serif text-3xl font-bold text-primary-red">
+              {priceLabel}
+            </p>
+            <ul className="mt-4 space-y-2.5">
+              {meta.map((m) => (
+                <li
+                  key={m.text}
+                  className="flex items-center gap-2.5 text-sm text-primary-green/70"
+                >
+                  <m.icon className="h-4 w-4 shrink-0 text-primary-green/50" aria-hidden />
+                  <span>{m.text}</span>
+                </li>
+              ))}
+            </ul>
+            <a
+              href="#tarif"
+              className="mt-5 block rounded-md bg-primary-red px-4 py-3 text-center text-sm font-medium text-white transition-colors hover:bg-primary-red-dark"
+            >
+              Rejoindre le pack
+            </a>
+            <p className="mt-2 text-center text-xs text-primary-green/45">
+              Paiement en 3x ou 4x sans frais
+            </p>
+          </div>
         </div>
       </aside>
 
       {/* Mobile / tablette — barre CTA fixe en bas */}
       <div
         className={cn(
-          "fixed inset-x-0 bottom-0 z-40 border-t border-primary-green/10 bg-background-beige/90 backdrop-blur-md transition-all duration-300 xl:hidden",
+          "fixed inset-x-0 bottom-0 z-40 border-t border-primary-green/10 bg-background-beige/95 backdrop-blur-md transition-all duration-300 xl:hidden",
           visible
             ? "translate-y-0 opacity-100"
             : "pointer-events-none translate-y-full opacity-0"

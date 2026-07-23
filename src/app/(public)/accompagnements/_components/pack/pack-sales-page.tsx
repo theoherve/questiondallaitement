@@ -33,6 +33,8 @@ type PackSalesPageProps = {
       } | null;
     } | null;
   };
+  sectionsCount: number;
+  lessonsCount: number;
   moduleRows: ModuleRow[];
   isLoggedIn: boolean;
   isEnrolled: boolean;
@@ -54,6 +56,8 @@ export async function fetchPackModuleRows(): Promise<ModuleRow[]> {
 
 export function PackSalesPage({
   formation,
+  sectionsCount,
+  lessonsCount,
   moduleRows,
   isLoggedIn,
   isEnrolled,
@@ -69,7 +73,14 @@ export function PackSalesPage({
 
   return (
     <>
-      <PackSideCta title={formation.title} priceLabel={priceLabel} />
+      <PackSideCta
+        title={formation.title}
+        priceLabel={priceLabel}
+        imageUrl={formation.thumbnail_url}
+        sectionsCount={sectionsCount}
+        lessonsCount={lessonsCount}
+        instructorName={instructorName}
+      />
       <PackHero
         title={formation.title}
         priceLabel={priceLabel}

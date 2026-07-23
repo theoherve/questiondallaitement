@@ -123,6 +123,14 @@ const FormationDetailPage = async ({ params }: Props) => {
 
   if (slug === PACK_SLUG) {
     const moduleRows = await fetchPackModuleRows();
+    const packSections = (formation.formation_sections ?? []) as {
+      formation_blocks?: unknown[];
+    }[];
+    const sectionsCount = packSections.length;
+    const lessonsCount = packSections.reduce(
+      (acc, s) => acc + (s.formation_blocks?.length ?? 0),
+      0
+    );
     return (
       <PackSalesPage
         formation={{
@@ -133,6 +141,8 @@ const FormationDetailPage = async ({ params }: Props) => {
           thumbnail_url: formation.thumbnail_url,
           consultants: formation.consultants as PackSalesPageConsultant,
         }}
+        sectionsCount={sectionsCount}
+        lessonsCount={lessonsCount}
         moduleRows={moduleRows}
         isLoggedIn={!!currentUser}
         isEnrolled={isEnrolled}
