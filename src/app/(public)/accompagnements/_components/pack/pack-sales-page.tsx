@@ -3,7 +3,7 @@ import { MODULE_ORDER, formatPrice } from "@/config/accompagnements";
 import { buildModuleCards, type ModuleRow } from "./pack-modules-data";
 import { PACK_CONTENT } from "./pack-content";
 import { PackFaq } from "./pack-faq";
-import { PackStickyHeader } from "./pack-sticky-header";
+import { PackSideCta } from "./pack-side-cta";
 import {
   PackHero,
   PackProblem,
@@ -69,7 +69,7 @@ export function PackSalesPage({
 
   return (
     <>
-      <PackStickyHeader title={formation.title} priceLabel={priceLabel} />
+      <PackSideCta title={formation.title} priceLabel={priceLabel} />
       <PackHero
         title={formation.title}
         priceLabel={priceLabel}

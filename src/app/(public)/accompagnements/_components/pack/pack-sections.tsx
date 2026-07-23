@@ -124,9 +124,9 @@ export function PackProblem() {
       <div className="mx-auto mt-10 grid max-w-3xl gap-3 sm:grid-cols-2">
         {points.map((p, i) => (
           <ScrollReveal key={p} delay={i * 60} className="h-full">
-            <div className="flex h-full items-start gap-3 rounded-lg border border-primary-green/10 bg-white p-4">
+            <div className="flex h-full flex-col items-center justify-center gap-3 rounded-lg border border-primary-green/10 bg-white p-5 text-center">
               <span
-                className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary-red"
+                className="h-2 w-2 shrink-0 rounded-full bg-primary-red"
                 aria-hidden
               />
               <span className="text-sm text-primary-green/80">{p}</span>

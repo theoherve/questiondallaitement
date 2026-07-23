@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, ChevronRight, Clock, Layers, User } from "lucide-react";
@@ -104,14 +105,19 @@ const FormationDetailPage = async ({ params }: Props) => {
 
   if (!formation) notFound();
 
+  // L'appli s'authentifie via NextAuth, pas Supabase Auth : `auth.uid()` est
+  // toujours nul cote RLS. Le client RLS (`createClient`) ne verrait donc jamais
+  // l'inscription. On lit via le client admin, borne au client courant — comme
+  // le reste des lectures authentifiees (voir getSupabaseAndUser, purchaseFormation).
   let isEnrolled = false;
   if (currentUser) {
-    const { data: enrollment } = await supabase
+    const admin = createAdminClient();
+    const { data: enrollment } = await admin
       .from("formation_enrollments")
       .select("id")
       .eq("client_id", currentUser.id)
       .eq("formation_id", formation.id)
-      .single();
+      .maybeSingle();
     isEnrolled = !!enrollment;
   }
 
