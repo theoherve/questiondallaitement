@@ -5,6 +5,8 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Menu, X, User, LogOut, Bell, Stethoscope, Shield, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AccompagnementsMegaMenu } from "@/components/layout/accompagnements-mega-menu";
+import type { AccompagnementsNavPreview } from "@/lib/accompagnements/nav-preview";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,9 +29,12 @@ import type { Notification } from "@/types/database";
 type HeaderProps = {
   user: SessionUser | null;
   onLogout: (formData: FormData) => void | Promise<void>;
+  accompagnements: AccompagnementsNavPreview;
 };
 
-export const Header = ({ user, onLogout }: HeaderProps) => {
+const ACCOMPAGNEMENTS_HREF = "/accompagnements";
+
+export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
@@ -98,15 +103,23 @@ export const Header = ({ user, onLogout }: HeaderProps) => {
             className="hidden items-center gap-8 lg:flex"
             aria-label="Navigation principale"
           >
-            {publicNav.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="nav-link relative text-[15px] font-medium text-primary-green transition-colors hover:text-primary-red"
-              >
-                {link.title}
-              </Link>
-            ))}
+            {publicNav.map((link) =>
+              link.href === ACCOMPAGNEMENTS_HREF ? (
+                <AccompagnementsMegaMenu
+                  key={link.href}
+                  data={accompagnements}
+                  triggerClassName="nav-link text-[15px] font-medium text-primary-green transition-colors hover:text-primary-red"
+                />
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="nav-link relative text-[15px] font-medium text-primary-green transition-colors hover:text-primary-red"
+                >
+                  {link.title}
+                </Link>
+              )
+            )}
           </nav>
 
           {/* Desktop right — icon-only user + CTA */}

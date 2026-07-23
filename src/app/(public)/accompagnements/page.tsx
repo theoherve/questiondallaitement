@@ -2,6 +2,11 @@ import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import {
+  PACK_SLUG,
+  formatPrice,
+  sortByModuleOrder,
+} from "@/config/accompagnements";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,25 +44,6 @@ type FormationRow = {
     profiles: { first_name: string | null; last_name: string | null } | null;
   } | null;
 };
-
-const formatPrice = (cents: number, currency: string): string =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(
-    cents / 100
-  );
-
-const PACK_SLUG = "pack-essentiel-allaitement";
-
-/** Desired display order for individual modules (by slug) */
-const MODULE_ORDER = [
-  "je-me-prepare-a-allaiter",
-  "mon-allaitement-des-premiers-jours",
-  "mon-allaitement-au-fil-des-mois",
-  "je-reprends-une-activite-professionnelle",
-  "la-diversification-de-mon-bebe-allaite",
-  "je-souhaite-sevrer-mon-bebe",
-  "mon-bebe-ne-fait-pas-ses-nuits",
-  "les-urgences-allaitement",
-];
 
 const BENEFITS = [
   { icon: Clock, label: "À votre rythme" },
@@ -115,13 +101,7 @@ const AccompagnementsPage = async () => {
 
   const rows = (formations ?? []) as unknown as FormationRow[];
   const pack = rows.find((f) => f.slug === PACK_SLUG);
-  const modules = rows
-    .filter((f) => f.slug !== PACK_SLUG)
-    .sort((a, b) => {
-      const ia = MODULE_ORDER.indexOf(a.slug);
-      const ib = MODULE_ORDER.indexOf(b.slug);
-      return (ia === -1 ? Infinity : ia) - (ib === -1 ? Infinity : ib);
-    });
+  const modules = sortByModuleOrder(rows.filter((f) => f.slug !== PACK_SLUG));
 
   const packSectionsCount = pack?.formation_sections.length ?? 0;
   const packBlocksCount =

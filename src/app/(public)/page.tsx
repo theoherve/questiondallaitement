@@ -11,6 +11,7 @@ import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { features } from "@/config/features";
 import { PACK_SALES_PATH } from "@/config/navigation";
+import { PACK_SLUG, sortByModuleOrder } from "@/config/accompagnements";
 
 /* ─── Static data ─── */
 
@@ -153,26 +154,10 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       : visibleServices.length === 3
         ? "sm:grid-cols-2 lg:grid-cols-3"
         : "sm:grid-cols-2 mx-auto max-w-4xl";
-  const featuredFormation = allFormations.find(
-    (f) => f.slug === "pack-essentiel-allaitement"
+  const featuredFormation = allFormations.find((f) => f.slug === PACK_SLUG);
+  const otherFormations = sortByModuleOrder(
+    allFormations.filter((f) => f.slug !== PACK_SLUG)
   );
-  const MODULE_ORDER = [
-    "je-me-prepare-a-allaiter",
-    "mon-allaitement-des-premiers-jours",
-    "mon-allaitement-au-fil-des-mois",
-    "je-reprends-une-activite-professionnelle",
-    "la-diversification-de-mon-bebe-allaite",
-    "je-souhaite-sevrer-mon-bebe",
-    "mon-bebe-ne-fait-pas-ses-nuits",
-    "les-urgences-allaitement",
-  ];
-  const otherFormations = allFormations
-    .filter((f) => f.slug !== "pack-essentiel-allaitement")
-    .sort((a, b) => {
-      const ia = MODULE_ORDER.indexOf(a.slug);
-      const ib = MODULE_ORDER.indexOf(b.slug);
-      return (ia === -1 ? Infinity : ia) - (ib === -1 ? Infinity : ib);
-    });
   const blogPosts = blogRes.data ?? [];
   const consultants = consultantsRes.data ?? [];
 
