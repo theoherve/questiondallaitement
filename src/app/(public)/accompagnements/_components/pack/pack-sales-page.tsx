@@ -74,7 +74,6 @@ export function PackSalesPage({
   return (
     <>
       <PackSideCta
-        title={formation.title}
         priceLabel={priceLabel}
         imageUrl={formation.thumbnail_url}
         sectionsCount={sectionsCount}
