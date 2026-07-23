@@ -24,7 +24,7 @@ export function PackStickyHeader({ title, priceLabel }: Props) {
   return (
     <div
       className={cn(
-        "fixed inset-x-0 top-0 z-40 border-b border-primary-green/10 bg-background-beige/80 backdrop-blur-md transition-all duration-300",
+        "fixed inset-x-0 top-16 z-40 border-b border-primary-green/10 bg-background-beige/80 backdrop-blur-md transition-all duration-300",
         visible
           ? "translate-y-0 opacity-100"
           : "pointer-events-none -translate-y-full opacity-0"

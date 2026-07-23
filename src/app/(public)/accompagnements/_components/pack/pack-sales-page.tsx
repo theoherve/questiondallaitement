@@ -1,9 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import {
-  MODULE_ORDER,
-  PACK_SLUG,
-  formatPrice,
-} from "@/config/accompagnements";
+import { MODULE_ORDER, formatPrice } from "@/config/accompagnements";
 import { buildModuleCards, type ModuleRow } from "./pack-modules-data";
 import { PACK_CONTENT } from "./pack-content";
 import { PackFaq } from "./pack-faq";
@@ -62,9 +58,7 @@ export function PackSalesPage({
   isEnrolled,
 }: PackSalesPageProps) {
   const priceLabel = formatPrice(formation.price_cents, formation.currency);
-  const modules = buildModuleCards(moduleRows).filter(
-    (m) => m.slug !== PACK_SLUG
-  );
+  const modules = buildModuleCards(moduleRows);
 
   const profile = formation.consultants?.profiles;
   const instructorName =
@@ -93,7 +87,7 @@ export function PackSalesPage({
         isLoggedIn={isLoggedIn}
         isEnrolled={isEnrolled}
       />
-      <section id="faq" className="bg-background-beige px-4 py-16 sm:px-6 sm:py-20">
+      <section id="faq" className="scroll-mt-20 bg-background-beige px-4 py-16 sm:px-6 sm:py-20">
         <PackFaq />
       </section>
       <PackFinalCta />

@@ -37,7 +37,7 @@ const Section = ({
   className?: string;
   children: React.ReactNode;
 }) => (
-  <section id={id} className={`px-4 py-16 sm:px-6 sm:py-20 ${className}`}>
+  <section id={id} className={`scroll-mt-20 px-4 py-16 sm:px-6 sm:py-20 ${className}`}>
     <div className="mx-auto max-w-6xl">{children}</div>
   </section>
 );
