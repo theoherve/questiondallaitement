@@ -46,14 +46,33 @@ const Section = ({
 export function PackHero({
   title,
   priceLabel,
+  imageUrl,
 }: {
   title: string;
   priceLabel: string;
+  imageUrl: string | null;
 }) {
   const { eyebrow, subtitle, reassurances, ctaLabel } = PACK_CONTENT.hero;
   return (
-    <section className="bg-primary-green px-4 py-20 sm:px-6 sm:py-28">
-      <div className="mx-auto max-w-4xl text-center">
+    <section className="relative overflow-hidden bg-primary-green px-4 py-20 sm:px-6 sm:py-28">
+      {/* Image du pack en fond, avec voile vert pour garder le texte lisible */}
+      {imageUrl && (
+        <>
+          <Image
+            src={imageUrl}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center"
+          />
+          <div
+            className="absolute inset-0 bg-linear-to-b from-primary-green/80 via-primary-green/75 to-primary-green/90"
+            aria-hidden
+          />
+        </>
+      )}
+      <div className="relative z-10 mx-auto max-w-4xl text-center">
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-sm">
           <span className="h-1.5 w-1.5 rounded-full bg-primary-red" aria-hidden />
           <span className="font-sans text-xs font-medium uppercase tracking-widest text-white/90">
@@ -104,8 +123,8 @@ export function PackProblem() {
       </ScrollReveal>
       <div className="mx-auto mt-10 grid max-w-3xl gap-3 sm:grid-cols-2">
         {points.map((p, i) => (
-          <ScrollReveal key={p} delay={i * 60}>
-            <div className="flex items-start gap-3 rounded-lg border border-primary-green/10 bg-white p-4">
+          <ScrollReveal key={p} delay={i * 60} className="h-full">
+            <div className="flex h-full items-start gap-3 rounded-lg border border-primary-green/10 bg-white p-4">
               <span
                 className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary-red"
                 aria-hidden

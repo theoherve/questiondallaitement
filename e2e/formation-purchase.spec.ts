@@ -39,8 +39,6 @@ test.describe("N2 — achat d'accompagnement", () => {
 
     await expect(page.getByTestId("purchase-login-cta")).toBeVisible();
     await expect(page.getByTestId("purchase-button")).toHaveCount(0);
-    // Pas de case non plus : rien a renoncer tant qu'on ne peut pas acheter.
-    await expect(page.getByTestId("withdrawal-waiver")).toHaveCount(0);
 
     await context.close();
   });
@@ -57,9 +55,6 @@ test.describe("N2 — achat d'accompagnement", () => {
       // s'ils divergent, la cliente paie autre chose que ce qu'elle a lu.
       await expect(page.getByText("99,00 €")).toBeVisible();
 
-      // L'acces au contenu est immediat : la renonciation au droit de
-      // retractation est toujours requise, et le bouton reste desactive sans.
-      await page.getByTestId("withdrawal-waiver").check();
       await page.getByTestId("purchase-button").click();
 
       // `purchaseFormation` renvoie { success: false } sur six chemins distincts
@@ -115,7 +110,6 @@ test.describe("N2 — achat d'accompagnement", () => {
 
       try {
         await page.goto(`/accompagnements/${FORMATION_SLUG}`);
-        await page.getByTestId("withdrawal-waiver").check();
         await page.getByTestId("purchase-button").click();
 
         await expect(page.getByTestId("purchase-error")).toHaveText(

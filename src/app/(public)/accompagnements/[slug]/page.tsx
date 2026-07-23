@@ -124,6 +124,7 @@ const FormationDetailPage = async ({ params }: Props) => {
           title: formation.title,
           price_cents: formation.price_cents,
           currency: formation.currency,
+          thumbnail_url: formation.thumbnail_url,
           consultants: formation.consultants as PackSalesPageConsultant,
         }}
         moduleRows={moduleRows}

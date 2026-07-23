@@ -23,6 +23,7 @@ type PackSalesPageProps = {
     title: string;
     price_cents: number;
     currency: string;
+    thumbnail_url: string | null;
     consultants: {
       bio: string | null;
       profiles: {
@@ -69,7 +70,11 @@ export function PackSalesPage({
   return (
     <>
       <PackStickyHeader title={formation.title} priceLabel={priceLabel} />
-      <PackHero title={formation.title} priceLabel={priceLabel} />
+      <PackHero
+        title={formation.title}
+        priceLabel={priceLabel}
+        imageUrl={formation.thumbnail_url}
+      />
       <PackProblem />
       <PackPromise />
       <PackModules modules={modules} />
