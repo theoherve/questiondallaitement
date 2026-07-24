@@ -73,6 +73,15 @@ export const clientNav: NavItem[] = [
   { title: "Mon profil", href: "/espace-client/profil", iconKey: "Settings" },
 ];
 
+/**
+ * Nav client filtrée selon les feature flags. Masque « Mes réservations »
+ * quand la réservation de RDV est désactivée (mode formations-only).
+ */
+export const getClientNav = (bookingEnabled: boolean): NavItem[] =>
+  bookingEnabled
+    ? clientNav
+    : clientNav.filter((item) => item.href !== "/espace-client/reservations");
+
 export const consultantNav: NavItem[] = [
   {
     title: "Tableau de bord",

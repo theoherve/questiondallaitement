@@ -7,6 +7,8 @@ import { CalendarDays, Clock, MapPin, Video } from "lucide-react";
 import { format, differenceInHours } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CancelBookingButton } from "./_components/cancel-booking-button";
+import { features } from "@/config/features";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Mes réservations",
@@ -30,6 +32,10 @@ const LOCATION_LABELS: Record<string, string> = {
 };
 
 const ClientReservationsPage = async () => {
+  if (!features.bookingEnabled) {
+    redirect("/espace-client");
+  }
+
   const { supabase, user } = await getSupabaseAndUser();
 
   const { data: bookings } = await supabase

@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { publicNav, clientNav, PACK_SALES_PATH } from "@/config/navigation";
+import { publicNav, getClientNav, PACK_SALES_PATH } from "@/config/navigation";
 import { features } from "@/config/features";
 import { getNavIcon } from "@/config/navigation-icons";
 import {
@@ -161,7 +161,7 @@ export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
                     {user.email}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {clientNav.map((item) => {
+                  {getClientNav(features.bookingEnabled).map((item) => {
                     const Icon = getNavIcon(item.iconKey);
                     return (
                       <DropdownMenuItem key={item.href} asChild>
@@ -320,7 +320,7 @@ export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
             {/* Auth section */}
             {user ? (
               <>
-                {clientNav.map((item) => (
+                {getClientNav(features.bookingEnabled).map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}

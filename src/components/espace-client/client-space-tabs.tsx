@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { clientNav } from "@/config/navigation";
+import { getClientNav } from "@/config/navigation";
 import { getNavIcon } from "@/config/navigation-icons";
+import { features } from "@/config/features";
+
+const nav = getClientNav(features.bookingEnabled);
 
 const getIsActive = (pathname: string, href: string, isFirst: boolean) => {
   if (isFirst) return pathname === href;
@@ -21,7 +24,7 @@ export const ClientSpaceTabs = () => {
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <ul className="flex gap-1 overflow-x-auto py-0" role="tablist">
-          {clientNav.map((item, index) => {
+          {nav.map((item, index) => {
             const isActive = getIsActive(
               pathname,
               item.href,
