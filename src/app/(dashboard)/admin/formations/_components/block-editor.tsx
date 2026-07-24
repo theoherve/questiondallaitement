@@ -181,14 +181,24 @@ const VideoBlockEditor = ({
       </Select>
     </div>
     <div className="space-y-2">
-      <Label>ID de la vidéo</Label>
+      <Label>
+        {content.provider === "vimeo" ? "URL de la vidéo" : "ID de la vidéo"}
+      </Label>
       <Input
         value={(content.video_id as string) ?? ""}
         onChange={(e) => onChange({ ...content, video_id: e.target.value })}
         placeholder={
-          content.provider === "vimeo" ? "123456789" : "dQw4w9WgXcQ"
+          content.provider === "vimeo"
+            ? "https://vimeo.com/123456789/abc123def"
+            : "dQw4w9WgXcQ"
         }
       />
+      {content.provider === "vimeo" && (
+        <p className="text-xs text-muted-foreground">
+          Collez l&apos;URL complète Vimeo (avec le code de confidentialité
+          après le « / » pour les vidéos non répertoriées).
+        </p>
+      )}
     </div>
     <div className="space-y-2">
       <Label>Titre</Label>

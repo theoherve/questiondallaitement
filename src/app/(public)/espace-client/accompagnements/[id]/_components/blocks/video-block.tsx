@@ -1,5 +1,7 @@
 "use client";
 
+import { getVimeoEmbedUrl } from "@/lib/vimeo";
+
 type VideoBlockProps = {
   content: {
     provider: "vimeo" | "youtube";
@@ -10,7 +12,13 @@ type VideoBlockProps = {
 
 const getEmbedUrl = (provider: string, videoId: string): string => {
   if (provider === "vimeo") {
-    return `https://player.vimeo.com/video/${videoId}?dnt=1`;
+    // Full Vimeo URL (may carry the unlisted privacy hash) → parse it so the
+    // h= param is preserved. Falls back to bare numeric IDs (legacy content,
+    // public videos only).
+    return (
+      getVimeoEmbedUrl(videoId) ??
+      `https://player.vimeo.com/video/${videoId}?dnt=1`
+    );
   }
   return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0`;
 };
