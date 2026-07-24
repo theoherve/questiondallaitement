@@ -23,9 +23,11 @@ import {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { RegisterButton } from "./register-button";
+import { RegistrationReconciler } from "./registration-reconciler";
 
 type Props = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ registered?: string }>;
 };
 
 export const generateMetadata = async ({
@@ -93,8 +95,9 @@ const HIGHLIGHTS = [
   { icon: GraduationCap, text: "Formatrice certifiée IBCLC" },
 ];
 
-const EventDetailPage = async ({ params }: Props) => {
+const EventDetailPage = async ({ params, searchParams }: Props) => {
   const { slug } = await params;
+  const { registered } = await searchParams;
   const supabase = await createClient();
 
   const { data: event } = await supabase
@@ -184,6 +187,12 @@ const EventDetailPage = async ({ params }: Props) => {
   const duration = formatDuration(event.starts_at, event.ends_at);
   const isFree = event.price_cents === 0;
   const isMultiDay = new Date(event.ends_at).getDate() !== new Date(event.starts_at).getDate();
+
+  // Retour d'un paiement : n'attendre le webhook que pour un evenement payant
+  // dont l'inscription n'apparait pas encore. Un evenement gratuit s'inscrit en
+  // synchrone dans l'action, sans course a combler.
+  const awaitingRegistration =
+    registered && !isFree && !isAlreadyRegistered;
 
   return (
     <div>
@@ -464,6 +473,11 @@ const EventDetailPage = async ({ params }: Props) => {
                   <div className="border-t border-primary-green/10" />
 
                   {/* CTA */}
+                  {awaitingRegistration && (
+                    <div className="mb-3">
+                      <RegistrationReconciler eventId={event.id} />
+                    </div>
+                  )}
                   <RegisterButton
                     eventId={event.id}
                     isFree={isFree}

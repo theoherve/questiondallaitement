@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShoppingCart } from "lucide-react";
+import { KlarnaNote } from "@/components/klarna-note";
 import { purchaseFormation } from "../actions";
 
 type PurchaseButtonProps = {
@@ -81,6 +82,7 @@ export const PurchaseButton = ({
         )}
         Acheter l&apos;accompagnement
       </Button>
+      <KlarnaNote />
       {error && (
         <p
           role="alert"

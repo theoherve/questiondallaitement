@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { KlarnaNote } from "@/components/klarna-note";
 import { registerForEvent } from "../actions";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2 } from "lucide-react";
@@ -82,21 +83,24 @@ export const RegisterButton = ({
   };
 
   return (
-    <Button
-      className="w-full bg-primary-red hover:bg-primary-red-dark"
-      onClick={handleRegister}
-      disabled={isPending}
-    >
-      {isPending ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Inscription en cours...
-        </>
-      ) : isFree ? (
-        "S\u2019inscrire (gratuit)"
-      ) : (
-        "S\u2019inscrire"
-      )}
-    </Button>
+    <div className="space-y-2">
+      <Button
+        className="w-full bg-primary-red hover:bg-primary-red-dark"
+        onClick={handleRegister}
+        disabled={isPending}
+      >
+        {isPending ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Inscription en cours...
+          </>
+        ) : isFree ? (
+          "S\u2019inscrire (gratuit)"
+        ) : (
+          "S\u2019inscrire"
+        )}
+      </Button>
+      {!isFree && <KlarnaNote />}
+    </div>
   );
 };

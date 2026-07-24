@@ -7,6 +7,30 @@ import { consultantCanSell } from "@/lib/invoicing/consultant-billing";
 import { siteConfig } from "@/config/site";
 import type { ActionResult } from "@/types";
 
+/**
+ * L'inscription a un evenement payant est ecrite par le webhook Stripe
+ * `checkout.session.completed`, livre en asynchrone. Au retour du paiement, la
+ * ligne `event_registrations` peut ne pas encore exister : cette action permet
+ * a l'ilot client de sonder son apparition sans recharger toute la page.
+ */
+export const hasEventRegistration = async (
+  eventId: string,
+): Promise<boolean> => {
+  const user = await getSessionUser();
+  if (!user) return false;
+
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("event_registrations")
+    .select("id")
+    .eq("event_id", eventId)
+    .eq("client_id", user.id)
+    .eq("status", "registered")
+    .maybeSingle();
+
+  return Boolean(data);
+};
+
 export const registerForEvent = async (
   eventId: string,
 ): Promise<ActionResult<{ redirect_url?: string }>> => {

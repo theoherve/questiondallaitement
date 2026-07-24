@@ -9,6 +9,7 @@ import { BookOpen, CheckCircle2, Play, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ProgressRing } from "@/components/espace-client/progress-ring";
+import { PurchaseReconciler } from "./_components/purchase-reconciler";
 
 export const metadata: Metadata = {
   title: "Mes accompagnements",
@@ -23,7 +24,11 @@ type FormationShape = {
   formation_sections: { formation_blocks: { id: string }[] }[];
 };
 
-const ClientFormationsPage = async () => {
+const ClientFormationsPage = async ({
+  searchParams,
+}: {
+  searchParams: Promise<{ purchased?: string }>;
+}) => {
   const { supabase, user } = await getSupabaseAndUser();
 
   const { data: enrollments } = await supabase
@@ -67,6 +72,17 @@ const ClientFormationsPage = async () => {
     progressByEnrollment.set(p.enrollment_id, set);
   });
 
+  // Retour d'un paiement : n'attendre le webhook que si l'inscription
+  // n'apparait pas encore, sinon l'ilot clignoterait pour rien.
+  const { purchased } = await searchParams;
+  const enrolledFormationIds = new Set(
+    (enrollments ?? []).map(
+      (e) => (e.formations as unknown as FormationShape | null)?.id
+    )
+  );
+  const awaitingPurchase =
+    purchased && !enrolledFormationIds.has(purchased) ? purchased : null;
+
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-3 rounded-3xl bg-linear-to-br from-background-beige-dark/50 via-background-beige to-accent-peach-soft/60 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
@@ -86,6 +102,8 @@ const ClientFormationsPage = async () => {
           <BookOpen className="h-6 w-6 text-primary-red" aria-hidden />
         </div>
       </header>
+
+      {awaitingPurchase && <PurchaseReconciler formationId={awaitingPurchase} />}
 
       {enrollments && enrollments.length > 0 ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
