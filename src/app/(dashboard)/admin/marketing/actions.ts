@@ -36,16 +36,32 @@ import type { JSONContent } from "@maily-to/render";
  * For marketing (Brevo), Brevo receives final HTML — pre-rendering is required.
  * Template variables stay as {{var}} placeholders (replaceVariables=false).
  */
+type RenderOutcome<T> =
+  | { ok: true; value: T & { body_html: string } }
+  | { ok: false; error: string };
+
 const withRenderedHtml = async <T extends { body_html?: string; body_design?: Record<string, unknown> | null }>(
   input: T,
-): Promise<T & { body_html: string }> => {
-  if (input.body_design && Object.keys(input.body_design).length > 0) {
-    const html = await renderBlockEmail(input.body_design as JSONContent, {
-      replaceVariables: false,
-    });
-    return { ...input, body_html: html };
+): Promise<RenderOutcome<T>> => {
+  try {
+    if (input.body_design && Object.keys(input.body_design).length > 0) {
+      const html = await renderBlockEmail(input.body_design as JSONContent, {
+        replaceVariables: false,
+      });
+      return { ok: true, value: { ...input, body_html: html } };
+    }
+    return { ok: true, value: { ...input, body_html: input.body_html ?? "" } };
+  } catch (e) {
+    // Sans ce filet, un design que le moteur d'email refuse fait remonter
+    // l'exception jusqu'a la page ("Application error: a server-side
+    // exception has occurred") au lieu d'un simple toast.
+    console.error("[marketing] rendu du design email echoue", e);
+    return {
+      ok: false,
+      error:
+        "Le rendu du contenu a echoue. Rechargez la page et reessayez ; si le probleme persiste, retirez le dernier bloc ajoute.",
+    };
   }
-  return { ...input, body_html: input.body_html ?? "" };
 };
 
 const requireAdmin = async () => {
@@ -96,7 +112,9 @@ export const createTemplate = async (
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const rendered = await withRenderedHtml(parsed.data);
+  const outcome = await withRenderedHtml(parsed.data);
+  if (!outcome.ok) return { success: false, error: outcome.error };
+  const rendered = outcome.value;
 
   const supabase = createAdminClient();
   const { data, error } = await supabase
@@ -123,7 +141,9 @@ export const updateTemplate = async (
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const rendered = await withRenderedHtml(parsed.data);
+  const outcome = await withRenderedHtml(parsed.data);
+  if (!outcome.ok) return { success: false, error: outcome.error };
+  const rendered = outcome.value;
 
   const supabase = createAdminClient();
   const { error } = await supabase
@@ -216,7 +236,9 @@ export const createCampaign = async (
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const rendered = await withRenderedHtml(parsed.data);
+  const outcome = await withRenderedHtml(parsed.data);
+  if (!outcome.ok) return { success: false, error: outcome.error };
+  const rendered = outcome.value;
   const supabase = createAdminClient();
 
   // Create in local DB first
@@ -271,7 +293,9 @@ export const updateCampaign = async (
     };
   }
 
-  const rendered = await withRenderedHtml(parsed.data);
+  const outcome = await withRenderedHtml(parsed.data);
+  if (!outcome.ok) return { success: false, error: outcome.error };
+  const rendered = outcome.value;
 
   const { error } = await supabase
     .from("email_campaigns")

@@ -32,33 +32,19 @@ type DesignNode = {
 };
 
 /**
- * Cheap O(n) scan — no clone. Returns true iff any image node in the tree
- * still has a `src` attribute pointing at a `blob:` URL (upload in flight).
+ * Normalise the editor's JSON into plain, structured-cloneable data:
+ * deep-clones via a JSON round-trip and resets image `src` attrs still
+ * pointing at a `blob:` URL (upload in flight).
+ *
+ * The clone is not an optimisation detail — it is the only thing that keeps
+ * the design serialisable across a server action. Tiptap parks Blob/File
+ * handles on nodes mid-upload, and Next wraps anything it cannot serialise in
+ * a temporary client reference; the server then throws
+ * "Cannot access <attr> on the server" as soon as the email renderer dots
+ * into that node's attrs. Always call this before handing a design to a
+ * server action.
  */
-export const hasBlobImageSrc = (json: JSONContent): boolean => {
-  if (!json || typeof json !== "object") return false;
-  const stack: DesignNode[] = [json as DesignNode];
-  while (stack.length) {
-    const n = stack.pop()!;
-    if (
-      n.type === "image" &&
-      typeof n.attrs?.src === "string" &&
-      n.attrs.src.startsWith("blob:")
-    ) {
-      return true;
-    }
-    if (Array.isArray(n.content)) stack.push(...n.content);
-  }
-  return false;
-};
-
-/**
- * Walk the design tree and reset image `src` attrs that still point at a
- * `blob:` URL. Returns a deep-cloned tree — the input is not mutated. Call
- * only after `hasBlobImageSrc` has confirmed a blob is present so the clone
- * cost is amortised.
- */
-export const stripBlobImageSrcs = (json: JSONContent): JSONContent => {
+export const toPlainDesign = (json: JSONContent): JSONContent => {
   const cloned = JSON.parse(JSON.stringify(json)) as JSONContent;
   const visit = (node: DesignNode) => {
     if (

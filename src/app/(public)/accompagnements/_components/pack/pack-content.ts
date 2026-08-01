@@ -1,11 +1,14 @@
 /**
  * Copie PLACEHOLDER de la page de vente du pack.
  * 100 % sérialisable — remplacer par les vrais textes sans toucher à la structure.
- * Les 8 modules affichés viennent de la DB, pas d'ici.
+ * Les modules affichés viennent de la DB, pas d'ici.
+ *
+ * Nom validé (spec « Pages de vente » v2) : « L'Allaitement Sur Mesure ».
+ * Le nombre de modules et l'ancrage prix sont dérivés de la DB, pas figés ici.
  */
 export const PACK_CONTENT = {
   hero: {
-    eyebrow: "Pack essentiel allaitement",
+    eyebrow: "L'Allaitement Sur Mesure",
     subtitle:
       "Le programme complet pour vivre un allaitement serein, de la préparation au sevrage — à votre rythme, où que vous soyez.",
     reassurances: [
@@ -31,7 +34,7 @@ export const PACK_CONTENT = {
   promise: {
     title: "Et si vous aviez enfin les bonnes réponses, au bon moment ?",
     paragraphs: [
-      "Le pack essentiel réunit tout ce dont vous avez besoin pour comprendre, anticiper et surmonter chaque étape de votre allaitement.",
+      "« L'Allaitement Sur Mesure » réunit tout ce dont vous avez besoin pour comprendre, anticiper et surmonter chaque étape de votre allaitement.",
       "Des contenus clairs, fondés sur les preuves, accessibles à toute heure — parce qu'un bébé ne pleure pas aux heures d'ouverture.",
     ],
     bullets: [
@@ -42,8 +45,9 @@ export const PACK_CONTENT = {
   },
   modules: {
     title: "Tout ce que contient le pack",
+    // Rendu comme « {N} {subtitle} » — le nombre vient de la DB.
     subtitle:
-      "Huit parcours complets qui couvrent l'allaitement de la préparation au sevrage.",
+      "parcours complets qui couvrent l'allaitement, de la préparation au sevrage.",
   },
   howItWorks: {
     title: "Comment ça se passe",
@@ -75,15 +79,20 @@ export const PACK_CONTENT = {
   instructor: {
     title: "Votre formatrice",
     fallbackName: "Votre consultante IBCLC",
+    // PLACEHOLDER — chiffres à valider avec Carole avant mise en ligne.
     fallbackBio:
-      "Consultante en lactation certifiée IBCLC, elle accompagne les familles avec une approche fondée sur les preuves et bienveillante.",
+      "Consultante en lactation certifiée IBCLC, elle accompagne plus de 1000 mères chaque année avec une approche fondée sur les preuves et bienveillante.",
+    // PLACEHOLDER — bloc crédibilité structuré (spec) : à confirmer avec Carole.
     credentials: [
-      "Consultante certifiée IBCLC",
-      "Approche fondée sur les preuves",
-      "Des milliers de familles accompagnées",
+      "IBCLC depuis 2011",
+      "1000+ mères accompagnées chaque année",
+      "Une équipe de 7 consultantes IBCLC",
+      "Autrice de 3 livres sur l'allaitement",
+      "Formatrice & conférencière",
     ],
   },
   testimonials: {
+    // PLACEHOLDER — remplacer par les vrais témoignages nominatifs du site.
     title: "Elles ont retrouvé un allaitement serein",
     items: [
       {
@@ -107,15 +116,18 @@ export const PACK_CONTENT = {
     ],
   },
   pricing: {
-    title: "Rejoignez le pack essentiel",
+    title: "Rejoignez « L'Allaitement Sur Mesure »",
     subtitle: "Un accès unique à l'ensemble des modules, à vie.",
     includes: [
-      "Les 8 modules complets",
-      "Accès immédiat et illimité",
+      "L'intégralité des modules du pack",
+      "Accès immédiat et illimité, à vie",
       "Mises à jour incluses",
-      "Paiement sécurisé, en 1x, 3x ou 4x sans frais",
+      "Paiement en 1×, 3× ou 4× sans frais",
     ],
-    guarantee: "Paiement 100 % sécurisé — contenu accessible immédiatement.",
+    // PLACEHOLDER JURIDIQUE — durée/conditions à valider (voir memory
+    // withdrawal-waiver-removed : la rétractation a été retirée, cette garantie
+    // rouvre le risque de remboursement sur contenu numérique à accès immédiat).
+    guarantee: "Satisfait ou remboursé sous 14 jours.",
   },
   faq: {
     title: "Questions fréquentes",
@@ -129,8 +141,20 @@ export const PACK_CONTENT = {
         a: "À vie. Vous revenez sur les modules autant de fois que vous le souhaitez, à votre rythme.",
       },
       {
+        q: "Est-ce que ça remplace une consultation individuelle ?",
+        a: "Non. Le pack couvre la grande majorité des situations avec des contenus clairs et fondés sur les preuves. Pour une situation spécifique, une consultation individuelle reste disponible en complément.",
+      },
+      {
+        q: "J'ai déjà allaité, ça peut encore m'apporter quelque chose ?",
+        a: "Oui. Chaque allaitement est différent, et ce qui s'est passé la première fois ne préjuge pas de la suivante. Le pack vous aide à aborder chaque étape avec les bons repères.",
+      },
+      {
+        q: "Et si mon allaitement est déjà difficile ?",
+        a: "Le pack est justement conçu pour comprendre ce qui se joue et reprendre la main, même quand le démarrage a été compliqué.",
+      },
+      {
         q: "Puis-je payer en plusieurs fois ?",
-        a: "Oui, le paiement en 3x ou 4x sans frais est proposé au moment du règlement.",
+        a: "Oui, le paiement en 3× ou 4× sans frais est proposé au moment du règlement.",
       },
       {
         q: "Le contenu est-il fiable ?",
@@ -145,7 +169,7 @@ export const PACK_CONTENT = {
   finalCta: {
     title: "Offrez-vous un allaitement serein",
     subtitle:
-      "Rejoignez le pack essentiel et avancez avec les bonnes réponses, à chaque étape.",
+      "Rejoignez « L'Allaitement Sur Mesure » et avancez avec les bonnes réponses, à chaque étape.",
     ctaLabel: "Rejoindre le pack",
   },
 } as const;

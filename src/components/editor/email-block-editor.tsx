@@ -27,11 +27,7 @@ import {
   buildCalloutSectionNode,
   type CalloutVariant,
 } from "./email-callout-presets";
-import {
-  hasBlobImageSrc,
-  stripBlobImageSrcs,
-  mimeToExt,
-} from "./email-block-helpers";
+import { toPlainDesign, mimeToExt } from "./email-block-helpers";
 import "@maily-to/core/style.css";
 
 /**
@@ -155,24 +151,21 @@ export const EmailBlockEditor = ({
   );
 
   const handleUpdate = useCallback((e: { getJSON: () => JSONContent }) => {
-    const raw = e.getJSON();
-    // Drop transient `blob:` URLs only when one is actually present — the
-    // common keystroke path skips the JSON round-trip entirely.
-    const json = hasBlobImageSrc(raw) ? stripBlobImageSrcs(raw) : raw;
+    // Normalise on every update rather than only when a `blob:` src is
+    // detected: the raw Tiptap JSON is what consumers hand straight to server
+    // actions (save, test send, preview), and anything non-serialisable in it
+    // becomes a temporary client reference that blows up server-side rendering.
+    const json = toPlainDesign(e.getJSON());
     liveDesignRef.current = json;
     onChangeRef.current(json);
   }, []);
 
   const openPreview = useCallback(() => {
-    // Deep-clone via JSON round-trip to strip any Blob/File refs the upload
-    // extension may have parked on image nodes mid-upload. Without this, the
-    // server action receives a non-serializable client reference and Next
-    // throws "Cannot access src on the server".
+    // `liveDesignRef` is already normalised by `handleUpdate`, but the initial
+    // design comes straight from props — normalise again so the preview action
+    // never receives a non-serialisable node.
     const live = liveDesignRef.current;
-    const safe = live
-      ? (JSON.parse(JSON.stringify(live)) as JSONContent)
-      : null;
-    setPreviewSnapshot(safe);
+    setPreviewSnapshot(live ? toPlainDesign(live) : null);
     setPreviewOpen(true);
   }, []);
 

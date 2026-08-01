@@ -9,6 +9,7 @@ import {
   Leaf,
   Moon,
   ShieldPlus,
+  ShieldCheck,
   Quote,
   type LucideIcon,
 } from "lucide-react";
@@ -179,7 +180,9 @@ export function PackModules({ modules }: { modules: ModuleCard[] }) {
         <h2 className="font-serif text-3xl font-bold text-primary-green sm:text-4xl">
           {title}
         </h2>
-        <p className="mt-4 text-lg text-primary-green/70">{subtitle}</p>
+        <p className="mt-4 text-lg text-primary-green/70">
+          {modules.length} {subtitle}
+        </p>
       </ScrollReveal>
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {modules.map((m, i) => {
@@ -327,8 +330,9 @@ export function PackInstructor({
               {credentials.map((c) => (
                 <li
                   key={c}
-                  className="rounded-full bg-primary-green/10 px-3 py-1 text-xs font-medium text-primary-green"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary-green/10 px-3 py-1 text-xs font-medium text-primary-green"
                 >
+                  <CheckCircle className="h-3 w-3 shrink-0 text-accent-sage" aria-hidden />
                   {c}
                 </li>
               ))}
@@ -381,11 +385,14 @@ export function PackTestimonials() {
 /* ------------------------------------------------------------- Pricing */
 export function PackPricing({
   priceLabel,
+  anchorLabel,
   formationId,
   isLoggedIn,
   isEnrolled,
 }: {
   priceLabel: string;
+  /** Ancrage de valeur dérivé de la DB (« X € d'économie… ») ; masqué si absent. */
+  anchorLabel: string | null;
   formationId: string;
   isLoggedIn: boolean;
   isEnrolled: boolean;
@@ -403,6 +410,11 @@ export function PackPricing({
         <p className="mt-6 text-center font-serif text-5xl font-bold text-primary-red">
           {priceLabel}
         </p>
+        {anchorLabel && (
+          <p className="mt-2 text-center text-sm font-medium text-accent-sage">
+            {anchorLabel}
+          </p>
+        )}
         <ul className="mt-6 space-y-2">
           {includes.map((it) => (
             <li key={it} className="flex items-start gap-2 text-sm text-primary-green/80">
@@ -421,7 +433,8 @@ export function PackPricing({
             isEnrolled={isEnrolled}
           />
         </div>
-        <p className="mt-4 text-center text-xs text-primary-green/50">
+        <p className="mt-4 flex items-center justify-center gap-2 text-center text-sm font-medium text-primary-green/80">
+          <ShieldCheck className="h-4 w-4 shrink-0 text-accent-sage" aria-hidden />
           {guarantee}
         </p>
       </div>

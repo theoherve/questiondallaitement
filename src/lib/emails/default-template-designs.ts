@@ -209,32 +209,85 @@ export const DESIGN_BOOKING_CONFIRMATION = doc([
   brandFooter(),
 ]);
 
+/**
+ * `booking_reminder` n'expose ni date ni URL de reservation (cf.
+ * `sendBookingReminder`) : le lien vers l'espace client est donc ecrit en dur.
+ */
+const BOOKING_AREA_URL =
+  "https://www.formation-allaitement.com/espace-client/reservations";
+
 export const DESIGN_BOOKING_REMINDER = doc([
   brandHeader(),
   section(
     [
-      heading(1, [text("C'est pour demain !")], "center"),
+      heading(1, [text("J-1 avant notre rendez-vous")], "center"),
       paragraph([text("Bonjour "), variable("client_name"), text(",")]),
       paragraph([
-        text("Petit rappel : votre consultation avec "),
-        variable("consultant_name"),
-        text(" a lieu "),
-        text("demain à ", [{ type: "bold" }]),
-        variable("time"),
-        text("."),
+        text(
+          "Demain, vous prendrez enfin ce temps pour vous, pour poser toutes vos questions, faire le point sur votre situation et repartir avec des réponses concrètes.",
+        ),
+      ]),
+      paragraph([
+        text("Et si c'était justement le bon moment pour y penser quelques minutes ?"),
       ]),
       spacer(8),
+      // Rappel des infos pratiques : `sendBookingReminder` fournit
+      // consultant_name et time, et l'objet seul ne les porte pas jusqu'au corps.
       detailsBox([
         { label: "Consultante :", value: [variable("consultant_name")] },
         { label: "Heure :", value: [variable("time")] },
       ]),
       paragraph([
         text(
-          "Préparez vos questions et installez-vous dans un endroit calme. Nous sommes là pour vous.",
+          "Que vous soyez de la team qui prépare tout à l'avance avec une liste de questions bien ficelée, ou plutôt de ceux qui préfèrent voir où la discussion les mène, voici quelques idées pour profiter pleinement de votre consultation :",
         ),
       ]),
+      spacer(8),
+      section(
+        [
+          paragraph([text("✨ Les sujets qui vous préoccupent en ce moment.")]),
+          spacer(6),
+          paragraph([
+            text("✨ Les changements ou difficultés rencontrés récemment."),
+          ]),
+          spacer(6),
+          paragraph([
+            text(
+              "✨ Vos objectifs, vos envies ou simplement ce que vous aimeriez mieux comprendre.",
+            ),
+          ]),
+        ],
+        { bg: "#f5ebe8", padding: 20, borderRadius: 10, marginBottom: 24 },
+      ),
+      paragraph([
+        text(
+          "Il n'y a pas de « bonne » façon de préparer ce rendez-vous : venez comme vous êtes, on s'occupe du reste.",
+        ),
+      ]),
+      spacer(8),
+      button("Je prépare ma consultation", BOOKING_AREA_URL),
       spacer(16),
-      paragraph([text("À demain,"), lineBreak(), text("L'équipe Question d'Allaitement")], "center"),
+      paragraph([
+        text(
+          "Et si vous avez besoin de modifier votre rendez-vous, retrouvez votre lien de réservation juste ici 👉 ",
+        ),
+        text("Votre lien de réservation", [
+          {
+            type: "link",
+            attrs: {
+              href: BOOKING_AREA_URL,
+              target: "_blank",
+              rel: "noopener noreferrer",
+            },
+          } as { type: string },
+        ]),
+        text(" 👈."),
+      ]),
+      spacer(16),
+      paragraph(
+        [text("À demain,"), lineBreak(), text("L'équipe de Carole Hervé")],
+        "center",
+      ),
     ],
     { bg: "#ffffff", padding: [32, 24], marginBottom: 0 },
   ),

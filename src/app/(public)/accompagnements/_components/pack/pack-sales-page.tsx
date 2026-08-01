@@ -65,6 +65,18 @@ export function PackSalesPage({
   const priceLabel = formatPrice(formation.price_cents, formation.currency);
   const modules = buildModuleCards(moduleRows);
 
+  // Ancrage de valeur (spec) : économie du pack vs somme des modules à l'unité.
+  // Dérivé de la DB — masqué si le pack n'est pas moins cher que le cumul.
+  const modulesTotalCents = moduleRows.reduce(
+    (acc, m) => acc + (m.price_cents ?? 0),
+    0
+  );
+  const savingsCents = modulesTotalCents - formation.price_cents;
+  const anchorLabel =
+    savingsCents > 0
+      ? `Soit ${formatPrice(savingsCents, formation.currency)} d'économie par rapport aux modules achetés à l'unité`
+      : null;
+
   const profile = formation.consultants?.profiles;
   const instructorName =
     profile && (profile.first_name || profile.last_name)
@@ -101,6 +113,7 @@ export function PackSalesPage({
       <PackTestimonials />
       <PackPricing
         priceLabel={priceLabel}
+        anchorLabel={anchorLabel}
         formationId={formation.id}
         isLoggedIn={isLoggedIn}
         isEnrolled={isEnrolled}

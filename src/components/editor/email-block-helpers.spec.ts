@@ -1,99 +1,10 @@
 import { describe, it, expect } from "vitest";
-import {
-  hasBlobImageSrc,
-  stripBlobImageSrcs,
-  mimeToExt,
-} from "./email-block-helpers";
+import { toPlainDesign, mimeToExt } from "./email-block-helpers";
 import type { JSONContent } from "@maily-to/render";
 
-// ─── hasBlobImageSrc ──────────────────────────────────────────
+// ─── toPlainDesign ────────────────────────────────────────────
 
-describe("hasBlobImageSrc", () => {
-  it("false sur design vide", () => {
-    expect(hasBlobImageSrc({} as JSONContent)).toBe(false);
-  });
-
-  it("false si aucune image", () => {
-    expect(
-      hasBlobImageSrc({
-        type: "doc",
-        content: [
-          {
-            type: "paragraph",
-            content: [{ type: "text", text: "Hello" }],
-          },
-        ],
-      }),
-    ).toBe(false);
-  });
-
-  it("false si toutes les images ont un src https", () => {
-    expect(
-      hasBlobImageSrc({
-        type: "doc",
-        content: [
-          {
-            type: "image",
-            attrs: { src: "https://cdn.example.com/a.jpg" },
-          },
-        ],
-      }),
-    ).toBe(false);
-  });
-
-  it("true si au moins une image.src commence par blob:", () => {
-    expect(
-      hasBlobImageSrc({
-        type: "doc",
-        content: [
-          {
-            type: "image",
-            attrs: { src: "https://cdn.example.com/a.jpg" },
-          },
-          { type: "image", attrs: { src: "blob:http://localhost/xyz" } },
-        ],
-      }),
-    ).toBe(true);
-  });
-
-  it("traverse les colonnes nested", () => {
-    expect(
-      hasBlobImageSrc({
-        type: "doc",
-        content: [
-          {
-            type: "columns",
-            content: [
-              {
-                type: "column",
-                content: [
-                  {
-                    type: "columns",
-                    content: [
-                      {
-                        type: "column",
-                        content: [
-                          {
-                            type: "image",
-                            attrs: { src: "blob:deep-nested" },
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      }),
-    ).toBe(true);
-  });
-});
-
-// ─── stripBlobImageSrcs ───────────────────────────────────────
-
-describe("stripBlobImageSrcs", () => {
+describe("toPlainDesign", () => {
   it("remplace blob:* par une string vide", () => {
     const input: JSONContent = {
       type: "doc",
@@ -101,7 +12,7 @@ describe("stripBlobImageSrcs", () => {
         { type: "image", attrs: { src: "blob:http://local/x", alt: "A" } },
       ],
     };
-    const out = stripBlobImageSrcs(input);
+    const out = toPlainDesign(input);
     const img = (out.content as { attrs: { src: string; alt: string } }[])[0];
     expect(img.attrs.src).toBe("");
     expect(img.attrs.alt).toBe("A"); // autres attrs intactes
@@ -114,7 +25,7 @@ describe("stripBlobImageSrcs", () => {
         { type: "image", attrs: { src: "https://cdn.example.com/a.jpg" } },
       ],
     };
-    const out = stripBlobImageSrcs(input);
+    const out = toPlainDesign(input);
     const img = (out.content as { attrs: { src: string } }[])[0];
     expect(img.attrs.src).toBe("https://cdn.example.com/a.jpg");
   });
@@ -125,8 +36,32 @@ describe("stripBlobImageSrcs", () => {
       content: [{ type: "image", attrs: { src: "blob:abc" } }],
     };
     const snapshot = JSON.parse(JSON.stringify(input));
-    stripBlobImageSrcs(input);
+    const out = toPlainDesign(input);
     expect(input).toEqual(snapshot);
+    expect(out).not.toBe(input);
+    expect(out.content).not.toBe(input.content);
+  });
+
+  it("laisse tomber les valeurs non serialisables (Blob/File/fonction)", () => {
+    const input = {
+      type: "doc",
+      content: [
+        {
+          type: "image",
+          attrs: {
+            src: "https://cdn.example.com/a.jpg",
+            file: new Blob(["x"]),
+            onUpload: () => undefined,
+          },
+        },
+      ],
+    } as unknown as JSONContent;
+    const out = toPlainDesign(input);
+    const attrs = (out.content as { attrs: Record<string, unknown> }[])[0]
+      .attrs;
+    expect(attrs.src).toBe("https://cdn.example.com/a.jpg");
+    expect(attrs.onUpload).toBeUndefined(); // fonction supprimee
+    expect(attrs.file).toEqual({}); // Blob aplati en objet nu
   });
 
   it("préserve la structure nested (colonnes, sections)", () => {
@@ -159,7 +94,7 @@ describe("stripBlobImageSrcs", () => {
         },
       ],
     };
-    const out = stripBlobImageSrcs(input);
+    const out = toPlainDesign(input);
     const section = (out.content as Array<{ content: unknown[] }>)[0];
     const columns = (section.content as Array<{ content: unknown[] }>)[0];
     const cols = columns.content as Array<{ content: Array<{ attrs?: { src?: string } }> }>;
