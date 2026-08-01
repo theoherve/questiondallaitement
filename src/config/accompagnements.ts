@@ -5,7 +5,7 @@
  */
 
 /** Slug du pack phare, affiché en vedette. */
-export const PACK_SLUG = "pack-essentiel-allaitement";
+export const PACK_SLUG = "pack-mon-allaitement-sur-mesure";
 
 /** Ordre d'affichage souhaité des modules individuels (par slug). */
 export const MODULE_ORDER = [

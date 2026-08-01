@@ -2,6 +2,8 @@
  * Serializable nav config: iconKey only (no React components).
  * Safe to pass from Server Components to Client Components.
  */
+import { PACK_SLUG } from "@/config/accompagnements";
+
 export type NavItem = {
   title: string;
   href: string;
@@ -28,7 +30,7 @@ export const publicNav: PublicNavItem[] = [
  * Page de vente du pack phare (offre en ligne). Sert de cible aux CTA de
  * conversion quand la réservation de RDV est désactivée (mode formations-only).
  */
-export const PACK_SALES_PATH = "/accompagnements/pack-essentiel-allaitement";
+export const PACK_SALES_PATH = `/accompagnements/${PACK_SLUG}`;
 
 /** Social links — used in footer. */
 export const socialLinks = [

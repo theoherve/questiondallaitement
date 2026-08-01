@@ -400,22 +400,94 @@ const DownloadBlockEditor = ({
 
 // ─── Helpers ────────────────────────────────────────────────
 
+const SUMMARY_MAX_LENGTH = 80;
+
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: " ",
+  laquo: "«",
+  raquo: "»",
+  hellip: "…",
+  rsquo: "’",
+  lsquo: "‘",
+  ldquo: "“",
+  rdquo: "”",
+  mdash: "—",
+  ndash: "–",
+  eacute: "é",
+  egrave: "è",
+  ecirc: "ê",
+  agrave: "à",
+  ccedil: "ç",
+  ugrave: "ù",
+  ocirc: "ô",
+  icirc: "î",
+  iuml: "ï",
+};
+
+/** Décode les entités HTML (numériques + nommées courantes). Sans DOM, donc SSR-safe. */
+const decodeEntities = (input: string): string =>
+  input
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) =>
+      String.fromCodePoint(Number.parseInt(hex, 16))
+    )
+    .replace(/&#(\d+);/g, (_, dec: string) =>
+      String.fromCodePoint(Number.parseInt(dec, 10))
+    )
+    .replace(
+      /&([a-z]+);/gi,
+      (match, name: string) => NAMED_ENTITIES[name.toLowerCase()] ?? match
+    );
+
+const truncate = (text: string): string => {
+  if (text.length <= SUMMARY_MAX_LENGTH) return text;
+  const cut = text.slice(0, SUMMARY_MAX_LENGTH);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+};
+
+/** Titre du premier heading si le contenu en ouvre un, sinon première ligne non vide. */
+const getTextSummary = (html: string): string => {
+  const heading = html.match(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/i);
+  const headingIsFirst =
+    heading !== null &&
+    html.slice(0, heading.index).replace(/<[^>]*>/g, "").trim() === "";
+
+  const source = headingIsFirst ? heading[1] : html;
+  const lines = decodeEntities(
+    source
+      // les balises bloc séparent le texte : sans ça les lignes se collent
+      .replace(/<\/(p|div|h[1-6]|li|blockquote|tr)>|<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]*>/g, "")
+  )
+    .split("\n")
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+
+  return lines[0] ?? "";
+};
+
 const getBlockSummary = (
   type: string,
   content: Record<string, unknown>
 ): string => {
   switch (type) {
     case "text": {
-      const html = (content.html as string) ?? "";
-      const text = html.replace(/<[^>]*>/g, "").slice(0, 60);
-      return text || "Texte vide";
+      const text = getTextSummary((content.html as string) ?? "");
+      return text ? truncate(text) : "Texte vide";
     }
     case "video":
       return (content.title as string) || "Vidéo sans titre";
     case "image":
       return (content.alt as string) || "Image";
-    case "quiz":
-      return (content.question as string)?.slice(0, 60) || "Quiz sans question";
+    case "quiz": {
+      const question = (content.question as string) ?? "";
+      return question ? truncate(decodeEntities(question)) : "Quiz sans question";
+    }
     case "download":
       return (content.filename as string) || "Fichier";
     default:

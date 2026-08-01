@@ -85,15 +85,15 @@ export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
           {/* Logo */}
           <Link
             href="/"
-            className="flex-shrink-0"
+            className="relative block h-10 w-37.5 shrink-0 lg:h-12 lg:w-45"
             aria-label="Accueil Question d'Allaitement"
           >
             <Image
               src="/logo.svg"
               alt="Question d'Allaitement"
-              width={180}
-              height={48}
-              className="h-10 w-auto lg:h-12"
+              fill
+              sizes="180px"
+              className="object-contain"
               priority
             />
           </Link>

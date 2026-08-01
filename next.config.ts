@@ -21,7 +21,10 @@ import type { NextConfig } from "next";
 const contentSecurityPolicy = [
   "default-src 'self'",
   // 'unsafe-eval' est requis par le rafraichissement a chaud en developpement.
-  `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === "development" ? "'unsafe-eval' " : ""}https://js.stripe.com`,
+  // va.vercel-scripts.com : Speed Insights charge son script de debug depuis ce
+  // CDN en developpement seulement ; en production il est servi par Vercel sur
+  // la meme origine (/_vercel/speed-insights/script.js).
+  `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === "development" ? "'unsafe-eval' https://va.vercel-scripts.com " : ""}https://js.stripe.com`,
   "style-src 'self' 'unsafe-inline'",
   // `https:` et non une liste d'hotes : les visuels importes depuis Wix
   // pointent sur des domaines quelconques, et une image bloquee laisserait une
@@ -32,7 +35,7 @@ const contentSecurityPolicy = [
   // aleatoire : autorise en developpement seulement, jamais en production.
   `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com${
     process.env.NODE_ENV === "development"
-      ? " ws://localhost:* ws://127.0.0.1:*"
+      ? " ws://localhost:* ws://127.0.0.1:* https://va.vercel-scripts.com"
       : ""
   }`,
   "frame-src https://js.stripe.com https://hooks.stripe.com https://player.vimeo.com https://www.youtube.com https://youtube.com https://podcast.ausha.co",

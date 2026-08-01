@@ -38,7 +38,6 @@ const Thumb = ({
           alt=""
           fill
           sizes={`${size}px`}
-          quality={60}
           className="object-cover"
         />
       </div>
@@ -163,7 +162,12 @@ export const AccompagnementsMegaMenu = ({ data, triggerClassName }: Props) => {
               : "pointer-events-none invisible -translate-y-2 opacity-0"
           )}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-[22rem_1fr]">
+          <div
+            className={cn(
+              "grid grid-cols-1",
+              pack && "sm:grid-cols-[22rem_1fr]"
+            )}
+          >
             {/* Vedette — le pack */}
             {pack && (
               <Link
@@ -182,7 +186,6 @@ export const AccompagnementsMegaMenu = ({ data, triggerClassName }: Props) => {
                       alt=""
                       fill
                       sizes="22rem"
-                      quality={65}
                       className="object-cover"
                     />
                   )}
