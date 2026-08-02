@@ -9,9 +9,16 @@ import { DownloadBlock } from "./blocks/download-block";
 type BlockRendererProps = {
   type: string;
   content: unknown;
+  formationId: string;
+  blockId: string;
 };
 
-export const BlockRenderer = ({ type, content }: BlockRendererProps) => {
+export const BlockRenderer = ({
+  type,
+  content,
+  formationId,
+  blockId,
+}: BlockRendererProps) => {
   switch (type) {
     case "text":
       return <TextBlock content={content as { html: string }} />;
@@ -47,6 +54,8 @@ export const BlockRenderer = ({ type, content }: BlockRendererProps) => {
           content={
             content as { url: string; filename: string; size_bytes: number }
           }
+          formationId={formationId}
+          blockId={blockId}
         />
       );
     default:

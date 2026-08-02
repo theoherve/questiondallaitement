@@ -2,6 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,11 +49,14 @@ import {
 import { FileUpload } from "@/components/ui/file-upload";
 import { WysiwygEditor } from "@/components/editor/wysiwyg-editor";
 import { SectionEditor } from "./section-editor";
+import { SortableSection } from "./sortable-section";
 import {
   updateFormation,
   updateFormationStatus,
   deleteFormation,
   createSection,
+  reorderSections,
+  duplicateFormation,
 } from "../actions";
 import { toast } from "sonner";
 import {
@@ -51,6 +69,7 @@ import {
   Plus,
   ArrowLeft,
   MoreHorizontal,
+  Copy,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -128,8 +147,50 @@ export const FormationEditor = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [duplicateTitle, setDuplicateTitle] = useState(
+    `${formation.title} Premium`
+  );
+  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [orderedSections, setOrderedSections] = useState(sections);
+  const [prevServerSections, setPrevServerSections] = useState(sections);
+
+  // Réaligne l'ordre local sur le serveur après un router.refresh().
+  if (prevServerSections !== sections) {
+    setPrevServerSections(sections);
+    setOrderedSections(sections);
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const statusConfig = STATUS_CONFIG[formation.status] ?? STATUS_CONFIG.draft;
+
+  const handleSectionDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = orderedSections.findIndex((s) => s.id === active.id);
+    const newIndex = orderedSections.findIndex((s) => s.id === over.id);
+    const next = arrayMove(orderedSections, oldIndex, newIndex);
+    setOrderedSections(next);
+
+    const result = await reorderSections(
+      formation.id,
+      next.map((s) => s.id)
+    );
+
+    if (result.success) {
+      toast.success("Ordre des sections enregistré");
+    } else {
+      setOrderedSections(sections);
+      toast.error(result.error ?? "Erreur lors du réordonnancement");
+    }
+  };
 
   const handleSaveMetadata = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -182,6 +243,20 @@ export const FormationEditor = ({
       router.refresh();
     } else {
       toast.error(result.error ?? "Erreur");
+    }
+  };
+
+  const handleDuplicate = async () => {
+    setIsDuplicating(true);
+    const result = await duplicateFormation(formation.id, duplicateTitle);
+    setIsDuplicating(false);
+
+    if (result.success && result.data) {
+      setDuplicateDialogOpen(false);
+      toast.success("Copie créée en brouillon");
+      router.push(`/admin/formations/${result.data.id}/edit`);
+    } else {
+      toast.error(result.error ?? "Erreur lors de la duplication");
     }
   };
 
@@ -305,6 +380,16 @@ export const FormationEditor = ({
                     Restaurer en brouillon
                   </DropdownMenuItem>
                 )}
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setDuplicateTitle(`${formation.title} Premium`);
+                    setDuplicateDialogOpen(true);
+                  }}
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Dupliquer
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   variant="destructive"
@@ -348,6 +433,53 @@ export const FormationEditor = ({
                 onClick={() => handleStatusChange("published")}
               >
                 Publier
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Duplicate dialog — la copie sert de base à une variante payante */}
+        <Dialog
+          open={duplicateDialogOpen}
+          onOpenChange={setDuplicateDialogOpen}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Dupliquer l&apos;accompagnement</DialogTitle>
+              <DialogDescription>
+                Sections, blocs, description et vignette sont recopiés. La copie
+                est créée en brouillon, à 0 € : fixez son prix avant de la
+                publier.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="duplicate-title">Titre de la copie</Label>
+              <Input
+                id="duplicate-title"
+                value={duplicateTitle}
+                onChange={(e) => setDuplicateTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && duplicateTitle.trim()) {
+                    e.preventDefault();
+                    handleDuplicate();
+                  }
+                }}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDuplicateDialogOpen(false)}
+                disabled={isDuplicating}
+              >
+                Annuler
+              </Button>
+              <Button
+                className="bg-primary-red hover:bg-primary-red-dark"
+                onClick={handleDuplicate}
+                disabled={isDuplicating || !duplicateTitle.trim()}
+              >
+                {isDuplicating ? "Duplication…" : "Dupliquer"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -457,17 +589,21 @@ export const FormationEditor = ({
                 />
               </div>
               <div className="space-y-2">
-                <Label>Thumbnail</Label>
+                <Label>Vignette</Label>
                 <FileUpload
                   bucket="formations"
                   folder="thumbnails"
                   accept="image/*"
                   maxSizeMb={5}
                   value={thumbnailUrl}
-                  onUpload={setThumbnailUrl}
+                  onUpload={(url) => setThumbnailUrl(url)}
                   onRemove={() => setThumbnailUrl("")}
                   label="Ajouter une image"
+                  cropAspect="16:9"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Recadrez en 16:9 : c&apos;est le format des cartes sur le site.
+                </p>
               </div>
             </div>
 
@@ -487,17 +623,39 @@ export const FormationEditor = ({
 
       {/* Sections & Blocks */}
       <div className="space-y-4">
-        <h2 className="font-serif text-xl font-semibold text-primary-green">
-          Sections & Contenu
-        </h2>
+        <div className="space-y-1">
+          <h2 className="font-serif text-xl font-semibold text-primary-green">
+            Sections & Contenu
+          </h2>
+          {orderedSections.length > 1 && (
+            <p className="text-sm text-muted-foreground">
+              Glissez la poignée à gauche d&apos;une section pour la déplacer.
+              Au clavier : Tab jusqu&apos;à la poignée, Espace, puis les flèches.
+            </p>
+          )}
+        </div>
 
-        {sections.map((section) => (
-          <SectionEditor
-            key={section.id}
-            section={section}
-            formationId={formation.id}
-          />
-        ))}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleSectionDragEnd}
+        >
+          <SortableContext
+            items={orderedSections.map((s) => s.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-4">
+              {orderedSections.map((section) => (
+                <SortableSection key={section.id} section={section}>
+                  <SectionEditor
+                    section={section}
+                    formationId={formation.id}
+                  />
+                </SortableSection>
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
 
         {/* Add section */}
         <Card>

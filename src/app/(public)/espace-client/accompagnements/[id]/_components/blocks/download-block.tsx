@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, FileText, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { getAttachmentUrl } from "../../actions";
 
 type DownloadBlockProps = {
   content: {
@@ -10,6 +12,8 @@ type DownloadBlockProps = {
     filename: string;
     size_bytes: number;
   };
+  formationId: string;
+  blockId: string;
 };
 
 const formatFileSize = (bytes: number): string => {
@@ -18,14 +22,26 @@ const formatFileSize = (bytes: number): string => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
 };
 
-export const DownloadBlock = ({ content }: DownloadBlockProps) => {
+export const DownloadBlock = ({
+  content,
+  formationId,
+  blockId,
+}: DownloadBlockProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
+      // Les pièces jointes vivent dans un bucket privé : le lien direct ne
+      // s'ouvre pas. Le serveur vérifie l'inscription et renvoie un lien signé.
+      const result = await getAttachmentUrl(formationId, blockId);
+      if (!result.success || !result.data) {
+        toast.error(result.error ?? "Téléchargement indisponible");
+        return;
+      }
+
       const link = document.createElement("a");
-      link.href = content.url;
+      link.href = result.data.url;
       link.download = content.filename;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
@@ -33,7 +49,7 @@ export const DownloadBlock = ({ content }: DownloadBlockProps) => {
       link.click();
       document.body.removeChild(link);
     } finally {
-      setTimeout(() => setIsDownloading(false), 1000);
+      setIsDownloading(false);
     }
   };
 

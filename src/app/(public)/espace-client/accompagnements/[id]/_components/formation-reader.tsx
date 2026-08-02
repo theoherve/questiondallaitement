@@ -223,7 +223,7 @@ export const FormationReader = ({
             />
             {resources.length > 0 && (
               <div className="mt-3 border-t border-border/50 pt-3">
-                <ResourcesPanel resources={resources} />
+                <ResourcesPanel resources={resources} formationId={formation.id} />
               </div>
             )}
           </div>
@@ -269,7 +269,7 @@ export const FormationReader = ({
                   />
                   {resources.length > 0 && (
                     <div className="border-t border-border/50 pt-3">
-                      <ResourcesPanel resources={resources} />
+                      <ResourcesPanel resources={resources} formationId={formation.id} />
                     </div>
                   )}
                 </div>
@@ -311,6 +311,8 @@ export const FormationReader = ({
                           <BlockRenderer
                             type={block.type}
                             content={block.content}
+                            formationId={formation.id}
+                            blockId={block.id}
                           />
                           <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-4">
                             <div className="flex items-center gap-2">

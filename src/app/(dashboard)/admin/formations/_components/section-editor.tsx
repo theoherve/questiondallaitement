@@ -44,7 +44,7 @@ import {
   Video,
   ImageIcon,
   HelpCircle,
-  Download,
+  Paperclip,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
@@ -78,11 +78,16 @@ type SectionEditorProps = {
 };
 
 const BLOCK_TYPES = [
-  { type: "text", label: "Texte", icon: Type },
-  { type: "video", label: "Vidéo", icon: Video },
-  { type: "image", label: "Image", icon: ImageIcon },
-  { type: "quiz", label: "Quiz", icon: HelpCircle },
-  { type: "download", label: "Téléchargement", icon: Download },
+  { type: "text", label: "Texte", hint: "Paragraphe mis en forme", icon: Type },
+  { type: "video", label: "Vidéo", hint: "YouTube ou Vimeo", icon: Video },
+  { type: "image", label: "Image", hint: "Photo ou illustration", icon: ImageIcon },
+  { type: "quiz", label: "Quiz", hint: "Question à choix", icon: HelpCircle },
+  {
+    type: "download",
+    label: "Pièce jointe",
+    hint: "PDF, support PPT, document",
+    icon: Paperclip,
+  },
 ] as const;
 
 const DEFAULT_CONTENT: Record<string, Record<string, unknown>> = {
@@ -349,14 +354,18 @@ export const SectionEditor = ({
               Ajouter un bloc
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="center" className="w-48">
-            {BLOCK_TYPES.map(({ type, label, icon: Icon }) => (
+          <DropdownMenuContent align="center" className="w-64">
+            {BLOCK_TYPES.map(({ type, label, hint, icon: Icon }) => (
               <DropdownMenuItem
                 key={type}
                 onClick={() => handleAddBlock(type)}
+                className="items-start gap-2"
               >
-                <Icon className="mr-2 h-4 w-4" />
-                {label}
+                <Icon className="mt-0.5 h-4 w-4 shrink-0" />
+                <span className="flex flex-col">
+                  <span>{label}</span>
+                  <span className="text-xs text-muted-foreground">{hint}</span>
+                </span>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

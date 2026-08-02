@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Square, RectangleHorizontal, RectangleVertical } from "lucide-react";
 import { toast } from "sonner";
 import { uploadFileAction } from "@/lib/storage/actions";
+import type { StorageBucket } from "@/lib/storage/helpers";
 
 type Props = {
   open: boolean;
@@ -29,9 +30,11 @@ type Props = {
   /** Bucket subfolder for the cropped upload. */
   uploadFolder: string;
   /** Bucket to upload the cropped image to. */
-  bucket: "mails" | "blog";
+  bucket: StorageBucket;
   /** Called with the new public URL after crop is saved. */
   onCropped: (url: string) => void;
+  /** Ratio pré-sélectionné à l'ouverture (« libre » par défaut). */
+  defaultAspect?: AspectPreset;
 };
 
 type AspectPreset = "free" | "1:1" | "16:9" | "4:3" | "3:4";
@@ -71,11 +74,12 @@ export const ImageCropDialog = ({
   uploadFolder,
   bucket,
   onCropped,
+  defaultAspect = "free",
 }: Props) => {
   const imgRef = useRef<HTMLImageElement>(null);
   const [crop, setCrop] = useState<Crop>();
   const [completed, setCompleted] = useState<PixelCrop>();
-  const [aspect, setAspect] = useState<AspectPreset>("free");
+  const [aspect, setAspect] = useState<AspectPreset>(defaultAspect);
   const [saving, setSaving] = useState(false);
 
   // Reset when dialog opens with a new src

@@ -95,7 +95,7 @@ export const RegisterButton = ({
             Inscription en cours...
           </>
         ) : isFree ? (
-          "S\u2019inscrire (gratuit)"
+          "S\u2019inscrire"
         ) : (
           "S\u2019inscrire"
         )}

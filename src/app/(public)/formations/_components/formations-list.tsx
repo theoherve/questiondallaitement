@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { format, isSameDay, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
+import { FORMATION_SCHOOL_PRICE_LABEL } from "@/config/formations";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -61,7 +62,7 @@ const EVENT_TYPE_LABELS: Record<string, { label: string; icon: typeof Video }> =
 };
 
 const formatPrice = (cents: number, currency: string): string => {
-  if (cents === 0) return "Gratuit";
+  if (cents === 0) return FORMATION_SCHOOL_PRICE_LABEL;
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(cents / 100);
 };
 
@@ -596,8 +597,8 @@ const EventCard = ({ event }: { event: EventData }) => {
         <div className="mt-5 flex items-center justify-between border-t border-primary-green/10 pt-4">
           <div>
             {isFree ? (
-              <Badge variant="secondary" className="bg-emerald-50 text-emerald-700">
-                Gratuit
+              <Badge variant="secondary" className="bg-accent-honey-soft text-primary-green">
+                {FORMATION_SCHOOL_PRICE_LABEL}
               </Badge>
             ) : hasDiscount ? (
               <div className="flex items-center gap-2">

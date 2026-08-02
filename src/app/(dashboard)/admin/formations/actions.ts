@@ -81,6 +81,122 @@ export const updateFormation = async (
   return { success: true };
 };
 
+const slugify = (text: string): string =>
+  text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+/** Slug libre : ajoute -2, -3… tant qu'un accompagnement porte déjà le même. */
+const findAvailableSlug = async (base: string): Promise<string> => {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("formations")
+    .select("slug")
+    .like("slug", `${base}%`);
+
+  const taken = new Set((data ?? []).map((row) => row.slug));
+  if (!taken.has(base)) return base;
+
+  let suffix = 2;
+  while (taken.has(`${base}-${suffix}`)) suffix += 1;
+  return `${base}-${suffix}`;
+};
+
+/**
+ * Duplique un accompagnement avec toutes ses sections et tous ses blocs.
+ *
+ * La copie part en brouillon et son prix est remis à zéro : dupliquer sert à
+ * bâtir une variante (un pack premium, par exemple), et laisser filer en ligne
+ * un doublon au prix de l'original serait le pire accident possible ici.
+ * Les collaboratrices ne sont pas reprises — les parts de revenus se
+ * redéfinissent à chaque offre.
+ */
+export const duplicateFormation = async (
+  id: string,
+  newTitle?: string,
+): Promise<ActionResult<{ id: string }>> => {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { data: source, error: sourceError } = await supabase
+    .from("formations")
+    .select(
+      "title, description, short_description, long_description_html, thumbnail_url, consultant_id",
+    )
+    .eq("id", id)
+    .single();
+
+  if (sourceError || !source) {
+    return { success: false, error: "Accompagnement introuvable" };
+  }
+
+  const title = newTitle?.trim() || `${source.title} (copie)`;
+  const slug = await findAvailableSlug(slugify(title));
+
+  const { data: copy, error: insertError } = await supabase
+    .from("formations")
+    .insert({
+      title,
+      slug,
+      description: source.description,
+      short_description: source.short_description,
+      long_description_html: source.long_description_html,
+      thumbnail_url: source.thumbnail_url,
+      consultant_id: source.consultant_id,
+      price_cents: 0,
+      status: "draft",
+    })
+    .select("id")
+    .single();
+
+  if (insertError || !copy) {
+    return { success: false, error: "Erreur lors de la duplication" };
+  }
+
+  const { data: sections } = await supabase
+    .from("formation_sections")
+    .select("id, title, position, formation_blocks(type, content, position)")
+    .eq("formation_id", id)
+    .order("position", { ascending: true });
+
+  for (const section of sections ?? []) {
+    const { data: newSection, error: sectionError } = await supabase
+      .from("formation_sections")
+      .insert({
+        formation_id: copy.id,
+        title: section.title,
+        position: section.position,
+      })
+      .select("id")
+      .single();
+
+    if (sectionError || !newSection) continue;
+
+    const blocks = (section.formation_blocks ?? []) as {
+      type: string;
+      content: Record<string, unknown>;
+      position: number;
+    }[];
+
+    if (blocks.length === 0) continue;
+
+    await supabase.from("formation_blocks").insert(
+      blocks.map((block) => ({
+        section_id: newSection.id,
+        type: block.type,
+        content: block.content,
+        position: block.position,
+      })),
+    );
+  }
+
+  revalidatePath("/admin/formations");
+  return { success: true, data: { id: copy.id } };
+};
+
 export const deleteFormation = async (id: string): Promise<ActionResult> => {
   await requireAdmin();
   const supabase = createAdminClient();

@@ -76,4 +76,10 @@ export type ActionResult<T = void> = {
   success: boolean;
   data?: T;
   error?: string;
+  /**
+   * Erreurs de validation par champ (clé = nom du champ du formulaire), pour
+   * que l'interface puisse afficher le message au bon endroit plutôt qu'un
+   * simple toast générique.
+   */
+  fieldErrors?: Record<string, string>;
 };

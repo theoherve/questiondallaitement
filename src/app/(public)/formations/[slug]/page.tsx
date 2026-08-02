@@ -22,6 +22,10 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import {
+  FORMATION_SCHOOL_PRICE_HINT,
+  FORMATION_SCHOOL_PRICE_LABEL,
+} from "@/config/formations";
 import { RegisterButton } from "./register-button";
 import { RegistrationReconciler } from "./registration-reconciler";
 
@@ -56,7 +60,7 @@ export const generateMetadata = async ({
 };
 
 const formatPrice = (cents: number, currency: string): string => {
-  if (cents === 0) return "Gratuit";
+  if (cents === 0) return FORMATION_SCHOOL_PRICE_LABEL;
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency,
@@ -275,7 +279,9 @@ const EventDetailPage = async ({ params, searchParams }: Props) => {
                 {formatPrice(event.price_cents, event.currency)}
               </p>
               {isFree && (
-                <p className="mt-1 text-sm text-white/50">Accès libre</p>
+                <p className="mt-1 text-sm text-white/50">
+                  {FORMATION_SCHOOL_PRICE_HINT}
+                </p>
               )}
             </div>
           </div>
@@ -385,9 +391,14 @@ const EventDetailPage = async ({ params, searchParams }: Props) => {
                   {/* Price */}
                   <div className="text-center">
                     {isFree ? (
-                      <Badge className="bg-emerald-50 text-emerald-700 text-lg px-4 py-1">
-                        Gratuit
-                      </Badge>
+                      <>
+                        <Badge className="bg-accent-honey-soft px-4 py-1 text-lg text-primary-green">
+                          {FORMATION_SCHOOL_PRICE_LABEL}
+                        </Badge>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {FORMATION_SCHOOL_PRICE_HINT}
+                        </p>
+                      </>
                     ) : (
                       <p className="font-serif text-3xl font-bold text-primary-green">
                         {formatPrice(event.price_cents, event.currency)}

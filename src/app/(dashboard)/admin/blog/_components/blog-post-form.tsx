@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WysiwygEditor } from "@/components/editor/wysiwyg-editor";
+import { FileUpload } from "@/components/ui/file-upload";
 import { createBlogPost, updateBlogPost, deleteBlogPost } from "../actions";
 import { toast } from "sonner";
 import { ArrowLeft, Save, Eye, Trash2, Calendar } from "lucide-react";
@@ -30,6 +31,7 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState("content");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
     title: post?.title ?? "",
@@ -64,6 +66,19 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
     }));
   };
 
+  /** Ramène la rédactrice sur l'onglet qui porte l'erreur. */
+  const revealFieldErrors = (errors: Record<string, string> | undefined) => {
+    setFieldErrors(errors ?? {});
+    if (!errors) return;
+    const seoFields = ["meta_title", "meta_description", "og_image_url"];
+    const hasSeoError = seoFields.some((f) => f in errors);
+    const hasContentError = Object.keys(errors).some(
+      (f) => !seoFields.includes(f),
+    );
+    if (hasSeoError && !hasContentError) setActiveTab("seo");
+    else if (hasContentError) setActiveTab("content");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -72,9 +87,14 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
       formData.scheduled_at &&
       new Date(formData.scheduled_at) <= new Date()
     ) {
+      setFieldErrors({
+        scheduled_at: "Choisissez une date de publication dans le futur",
+      });
       toast.error("La date de publication programmée doit être dans le futur");
       return;
     }
+
+    setFieldErrors({});
 
     const payload = {
       ...formData,
@@ -94,6 +114,7 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
           toast.success("Article créé");
           router.push(`/admin/blog/${result.data.id}/edit`);
         } else {
+          revealFieldErrors(result.fieldErrors);
           toast.error(result.error || "Erreur lors de la création");
         }
       } else if (post) {
@@ -102,7 +123,8 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
           toast.success("Article mis à jour");
           router.refresh();
         } else {
-          toast.error(result.error);
+          revealFieldErrors(result.fieldErrors);
+          toast.error(result.error ?? "Erreur lors de l'enregistrement");
         }
       }
     });
@@ -136,10 +158,18 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
         toast.success("Article publié");
         router.refresh();
       } else {
-        toast.error(result.error);
+        revealFieldErrors(result.fieldErrors);
+        toast.error(result.error ?? "Erreur lors de la publication");
       }
     });
   };
+
+  const fieldError = (field: string) =>
+    fieldErrors[field] ? (
+      <p className="text-sm text-destructive" role="alert">
+        {fieldErrors[field]}
+      </p>
+    ) : null;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -203,7 +233,9 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
                       onChange={handleTitleChange}
                       placeholder="Titre de l'article"
                       required
+                      aria-invalid={Boolean(fieldErrors.title)}
                     />
+                    {fieldError("title")}
                   </div>
 
                   <div className="space-y-2">
@@ -218,8 +250,10 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
                         }
                         placeholder="slug-de-larticle"
                         required
+                        aria-invalid={Boolean(fieldErrors.slug)}
                       />
                     </div>
+                    {fieldError("slug")}
                   </div>
 
                   <div className="space-y-2">
@@ -237,6 +271,7 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
                     <p className="text-xs text-muted-foreground">
                       {formData.excerpt.length}/300 caractères
                     </p>
+                    {fieldError("excerpt")}
                   </div>
                 </CardContent>
               </Card>
@@ -281,6 +316,7 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
                     <p className="text-xs text-muted-foreground">
                       {formData.meta_title.length}/70 caractères
                     </p>
+                    {fieldError("meta_title")}
                   </div>
 
                   <div className="space-y-2">
@@ -301,25 +337,31 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
                     <p className="text-xs text-muted-foreground">
                       {formData.meta_description.length}/160 caractères
                     </p>
+                    {fieldError("meta_description")}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="og_image_url">Image Open Graph</Label>
-                    <Input
-                      id="og_image_url"
+                    <Label>Image Open Graph</Label>
+                    <FileUpload
+                      bucket="blog"
+                      folder="og"
+                      accept="image/*"
+                      maxSizeMb={10}
                       value={formData.og_image_url}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          og_image_url: e.target.value,
-                        }))
+                      onUpload={(url) =>
+                        setFormData((prev) => ({ ...prev, og_image_url: url }))
                       }
-                      placeholder="https://..."
-                      type="url"
+                      onRemove={() =>
+                        setFormData((prev) => ({ ...prev, og_image_url: "" }))
+                      }
+                      label="Ajouter l'image de partage"
+                      cropAspect="16:9"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Image affichée lors du partage sur les réseaux sociaux
+                      Image affichée lors du partage sur les réseaux sociaux.
+                      Recadrez-la en 16:9 pour éviter les coupes.
                     </p>
+                    {fieldError("og_image_url")}
                   </div>
                 </CardContent>
               </Card>
@@ -374,6 +416,7 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
                   <p className="text-xs text-muted-foreground">
                     La date doit être dans le futur
                   </p>
+                  {fieldError("scheduled_at")}
                 </div>
               )}
 
@@ -446,19 +489,23 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="thumbnail_url">Image de couverture</Label>
-                <Input
-                  id="thumbnail_url"
+                <Label>Image de couverture</Label>
+                <FileUpload
+                  bucket="blog"
+                  folder="covers"
+                  accept="image/*"
+                  maxSizeMb={10}
                   value={formData.thumbnail_url}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      thumbnail_url: e.target.value,
-                    }))
+                  onUpload={(url) =>
+                    setFormData((prev) => ({ ...prev, thumbnail_url: url }))
                   }
-                  placeholder="https://..."
-                  type="url"
+                  onRemove={() =>
+                    setFormData((prev) => ({ ...prev, thumbnail_url: "" }))
+                  }
+                  label="Ajouter une image de couverture"
+                  cropAspect="16:9"
                 />
+                {fieldError("thumbnail_url")}
               </div>
             </CardContent>
           </Card>

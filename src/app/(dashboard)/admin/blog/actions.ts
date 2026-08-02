@@ -13,6 +13,26 @@ const requireAdmin = async () => {
   return user;
 };
 
+/**
+ * Traduit un échec Zod en `ActionResult` exploitable par le formulaire :
+ * un message principal + le détail champ par champ.
+ */
+const validationFailure = (error: {
+  issues: { path: PropertyKey[]; message: string }[];
+}): ActionResult<never> => {
+  const fieldErrors: Record<string, string> = {};
+  for (const issue of error.issues) {
+    const field = String(issue.path[0] ?? "");
+    if (field && !fieldErrors[field]) fieldErrors[field] = issue.message;
+  }
+
+  return {
+    success: false,
+    error: error.issues[0]?.message ?? "Certains champs sont invalides",
+    fieldErrors,
+  };
+};
+
 const slugify = (text: string): string =>
   text
     .toLowerCase()
@@ -113,7 +133,7 @@ export const createBlogPost = async (
   const user = await requireAdmin();
   const parsed = blogPostSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message };
+    return validationFailure(parsed.error);
   }
 
   const supabase = createAdminClient();
@@ -122,6 +142,10 @@ export const createBlogPost = async (
     ...parsed.data,
     slug: slugify(parsed.data.slug),
     author_id: user.id,
+    body_html: parsed.data.body_html ?? "",
+    excerpt: parsed.data.excerpt ?? null,
+    meta_title: parsed.data.meta_title ?? null,
+    meta_description: parsed.data.meta_description ?? null,
     thumbnail_url: parsed.data.thumbnail_url || null,
     og_image_url: parsed.data.og_image_url || null,
     category_id: parsed.data.category_id || null,
@@ -159,7 +183,7 @@ export const updateBlogPost = async (
   await requireAdmin();
   const parsed = blogPostSchema.safeParse(data);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message };
+    return validationFailure(parsed.error);
   }
 
   const supabase = createAdminClient();
@@ -174,6 +198,10 @@ export const updateBlogPost = async (
   const updateData: Record<string, unknown> = {
     ...parsed.data,
     slug: slugify(parsed.data.slug),
+    body_html: parsed.data.body_html ?? "",
+    excerpt: parsed.data.excerpt ?? null,
+    meta_title: parsed.data.meta_title ?? null,
+    meta_description: parsed.data.meta_description ?? null,
     thumbnail_url: parsed.data.thumbnail_url || null,
     og_image_url: parsed.data.og_image_url || null,
     category_id: parsed.data.category_id || null,

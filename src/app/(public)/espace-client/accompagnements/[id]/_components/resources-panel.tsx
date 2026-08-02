@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Download, FileText, FolderOpen, Sparkles } from "lucide-react";
+import { Download, FileText, FolderOpen, Loader2, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+import { getAttachmentUrl } from "../actions";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +26,7 @@ export type FormationResource = {
 
 type ResourcesPanelProps = {
   resources: FormationResource[];
+  formationId: string;
 };
 
 const formatSize = (bytes: number) => {
@@ -33,8 +36,30 @@ const formatSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
 };
 
-export const ResourcesPanel = ({ resources }: ResourcesPanelProps) => {
+export const ResourcesPanel = ({
+  resources,
+  formationId,
+}: ResourcesPanelProps) => {
   const [open, setOpen] = useState(false);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+
+  /**
+   * Le bucket des pièces jointes est privé : on demande au serveur un lien
+   * signé au moment du clic plutôt que d'exposer une URL permanente.
+   */
+  const handleDownload = async (resource: FormationResource) => {
+    setPendingId(resource.blockId);
+    try {
+      const result = await getAttachmentUrl(formationId, resource.blockId);
+      if (!result.success || !result.data) {
+        toast.error(result.error ?? "Téléchargement indisponible");
+        return;
+      }
+      window.open(result.data.url, "_blank", "noopener,noreferrer");
+    } finally {
+      setPendingId(null);
+    }
+  };
 
   if (resources.length === 0) return null;
 
@@ -102,12 +127,12 @@ export const ResourcesPanel = ({ resources }: ResourcesPanelProps) => {
                 <ul className="space-y-2">
                   {items.map((r) => (
                     <li key={r.blockId}>
-                      <a
-                        href={r.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        tabIndex={0}
-                        className="group flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-3 transition-all hover:-translate-y-0.5 hover:border-primary-red/40 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-red"
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(r)}
+                        disabled={pendingId === r.blockId}
+                        aria-label={`Télécharger ${r.filename}`}
+                        className="group flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-card p-3 text-left transition-all hover:-translate-y-0.5 hover:border-primary-red/40 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-red disabled:opacity-60"
                       >
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-peach-soft text-primary-red group-hover:bg-accent-peach/40">
                           <FileText className="h-4 w-4" aria-hidden />
@@ -122,11 +147,18 @@ export const ResourcesPanel = ({ resources }: ResourcesPanelProps) => {
                             </span>
                           )}
                         </span>
-                        <Download
-                          className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary-red"
-                          aria-hidden
-                        />
-                      </a>
+                        {pendingId === r.blockId ? (
+                          <Loader2
+                            className="h-4 w-4 shrink-0 animate-spin text-primary-red"
+                            aria-hidden
+                          />
+                        ) : (
+                          <Download
+                            className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary-red"
+                            aria-hidden
+                          />
+                        )}
+                      </button>
                     </li>
                   ))}
                 </ul>

@@ -392,7 +392,9 @@ export const EventForm = ({
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  0 = Gratuit
+                  0 € affiche « Voir avec l&apos;école » sur la page publique de
+                  la formation : à utiliser quand l&apos;inscription et le
+                  paiement passent par l&apos;école.
                 </p>
               </div>
 

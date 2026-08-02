@@ -39,7 +39,7 @@ const BLOCK_TYPE_LABELS: Record<string, string> = {
   video: "Vidéo",
   image: "Image",
   quiz: "Quiz",
-  download: "Téléchargement",
+  download: "Pièce jointe",
 };
 
 export const BlockEditor = ({ block, formationId }: BlockEditorProps) => {
@@ -119,7 +119,11 @@ export const BlockEditor = ({ block, formationId }: BlockEditorProps) => {
             <QuizBlockEditor content={content} onChange={setContent} />
           )}
           {block.type === "download" && (
-            <DownloadBlockEditor content={content} onChange={setContent} />
+            <DownloadBlockEditor
+              content={content}
+              onChange={setContent}
+              formationId={formationId}
+            />
           )}
 
           <div className="flex justify-end">
@@ -368,32 +372,56 @@ const QuizBlockEditor = ({
 
 // ─── Download Block ─────────────────────────────────────────
 
+/** Extensions acceptées côté serveur pour le bucket `downloads`. */
+const ATTACHMENT_ACCEPT =
+  ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.odt,.ods,.odp,.csv,.txt,.zip,.mp3,.wav,.m4a,.mp4,.mov,image/*";
+
 const DownloadBlockEditor = ({
   content,
   onChange,
+  formationId,
 }: {
   content: Record<string, unknown>;
   onChange: (c: Record<string, unknown>) => void;
+  formationId: string;
 }) => (
   <div className="space-y-3">
     <FileUpload
       bucket="downloads"
-      folder="formations"
-      accept="*/*"
+      // Le dossier porte l'id de l'accompagnement : c'est ce que la règle
+      // d'accès du bucket privé compare pour n'ouvrir le fichier qu'aux
+      // personnes inscrites.
+      folder={formationId}
+      accept={ATTACHMENT_ACCEPT}
       maxSizeMb={50}
       value={(content.url as string) ?? ""}
-      onUpload={(url) => onChange({ ...content, url })}
-      onRemove={() => onChange({ ...content, url: "", filename: "" })}
-      label="Glissez ou cliquez pour ajouter un fichier"
+      onUpload={(url, file) =>
+        onChange({
+          ...content,
+          url,
+          // Le nom affiché est pré-rempli avec celui du fichier d'origine,
+          // et reste modifiable juste en dessous.
+          filename: (content.filename as string) || file?.name || "",
+          size_bytes: file?.sizeBytes ?? content.size_bytes ?? 0,
+        })
+      }
+      onRemove={() =>
+        onChange({ ...content, url: "", filename: "", size_bytes: 0 })
+      }
+      label="Glissez ou cliquez pour ajouter un PDF, un support ou un document"
       previewType="file"
     />
     <div className="space-y-2">
-      <Label>Nom du fichier affiché</Label>
+      <Label>Nom affiché aux clientes</Label>
       <Input
         value={(content.filename as string) ?? ""}
         onChange={(e) => onChange({ ...content, filename: e.target.value })}
-        placeholder="Ex: guide-allaitement.pdf"
+        placeholder="Ex : Guide de l'allaitement (PDF)"
       />
+      <p className="text-xs text-muted-foreground">
+        PDF, Word, PowerPoint, Excel, audio, vidéo ou image — 50 Mo maximum. Le
+        fichier apparaît dans la leçon et dans le panneau « Ressources ».
+      </p>
     </div>
   </div>
 );
@@ -489,7 +517,7 @@ const getBlockSummary = (
       return question ? truncate(decodeEntities(question)) : "Quiz sans question";
     }
     case "download":
-      return (content.filename as string) || "Fichier";
+      return (content.filename as string) || "Pièce jointe";
     default:
       return "Bloc";
   }

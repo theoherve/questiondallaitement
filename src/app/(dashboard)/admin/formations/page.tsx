@@ -18,6 +18,7 @@ import { Plus, Pencil, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { FormationStatusToggle } from "./_components/formation-status-toggle";
+import { DuplicateFormationButton } from "./_components/duplicate-formation-button";
 
 export const metadata: Metadata = {
   title: "Gestion des accompagnements",
@@ -296,6 +297,10 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
                               <ExternalLink className="h-4 w-4" />
                             </Link>
                           </Button>
+                          <DuplicateFormationButton
+                            formationId={formation.id}
+                            formationTitle={formation.title}
+                          />
                           <Button asChild variant="ghost" size="icon">
                             <Link
                               href={`/admin/formations/${formation.id}/edit`}
