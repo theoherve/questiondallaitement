@@ -2,6 +2,7 @@ import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createContact } from "@/lib/brevo/client";
+import { sendWelcomeEmail } from "./welcome-email";
 import {
   NEWSLETTER_CONSENT_TEXT,
   type NewsletterSource,
@@ -90,7 +91,11 @@ export const subscribeToNewsletter = async (
     return { status: "error" };
   }
 
+  // Le contact doit exister chez Brevo avant l'envoi : le template de bienvenue
+  // porte le lien de desinscription, que Brevo ne peut resoudre que pour un
+  // contact qu'il connait.
   await pushToBrevo({ id: subscriber.id, email, firstName, source: input.source });
+  await sendWelcomeEmail({ subscriberId: subscriber.id, email, firstName });
 
   return { status: "subscribed", firstName };
 };

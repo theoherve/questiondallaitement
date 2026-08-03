@@ -14,6 +14,8 @@ import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { getMemoUrl } from "@/lib/newsletter/welcome-email";
+import { MemoUpload } from "./_components/memo-upload";
 
 export const metadata: Metadata = {
   title: "Newsletter",
@@ -27,6 +29,8 @@ type Subscriber = {
   consented_at: string;
   brevo_synced_at: string | null;
   brevo_sync_error: string | null;
+  welcome_email_sent_at: string | null;
+  welcome_email_error: string | null;
   unsubscribed_at: string | null;
   created_at: string;
 };
@@ -42,7 +46,7 @@ const NewsletterSubscribersPage = async () => {
 
   const supabase = createAdminClient();
 
-  const [subscribersRes, viewsRes] = await Promise.all([
+  const [subscribersRes, viewsRes, memoUrl] = await Promise.all([
     supabase
       .from("newsletter_subscribers")
       .select("*")
@@ -52,6 +56,7 @@ const NewsletterSubscribersPage = async () => {
       .from("newsletter_events")
       .select("source", { count: "exact" })
       .eq("type", "page_view"),
+    getMemoUrl(),
   ]);
 
   const subscribers = (subscribersRes.data ?? []) as Subscriber[];
@@ -98,6 +103,12 @@ const NewsletterSubscribersPage = async () => {
         />
       </div>
 
+      <Card>
+        <CardContent className="pt-6">
+          <MemoUpload currentUrl={memoUrl} />
+        </CardContent>
+      </Card>
+
       {pendingSync.length > 0 && (
         <Card>
           <CardContent className="pt-6 text-sm">
@@ -131,6 +142,7 @@ const NewsletterSubscribersPage = async () => {
                   <TableHead>Source</TableHead>
                   <TableHead>Consentement</TableHead>
                   <TableHead>Brevo</TableHead>
+                  <TableHead>Bienvenue</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -161,6 +173,18 @@ const NewsletterSubscribersPage = async () => {
                       ) : (
                         <Badge variant="destructive" title={subscriber.brevo_sync_error ?? undefined}>
                           En échec
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {subscriber.welcome_email_sent_at ? (
+                        <Badge variant="secondary">Envoyé</Badge>
+                      ) : (
+                        <Badge
+                          variant="destructive"
+                          title={subscriber.welcome_email_error ?? undefined}
+                        >
+                          Non envoyé
                         </Badge>
                       )}
                     </TableCell>
