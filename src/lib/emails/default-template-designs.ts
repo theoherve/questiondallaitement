@@ -590,7 +590,77 @@ export const DESIGN_BOOKING_SLOT_CONFLICT = doc([
   brandFooter(),
 ]);
 
+/**
+ * Bienvenue newsletter, avec le memo offert a l'inscription.
+ *
+ * Deux differences avec les autres transactionnels :
+ *
+ *   - `memo_block` porte le bouton de telechargement et vaut la chaine vide
+ *     tant qu'aucun memo n'a ete depose. Un bouton en dur pointerait vers une
+ *     URL vide le temps que Carole televerse le fichier.
+ *   - le pied de page contient un lien de desinscription. Les autres emails
+ *     n'en ont pas besoin — ils repondent a une action de la cliente — mais
+ *     celui-ci ouvre un abonnement, et la loi l'exige dans chaque envoi.
+ */
+export const DESIGN_NEWSLETTER_WELCOME = doc([
+  brandHeader(),
+  section(
+    [
+      heading(1, [text("Bienvenue")], "center"),
+      spacer(4),
+      paragraph(
+        [text("L'allaitement, autrement.", [{ type: "italic" }])],
+        "center",
+      ),
+      spacer(20),
+      paragraph([text("Bonjour "), variable("first_name"), text(",")]),
+      paragraph([
+        text(
+          "Vous recevrez désormais un email chaque mardi : une question d'allaitement, une réponse claire, à lire en cinq minutes. Sans discours culpabilisant, sans recette toute faite.",
+        ),
+      ]),
+      spacer(8),
+      paragraph([
+        text("Votre mémo vous attend", [{ type: "bold" }]),
+      ]),
+      paragraph([
+        text(
+          "« Conservation du lait maternel » — une page à imprimer et coller sur la porte du frigo, pour ne plus avoir à chercher la réponse à 3 h du matin.",
+        ),
+      ]),
+      spacer(20),
+      // Ecrit en texte brut, pas en noeud variable() : Maily echappe la valeur
+      // de ses variables, et la lectrice verrait le code du bouton au lieu du
+      // bouton. Meme mecanisme que zoom_block.
+      paragraph([text("{{memo_block}}")], "center"),
+      spacer(16),
+      paragraph([
+        text(
+          "Une question vous préoccupe ? Répondez simplement à cet email, nous le lisons.",
+        ),
+      ]),
+      paragraph(
+        [text("À mardi,"), lineBreak(), text("Carole Hervé")],
+        "center",
+      ),
+    ],
+    { bg: "#ffffff", padding: [32, 24], marginBottom: 0 },
+  ),
+  section(
+    [
+      footer([text("Accompagnement en lactation par des consultantes IBCLC.")]),
+      footer([
+        text("Vous ne souhaitez plus recevoir cette newsletter ? "),
+        text("{{unsubscribe_link}}"),
+      ]),
+      footer([text("© Question d'Allaitement — Tous droits réservés.")]),
+    ],
+    { bg: "#fff8f6", padding: [16, 16], marginTop: 8, marginBottom: 0 },
+  ),
+]);
+
 export const DEFAULT_TEMPLATE_DESIGNS: Record<string, Node> = {
+  newsletter_welcome: DESIGN_NEWSLETTER_WELCOME,
   booking_confirmation: DESIGN_BOOKING_CONFIRMATION,
   booking_reminder: DESIGN_BOOKING_REMINDER,
   booking_cancelled: DESIGN_BOOKING_CANCELLED,
@@ -617,6 +687,7 @@ export const TEMPLATE_DEFAULT_SUBJECTS: Record<string, string> = {
   formation_access:
     "Votre accompagnement « {{formation_title}} » est disponible",
   welcome: "Bienvenue sur Question d'Allaitement",
+  newsletter_welcome: "Bienvenue — votre mémo est à l'intérieur",
   password_reset: "Réinitialisation de votre mot de passe",
   migration_welcome: "Votre espace Question d'Allaitement a migré",
   booking_slot_conflict:
@@ -637,6 +708,10 @@ export const TEMPLATE_DEFAULT_VARIABLES: Record<string, string[]> = {
   booking_cancelled: ["client_name", "date", "refund_info"],
   formation_access: ["client_name", "formation_title", "formation_url"],
   welcome: ["client_name", "dashboard_url"],
+  // memo_block et unsubscribe_link portent du HTML construit par le code : les
+  // omettre ici les retirerait de la liste proposee dans l'editeur, et Carole
+  // ne pourrait pas les replacer si elle refait la mise en page.
+  newsletter_welcome: ["first_name", "memo_block", "unsubscribe_link"],
   password_reset: ["client_name", "reset_url"],
   migration_welcome: ["client_name", "setup_url"],
   booking_slot_conflict: [

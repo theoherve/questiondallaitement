@@ -1,7 +1,8 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendTransactionalEmail } from "@/lib/brevo/client";
+import { sendNewsletterWelcome } from "@/lib/emails/send";
+import { unsubscribeUrlFor } from "./unsubscribe";
 
 /**
  * URL du memo offert a l'inscription.
@@ -22,22 +23,16 @@ export const getMemoUrl = async (): Promise<string | null> => {
   return url === "" ? null : url;
 };
 
-const templateId = () => {
-  const raw = process.env.BREVO_TEMPLATE_ID_NEWSLETTER_WELCOME?.trim();
-  if (!raw) return null;
-
-  const parsed = Number.parseInt(raw, 10);
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
 /**
  * Envoie l'email de bienvenue contenant le lien vers le memo.
  *
+ * Le template vit dans `email_templates` et s'edite dans l'administration du
+ * site, comme les autres transactionnels — plutot que chez Brevo, ou Carole
+ * aurait eu deux endroits ou modifier ses emails et un editeur de moins.
+ *
  * Un lien, pas une piece jointe : un fichier joint degrade la delivrabilite, et
  * il fige le memo dans les boites de reception — le remplacer n'aurait aucun
- * effet sur les envois passes. Le lien pointe vers le bucket public
- * « ressources », donc il reste valable indefiniment, contrairement aux URL
- * signees du bucket prive.
+ * effet sur les envois passes.
  *
  * Toute erreur est enregistree plutot que remontee : le consentement a ete
  * recueilli et le contact est dans la liste, un email de bienvenue manquant ne
@@ -47,43 +42,44 @@ export const sendWelcomeEmail = async ({
   subscriberId,
   email,
   firstName,
+  unsubscribeToken,
 }: {
   subscriberId: string;
   email: string;
   firstName: string;
+  unsubscribeToken: string;
 }) => {
   const supabase = createAdminClient();
-  const template = templateId();
 
-  if (!template) {
+  try {
+    const sent = await sendNewsletterWelcome(email, {
+      first_name: firstName,
+      memo_url: await getMemoUrl(),
+      unsubscribe_url: unsubscribeUrlFor(unsubscribeToken),
+    });
+
     await supabase
       .from("newsletter_subscribers")
-      .update({
-        welcome_email_error: "BREVO_TEMPLATE_ID_NEWSLETTER_WELCOME absent",
-      })
+      .update(
+        sent
+          ? {
+              welcome_email_sent_at: new Date().toISOString(),
+              welcome_email_error: null,
+            }
+          : {
+              // Le template est protege par `REQUIRED_TEMPLATES`, mais il peut
+              // manquer tant que « Restaurer les templates par defaut » n'a pas
+              // ete lance sur un environnement neuf.
+              welcome_email_error:
+                "Template « newsletter_welcome » absent de la base",
+            },
+      )
       .eq("id", subscriberId);
-    return;
+  } catch (error) {
+    console.error("[newsletter] email de bienvenue non envoyé", error);
+    await supabase
+      .from("newsletter_subscribers")
+      .update({ welcome_email_error: "Envoi impossible" })
+      .eq("id", subscriberId);
   }
-
-  const memoUrl = await getMemoUrl();
-
-  const { ok, status } = await sendTransactionalEmail({
-    to: email,
-    templateId: template,
-    params: {
-      PRENOM: firstName,
-      // Le template doit conditionner son bouton a cette variable : tant que le
-      // memo n'est pas depose, l'email part sans lien mort.
-      MEMO_URL: memoUrl ?? "",
-    },
-  });
-
-  await supabase
-    .from("newsletter_subscribers")
-    .update(
-      ok
-        ? { welcome_email_sent_at: new Date().toISOString(), welcome_email_error: null }
-        : { welcome_email_error: `Brevo a repondu ${status}` },
-    )
-    .eq("id", subscriberId);
 };

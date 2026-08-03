@@ -81,7 +81,7 @@ export const subscribeToNewsletter = async (
       },
       { onConflict: "email" },
     )
-    .select("id")
+    .select("id, unsubscribe_token")
     .single();
 
   if (error || !subscriber) {
@@ -95,7 +95,12 @@ export const subscribeToNewsletter = async (
   // porte le lien de desinscription, que Brevo ne peut resoudre que pour un
   // contact qu'il connait.
   await pushToBrevo({ id: subscriber.id, email, firstName, source: input.source });
-  await sendWelcomeEmail({ subscriberId: subscriber.id, email, firstName });
+  await sendWelcomeEmail({
+    subscriberId: subscriber.id,
+    email,
+    firstName,
+    unsubscribeToken: subscriber.unsubscribe_token,
+  });
 
   return { status: "subscribed", firstName };
 };
