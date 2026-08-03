@@ -15,6 +15,7 @@ const PUBLIC_ROUTES = [
   "/medias",
   "/blog",
   "/a-propos",
+  "/newsletter",
 ];
 
 const AUTH_ROUTES = [

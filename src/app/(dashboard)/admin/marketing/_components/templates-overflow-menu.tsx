@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { MoreHorizontal, Sparkles } from "lucide-react";
+import { MoreHorizontal, Sparkles, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { restoreDefaultTemplates } from "../actions";
+import { createMissingTemplates, restoreDefaultTemplates } from "../actions";
 
 /**
  * Overflow menu on the marketing templates tab. Contains the "restore defaults"
@@ -29,6 +29,32 @@ export const TemplatesOverflowMenu = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  /**
+   * Sans confirmation, contrairement a la restauration : cette action ne peut
+   * rien ecraser. Demander « êtes-vous sûr ? » laisserait croire l'inverse.
+   */
+  const handleCreateMissing = async () => {
+    setLoading(true);
+    try {
+      const result = await createMissingTemplates();
+      if (result.success && result.data) {
+        const { created } = result.data;
+        toast.success(
+          created.length === 0
+            ? "Aucun template manquant — rien n'a été modifié."
+            : `Créé : ${created.join(", ")}. Les autres templates n'ont pas été touchés.`,
+        );
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "Erreur lors de la création.");
+      }
+    } catch {
+      toast.error("Erreur lors de la création.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRestore = async () => {
     setLoading(true);
@@ -62,7 +88,11 @@ export const TemplatesOverflowMenu = () => {
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuContent align="end" className="w-72">
+          <DropdownMenuItem disabled={loading} onSelect={handleCreateMissing}>
+            <Plus className="mr-2 h-4 w-4" />
+            Créer les templates manquants
+          </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault();
@@ -80,11 +110,12 @@ export const TemplatesOverflowMenu = () => {
           <DialogHeader>
             <DialogTitle>Restaurer les templates transactionnels ?</DialogTitle>
             <DialogDescription>
-              Réécrit le sujet, le contenu HTML et le design block-éditeur des 6
-              templates transactionnels (booking_confirmation, booking_reminder,
-              booking_cancelled, formation_access, welcome, password_reset) avec
-              les designs par défaut de la marque. Toute personnalisation sera
-              écrasée.
+              Réécrit le sujet, le contenu HTML et le design de{" "}
+              <strong>tous</strong> les templates transactionnels livrés avec le
+              site. Toute retouche faite dans l&apos;éditeur sera perdue, y
+              compris sur les templates que vous ne cherchiez pas à restaurer.
+              Pour ajouter un template absent sans rien écraser, utilisez
+              « Créer les templates manquants ».
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

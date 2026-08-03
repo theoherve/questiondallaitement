@@ -5,7 +5,7 @@ import {
   TEMPLATE_DEFAULT_VARIABLES,
 } from "./default-template-designs";
 import { renderBlockEmail, resolveEmailHtml } from "./render-block-email";
-import { buildZoomBlock } from "./send";
+import { buildZoomBlock, buildMemoBlock, buildUnsubscribeLink } from "./send";
 import type { JSONContent } from "@maily-to/render";
 
 /**
@@ -42,6 +42,10 @@ const REQUIRED_PLACEHOLDERS: Record<string, string[]> = {
     "amount_refunded",
     "booking_url",
   ],
+  // sendNewsletterWelcome fournit memo_block — le bouton de telechargement du
+  // memo, vide tant qu'aucun fichier n'est depose — et unsubscribe_link, dont
+  // l'absence rendrait l'envoi illegal.
+  newsletter_welcome: ["first_name", "memo_block", "unsubscribe_link"],
 };
 
 describe("designs par defaut des templates d'email", () => {
@@ -96,6 +100,17 @@ describe("designs par defaut des templates d'email", () => {
     }
   });
 
+  /**
+   * Qui signe chaque email. Les transactionnels sont signes par l'equipe ; la
+   * newsletter est signee par Carole, parce qu'elle emane d'une personne et
+   * non du site. Le nom attendu est explicite plutot que devine : sans lui, le
+   * test se contenterait de constater la presence d'un <br> n'importe ou.
+   */
+  const SIGNATURES: Record<string, string> = {
+    newsletter_welcome: "Carole Hervé",
+  };
+  const DEFAULT_SIGNATURE = "L&#x27;équipe";
+
   it("aucune signature ne compte sur un \\n pour aller a la ligne", async () => {
     // En HTML un \n est un espace. « À bientôt,\nL'équipe » s'affiche sur une
     // seule ligne : il faut un <br> explicite.
@@ -103,16 +118,17 @@ describe("designs par defaut des templates d'email", () => {
       const html = await renderBlockEmail(design as JSONContent, {
         replaceVariables: false,
       });
+      const signature = SIGNATURES[name] ?? DEFAULT_SIGNATURE;
       const collapsed = html.replace(/\n/g, "␊");
       expect(
-        /␊\s*L&#x27;équipe|␊\s*L'équipe/.test(collapsed),
+        new RegExp(`␊\\s*${signature}`).test(collapsed),
         `${name} : signature coupee par un \\n, qui ne produit pas de retour a la ligne`,
       ).toBe(false);
 
       // Sans cette seconde assertion, supprimer purement le retour a la ligne
       // ferait passer le test alors que la signature serait sur une seule ligne.
       expect(
-        /<br\s*\/?>\s*L&#x27;équipe/.test(html),
+        new RegExp(`<br\\s*/?>\\s*${signature}`).test(html),
         `${name} : la signature doit etre coupee par un <br>`,
       ).toBe(true);
     }
@@ -131,6 +147,43 @@ describe("designs par defaut des templates d'email", () => {
     );
     expect(/<p[^>]*>\s*<p[^>]*>/.test(html)).toBe(false);
     expect(html).toContain('href="https://zoom.us/j/123"');
+  });
+
+  it("le bloc mémo et le lien de désinscription n'imbriquent pas un <p> dans un <p>", async () => {
+    // Meme piege que zoom_block : les deux fragments sont injectes a
+    // l'interieur d'un paragraphe. On injecte ce que sendNewsletterWelcome
+    // produit reellement, pas un fragment de complaisance.
+    const html = await resolveEmailHtml(
+      DEFAULT_TEMPLATE_DESIGNS.newsletter_welcome as JSONContent,
+      null,
+      {
+        memo_block: buildMemoBlock("https://exemple.test/memo.pdf"),
+        unsubscribe_link: buildUnsubscribeLink("https://exemple.test/desinscription?token=abc"),
+      },
+    );
+    expect(/<p[^>]*>\s*<p[^>]*>/.test(html)).toBe(false);
+    expect(html).toContain('href="https://exemple.test/memo.pdf"');
+    expect(html).not.toContain("{{memo_block}}");
+  });
+
+  it("newsletter_welcome porte toujours un lien de désinscription", async () => {
+    // Obligation legale, et l'email part par Resend : contrairement aux
+    // campagnes Brevo, personne ne l'ajoute a notre place.
+    const html = await resolveEmailHtml(
+      DEFAULT_TEMPLATE_DESIGNS.newsletter_welcome as JSONContent,
+      null,
+      {
+        memo_block: buildMemoBlock(null),
+        unsubscribe_link: buildUnsubscribeLink("https://exemple.test/desinscription?token=abc"),
+      },
+    );
+    expect(html).toContain("desinscription?token=abc");
+    expect(html).not.toContain("{{unsubscribe_link}}");
+  });
+
+  it("buildMemoBlock ne produit rien tant qu'aucun mémo n'est déposé", () => {
+    // Sinon l'email porterait un bouton vers une URL vide.
+    expect(buildMemoBlock(null)).toBe("");
   });
 
   it("buildZoomBlock ne produit rien hors teleconsultation", () => {

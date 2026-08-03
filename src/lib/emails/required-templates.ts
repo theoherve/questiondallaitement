@@ -22,6 +22,7 @@ export const REQUIRED_TEMPLATES = [
   "password_reset",
   "migration_welcome",
   "booking_slot_conflict",
+  "newsletter_welcome",
 ] as const;
 
 export type RequiredTemplate = (typeof REQUIRED_TEMPLATES)[number];
@@ -44,6 +45,8 @@ const BREAKS: Record<string, string> = {
   migration_welcome: "l'email d'activation des comptes migrés",
   booking_slot_conflict:
     "l'email prévenant qu'un créneau a été vendu deux fois et remboursé",
+  newsletter_welcome:
+    "l'email de bienvenue de la newsletter, qui porte le mémo offert et le lien de désinscription",
 };
 
 export const requiredTemplateReason = (name: string): string =>

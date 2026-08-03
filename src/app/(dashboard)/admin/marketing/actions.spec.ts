@@ -46,6 +46,7 @@ vi.mock("@/lib/emails/render-block-email", () => ({
 import {
   restoreTemplateDesign,
   restoreDefaultTemplates,
+  createMissingTemplates,
   deleteTemplate,
 } from "./actions";
 import { DEFAULT_TEMPLATE_DESIGNS } from "@/lib/emails/default-template-designs";
@@ -202,6 +203,45 @@ describe("restoreDefaultTemplates", () => {
       data: { updated: expectedCount },
     });
     expect(mockRenderBlockEmail).toHaveBeenCalledTimes(expectedCount);
+  });
+});
+
+// ─── createMissingTemplates ───────────────────────────────────
+
+describe("createMissingTemplates", () => {
+  /**
+   * L'interet de cette action est entierement dans ce qu'elle ne fait pas :
+   * reclamer un template absent ne doit couter aucune retouche sur les autres.
+   */
+  it("n'insère que les templates absents et ne touche jamais aux existants", async () => {
+    const names = Object.keys(DEFAULT_TEMPLATE_DESIGNS);
+    const missing = names[0];
+    const alreadyThere = names.slice(1).map((name) => ({ name }));
+
+    mockSelect.mockResolvedValue({ data: alreadyThere, error: null });
+    mockInsert.mockResolvedValue({ error: null });
+
+    const result = await createMissingTemplates();
+
+    expect(result).toEqual({ success: true, data: { created: [missing] } });
+    expect(mockInsert).toHaveBeenCalledTimes(1);
+    expect(mockInsert.mock.calls[0][0]).toMatchObject({ name: missing });
+    // Aucun UPDATE : c'est la garantie qui distingue cette action de
+    // restoreDefaultTemplates.
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("ne fait rien quand tous les templates existent déjà", async () => {
+    mockSelect.mockResolvedValue({
+      data: Object.keys(DEFAULT_TEMPLATE_DESIGNS).map((name) => ({ name })),
+      error: null,
+    });
+
+    const result = await createMissingTemplates();
+
+    expect(result).toEqual({ success: true, data: { created: [] } });
+    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 });
 

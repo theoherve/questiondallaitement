@@ -141,6 +141,7 @@ export const adminNav: NavItem[] = [
   { title: "Paiements", href: "/admin/paiements", iconKey: "CreditCard" },
   { title: "Analytics", href: "/admin/analytics", iconKey: "BarChart3" },
   { title: "Marketing", href: "/admin/marketing", iconKey: "Megaphone" },
+  { title: "Newsletter", href: "/admin/marketing/newsletter", iconKey: "Mail" },
   { title: "Automations", href: "/admin/automations", iconKey: "Zap" },
   { title: "Paramètres", href: "/admin/parametres", iconKey: "Settings" },
 ];

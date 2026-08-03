@@ -626,6 +626,44 @@ const upsertDefaultTemplateByName = async (
  * template. Idempotent — re-running overwrites design/body_html/subject with
  * the latest defaults, leaves created_at untouched.
  */
+/**
+ * Cree les templates dont le code depend et qui n'existent pas encore en base.
+ *
+ * `restoreDefaultTemplates` ne convenait pas : il boucle sur tous les designs
+ * et fait un UPDATE sur ceux qui existent deja, donc reclamer un template
+ * manquant coutait toutes les retouches faites sur les autres. Et la version
+ * ciblee, `restoreTemplateDesign`, n'est atteignable que depuis la page
+ * d'edition d'un template — inaccessible tant que la ligne n'existe pas.
+ *
+ * Ici, un template deja present n'est jamais touche : la creation est le seul
+ * effet possible.
+ */
+export const createMissingTemplates = async (): Promise<
+  ActionResult<{ created: string[] }>
+> => {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { data: existing } = await supabase
+    .from("email_templates")
+    .select("name");
+  const known = new Set((existing ?? []).map((row) => row.name as string));
+
+  const created: string[] = [];
+  for (const name of Object.keys(DEFAULT_TEMPLATE_DESIGNS)) {
+    if (known.has(name)) continue;
+
+    const payload = await buildDefaultTemplatePayload(name);
+    if (!payload) continue;
+
+    const { error } = await supabase.from("email_templates").insert(payload);
+    if (!error) created.push(name);
+  }
+
+  revalidatePath("/admin/marketing");
+  return { success: true, data: { created } };
+};
+
 export const restoreDefaultTemplates = async (): Promise<
   ActionResult<{ updated: number }>
 > => {

@@ -91,6 +91,16 @@ const BUCKET_POLICIES: Record<StorageBucket, BucketPolicy> = {
     sniffedTypes: [...IMAGE_TYPES, "application/pdf"],
     allowDocExtensions: true,
   },
+  // Bucket public : les fichiers y sont deposes pour etre diffuses (memo offert
+  // a l'inscription, article de presse, support de presentation). Meme
+  // politique que `downloads` — l'upload reste reserve a l'admin, et la liste
+  // d'extensions exclut deja les types dangereux (html, svg, js, executables),
+  // ce qui compte doublement ici puisque le bucket est servi publiquement.
+  ressources: {
+    maxBytes: 50 * MB,
+    sniffedTypes: [...IMAGE_TYPES, "application/pdf"],
+    allowDocExtensions: true,
+  },
 };
 
 const extensionOf = (filename: string): string => {

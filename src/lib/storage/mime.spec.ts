@@ -122,3 +122,54 @@ describe("validateUpload — bucket downloads (documents)", () => {
     expect(res.ok).toBe(false);
   });
 });
+
+describe("validateUpload — bucket public ressources", () => {
+  // Ce bucket est servi publiquement : ce que la validation laisse passer est
+  // directement atteignable par n'importe qui via son URL.
+  const PPTX = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00]);
+
+  it("accepte un PDF, le format attendu du mémo", () => {
+    const res = validateUpload({
+      bucket: "ressources",
+      filename: "memo-conservation-lait.pdf",
+      declaredType: "application/pdf",
+      bytes: PDF,
+    });
+    expect(res.ok).toBe(true);
+  });
+
+  it("accepte un support de présentation", () => {
+    const res = validateUpload({
+      bucket: "ressources",
+      filename: "support.pptx",
+      declaredType:
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      bytes: PPTX,
+    });
+    expect(res.ok).toBe(true);
+  });
+
+  it("rejette le HTML et le SVG, vecteurs XSS sur un bucket public", () => {
+    for (const filename of ["page.html", "logo.svg"]) {
+      const res = validateUpload({
+        bucket: "ressources",
+        filename,
+        declaredType: "text/html",
+        bytes: HTML,
+      });
+      expect(res.ok).toBe(false);
+    }
+  });
+
+  it("impose le type reniflé, pas celui déclaré par le client", () => {
+    // Un fichier HTML renomme en .pdf ne doit pas passer : sur un bucket
+    // public, il serait servi tel quel au navigateur.
+    const res = validateUpload({
+      bucket: "ressources",
+      filename: "piege.pdf",
+      declaredType: "application/pdf",
+      bytes: HTML,
+    });
+    expect(res.ok).toBe(false);
+  });
+});

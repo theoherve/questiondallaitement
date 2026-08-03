@@ -403,3 +403,48 @@ export const sendPasswordResetEmail = async (
     `,
   });
 };
+
+/**
+ * Bouton « Télécharger le mémo », ou chaine vide tant qu'aucun fichier n'a ete
+ * depose depuis l'administration.
+ *
+ * Comme `buildZoomBlock`, le fragment reste **inline** : il est injecte dans un
+ * paragraphe du design, et un <p> imbrique dans un <p> est du HTML invalide que
+ * les clients mail corrigent en refermant le paragraphe exterieur — ce qui
+ * casse l'espacement de tout ce qui suit.
+ */
+export const buildMemoBlock = (memoUrl: string | null): string =>
+  memoUrl
+    ? `<a href="${memoUrl}" style="display:inline-block;padding:14px 32px;background-color:#a0283e;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:600;">Télécharger le mémo</a>`
+    : "";
+
+/**
+ * Lien de desinscription, obligatoire dans chaque envoi de newsletter.
+ *
+ * Brevo l'ajoute nativement a ses campagnes ; cet email-ci part par Resend,
+ * donc il faut le fournir. Rendu discret pour ne pas concurrencer le contenu,
+ * mais jamais absent.
+ */
+export const buildUnsubscribeLink = (unsubscribeUrl: string): string =>
+  `<a href="${unsubscribeUrl}" style="color:#5a6b69;text-decoration:underline;">Se désinscrire</a>`;
+
+export const sendNewsletterWelcome = async (
+  subscriberEmail: string,
+  variables: {
+    first_name: string;
+    memo_url: string | null;
+    unsubscribe_url: string;
+  },
+) => {
+  const template = await getTemplate("newsletter_welcome");
+  if (!template) return false;
+
+  const { subject, html } = await renderTemplateRow(template, {
+    first_name: variables.first_name,
+    memo_block: buildMemoBlock(variables.memo_url),
+    unsubscribe_link: buildUnsubscribeLink(variables.unsubscribe_url),
+  });
+
+  await sendTransactionalEmail({ to: subscriberEmail, subject, html });
+  return true;
+};

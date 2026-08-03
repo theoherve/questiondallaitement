@@ -2,7 +2,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { randomUUID } from "crypto";
 import { validateUpload } from "./mime";
 
-export type StorageBucket = "avatars" | "formations" | "accompagnements" | "downloads" | "blog" | "mails";
+export type StorageBucket =
+  | "avatars"
+  | "formations"
+  | "accompagnements"
+  | "downloads"
+  | "blog"
+  | "mails"
+  | "ressources";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
