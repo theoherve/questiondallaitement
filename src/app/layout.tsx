@@ -84,6 +84,26 @@ const RootLayout = ({
 }>) => {
   return (
     <html lang="fr" suppressHydrationWarning>
+      <head>
+        {/*
+          Marque le document comme « JS actif » avant le premier rendu.
+          Les revelations au scroll (.scroll-reveal) partent d'opacity: 0 et ne
+          sont levees que par un IntersectionObserver. Sans ce drapeau, tout
+          navigateur ou robot qui n'execute pas le JS recoit une page dont le
+          contenu est bien dans le DOM mais invisible a l'ecran — exactement le
+          symptome remonte lors de l'audit du bloc newsletter. Le CSS masque
+          donc uniquement sous `.js`, et l'absence de JS laisse le contenu
+          visible.
+
+          Inline et dans le <head> : un script differe s'executerait apres la
+          peinture, et le contenu clignoterait.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `document.documentElement.classList.add('js')`,
+          }}
+        />
+      </head>
       <body
         className={`${dmSans.variable} ${notoSerif.variable} antialiased`}
       >

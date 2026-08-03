@@ -74,7 +74,19 @@ const PolitiqueConfidentialitePage = () => (
             notifications)
           </li>
           <li>Amélioration de nos services et de l&apos;expérience utilisateur</li>
+          <li>
+            <strong>Newsletter :</strong> envoi de la newsletter hebdomadaire,
+            du mémo offert à l&apos;inscription et d&apos;informations sur nos
+            accompagnements et formations
+          </li>
         </ul>
+        <p className="mt-3 text-sm">
+          L&apos;inscription à la newsletter repose sur votre consentement
+          explicite, recueilli par une case à cocher jamais pré-cochée. Nous
+          conservons la preuve de ce consentement : sa date et le texte exact
+          que vous avez accepté. Chaque email contient un lien de désinscription
+          en un clic.
+        </p>
       </section>
 
       <section>
@@ -156,6 +168,11 @@ const PolitiqueConfidentialitePage = () => (
           </li>
           <li>
             <strong>Logs de connexion :</strong> 12 mois
+          </li>
+          <li>
+            <strong>Inscription à la newsletter :</strong> conservée jusqu&apos;à
+            votre désinscription, puis 3 ans au titre de la preuve du
+            consentement
           </li>
         </ul>
       </section>
