@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { addContactToList, createContact } from "@/lib/brevo/client";
+import { createContact, getContact } from "@/lib/brevo/client";
 import { sendWelcomeEmail } from "./welcome-email";
 import {
   NEWSLETTER_CONSENT_TEXT,
@@ -150,24 +150,26 @@ const pushToBrevo = async ({
     return;
   }
 
-  // L'appartenance a la liste est confirmee separement, et c'est indispensable :
+  // L'appartenance a la liste est relue, et c'est indispensable :
   // `POST /v3/contacts` accepte un `listIds` inconnu en repondant 201 sans rien
   // ajouter. Constate en production — le contact existait avec ses attributs,
-  // `listIds` etait vide, et nous avions enregistre une synchronisation reussie.
-  // `POST /contacts/lists/{id}/contacts/add` repond 404 sur une liste
-  // inexistante ; c'est donc lui qui dit la verite.
+  // `listIds` etait vide, la liste comptait zero abonne, et nous avions
+  // enregistre une synchronisation reussie.
   //
-  // Un contact deja membre ressort en echec dans la reponse mais avec un statut
-  // 201 : l'etat vise est atteint, on n'en fait pas une erreur.
-  const added = await addContactToList(email, list);
+  // Une relecture plutot qu'un second ajout : `contacts/lists/{id}/contacts/add`
+  // repond 400 lorsque le contact est deja membre — soit le cas normal ici,
+  // puisque la creation vient de l'ajouter. Son code de retour ne permet donc
+  // pas de distinguer un succes d'un echec. `listIds` ne laisse aucun doute.
+  const { data: contact } = await getContact(email);
+  const inList = contact?.listIds?.includes(list) ?? false;
 
   await supabase
     .from("newsletter_subscribers")
     .update(
-      added.ok
+      inList
         ? { brevo_synced_at: new Date().toISOString(), brevo_sync_error: null }
         : {
-            brevo_sync_error: `Ajout a la liste ${list} refuse par Brevo (${added.status})`,
+            brevo_sync_error: `Contact absent de la liste ${list} apres creation`,
           },
     )
     .eq("id", id);
