@@ -48,6 +48,7 @@ import {
   Undo,
   Redo,
   Image as ImageIcon,
+  BarChart3,
   Columns2,
   Columns3,
   Info,
@@ -72,6 +73,7 @@ import {
   type CtaVariant,
 } from "./wysiwyg-extensions";
 import { ImageCropDialog } from "./image-crop-dialog";
+import { SurveyEmbedNode } from "./survey-embed-node";
 
 /**
  * Tiptap chains for our custom nodes are not in the global Commands<> shape
@@ -176,6 +178,7 @@ const extensions = [
   Column,
   Callout,
   CtaButton,
+  SurveyEmbedNode,
   Placeholder.configure({ placeholder: "Commencez à écrire..." }),
 ];
 
@@ -391,6 +394,23 @@ const slashCommandItems = createSuggestionItems([
     searchTerms: ["cta", "bouton", "outline", "contour"],
     command: ({ editor, range }) => {
       insertCtaButton(editor, range, "outline");
+    },
+  },
+  {
+    title: "Sondage",
+    description: "Insérer un sondage ou son graphique de résultats",
+    icon: <BarChart3 className="h-4 w-4" />,
+    searchTerms: ["sondage", "quiz", "survey", "graphique", "resultats"],
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent({
+          type: "surveyEmbed",
+          attrs: { slug: "", mode: "form" },
+        })
+        .run();
     },
   },
 ]);

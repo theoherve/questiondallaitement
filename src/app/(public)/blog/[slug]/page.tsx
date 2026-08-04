@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ArticleBody } from "@/components/blog/article-body";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ArrowLeft, User, Calendar, ChevronRight } from "lucide-react";
@@ -213,9 +214,9 @@ const BlogPostPage = async ({ params }: Props) => {
       )}
 
       {/* Content */}
-      <div
+      <ArticleBody
+        html={post.body_html}
         className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:text-primary-green prose-p:text-primary-green/80 prose-a:text-primary-red prose-a:no-underline hover:prose-a:underline prose-blockquote:border-primary-red/30 prose-blockquote:text-primary-green/70"
-        dangerouslySetInnerHTML={{ __html: post.body_html }}
       />
 
       {/* Tags */}
