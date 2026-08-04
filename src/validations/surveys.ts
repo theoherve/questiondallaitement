@@ -69,3 +69,58 @@ export const validateAnswersAgainstDefinition = (
 
   return null;
 };
+
+// ─── Administration ─────────────────────────────────────────
+
+const choiceSchema = z.object({
+  key: z
+    .string()
+    .trim()
+    .min(1)
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Les clés ne contiennent que des minuscules, chiffres et tirets",
+    ),
+  label: z.string().trim().min(1, "Chaque option a besoin d'un libellé"),
+});
+
+/**
+ * Définition d'un sondage côté administration.
+ *
+ * Les clés sont validées strictement : elles sont recopiées dans chaque réponse
+ * enregistrée. Une clé renommée après coup couperait le sondage en deux jeux de
+ * données qui ne s'additionnent plus.
+ */
+export const surveyDefinitionSchema = z.object({
+  id: z.uuid().optional(),
+  slug: z
+    .string()
+    .trim()
+    .regex(/^[a-z0-9-]+$/, "Le slug ne contient que minuscules, chiffres, tirets"),
+  title: z.string().trim().min(1, "Le titre est obligatoire"),
+  intro: z.string().trim().optional(),
+  status: z.enum(["draft", "published", "closed"]),
+  thank_you_message: z.string().trim().default(""),
+  questions: z
+    .array(
+      z.object({
+        id: z.uuid().optional(),
+        kind: z.enum(["matrix", "single"]),
+        label: z.string().trim().min(1, "Chaque question a besoin d'un intitulé"),
+        rows: z.array(choiceSchema),
+        choices: z.array(choiceSchema).min(2, "Au moins deux options par question"),
+        is_required: z.boolean(),
+        is_segment: z.boolean(),
+        is_charted: z.boolean(),
+      }),
+    )
+    .min(1, "Un sondage a besoin d'au moins une question")
+    .refine((questions) => questions.filter((q) => q.is_charted).length <= 1, {
+      error: "Une seule question peut alimenter le graphique",
+    })
+    .refine((questions) => questions.filter((q) => q.is_segment).length <= 1, {
+      error: "Une seule question peut servir de segment marketing",
+    }),
+});
+
+export type SurveyDefinitionInput = z.infer<typeof surveyDefinitionSchema>;
