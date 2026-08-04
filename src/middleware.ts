@@ -94,7 +94,18 @@ export default auth((req) => {
 });
 
 export const config = {
+  /**
+   * `robots.txt` et `sitemap.xml` sont exclus explicitement.
+   *
+   * Ils ne figuraient ni dans les routes publiques ni dans les exclusions du
+   * matcher : le middleware les renvoyait donc vers /connexion. Constate en
+   * production — les deux repondaient 307 vers la page de connexion, donc aucun
+   * moteur ne lisait ni les directives d'indexation ni la liste des pages.
+   *
+   * Exclus du matcher plutot qu'ajoutes aux routes publiques : ces deux fichiers
+   * n'ont aucune logique d'authentification a traverser.
+   */
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

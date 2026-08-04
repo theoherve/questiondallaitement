@@ -1,0 +1,19 @@
+# Sources suivies par git mais inutiles a la construction du site.
+#
+# Elles representaient environ 95 Mo sur les 130 Mo envoyes a Vercel : l'upload
+# echouait avec une 500 sur /v2/files, et chaque build passait par la meme
+# charge. Rien dans src/, e2e/, scripts/ ni les fichiers de configuration ne
+# les importe — verifie avant exclusion.
+#
+# `next build` n'y touche pas : ce sont des outils de recuperation de donnees et
+# des maquettes, executes a la main en local quand on en a besoin.
+blog-scraper
+formations-scraper
+vimeo-harvest
+maquettes
+backups
+
+# Artefacts de test, jamais utiles en production.
+test-results
+playwright-report
+.playwright-mcp
