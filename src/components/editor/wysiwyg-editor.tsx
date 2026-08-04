@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   EditorRoot,
   EditorContent,
@@ -74,6 +74,8 @@ import {
 } from "./wysiwyg-extensions";
 import { ImageCropDialog } from "./image-crop-dialog";
 import { SurveyEmbedNode } from "./survey-embed-node";
+import { EditorDragHandle } from "./editor-drag-handle";
+import { MoveBlockShortcuts } from "./move-block-shortcuts";
 
 /**
  * Tiptap chains for our custom nodes are not in the global Commands<> shape
@@ -179,6 +181,7 @@ const extensions = [
   Callout,
   CtaButton,
   SurveyEmbedNode,
+  MoveBlockShortcuts,
   Placeholder.configure({ placeholder: "Commencez à écrire..." }),
 ];
 
@@ -845,6 +848,7 @@ export const WysiwygEditor = ({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const editorAreaRef = useRef<HTMLDivElement>(null);
 
   const snippetsCtx = useWysiwygSnippets();
   const effectiveSnippets = snippets.length > 0 ? snippets : snippetsCtx?.snippets ?? [];
@@ -893,6 +897,12 @@ export const WysiwygEditor = ({
           onOpenPreview={preview ? () => setPreviewOpen(true) : undefined}
           showPreview={preview}
         />
+        {/* `relative` porte le positionnement de la poignée : sans lui, elle se
+            placerait par rapport à la page et dériverait au moindre scroll.
+            `pl-7` dégage la marge où elle se pose, pour qu'elle ne recouvre
+            jamais le texte. */}
+        <div ref={editorAreaRef} className="relative pl-7">
+        <EditorDragHandle editor={editor} containerRef={editorAreaRef} />
         <EditorContent
           className="prose prose-sm max-w-none p-4"
           extensions={allExtensions}
@@ -967,6 +977,7 @@ export const WysiwygEditor = ({
             </EditorCommandList>
           </EditorCommand>
         </EditorContent>
+        </div>
         </div>
 
         {/* Desktop inline sidebar */}
