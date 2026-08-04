@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createContact } from "@/lib/brevo/client";
+import { addContactToList, createContact } from "@/lib/brevo/client";
 import { sendWelcomeEmail } from "./welcome-email";
 import {
   NEWSLETTER_CONSENT_TEXT,
@@ -142,12 +142,33 @@ const pushToBrevo = async ({
     [list],
   );
 
+  if (!ok) {
+    await supabase
+      .from("newsletter_subscribers")
+      .update({ brevo_sync_error: `Brevo a repondu ${status}` })
+      .eq("id", id);
+    return;
+  }
+
+  // L'appartenance a la liste est confirmee separement, et c'est indispensable :
+  // `POST /v3/contacts` accepte un `listIds` inconnu en repondant 201 sans rien
+  // ajouter. Constate en production — le contact existait avec ses attributs,
+  // `listIds` etait vide, et nous avions enregistre une synchronisation reussie.
+  // `POST /contacts/lists/{id}/contacts/add` repond 404 sur une liste
+  // inexistante ; c'est donc lui qui dit la verite.
+  //
+  // Un contact deja membre ressort en echec dans la reponse mais avec un statut
+  // 201 : l'etat vise est atteint, on n'en fait pas une erreur.
+  const added = await addContactToList(email, list);
+
   await supabase
     .from("newsletter_subscribers")
     .update(
-      ok
+      added.ok
         ? { brevo_synced_at: new Date().toISOString(), brevo_sync_error: null }
-        : { brevo_sync_error: `Brevo a repondu ${status}` },
+        : {
+            brevo_sync_error: `Ajout a la liste ${list} refuse par Brevo (${added.status})`,
+          },
     )
     .eq("id", id);
 };
