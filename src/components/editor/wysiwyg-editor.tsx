@@ -140,6 +140,11 @@ type WysiwygEditorProps = {
   className?: string;
   /** Show the right-hand blocks sidebar (default: true). */
   sidebar?: boolean;
+  /**
+   * Ouvre la bibliothèque de blocs au montage. Fermée par défaut : les
+   * éditeurs courts (snippets, descriptions) n'ont pas la largeur pour elle.
+   */
+  defaultSidebarOpen?: boolean;
   /** Show the Preview button in the toolbar (default: true). */
   preview?: boolean;
   /** Snippets to display in the sidebar "Snippets" section. */
@@ -839,13 +844,14 @@ export const WysiwygEditor = ({
   placeholder,
   className,
   sidebar = true,
+  defaultSidebarOpen = false,
   preview = true,
   snippets = [],
   onSaveSnippet,
 }: WysiwygEditorProps) => {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [currentHtml, setCurrentHtml] = useState(initialContent ?? "");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(defaultSidebarOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const editorAreaRef = useRef<HTMLDivElement>(null);

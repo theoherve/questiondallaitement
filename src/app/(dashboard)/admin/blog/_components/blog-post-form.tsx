@@ -288,6 +288,7 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
                     }
                     placeholder="Rédigez votre article ici..."
                     className="min-h-100"
+                    defaultSidebarOpen
                   />
                 </CardContent>
               </Card>
