@@ -14,6 +14,37 @@ const listId = () => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+export type TokenLookup =
+  | { status: "found"; firstName: string; alreadyUnsubscribed: boolean }
+  | { status: "unknown_token" };
+
+/**
+ * Lecture seule : identifie le porteur d'un jeton sans rien modifier.
+ *
+ * Existe parce que l'affichage de la page ne doit avoir aucun effet. Le lien de
+ * desinscription part dans des emails, et les passerelles de securite le
+ * prechargent : constate en recette, une adresse Klesia a ete desinscrite vingt
+ * secondes apres reception, sans qu'aucun humain ne clique. La desinscription
+ * elle-meme passe donc par `unsubscribeByToken`, appele en POST.
+ */
+export const findSubscriberByToken = async (
+  token: string,
+): Promise<TokenLookup> => {
+  const { data } = await createAdminClient()
+    .from("newsletter_subscribers")
+    .select("first_name, unsubscribed_at")
+    .eq("unsubscribe_token", token)
+    .maybeSingle();
+
+  if (!data) return { status: "unknown_token" };
+
+  return {
+    status: "found",
+    firstName: data.first_name,
+    alreadyUnsubscribed: Boolean(data.unsubscribed_at),
+  };
+};
+
 export type UnsubscribeOutcome =
   | { status: "unsubscribed"; firstName: string; token: string }
   | { status: "already_unsubscribed"; firstName: string; token: string }
@@ -70,12 +101,9 @@ export const unsubscribeByToken = async (
 /**
  * Reabonne le porteur d'un jeton.
  *
- * Le lien de desinscription est une URL ouverte en GET : les antivirus et les
- * previsualisateurs de certains clients mail les visitent d'eux-memes, ce qui
- * desinscrit des personnes qui n'ont rien demande. Plutot que d'imposer une
- * confirmation a tout le monde — deux clics pour un droit qui doit s'exercer en
- * un — on offre le retour en arriere sur la page de confirmation. Le jeton
- * reste le meme, donc le lien deja parti dans les emails continue de marcher.
+ * Filet de securite laisse sur la page apres une desinscription, pour la
+ * personne qui s'est trompee de bouton. Le jeton reste le meme, donc le lien
+ * deja parti dans les emails continue de fonctionner.
  */
 export const resubscribeByToken = async (token: string): Promise<boolean> => {
   const supabase = createAdminClient();
