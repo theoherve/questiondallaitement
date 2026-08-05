@@ -56,10 +56,11 @@ const ConsultantesPage = async () => {
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="text-center">
         <h1 className="font-serif text-3xl font-bold text-primary-green sm:text-4xl">
-          Nos consultantes
+          Votre consultante référente
         </h1>
-        <p className="mt-4 text-lg text-primary-green/70">
-          Des professionnelles certifiées pour vous accompagner
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-primary-green/70">
+          Chaque consultante de l&apos;équipe est certifiée IBCLC — le plus haut
+          standard international en lactation humaine.
         </p>
       </div>
 

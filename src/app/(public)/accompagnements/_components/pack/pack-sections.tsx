@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { PurchaseButton } from "../purchase-button";
+import { ctaLabelFor } from "@/config/accompagnement-cta";
+import { PACK_SLUG } from "@/config/accompagnements";
 import { PACK_CONTENT } from "./pack-content";
 import type { ModuleCard } from "./pack-modules-data";
 
@@ -53,7 +55,8 @@ export function PackHero({
   priceLabel: string;
   imageUrl: string | null;
 }) {
-  const { eyebrow, subtitle, reassurances, ctaLabel } = PACK_CONTENT.hero;
+  const { eyebrow, titleOverride, subtitle, reassurances, ctaLabel } =
+    PACK_CONTENT.hero;
   return (
     <section className="relative overflow-hidden bg-primary-green px-4 py-20 sm:px-6 sm:py-28">
       {/* Image du pack en fond, avec voile vert pour garder le texte lisible */}
@@ -80,9 +83,15 @@ export function PackHero({
             {eyebrow}
           </span>
         </div>
-        <h1 className="font-serif text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
-          {title}
+        {/* Le H1 porte la promesse ; le nom produit reste affiché en dessous. */}
+        <h1 className="font-serif text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
+          {titleOverride ?? title}
         </h1>
+        {titleOverride && (
+          <p className="mt-4 font-sans text-sm font-medium uppercase tracking-widest text-background-beige/70">
+            {title}
+          </p>
+        )}
         <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/85">
           {subtitle}
         </p>
@@ -431,6 +440,7 @@ export function PackPricing({
             formationId={formationId}
             isLoggedIn={isLoggedIn}
             isEnrolled={isEnrolled}
+            ctaLabel={ctaLabelFor(PACK_SLUG)}
           />
         </div>
         <p className="mt-4 flex items-center justify-center gap-2 text-center text-sm font-medium text-primary-green/80">

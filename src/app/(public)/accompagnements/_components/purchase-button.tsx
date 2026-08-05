@@ -10,12 +10,18 @@ type PurchaseButtonProps = {
   formationId: string;
   isLoggedIn: boolean;
   isEnrolled: boolean;
+  /**
+   * Libellé orienté bénéfice, propre à l'accompagnement (« Je soulage la
+   * douleur maintenant »…). Sans lui, on retombe sur un libellé générique.
+   */
+  ctaLabel?: string;
 };
 
 export const PurchaseButton = ({
   formationId,
   isLoggedIn,
   isEnrolled,
+  ctaLabel,
 }: PurchaseButtonProps) => {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -36,16 +42,21 @@ export const PurchaseButton = ({
 
   if (!isLoggedIn) {
     return (
-      <Button asChild className="w-full bg-primary-red hover:bg-primary-red-dark">
-        <a
-          href={`/connexion?redirect=/accompagnements/${formationId}`}
-          data-testid="purchase-login-cta"
-          tabIndex={0}
-        >
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          Se connecter pour acheter
-        </a>
-      </Button>
+      <div className="space-y-2">
+        <Button asChild className="w-full bg-primary-red hover:bg-primary-red-dark">
+          <a
+            href={`/connexion?redirect=/accompagnements/${formationId}`}
+            data-testid="purchase-login-cta"
+            tabIndex={0}
+          >
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            {ctaLabel ?? "Se connecter pour acheter"}
+          </a>
+        </Button>
+        <p className="text-center text-xs text-primary-green/60">
+          Accès immédiat après connexion
+        </p>
+      </div>
     );
   }
 
@@ -80,7 +91,7 @@ export const PurchaseButton = ({
         ) : (
           <ShoppingCart className="mr-2 h-4 w-4" />
         )}
-        Acheter l&apos;accompagnement
+        {ctaLabel ?? "Acheter l'accompagnement"}
       </Button>
       <KlarnaNote />
       {error && (

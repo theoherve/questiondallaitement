@@ -179,10 +179,13 @@ const ReserverPage = async () => {
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="mb-8 text-center">
         <h1 className="font-serif text-3xl font-bold text-primary-green sm:text-4xl">
-          Réserver une consultation
+          Prenez rendez-vous avec une consultante IBCLC
         </h1>
-        <p className="mt-3 text-lg text-primary-green/70">
-          Prenez rendez-vous en quelques étapes simples.
+        <p className="mx-auto mt-3 max-w-2xl text-lg text-primary-green/70">
+          En cabinet à Paris ou en téléconsultation, selon ce qui vous convient.
+          Le même niveau d&apos;expertise, adapté à votre situation précise —
+          freins de langue, prise de poids qui inquiète, douleur persistante, ou
+          simplement l&apos;envie d&apos;un échange en direct.
         </p>
       </div>
       <BookingWizard services={uniqueServices} locationConfigs={locationConfigs} />

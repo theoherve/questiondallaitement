@@ -105,7 +105,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       description:
         cabinetTypes.length === 1 && cabinetTypes[0].description
           ? cabinetTypes[0].description
-          : "Un rendez-vous à Paris pour un accompagnement personnalisé et adapté à votre situation.",
+          : "Un diagnostic précis, en face à face, pour une situation qui vous appartient à vous seule.",
       price: getPriceLabel(cabinetTypes),
       href: "/reserver",
       cta: "Réserver un créneau",
@@ -117,7 +117,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       description:
         teleTypes.length === 1 && teleTypes[0].description
           ? teleTypes[0].description
-          : "La même qualité d'accompagnement depuis chez vous. Idéal quelle que soit votre localisation.",
+          : "La même expertise clinique, où que vous soyez — sans déplacement, sans attente.",
       price: getPriceLabel(teleTypes),
       href: "/reserver",
       cta: "Réserver un créneau",
@@ -127,7 +127,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       label: "Accompagnement en ligne",
       title: "Modules autonomes",
       description:
-        "Des parcours complets pour vous accompagner à chaque étape de votre allaitement, à votre rythme.",
+        "Les réponses aux situations les plus fréquentes, disponibles immédiatement, à consulter à votre rythme.",
       price: formationPriceLabel,
       href: "/accompagnements",
       cta: "Découvrir",
@@ -137,7 +137,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       label: "Pro",
       title: "Formations Pro",
       description:
-        "Formations, ateliers et webinaires pour les professionnels de santé souhaitant développer leur expertise.",
+        "Pour les professionnels de santé qui veulent accompagner l'allaitement avec la même rigueur clinique.",
       price: "À partir de 200 €",
       href: "/formations",
       cta: "En savoir plus",
@@ -193,21 +193,23 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-primary-red" aria-hidden />
               <p className="font-sans text-xs font-medium uppercase tracking-widest text-white/90">
-                Consultante en lactation IBCLC
+                Consultante IBCLC depuis 2011 &middot; 5 000+ familles accompagnées
               </p>
             </div>
 
             <h1 className="font-serif text-5xl font-bold leading-tight text-white sm:text-6xl lg:text-7xl">
-              L&apos;allaitement,
+              Chaque allaitement mérite
               <br />
               <em className="font-serif italic text-background-beige">
-                autrement.
+                d&apos;être accompagné
               </em>
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/85 sm:text-xl">
-              Consultante IBCLC, auteure et formatrice.
-              20+ ans d&apos;expertise au service de votre allaitement.
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/85 sm:text-xl">
+              Vous voulez allaiter sereinement, sans sacrifier votre santé,
+              votre couple ou votre carrière. Je vous donne les repères
+              cliniques et le soutien humain pour y arriver — à votre rythme,
+              selon votre réalité.
             </p>
 
             <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
@@ -269,6 +271,47 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
               <span className="mt-1 h-2 w-2 animate-bounce rounded-full bg-white/60" />
             </span>
           </div>
+        </div>
+      </section>
+
+      {/* ─── CE QUE VOUS VIVEZ — nomme le problème avant de proposer l'offre ─── */}
+      <section className="section-padding bg-background-beige">
+        <div className="mx-auto max-w-5xl">
+          <ScrollReveal>
+            <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
+              Vous êtes au bon endroit si…
+            </p>
+            <h2 className="mt-3 max-w-3xl font-serif text-3xl font-bold text-primary-green lg:text-4xl">
+              Ce que vous vivez peut-être{" "}
+              <em className="font-serif italic">en ce moment</em>
+            </h2>
+          </ScrollReveal>
+
+          <ul className="mt-10 divide-y divide-primary-green/10 border-y border-primary-green/10">
+            {[
+              "Vous êtes enceinte, ou votre bébé vient de naître, et vous voulez que ça se passe bien — sans savoir par où commencer.",
+              "Vous avez déjà reçu des conseils contradictoires : à la maternité, dans votre entourage, sur internet.",
+              "Une difficulté est apparue — douleur, doute sur la lactation, sommeil, reprise du travail — et vous cherchez une réponse fiable, pas un forum de plus.",
+              "Vous voulez concilier votre allaitement avec votre vie de femme, pas y renoncer.",
+            ].map((line, i) => (
+              <ScrollReveal key={line} delay={i * 70}>
+                <li className="flex gap-4 py-5">
+                  <span
+                    className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary-red"
+                    aria-hidden
+                  />
+                  <p className="text-primary-green/80 lg:text-lg">{line}</p>
+                </li>
+              </ScrollReveal>
+            ))}
+          </ul>
+
+          <ScrollReveal>
+            <p className="mt-8 max-w-2xl text-primary-green/70">
+              Dans chacune de ces situations, il existe une réponse clinique
+              précise. C&apos;est tout ce que je fais depuis 2011.
+            </p>
+          </ScrollReveal>
         </div>
       </section>
 

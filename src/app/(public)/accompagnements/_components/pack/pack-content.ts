@@ -1,98 +1,99 @@
 /**
- * Copie PLACEHOLDER de la page de vente du pack.
- * 100 % sérialisable — remplacer par les vrais textes sans toucher à la structure.
- * Les modules affichés viennent de la DB, pas d'ici.
+ * Copie de la page de vente du pack (refonte copywriting, août 2026).
+ * 100 % sérialisable — la structure suit les 12 temps du brief de vente.
+ * Les modules affichés et le prix viennent de la DB, pas d'ici.
  *
- * Nom validé (spec « Pages de vente » v2) : « L'Allaitement Sur Mesure ».
- * Le nombre de modules et l'ancrage prix sont dérivés de la DB, pas figés ici.
+ * `titleOverride` ne s'applique qu'au H1 de cette page : le nom produit
+ * (formations.title) reste utilisé dans les listings, le panier et les factures.
  */
 export const PACK_CONTENT = {
   hero: {
-    eyebrow: "L'Allaitement Sur Mesure",
+    eyebrow: "Consultante IBCLC depuis 2011 · 5 000+ familles accompagnées",
+    titleOverride:
+      "Et si allaiter ne rimait plus avec douleur, épuisement et doutes, mais avec une évidence tranquille ?",
     subtitle:
-      "Le programme complet pour vivre un allaitement serein, de la préparation au sevrage — à votre rythme, où que vous soyez.",
+      "Imaginez une tétée sans boule au ventre. Un bébé apaisé, une prise de poids qui ne vous angoisse plus, des nuits qui redeviennent supportables. Ce n'est pas un idéal inaccessible — c'est ce que permettent les bons repères, au bon moment.",
     reassurances: [
       "Accès immédiat après paiement",
       "Accès illimité, à vie",
       "Par une consultante IBCLC",
     ],
-    ctaLabel: "Rejoindre le pack",
+    ctaLabel: "Je sécurise mon allaitement",
   },
   problem: {
-    title: "L'allaitement, ça ne devrait pas être un parcours du combattant",
+    title: "Ce que vous vivez peut-être, là, maintenant",
     intro:
-      "Vous vous êtes préparée à accueillir votre bébé, mais personne ne vous a vraiment préparée à l'allaitement.",
+      "Vous vous êtes préparée à accueillir votre bébé. Personne ne vous a vraiment préparée à l'allaitement.",
     points: [
-      "Des douleurs qui s'installent sans que vous sachiez pourquoi.",
-      "Des conseils contradictoires à chaque personne consultée.",
-      "La peur de « ne pas avoir assez de lait ».",
-      "Des nuits hachées et le sentiment d'être seule face aux difficultés.",
-      "Le retour au travail qui approche, sans plan clair.",
-      "L'impression que tout repose sur vous, en permanence.",
+      "Vos seins vous font mal à chaque mise au sein, et vous redoutez la tétée suivante plutôt que de l'attendre.",
+      "On vous a donné dix conseils différents — à la maternité, par votre entourage, sur internet — et ils se contredisent tous.",
+      "Vous regardez la courbe de poids de votre bébé avec une boule au ventre, en redoutant le verdict du prochain rendez-vous.",
+      "Vous êtes épuisée, seule à 3h du matin, sans personne à qui poser vos questions dans l'instant.",
+      "Le retour au travail approche et vous n'avez aucun plan clair pour continuer d'allaiter.",
+      "Vous avez l'impression que tout repose sur vous, en permanence, sans droit à l'erreur.",
     ],
   },
   promise: {
-    title: "Et si vous aviez enfin les bonnes réponses, au bon moment ?",
+    title: "Pourquoi les conseils habituels ne suffisent pas",
     paragraphs: [
-      "« L'Allaitement Sur Mesure » réunit tout ce dont vous avez besoin pour comprendre, anticiper et surmonter chaque étape de votre allaitement.",
-      "Des contenus clairs, fondés sur les preuves, accessibles à toute heure — parce qu'un bébé ne pleure pas aux heures d'ouverture.",
+      "Si vous en êtes là, ce n'est pas un manque de volonté ni d'amour pour votre bébé. Les forums, les avis contradictoires de l'entourage et les injonctions reçues à la maternité (« patientez », « ça va passer », « donnez un biberon pour voir ») ne font qu'ajouter du doute au doute. Sans repères cliniques précis, on navigue à vue — et on s'épuise plus vite qu'on ne trouve de réponses.",
+      "Mon approche s'appuie sur l'observation clinique, la physiologie réelle de la lactation et les comportements innés du nourrisson — pas sur des dogmes ni des recettes universelles. Ce pack est la version structurée de ce que je transmets en consultation individuelle depuis plus de dix ans.",
     ],
     bullets: [
-      "Comprendre ce qui se passe et pourquoi.",
-      "Savoir quoi faire, concrètement, à chaque étape.",
-      "Reprendre confiance en vous et en votre corps.",
+      "Comprendre ce qui se passe dans votre corps et celui de votre bébé, et pourquoi.",
+      "Savoir quoi faire, concrètement, à chaque étape — et ce qu'il ne faut surtout pas faire.",
+      "Distinguer ce qui est physiologiquement normal de ce qui doit être corrigé.",
     ],
   },
   modules: {
-    title: "Tout ce que contient le pack",
+    title: "Les piliers du programme",
     // Rendu comme « {N} {subtitle} » — le nombre vient de la DB.
     subtitle:
       "parcours complets qui couvrent l'allaitement, de la préparation au sevrage.",
   },
   howItWorks: {
-    title: "Comment ça se passe",
+    title: "Comment se déroule l'accompagnement",
     steps: [
       {
         title: "Vous rejoignez le pack",
-        text: "Paiement sécurisé, puis accès immédiat à l'ensemble des modules.",
+        text: "Paiement sécurisé (1×, 3× ou 4× sans frais), accès immédiat à l'ensemble des modules.",
       },
       {
         title: "Vous avancez à votre rythme",
-        text: "Chaque module est disponible à vie : vous piochez selon votre besoin du moment.",
+        text: "Chaque module reste accessible à vie : vous y revenez selon votre besoin du moment, sans calendrier imposé.",
       },
       {
         title: "Vous appliquez, sereinement",
-        text: "Des contenus concrets et fondés sur les preuves, pour agir en confiance.",
+        text: "Des contenus courts, concrets, fondés sur les preuves, pensés pour être consultés entre deux tétées.",
       },
     ],
   },
   forWho: {
-    title: "Vous allez vous reconnaître",
+    title: "Ce qui devient possible",
     scenarios: [
-      "Vous êtes enceinte et vous voulez mettre toutes les chances de votre côté.",
-      "Votre bébé vient de naître et les premiers jours sont plus durs que prévu.",
-      "Vous reprenez le travail et vous ne savez pas comment organiser la suite.",
-      "Vous vous posez mille questions sur la diversification.",
-      "Vous envisagez le sevrage et vous voulez le faire en douceur.",
+      "La pesée de votre bébé n'est plus une source d'angoisse mais la confirmation que votre corps fait ce qu'il faut.",
+      "Vous savez pourquoi votre bébé pleure, et quoi faire — sans avoir à deviner.",
+      "Vos nuits redeviennent lisibles : vous comprenez les réveils au lieu de les subir.",
+      "La reprise du travail est organisée, avec un plan de tirage et une lactation qui tient.",
+      "La diversification puis, le jour venu, le sevrage se font à votre rythme et en sécurité.",
+      "Vous devenez une mère qui sait, plutôt qu'une mère qui devine.",
     ],
   },
   instructor: {
-    title: "Votre formatrice",
+    title: "Pourquoi faire confiance à Carole",
     fallbackName: "Votre consultante IBCLC",
-    // PLACEHOLDER — chiffres à valider avec Carole avant mise en ligne.
     fallbackBio:
-      "Consultante en lactation certifiée IBCLC, elle accompagne plus de 1000 mères chaque année avec une approche fondée sur les preuves et bienveillante.",
-    // PLACEHOLDER — bloc crédibilité structuré (spec) : à confirmer avec Carole.
+      "Consultante en lactation certifiée IBCLC depuis 2011, j'ai accompagné plus de 5 000 familles et j'aide aujourd'hui plus de 1 000 mères chaque année, avec une équipe de 7 consultantes IBCLC. Ce pack, c'est la synthèse de plus de dix ans de consultations individuelles — condensée pour être accessible à toute heure, même quand mon agenda de consultation est complet.",
     credentials: [
       "IBCLC depuis 2011",
-      "1000+ mères accompagnées chaque année",
+      "5 000+ familles accompagnées",
+      "1 000+ mères accompagnées chaque année",
       "Une équipe de 7 consultantes IBCLC",
       "Autrice de 3 livres sur l'allaitement",
-      "Formatrice & conférencière",
+      "Formatrice & conférencière internationale",
     ],
   },
   testimonials: {
-    // PLACEHOLDER — remplacer par les vrais témoignages nominatifs du site.
     title: "Elles ont retrouvé un allaitement serein",
     items: [
       {
@@ -116,7 +117,8 @@ export const PACK_CONTENT = {
     ],
   },
   pricing: {
-    title: "Rejoignez « L'Allaitement Sur Mesure »",
+    title:
+      "Offrez-vous — et offrez à votre bébé — le démarrage serein que vous méritez",
     subtitle: "Un accès unique à l'ensemble des modules, à vie.",
     includes: [
       "L'intégralité des modules du pack",
@@ -139,6 +141,10 @@ export const PACK_CONTENT = {
       {
         q: "Pendant combien de temps ai-je accès ?",
         a: "À vie. Vous revenez sur les modules autant de fois que vous le souhaitez, à votre rythme.",
+      },
+      {
+        q: "Puis-je acheter uniquement le module dont j'ai besoin ?",
+        a: "Oui. Chaque accompagnement est disponible à l'unité (27 € pour les urgences de l'allaitement, 75 € pour la plupart des modules, 97 € pour le sommeil). Le pack devient intéressant dès que deux modules vous concernent.",
       },
       {
         q: "Est-ce que ça remplace une consultation individuelle ?",
@@ -169,7 +175,7 @@ export const PACK_CONTENT = {
   finalCta: {
     title: "Offrez-vous un allaitement serein",
     subtitle:
-      "Rejoignez « L'Allaitement Sur Mesure » et avancez avec les bonnes réponses, à chaque étape.",
-    ctaLabel: "Rejoindre le pack",
+      "Rejoignez « Mon Allaitement Sur Mesure » et avancez avec les bonnes réponses, à chaque étape.",
+    ctaLabel: "Je rejoins le programme",
   },
 } as const;

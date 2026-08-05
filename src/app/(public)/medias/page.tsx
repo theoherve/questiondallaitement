@@ -240,6 +240,17 @@ const MediasPage = () => {
               toutes les librairies et sur les principales plateformes en
               ligne.
             </p>
+            <p className="mx-auto mt-4 max-w-xl text-background-beige/60">
+              Envie d&apos;un accompagnement personnalisé plutôt que de la
+              lecture ?{" "}
+              <Link
+                href="/accompagnements"
+                className="underline decoration-primary-red decoration-2 underline-offset-4 hover:text-background-beige"
+              >
+                Découvrez les accompagnements en ligne
+              </Link>
+              .
+            </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Button
                 asChild

@@ -8,6 +8,7 @@ import { BookOpen, ChevronRight, Clock, Layers, User } from "lucide-react";
 import { getSessionUser } from "@/lib/auth";
 import { PurchaseButton } from "../_components/purchase-button";
 import { PACK_SLUG } from "@/config/accompagnements";
+import { ctaLabelFor } from "@/config/accompagnement-cta";
 import {
   PackSalesPage,
   fetchPackModuleRows,
@@ -331,6 +332,7 @@ const FormationDetailPage = async ({ params }: Props) => {
                 formationId={formation.id}
                 isLoggedIn={!!currentUser}
                 isEnrolled={isEnrolled}
+                ctaLabel={ctaLabelFor(formation.slug)}
               />
             </CardContent>
           </Card>

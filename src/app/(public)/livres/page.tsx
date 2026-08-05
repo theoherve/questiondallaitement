@@ -516,7 +516,7 @@ const LivresPage = () => {
                     </p>
                   </div>
                   <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-4xl">
-                    Mes contributions
+                    Mon expertise citée dans les ouvrages de référence
                   </h2>
                   <p className="mx-auto mt-4 max-w-xl text-primary-green/70 lg:text-lg">
                     Des ouvrages auxquels j&apos;ai apporté mon expertise en
@@ -653,6 +653,17 @@ const LivresPage = () => {
             <p className="mx-auto mt-6 max-w-xl text-lg text-background-beige/70">
               Les livres de Carole Hervé sont disponibles dans toutes les
               librairies et sur les principales plateformes en ligne.
+            </p>
+            <p className="mx-auto mt-4 max-w-xl text-background-beige/60">
+              Vous avez lu, et vous voulez maintenant être accompagnée pas à
+              pas ?{" "}
+              <Link
+                href="/accompagnements"
+                className="underline decoration-primary-red decoration-2 underline-offset-4 hover:text-background-beige"
+              >
+                Découvrez les accompagnements en ligne
+              </Link>
+              .
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Button

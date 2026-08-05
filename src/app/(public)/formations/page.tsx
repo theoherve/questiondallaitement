@@ -96,11 +96,15 @@ const FormationsProPage = async () => {
       <section className="bg-primary-green px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14">
         <div className="mx-auto max-w-7xl text-center">
           <h1 className="font-serif text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
-            Formations professionnelles
+            Formez-vous à l&apos;allaitement avec une approche clinique, pas
+            des recettes toutes faites
           </h1>
-          <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-white/80">
-            Formations certifiantes en allaitement maternel et parentalité.
-            Approche scientifique et bienveillante.
+          <p className="mx-auto mt-3 max-w-3xl text-base leading-relaxed text-white/80">
+            Sages-femmes, orthophonistes, puéricultrices, ostéopathes,
+            accompagnantes en périnatalité : des formations certifiantes
+            construites sur l&apos;observation clinique et les données
+            probantes, pour accompagner l&apos;allaitement avec rigueur et
+            humanité.
           </p>
 
           {/* Quick stats */}
@@ -139,6 +143,27 @@ const FormationsProPage = async () => {
               </div>
             )}
           </div>
+
+          {/* Orientation par type de session — les filtres ne s'expliquent pas
+              d'eux-mêmes pour qui découvre la page. */}
+          <dl className="mx-auto mt-8 grid max-w-3xl gap-x-8 gap-y-2 text-left text-sm text-white/75 sm:grid-cols-2">
+            <div>
+              <dt className="inline font-medium text-white">Formations — </dt>
+              <dd className="inline">un parcours complet et certifiant.</dd>
+            </div>
+            <div>
+              <dt className="inline font-medium text-white">Masterclass — </dt>
+              <dd className="inline">un sujet précis approfondi en une session.</dd>
+            </div>
+            <div>
+              <dt className="inline font-medium text-white">Ateliers — </dt>
+              <dd className="inline">pour celles qui animent déjà des groupes de parents.</dd>
+            </div>
+            <div>
+              <dt className="inline font-medium text-white">Lives — </dt>
+              <dd className="inline">réservés aux personnes accompagnées en ligne par Carole.</dd>
+            </div>
+          </dl>
         </div>
       </section>
 
