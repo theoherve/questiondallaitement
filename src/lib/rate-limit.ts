@@ -91,3 +91,14 @@ export const AUTH_RATE_LIMITS = {
     windowSeconds: 600,
   },
 } as const satisfies Record<string, RateLimitConfig>;
+
+/**
+ * Valider un code est un oracle : sans limite, on enumere le catalogue en
+ * quelques minutes. Dix essais par tranche de cinq minutes suffisent a une
+ * cliente qui recopie son code de travers.
+ */
+export const PROMO_RATE_LIMIT = {
+  prefix: "promo-preview",
+  limit: 10,
+  windowSeconds: 300,
+} as const satisfies RateLimitConfig;
