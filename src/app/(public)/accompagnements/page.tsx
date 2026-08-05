@@ -128,11 +128,13 @@ const AccompagnementsPage = async () => {
           Accompagnements en ligne
         </Badge>
         <h1 className="mt-4 font-serif text-3xl font-bold text-primary-green sm:text-4xl">
-          Accompagnements en ligne
+          Le bon accompagnement, pour l&apos;étape que vous traversez maintenant
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-primary-green/70">
-          Des parcours complets pour vous accompagner dans votre allaitement et
-          votre parentalité — à votre rythme, où que vous soyez.
+          Huit parcours, un pack complet — chacun conçu pour répondre à une
+          situation précise, avec la même exigence clinique. Pas de contenu
+          générique : uniquement ce dont vous avez besoin, quand vous en avez
+          besoin.
         </p>
       </div>
 
@@ -150,6 +152,53 @@ const AccompagnementsPage = async () => {
           </div>
         ))}
       </div>
+
+      {/* Orientation — aide une visiteuse pressée à choisir sans lire les 9 fiches */}
+      {rows.length > 0 && (
+        <div className="mx-auto mt-10 max-w-3xl border-l-2 border-primary-red/30 pl-5">
+          <p className="font-serif text-lg font-semibold text-primary-green">
+            Vous ne savez pas par où commencer ?
+          </p>
+          <ul className="mt-3 space-y-1.5 text-primary-green/75">
+            <li>
+              Enceinte ou en préparation —{" "}
+              <Link
+                href="/accompagnements/je-me-prepare-a-allaiter"
+                className="text-primary-red hover:underline"
+              >
+                Je me prépare à allaiter
+              </Link>
+            </li>
+            <li>
+              Bébé a moins d&apos;un mois —{" "}
+              <Link
+                href="/accompagnements/mon-allaitement-des-premiers-jours"
+                className="text-primary-red hover:underline"
+              >
+                Mon allaitement des premiers jours
+              </Link>
+            </li>
+            <li>
+              Une douleur ou une urgence là, maintenant —{" "}
+              <Link
+                href="/accompagnements/les-urgences-allaitement"
+                className="text-primary-red hover:underline"
+              >
+                Les urgences de l&apos;allaitement
+              </Link>
+            </li>
+            <li>
+              Toutes les étapes en une fois —{" "}
+              <Link
+                href={`/accompagnements/${PACK_SLUG}`}
+                className="text-primary-red hover:underline"
+              >
+                le Pack complet
+              </Link>
+            </li>
+          </ul>
+        </div>
+      )}
 
       {rows.length === 0 && (
         <div className="mt-12 text-center">

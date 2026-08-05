@@ -440,9 +440,9 @@ const AProposPage = () => {
               Prête à vivre votre allaitement sereinement ?
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-background-beige/70">
-              Que vous soyez enceinte, en tout début d&apos;allaitement ou
-              confrontée à une difficulté, il existe un accompagnement adapté à
-              votre situation.
+              Que vous soyez en train de lire ces lignes le regard rivé sur
+              votre bébé qui dort enfin, ou en pleine préparation d&apos;un
+              allaitement à venir — il existe un accompagnement pour vous.
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Button

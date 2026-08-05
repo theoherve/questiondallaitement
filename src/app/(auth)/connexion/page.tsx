@@ -20,9 +20,9 @@ const LoginPage = async ({ searchParams }: Props) => {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Connexion</CardTitle>
+        <CardTitle className="text-2xl">Heureuse de vous revoir</CardTitle>
         <CardDescription>
-          Connectez-vous à votre espace personnel
+          Connectez-vous pour retrouver vos accompagnements et vos rendez-vous.
         </CardDescription>
       </CardHeader>
       <CardContent>

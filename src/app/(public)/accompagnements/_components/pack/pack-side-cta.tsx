@@ -5,6 +5,8 @@ import Image from "next/image";
 import { BookOpen, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PurchaseButton } from "../purchase-button";
+import { ctaLabelFor } from "@/config/accompagnement-cta";
+import { PACK_SLUG } from "@/config/accompagnements";
 
 type Props = {
   priceLabel: string;
@@ -104,6 +106,7 @@ export function PackSideCta({
               formationId={formationId}
               isLoggedIn={isLoggedIn}
               isEnrolled={isEnrolled}
+              ctaLabel={ctaLabelFor(PACK_SLUG)}
             />
           </div>
 

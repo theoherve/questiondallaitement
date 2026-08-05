@@ -22,8 +22,9 @@ const PolitiqueConfidentialitePage = () => (
         </h2>
         <p className="mt-3 text-sm">
           Le responsable du traitement des données personnelles collectées sur
-          ce site est [Nom de la société], dont le siège social est situé
-          [Adresse complète]. Contact : contact@questiondallaitement.fr
+          ce site est Carole HERVÉ, entrepreneur individuel (SIRET 540 075 819
+          00016), dont le siège social est situé 43 rue Guy Môquet, 75017 Paris.
+          Contact : contact@questiondallaitement.fr
         </p>
       </section>
 
