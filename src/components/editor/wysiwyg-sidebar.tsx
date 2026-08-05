@@ -8,6 +8,7 @@ import {
   Columns2,
   Columns3,
   BarChart3,
+  ChevronsUpDown,
   Heading1,
   Heading2,
   Heading3,
@@ -21,10 +22,14 @@ import {
   MousePointerClick,
   Quote,
   Search,
+  SquareCode,
   StickyNote,
+  Table as TableIcon,
   Type,
+  Youtube,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { insertVideo } from "./content-nodes";
 import { uploadFileAction } from "@/lib/storage/actions";
 import { toast } from "sonner";
 
@@ -39,6 +44,13 @@ type ChainAny = {
     variant?: "primary" | "secondary" | "outline";
     text?: string;
   }): ChainAny;
+  toggleCodeBlock(): ChainAny;
+  insertTable(options: {
+    rows: number;
+    cols: number;
+    withHeaderRow: boolean;
+  }): ChainAny;
+  setAccordion(): ChainAny;
   run(): boolean;
 };
 
@@ -265,6 +277,45 @@ const CATALOG: SidebarCategory[] = [
         icon: <MousePointerClick className="h-4 w-4" />,
         keywords: ["cta", "bouton", "outline", "contour"],
         insert: (e) => insertCta(e, "outline"),
+      },
+    ],
+  },
+  {
+    id: "contenus-riches",
+    label: "Contenus riches",
+    items: [
+      {
+        id: "code-block",
+        label: "Bloc de code",
+        description: "Extrait en chasse fixe",
+        icon: <SquareCode className="h-4 w-4" />,
+        keywords: ["code", "bloc", "pre", "snippet"],
+        insert: (e) => chainOf(e).toggleCodeBlock().run(),
+      },
+      {
+        id: "table",
+        label: "Tableau",
+        description: "3 × 3 avec ligne d'en-tête",
+        icon: <TableIcon className="h-4 w-4" />,
+        keywords: ["tableau", "table", "grille", "colonnes"],
+        insert: (e) =>
+          chainOf(e).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+      },
+      {
+        id: "video",
+        label: "Vidéo",
+        description: "YouTube ou Vimeo",
+        icon: <Youtube className="h-4 w-4" />,
+        keywords: ["video", "youtube", "vimeo", "lecteur"],
+        insert: (e) => insertVideo(e, null),
+      },
+      {
+        id: "accordion",
+        label: "Accordéon",
+        description: "Question repliable, pour une FAQ",
+        icon: <ChevronsUpDown className="h-4 w-4" />,
+        keywords: ["accordeon", "faq", "question", "repliable"],
+        insert: (e) => chainOf(e).setAccordion().run(),
       },
     ],
   },

@@ -213,14 +213,13 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main content */}
-        <div className="lg:col-span-2 space-y-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
-              <TabsTrigger value="content">Contenu</TabsTrigger>
-              <TabsTrigger value="seo">SEO</TabsTrigger>
-            </TabsList>
+      <div className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="content">Contenu</TabsTrigger>
+            <TabsTrigger value="informations">Informations</TabsTrigger>
+            <TabsTrigger value="seo">SEO</TabsTrigger>
+          </TabsList>
 
             <TabsContent value="content" className="space-y-4">
               <Card>
@@ -367,150 +366,152 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
                 </CardContent>
               </Card>
             </TabsContent>
-          </Tabs>
-        </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Publication */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Publication</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="status">Statut</Label>
-                <select
-                  id="status"
-                  value={formData.status}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      status: e.target.value as typeof formData.status,
-                    }))
-                  }
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="draft">Brouillon</option>
-                  <option value="scheduled">Programmé</option>
-                  <option value="published">Publié</option>
-                  <option value="archived">Archivé</option>
-                </select>
-              </div>
-
-              {formData.status === "scheduled" && (
+          <TabsContent value="informations" className="space-y-4">
+            {/* Deux colonnes sur grand ecran : ces cartes sont courtes,
+                les empiler laisserait la moitie de la largeur vide. */}
+            <div className="grid gap-6 lg:grid-cols-2">
+            {/* Publication */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Publication</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="scheduled_at">Date de publication</Label>
-                  <Input
-                    id="scheduled_at"
-                    type="datetime-local"
-                    value={formData.scheduled_at}
-                    min={new Date().toISOString().slice(0, 16)}
+                  <Label htmlFor="status">Statut</Label>
+                  <select
+                    id="status"
+                    value={formData.status}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        scheduled_at: e.target.value,
+                        status: e.target.value as typeof formData.status,
                       }))
                     }
-                    required={formData.status === "scheduled"}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    La date doit être dans le futur
-                  </p>
-                  {fieldError("scheduled_at")}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="draft">Brouillon</option>
+                    <option value="scheduled">Programmé</option>
+                    <option value="published">Publié</option>
+                    <option value="archived">Archivé</option>
+                  </select>
                 </div>
-              )}
 
-              {mode === "edit" && formData.status !== "published" && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={handlePublishNow}
-                  disabled={isPending}
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Publier maintenant
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+                {formData.status === "scheduled" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="scheduled_at">Date de publication</Label>
+                    <Input
+                      id="scheduled_at"
+                      type="datetime-local"
+                      value={formData.scheduled_at}
+                      min={new Date().toISOString().slice(0, 16)}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          scheduled_at: e.target.value,
+                        }))
+                      }
+                      required={formData.status === "scheduled"}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      La date doit être dans le futur
+                    </p>
+                    {fieldError("scheduled_at")}
+                  </div>
+                )}
 
-          {/* Meta */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Informations</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="category_id">Catégorie</Label>
-                <select
-                  id="category_id"
-                  value={formData.category_id}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      category_id: e.target.value,
-                    }))
-                  }
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">Aucune</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                {mode === "edit" && formData.status !== "published" && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={handlePublishNow}
+                    disabled={isPending}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Publier maintenant
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
 
-              <div className="space-y-2">
-                <Label htmlFor="consultant_id">Consultante associée</Label>
-                <select
-                  id="consultant_id"
-                  value={formData.consultant_id}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      consultant_id: e.target.value,
-                    }))
-                  }
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">Aucune</option>
-                  {consultants.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.profiles?.first_name} {c.profiles?.last_name}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-muted-foreground">
-                  Affichée comme auteur de l&apos;article
-                </p>
-              </div>
+            {/* Meta */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Informations</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category_id">Catégorie</Label>
+                  <select
+                    id="category_id"
+                    value={formData.category_id}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        category_id: e.target.value,
+                      }))
+                    }
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">Aucune</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="space-y-2">
-                <Label>Image de couverture</Label>
-                <FileUpload
-                  bucket="blog"
-                  folder="covers"
-                  accept="image/*"
-                  maxSizeMb={10}
-                  value={formData.thumbnail_url}
-                  onUpload={(url) =>
-                    setFormData((prev) => ({ ...prev, thumbnail_url: url }))
-                  }
-                  onRemove={() =>
-                    setFormData((prev) => ({ ...prev, thumbnail_url: "" }))
-                  }
-                  label="Ajouter une image de couverture"
-                  cropAspect="16:9"
-                />
-                {fieldError("thumbnail_url")}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                <div className="space-y-2">
+                  <Label htmlFor="consultant_id">Consultante associée</Label>
+                  <select
+                    id="consultant_id"
+                    value={formData.consultant_id}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        consultant_id: e.target.value,
+                      }))
+                    }
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">Aucune</option>
+                    {consultants.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.profiles?.first_name} {c.profiles?.last_name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    Affichée comme auteur de l&apos;article
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Image de couverture</Label>
+                  <FileUpload
+                    bucket="blog"
+                    folder="covers"
+                    accept="image/*"
+                    maxSizeMb={10}
+                    value={formData.thumbnail_url}
+                    onUpload={(url) =>
+                      setFormData((prev) => ({ ...prev, thumbnail_url: url }))
+                    }
+                    onRemove={() =>
+                      setFormData((prev) => ({ ...prev, thumbnail_url: "" }))
+                    }
+                    label="Ajouter une image de couverture"
+                    cropAspect="16:9"
+                  />
+                  {fieldError("thumbnail_url")}
+                </div>
+              </CardContent>
+            </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </form>
   );

@@ -190,3 +190,108 @@
     display: none;
   }
 }
+
+/* ─── Blocs riches de l'éditeur ──────────────────────────────
+   Ces règles servent deux endroits à la fois : la zone d'édition et l'article
+   publié. Les classes Tailwind posées par les nœuds Tiptap couvrent le gros du
+   rendu, mais ce qui vient du HTML stocké en base n'est pas vu par le
+   compilateur Tailwind — d'où ce complément en CSS brut. */
+
+/* Le redimensionnement de colonnes de Tiptap exige `table-layout: fixed`. */
+.ProseMirror table,
+.prose [data-rich-table] {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+.ProseMirror th,
+.ProseMirror td,
+.prose [data-rich-table] th,
+.prose [data-rich-table] td {
+  border: 1px solid color-mix(in srgb, var(--color-primary-green) 20%, transparent);
+  padding: 0.5rem 0.75rem;
+  vertical-align: top;
+}
+
+.ProseMirror th,
+.prose [data-rich-table] th {
+  background-color: var(--color-background-beige-dark);
+  font-weight: 500;
+  text-align: left;
+}
+
+/* Poignée de redimensionnement des colonnes. */
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: var(--color-primary-red);
+  pointer-events: none;
+}
+
+.ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+
+/* Accordéon : le marqueur natif est remplacé par un chevron qui pivote. */
+.prose details[data-accordion] summary,
+.ProseMirror details[data-accordion] summary {
+  list-style: none;
+  position: relative;
+  padding-right: 1.5rem;
+}
+
+.prose details[data-accordion] summary::-webkit-details-marker,
+.ProseMirror details[data-accordion] summary::-webkit-details-marker {
+  display: none;
+}
+
+.prose details[data-accordion] summary::after,
+.ProseMirror details[data-accordion] summary::after {
+  content: "";
+  position: absolute;
+  right: 0.25rem;
+  top: 0.4em;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 150ms ease;
+}
+
+.prose details[data-accordion][open] summary::after,
+.ProseMirror details[data-accordion][open] summary::after {
+  transform: rotate(-135deg);
+}
+
+/* En édition, le contenu d'un accordéon replié serait inatteignable au clic :
+   on force l'ouverture dans l'éditeur seulement. */
+.ProseMirror details[data-accordion] > *:not(summary) {
+  display: block;
+}
+
+/* Vidéo embarquée : le ratio est porté par le conteneur, l'iframe le remplit. */
+.prose [data-video-embed],
+.ProseMirror [data-video-embed] {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  margin: 1.5rem 0;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background-color: var(--color-primary-green);
+}
+
+.prose [data-video-embed] iframe,
+.ProseMirror [data-video-embed] iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
