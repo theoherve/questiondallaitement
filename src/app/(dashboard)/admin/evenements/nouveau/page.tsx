@@ -14,10 +14,13 @@ const NewEventPage = async () => {
 
   const supabase = createAdminClient();
 
-  const { data: consultantsRaw } = await supabase
-    .from("consultants")
-    .select("id, profiles!consultants_id_fkey(first_name, last_name)")
-    .eq("is_active", true);
+  const [{ data: consultantsRaw }, { data: providers }] = await Promise.all([
+    supabase
+      .from("consultants")
+      .select("id, profiles!consultants_id_fkey(first_name, last_name)")
+      .eq("is_active", true),
+    supabase.from("training_providers").select("id, name").order("name"),
+  ]);
 
   const consultants = (consultantsRaw ?? []).map((c: Record<string, unknown>) => ({
     id: c.id as string,
@@ -27,7 +30,13 @@ const NewEventPage = async () => {
     } | null,
   }));
 
-  return <EventForm consultants={consultants} mode="create" />;
+  return (
+    <EventForm
+      consultants={consultants}
+      providers={providers ?? []}
+      mode="create"
+    />
+  );
 };
 
 export default NewEventPage;

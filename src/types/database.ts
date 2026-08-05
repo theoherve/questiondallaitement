@@ -267,6 +267,7 @@ export type Event = {
   max_participants: number | null;
   price_cents: number;
   currency: string;
+  show_price: boolean;
   is_published: boolean;
   provider_id: string | null;
   external_url: string | null;

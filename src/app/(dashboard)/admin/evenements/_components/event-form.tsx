@@ -30,9 +30,15 @@ type ConsultantOption = {
   profiles: { first_name: string | null; last_name: string | null } | null;
 };
 
+type ProviderOption = {
+  id: string;
+  name: string;
+};
+
 type Props = {
   event?: Event;
   consultants: ConsultantOption[];
+  providers?: ProviderOption[];
   mode: "create" | "edit";
   registrationsCount?: number;
 };
@@ -40,6 +46,7 @@ type Props = {
 export const EventForm = ({
   event,
   consultants,
+  providers = [],
   mode,
   registrationsCount = 0,
 }: Props) => {
@@ -64,7 +71,11 @@ export const EventForm = ({
     location: event?.location ?? "",
     max_participants: event?.max_participants ?? ("" as number | ""),
     price_cents: event?.price_cents ?? 0,
+    discounted_price_cents: event?.discounted_price_cents ?? ("" as number | ""),
     currency: event?.currency ?? "eur",
+    show_price: event?.show_price ?? true,
+    provider_id: event?.provider_id ?? "",
+    external_url: event?.external_url ?? "",
     consultant_id: event?.consultant_id ?? "",
     is_published: event?.is_published ?? false,
   });
@@ -96,6 +107,12 @@ export const EventForm = ({
       max_participants:
         formData.max_participants === "" ? null : Number(formData.max_participants),
       price_cents: Number(formData.price_cents),
+      discounted_price_cents:
+        formData.discounted_price_cents === ""
+          ? null
+          : Number(formData.discounted_price_cents),
+      provider_id: formData.provider_id || null,
+      external_url: formData.external_url.trim() || null,
       starts_at: formData.starts_at
         ? new Date(formData.starts_at).toISOString()
         : "",
@@ -162,6 +179,10 @@ export const EventForm = ({
   };
 
   const priceInEuros = formData.price_cents / 100;
+  const discountedPriceInEuros =
+    formData.discounted_price_cents === ""
+      ? ""
+      : formData.discounted_price_cents / 100;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -340,6 +361,53 @@ export const EventForm = ({
               )}
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Organisme de formation</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="provider_id">Organisme</Label>
+                <select
+                  id="provider_id"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={formData.provider_id}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, provider_id: e.target.value }))
+                  }
+                >
+                  <option value="">Aucun (formation propre)</option>
+                  {providers.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="external_url">
+                  Lien vers la page de l&apos;organisme (optionnel)
+                </Label>
+                <Input
+                  id="external_url"
+                  type="url"
+                  value={formData.external_url}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, external_url: e.target.value }))
+                  }
+                  placeholder="https://organisme.fr/formations/..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Si renseigné, la formation n&apos;a plus de page de détail sur
+                  le site : le CTA renvoie directement vers l&apos;organisme
+                  (avec le code MILKPOWER). Aucune inscription n&apos;est
+                  possible ici.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Sidebar */}
@@ -397,6 +465,49 @@ export const EventForm = ({
                   paiement passent par l&apos;école.
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="discounted_price">
+                  Prix remisé (€, optionnel)
+                </Label>
+                <Input
+                  id="discounted_price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={discountedPriceInEuros}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      discounted_price_cents:
+                        e.target.value === ""
+                          ? ""
+                          : Math.round(parseFloat(e.target.value) * 100),
+                    }))
+                  }
+                  placeholder="Aucune remise"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Affiche le prix plein barré à côté du prix remisé.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="show_price"
+                  checked={formData.show_price}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, show_price: e.target.checked }))
+                  }
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="show_price">Afficher le tarif</Label>
+              </div>
+              <p className="-mt-2 text-xs text-muted-foreground">
+                Décoché : aucun tarif n&apos;apparaît sur le site (à utiliser
+                tant que le prix n&apos;est pas arrêté).
+              </p>
 
               <div className="space-y-2">
                 <Label htmlFor="max_participants">

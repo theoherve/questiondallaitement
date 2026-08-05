@@ -19,10 +19,31 @@ export const eventSchema = z
     location: z.string().optional().nullable(),
     max_participants: z.number().int().min(1).optional().nullable(),
     price_cents: z.number().int().min(0, "Le prix ne peut pas être négatif"),
+    discounted_price_cents: z
+      .number()
+      .int()
+      .min(0, "Le prix remisé ne peut pas être négatif")
+      .optional()
+      .nullable(),
     currency: z.string().default("eur"),
+    show_price: z.boolean().default(true),
+    provider_id: z.string().uuid().optional().nullable(),
+    external_url: z
+      .url("Le lien externe doit être une URL valide")
+      .optional()
+      .nullable(),
     consultant_id: z.string().uuid("Consultante requise"),
     is_published: z.boolean().default(false),
   })
+  .refine(
+    (data) =>
+      data.discounted_price_cents == null ||
+      data.discounted_price_cents < data.price_cents,
+    {
+      message: "Le prix remisé doit être inférieur au prix plein",
+      path: ["discounted_price_cents"],
+    },
+  )
   .refine(
     (data) => {
       const start = new Date(data.starts_at);

@@ -21,13 +21,14 @@ const EditEventPage = async ({ params }: Props) => {
   const { id } = await params;
   const supabase = createAdminClient();
 
-  const [eventResult, consultantsResult, registrationsCount] =
+  const [eventResult, consultantsResult, providersResult, registrationsCount] =
     await Promise.all([
       supabase.from("events").select("*").eq("id", id).single(),
       supabase
         .from("consultants")
         .select("id, profiles!consultants_id_fkey(first_name, last_name)")
         .eq("is_active", true),
+      supabase.from("training_providers").select("id, name").order("name"),
       getEventRegistrationsCount(id),
     ]);
 
@@ -50,6 +51,7 @@ const EditEventPage = async ({ params }: Props) => {
     <EventForm
       event={event}
       consultants={consultants}
+      providers={providersResult.data ?? []}
       mode="edit"
       registrationsCount={registrationsCount}
     />
