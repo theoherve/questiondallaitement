@@ -1,0 +1,82 @@
+[
+  {
+    "id": "8dec516c-6d10-4829-ba9f-dc6db2152f09",
+    "name": "Accueillir bébé",
+    "slug": "accueillir-bebe",
+    "description": null,
+    "position": 1,
+    "created_at": "2026-03-17T23:30:29.488425+00:00"
+  },
+  {
+    "id": "eb685466-1f86-4828-b8f2-c9538e17fef1",
+    "name": "Douleurs",
+    "slug": "douleurs",
+    "description": null,
+    "position": 2,
+    "created_at": "2026-03-17T23:30:29.488425+00:00"
+  },
+  {
+    "id": "720da0db-b049-4a68-9866-114e5236a1d5",
+    "name": "Augmenter la lactation",
+    "slug": "augmenter-la-lactation",
+    "description": null,
+    "position": 3,
+    "created_at": "2026-03-17T23:30:29.488425+00:00"
+  },
+  {
+    "id": "57d465ef-9ec8-48ea-92a0-c5670ec39b8e",
+    "name": "Équilibre allaitement - vie active",
+    "slug": "equilibre-allaitement-vie-active",
+    "description": null,
+    "position": 4,
+    "created_at": "2026-03-17T23:30:29.488425+00:00"
+  },
+  {
+    "id": "7efdcd9c-8774-4c88-a044-99431989cb3c",
+    "name": "Diversification",
+    "slug": "diversification",
+    "description": null,
+    "position": 5,
+    "created_at": "2026-03-17T23:30:29.488425+00:00"
+  },
+  {
+    "id": "23f16347-e968-4df5-ad29-599d960e7199",
+    "name": "Sevrage",
+    "slug": "sevrage",
+    "description": null,
+    "position": 6,
+    "created_at": "2026-03-17T23:30:29.488425+00:00"
+  },
+  {
+    "id": "2370bda6-742e-4e15-a1dd-03c53cf80c9e",
+    "name": "Sommeil du tout petit",
+    "slug": "sommeil-du-tout-petit",
+    "description": null,
+    "position": 7,
+    "created_at": "2026-03-17T23:30:29.488425+00:00"
+  },
+  {
+    "id": "2e576bea-5d00-4e6b-ab0c-b0703fb645a6",
+    "name": "Consultante en lactation",
+    "slug": "consultante-en-lactation",
+    "description": null,
+    "position": 8,
+    "created_at": "2026-03-17T23:30:29.488425+00:00"
+  },
+  {
+    "id": "3de146a9-d77c-4524-9c91-e3f67dc6069c",
+    "name": "Allaitement bambin",
+    "slug": "allaitement-bambin",
+    "description": null,
+    "position": 9,
+    "created_at": "2026-03-17T23:30:29.488425+00:00"
+  },
+  {
+    "id": "92e1df3a-a755-4927-9af9-83996a7db917",
+    "name": "Formation",
+    "slug": "formation",
+    "description": null,
+    "position": 10,
+    "created_at": "2026-03-17T23:30:29.488425+00:00"
+  }
+]
