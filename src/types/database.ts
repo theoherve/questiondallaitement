@@ -472,6 +472,14 @@ export type BlogPost = {
   meta_description: string | null;
   og_image_url: string | null;
   tags: string[];
+  /** Titre de l'encadre de conclusion. Vide : « A retenir » a l'affichage. */
+  conclusion_title: string | null;
+  /** Texte simple de l'encadre. Vide : encadre masque. */
+  conclusion_text: string | null;
+  /** References et sources en HTML. Vide : section masquee. */
+  references_html: string | null;
+  /** Jusqu'a 3 articles epingles, ordre de saisie conserve. */
+  related_post_ids: string[];
   scheduled_at: string | null;
   published_at: string | null;
   deleted_at: string | null;

@@ -10,6 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WysiwygEditor } from "@/components/editor/wysiwyg-editor";
 import { FileUpload } from "@/components/ui/file-upload";
+import {
+  PostEndingFields,
+  type PinnablePost,
+} from "./post-ending-fields";
 import { createBlogPost, updateBlogPost, deleteBlogPost } from "../actions";
 import { toast } from "sonner";
 import { ArrowLeft, Save, Eye, Trash2, Calendar } from "lucide-react";
@@ -24,10 +28,18 @@ type Props = {
   post?: BlogPost;
   categories: BlogCategory[];
   consultants: ConsultantWithProfile[];
+  /** Articles publiés épinglables comme suggestions, article courant exclu. */
+  pinnablePosts?: PinnablePost[];
   mode: "create" | "edit";
 };
 
-export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => {
+export const BlogPostForm = ({
+  post,
+  categories,
+  consultants,
+  pinnablePosts = [],
+  mode,
+}: Props) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState("content");
@@ -46,6 +58,10 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
     meta_description: post?.meta_description ?? "",
     og_image_url: post?.og_image_url ?? "",
     tags: post?.tags ?? [],
+    conclusion_title: post?.conclusion_title ?? "",
+    conclusion_text: post?.conclusion_text ?? "",
+    references_html: post?.references_html ?? "",
+    related_post_ids: post?.related_post_ids ?? [],
     scheduled_at: post?.scheduled_at?.slice(0, 16) ?? "",
   });
 
@@ -71,12 +87,20 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
     setFieldErrors(errors ?? {});
     if (!errors) return;
     const seoFields = ["meta_title", "meta_description", "og_image_url"];
+    const endingFields = [
+      "conclusion_title",
+      "conclusion_text",
+      "references_html",
+      "related_post_ids",
+    ];
     const hasSeoError = seoFields.some((f) => f in errors);
+    const hasEndingError = endingFields.some((f) => f in errors);
     const hasContentError = Object.keys(errors).some(
-      (f) => !seoFields.includes(f),
+      (f) => !seoFields.includes(f) && !endingFields.includes(f),
     );
-    if (hasSeoError && !hasContentError) setActiveTab("seo");
-    else if (hasContentError) setActiveTab("content");
+    if (hasContentError) setActiveTab("content");
+    else if (hasSeoError) setActiveTab("seo");
+    else if (hasEndingError) setActiveTab("ending");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,6 +122,9 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
 
     const payload = {
       ...formData,
+      conclusion_title: formData.conclusion_title || null,
+      conclusion_text: formData.conclusion_text || null,
+      references_html: formData.references_html || null,
       category_id: formData.category_id || null,
       consultant_id: formData.consultant_id || null,
       thumbnail_url: formData.thumbnail_url || null,
@@ -213,14 +240,28 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main content */}
-        <div className="lg:col-span-2 space-y-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
-              <TabsTrigger value="content">Contenu</TabsTrigger>
-              <TabsTrigger value="seo">SEO</TabsTrigger>
-            </TabsList>
+      <div className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="content">Contenu</TabsTrigger>
+            <TabsTrigger value="informations">Informations</TabsTrigger>
+            <TabsTrigger value="ending">Fin d&apos;article</TabsTrigger>
+            <TabsTrigger value="seo">SEO</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="ending" className="space-y-4">
+            <PostEndingFields
+              conclusionTitle={formData.conclusion_title}
+              conclusionText={formData.conclusion_text}
+              referencesHtml={formData.references_html}
+              relatedPostIds={formData.related_post_ids}
+              pinnablePosts={pinnablePosts}
+              onChange={(patch) =>
+                setFormData((prev) => ({ ...prev, ...patch }))
+              }
+              fieldError={fieldError}
+            />
+          </TabsContent>
 
             <TabsContent value="content" className="space-y-4">
               <Card>
@@ -367,150 +408,152 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
                 </CardContent>
               </Card>
             </TabsContent>
-          </Tabs>
-        </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Publication */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Publication</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="status">Statut</Label>
-                <select
-                  id="status"
-                  value={formData.status}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      status: e.target.value as typeof formData.status,
-                    }))
-                  }
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="draft">Brouillon</option>
-                  <option value="scheduled">Programmé</option>
-                  <option value="published">Publié</option>
-                  <option value="archived">Archivé</option>
-                </select>
-              </div>
-
-              {formData.status === "scheduled" && (
+          <TabsContent value="informations" className="space-y-4">
+            {/* Deux colonnes sur grand ecran : ces cartes sont courtes,
+                les empiler laisserait la moitie de la largeur vide. */}
+            <div className="grid gap-6 lg:grid-cols-2">
+            {/* Publication */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Publication</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="scheduled_at">Date de publication</Label>
-                  <Input
-                    id="scheduled_at"
-                    type="datetime-local"
-                    value={formData.scheduled_at}
-                    min={new Date().toISOString().slice(0, 16)}
+                  <Label htmlFor="status">Statut</Label>
+                  <select
+                    id="status"
+                    value={formData.status}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        scheduled_at: e.target.value,
+                        status: e.target.value as typeof formData.status,
                       }))
                     }
-                    required={formData.status === "scheduled"}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    La date doit être dans le futur
-                  </p>
-                  {fieldError("scheduled_at")}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="draft">Brouillon</option>
+                    <option value="scheduled">Programmé</option>
+                    <option value="published">Publié</option>
+                    <option value="archived">Archivé</option>
+                  </select>
                 </div>
-              )}
 
-              {mode === "edit" && formData.status !== "published" && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={handlePublishNow}
-                  disabled={isPending}
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Publier maintenant
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+                {formData.status === "scheduled" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="scheduled_at">Date de publication</Label>
+                    <Input
+                      id="scheduled_at"
+                      type="datetime-local"
+                      value={formData.scheduled_at}
+                      min={new Date().toISOString().slice(0, 16)}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          scheduled_at: e.target.value,
+                        }))
+                      }
+                      required={formData.status === "scheduled"}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      La date doit être dans le futur
+                    </p>
+                    {fieldError("scheduled_at")}
+                  </div>
+                )}
 
-          {/* Meta */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Informations</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="category_id">Catégorie</Label>
-                <select
-                  id="category_id"
-                  value={formData.category_id}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      category_id: e.target.value,
-                    }))
-                  }
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">Aucune</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                {mode === "edit" && formData.status !== "published" && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={handlePublishNow}
+                    disabled={isPending}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Publier maintenant
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
 
-              <div className="space-y-2">
-                <Label htmlFor="consultant_id">Consultante associée</Label>
-                <select
-                  id="consultant_id"
-                  value={formData.consultant_id}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      consultant_id: e.target.value,
-                    }))
-                  }
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">Aucune</option>
-                  {consultants.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.profiles?.first_name} {c.profiles?.last_name}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-muted-foreground">
-                  Affichée comme auteur de l&apos;article
-                </p>
-              </div>
+            {/* Meta */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Informations</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category_id">Catégorie</Label>
+                  <select
+                    id="category_id"
+                    value={formData.category_id}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        category_id: e.target.value,
+                      }))
+                    }
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">Aucune</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="space-y-2">
-                <Label>Image de couverture</Label>
-                <FileUpload
-                  bucket="blog"
-                  folder="covers"
-                  accept="image/*"
-                  maxSizeMb={10}
-                  value={formData.thumbnail_url}
-                  onUpload={(url) =>
-                    setFormData((prev) => ({ ...prev, thumbnail_url: url }))
-                  }
-                  onRemove={() =>
-                    setFormData((prev) => ({ ...prev, thumbnail_url: "" }))
-                  }
-                  label="Ajouter une image de couverture"
-                  cropAspect="16:9"
-                />
-                {fieldError("thumbnail_url")}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                <div className="space-y-2">
+                  <Label htmlFor="consultant_id">Consultante associée</Label>
+                  <select
+                    id="consultant_id"
+                    value={formData.consultant_id}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        consultant_id: e.target.value,
+                      }))
+                    }
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">Aucune</option>
+                    {consultants.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.profiles?.first_name} {c.profiles?.last_name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    Affichée comme auteur de l&apos;article
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Image de couverture</Label>
+                  <FileUpload
+                    bucket="blog"
+                    folder="covers"
+                    accept="image/*"
+                    maxSizeMb={10}
+                    value={formData.thumbnail_url}
+                    onUpload={(url) =>
+                      setFormData((prev) => ({ ...prev, thumbnail_url: url }))
+                    }
+                    onRemove={() =>
+                      setFormData((prev) => ({ ...prev, thumbnail_url: "" }))
+                    }
+                    label="Ajouter une image de couverture"
+                    cropAspect="16:9"
+                  />
+                  {fieldError("thumbnail_url")}
+                </div>
+              </CardContent>
+            </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </form>
   );

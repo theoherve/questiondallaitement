@@ -98,6 +98,32 @@ export const blogPostSchema = z.object({
     "L'image Open Graph doit être une URL valide (https://…)",
   ),
   tags: z.array(z.string()).default([]),
+  // ─── Fin d'article ────────────────────────────────────────
+  // Les trois champs sont facultatifs : un article sans rappel, sans sources
+  // et sans epingle reste publiable, et c'est le cas de tous les existants.
+  conclusion_title: z
+    .union([z.string(), z.null()])
+    .transform((v) => (v ? v : undefined))
+    .optional()
+    .refine((v) => v === undefined || v.length <= 120, {
+      message: "Le titre de l'encadré ne peut pas dépasser 120 caractères",
+    }),
+  conclusion_text: optionalText,
+  references_html: optionalText,
+  related_post_ids: z
+    .union([z.array(z.string()), z.null()])
+    .transform((v) => v ?? [])
+    .optional()
+    .refine(
+      (v) => (v ?? []).every((id) => z.string().uuid().safeParse(id).success),
+      { message: "Article épinglé invalide" },
+    )
+    .refine((v) => (v ?? []).length <= 3, {
+      message: "Vous ne pouvez épingler que 3 articles au maximum",
+    })
+    .refine((v) => new Set(v ?? []).size === (v ?? []).length, {
+      message: "Un même article ne peut être épinglé deux fois",
+    }),
   scheduled_at: z
     .union([z.string(), z.null()])
     .transform((v) => (v ? v : null))

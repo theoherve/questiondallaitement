@@ -12,6 +12,8 @@ import {
   type EditorInstance,
   handleCommandNavigation,
   createSuggestionItems,
+  Command,
+  renderItems,
   StarterKit,
   Placeholder,
   TiptapLink,
@@ -49,6 +51,10 @@ import {
   Redo,
   Image as ImageIcon,
   BarChart3,
+  SquareCode,
+  Table as TableIcon,
+  Youtube,
+  ChevronsUpDown,
   Columns2,
   Columns3,
   Info,
@@ -74,8 +80,18 @@ import {
 } from "./wysiwyg-extensions";
 import { ImageCropDialog } from "./image-crop-dialog";
 import { SurveyEmbedNode } from "./survey-embed-node";
-import { EditorDragHandle } from "./editor-drag-handle";
+import { EditorBlockHandle } from "./editor-drag-handle";
 import { MoveBlockShortcuts } from "./move-block-shortcuts";
+import {
+  VideoEmbed,
+  Accordion,
+  AccordionSummary,
+  insertVideo,
+} from "./content-nodes";
+import Table from "@tiptap/extension-table";
+import TableRow from "@tiptap/extension-table-row";
+import TableHeader from "@tiptap/extension-table-header";
+import TableCell from "@tiptap/extension-table-cell";
 
 /**
  * Tiptap chains for our custom nodes are not in the global Commands<> shape
@@ -93,6 +109,14 @@ type ChainAny = {
     variant?: CtaVariant;
     text?: string;
   }): ChainAny;
+  setVideoEmbed(url: string): ChainAny;
+  setAccordion(): ChainAny;
+  insertTable(options: {
+    rows: number;
+    cols: number;
+    withHeaderRow: boolean;
+  }): ChainAny;
+  toggleCodeBlock(): ChainAny;
   run(): boolean;
 };
 const columns = (editor: Editor, range: { from: number; to: number }) =>
@@ -120,6 +144,7 @@ const insertCtaButton = (
   if (range) chain.deleteRange(range);
   return chain.setCtaButton({ url, variant, text: "Découvrir" }).run();
 };
+
 import { handleImageDrop, handleImagePaste } from "novel";
 import { uploadFileAction } from "@/lib/storage/actions";
 import { toast } from "sonner";
@@ -163,7 +188,14 @@ const extensions = [
         class: "border-l-4 border-primary-red/30 pl-4 italic",
       },
     },
-    codeBlock: false,
+    // Active : le bouton « code » de la barre d'outils ne pose qu'une marque
+    // en ligne, il ne remplace pas un vrai bloc.
+    codeBlock: {
+      HTMLAttributes: {
+        class:
+          "not-prose my-4 overflow-x-auto rounded-lg bg-primary-green px-4 py-3 font-mono text-sm text-background-beige",
+      },
+    },
     horizontalRule: false,
   }),
   HorizontalRule,
@@ -186,6 +218,22 @@ const extensions = [
   Callout,
   CtaButton,
   SurveyEmbedNode,
+  VideoEmbed,
+  Accordion,
+  AccordionSummary,
+  Table.configure({
+    resizable: true,
+    HTMLAttributes: { class: "not-prose w-full border-collapse text-sm" },
+  }),
+  TableRow,
+  TableHeader.configure({
+    HTMLAttributes: {
+      class: "border border-primary-green/20 bg-background-beige-dark px-3 py-2 text-left font-medium",
+    },
+  }),
+  TableCell.configure({
+    HTMLAttributes: { class: "border border-primary-green/20 px-3 py-2" },
+  }),
   MoveBlockShortcuts,
   Placeholder.configure({ placeholder: "Commencez à écrire..." }),
 ];
@@ -405,6 +453,54 @@ const slashCommandItems = createSuggestionItems([
     },
   },
   {
+    title: "Bloc de code",
+    description: "Extrait de code en chasse fixe",
+    icon: <SquareCode className="h-4 w-4" />,
+    searchTerms: ["code", "bloc", "pre", "snippet"],
+    command: ({ editor, range }) => {
+      (editor.chain() as unknown as ChainAny)
+        .focus()
+        .deleteRange(range)
+        .toggleCodeBlock()
+        .run();
+    },
+  },
+  {
+    title: "Tableau",
+    description: "Tableau 3 × 3 avec ligne d'en-tête",
+    icon: <TableIcon className="h-4 w-4" />,
+    searchTerms: ["tableau", "table", "grille", "colonnes"],
+    command: ({ editor, range }) => {
+      (editor.chain() as unknown as ChainAny)
+        .focus()
+        .deleteRange(range)
+        .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+        .run();
+    },
+  },
+  {
+    title: "Vidéo",
+    description: "Lecteur YouTube ou Vimeo",
+    icon: <Youtube className="h-4 w-4" />,
+    searchTerms: ["video", "youtube", "vimeo", "lecteur"],
+    command: ({ editor, range }) => {
+      insertVideo(editor, range);
+    },
+  },
+  {
+    title: "Accordéon",
+    description: "Question repliable, pour une FAQ",
+    icon: <ChevronsUpDown className="h-4 w-4" />,
+    searchTerms: ["accordeon", "faq", "question", "repliable", "details"],
+    command: ({ editor, range }) => {
+      (editor.chain() as unknown as ChainAny)
+        .focus()
+        .deleteRange(range)
+        .setAccordion()
+        .run();
+    },
+  },
+  {
     title: "Sondage",
     description: "Insérer un sondage ou son graphique de résultats",
     icon: <BarChart3 className="h-4 w-4" />,
@@ -422,6 +518,17 @@ const slashCommandItems = createSuggestionItems([
     },
   },
 ]);
+
+/**
+ * Branche le menu « / » sur les entrées ci-dessus.
+ *
+ * Sans cette extension, `slashCommandItems` n'était qu'une liste inerte : le
+ * menu existait dans le JSX mais rien ne l'ouvrait, et taper « / » ne faisait
+ * qu'écrire une barre oblique.
+ */
+const slashCommand = Command.configure({
+  suggestion: { items: () => slashCommandItems, render: renderItems },
+});
 
 const htmlToContent = (html: string): JSONContent | undefined => {
   if (!html) return undefined;
@@ -874,11 +981,14 @@ export const WysiwygEditor = ({
     ? Placeholder.configure({ placeholder })
     : undefined;
 
-  const allExtensions = placeholderExt
-    ? extensions.map((ext) =>
-        ext.name === "placeholder" ? placeholderExt : ext
-      )
-    : extensions;
+  const allExtensions = [
+    ...(placeholderExt
+      ? extensions.map((ext) =>
+          ext.name === "placeholder" ? placeholderExt : ext,
+        )
+      : extensions),
+    slashCommand,
+  ];
 
   const handleToggleSidebar = () => {
     // Desktop: toggle inline sidebar. Mobile viewports prefer the Sheet.
@@ -907,8 +1017,8 @@ export const WysiwygEditor = ({
             placerait par rapport à la page et dériverait au moindre scroll.
             `pl-7` dégage la marge où elle se pose, pour qu'elle ne recouvre
             jamais le texte. */}
-        <div ref={editorAreaRef} className="relative pl-7">
-        <EditorDragHandle editor={editor} containerRef={editorAreaRef} />
+        <div ref={editorAreaRef} className="relative pl-14">
+        <EditorBlockHandle editor={editor} containerRef={editorAreaRef} />
         <EditorContent
           className="prose prose-sm max-w-none p-4"
           extensions={allExtensions}
@@ -987,8 +1097,16 @@ export const WysiwygEditor = ({
         </div>
 
         {/* Desktop inline sidebar */}
+        {/* `self-start` est indispensable : dans un conteneur flex, la colonne
+            serait sinon étirée sur toute la hauteur et `sticky` n'aurait aucun
+            effet. La hauteur bornée fait défiler la liste à l'intérieur plutôt
+            que la colonne entière — le champ de recherche reste donc toujours
+            visible. */}
         {sidebar && sidebarOpen && (
-          <div className="hidden w-64 shrink-0 border-l border-border/60 lg:block">
+          <div
+            className="sticky hidden max-h-[calc(100vh-var(--wysiwyg-toolbar-top,0px))] w-64 shrink-0 self-start overflow-hidden border-l border-border/60 lg:block"
+            style={{ top: "var(--wysiwyg-toolbar-top, 0px)" }}
+          >
             <WysiwygSidebar
               editor={editor}
               snippets={effectiveSnippets}

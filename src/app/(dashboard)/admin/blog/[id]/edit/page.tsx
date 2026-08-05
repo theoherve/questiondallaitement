@@ -20,17 +20,28 @@ const EditBlogPostPage = async ({ params }: Props) => {
   const { id } = await params;
   const supabase = createAdminClient();
 
-  const [postResult, categoriesResult, consultantsResult] = await Promise.all([
-    supabase.from("blog_posts").select("*").eq("id", id).single(),
-    supabase
-      .from("blog_categories")
-      .select("*")
-      .order("position", { ascending: true }),
-    supabase
-      .from("consultants")
-      .select("id, slug, profiles!consultants_id_fkey(first_name, last_name)")
-      .eq("is_active", true),
-  ]);
+  const [postResult, categoriesResult, consultantsResult, pinnableResult] =
+    await Promise.all([
+      supabase.from("blog_posts").select("*").eq("id", id).single(),
+      supabase
+        .from("blog_categories")
+        .select("*")
+        .order("position", { ascending: true }),
+      supabase
+        .from("consultants")
+        .select("id, slug, profiles!consultants_id_fkey(first_name, last_name)")
+        .eq("is_active", true),
+      // Candidats a l'epinglage : uniquement des articles publies, sinon la
+      // suggestion pointerait vers une page introuvable.
+      supabase
+        .from("blog_posts")
+        .select("id, title")
+        .eq("status", "published")
+        .is("deleted_at", null)
+        .neq("id", id)
+        .order("published_at", { ascending: false })
+        .limit(200),
+    ]);
 
   if (postResult.error || !postResult.data) {
     notFound();
@@ -49,6 +60,7 @@ const EditBlogPostPage = async ({ params }: Props) => {
       post={post}
       categories={categories}
       consultants={consultants as never}
+      pinnablePosts={pinnableResult.data ?? []}
       mode="edit"
     />
   );

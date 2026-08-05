@@ -150,6 +150,10 @@ export const createBlogPost = async (
     og_image_url: parsed.data.og_image_url || null,
     category_id: parsed.data.category_id || null,
     consultant_id: parsed.data.consultant_id || null,
+    conclusion_title: parsed.data.conclusion_title ?? null,
+    conclusion_text: parsed.data.conclusion_text ?? null,
+    references_html: parsed.data.references_html ?? null,
+    related_post_ids: parsed.data.related_post_ids ?? [],
   };
 
   // If publishing immediately, set published_at
@@ -206,7 +210,14 @@ export const updateBlogPost = async (
     og_image_url: parsed.data.og_image_url || null,
     category_id: parsed.data.category_id || null,
     consultant_id: parsed.data.consultant_id || null,
-    updated_at: new Date().toISOString(),
+    conclusion_title: parsed.data.conclusion_title ?? null,
+    conclusion_text: parsed.data.conclusion_text ?? null,
+    references_html: parsed.data.references_html ?? null,
+    // Un article ne peut pas s'epingler lui-meme : la suggestion serait un
+    // lien vers la page courante.
+    related_post_ids: (parsed.data.related_post_ids ?? []).filter(
+      (relatedId) => relatedId !== id,
+    ),
   };
 
   // If publishing for the first time, set published_at

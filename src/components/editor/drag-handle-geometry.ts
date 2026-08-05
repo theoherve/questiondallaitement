@@ -1,7 +1,12 @@
 export type Rect = { top: number; left: number; height: number };
 
-/** Largeur réservée à la poignée dans la marge gauche, en pixels. */
-export const HANDLE_GUTTER = 28;
+/**
+ * Largeur réservée dans la marge gauche, en pixels.
+ *
+ * Deux boutons de 20 px (ajouter, déplacer) plus leurs espacements : la marge
+ * doit les contenir tous les deux sans jamais mordre sur le texte.
+ */
+export const HANDLE_GUTTER = 52;
 
 /**
  * Position de la poignée, en coordonnées relatives au conteneur de l'éditeur.
