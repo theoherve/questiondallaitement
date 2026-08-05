@@ -10,6 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WysiwygEditor } from "@/components/editor/wysiwyg-editor";
 import { FileUpload } from "@/components/ui/file-upload";
+import {
+  PostEndingFields,
+  type PinnablePost,
+} from "./post-ending-fields";
 import { createBlogPost, updateBlogPost, deleteBlogPost } from "../actions";
 import { toast } from "sonner";
 import { ArrowLeft, Save, Eye, Trash2, Calendar } from "lucide-react";
@@ -24,10 +28,18 @@ type Props = {
   post?: BlogPost;
   categories: BlogCategory[];
   consultants: ConsultantWithProfile[];
+  /** Articles publiés épinglables comme suggestions, article courant exclu. */
+  pinnablePosts?: PinnablePost[];
   mode: "create" | "edit";
 };
 
-export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => {
+export const BlogPostForm = ({
+  post,
+  categories,
+  consultants,
+  pinnablePosts = [],
+  mode,
+}: Props) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState("content");
@@ -46,6 +58,10 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
     meta_description: post?.meta_description ?? "",
     og_image_url: post?.og_image_url ?? "",
     tags: post?.tags ?? [],
+    conclusion_title: post?.conclusion_title ?? "",
+    conclusion_text: post?.conclusion_text ?? "",
+    references_html: post?.references_html ?? "",
+    related_post_ids: post?.related_post_ids ?? [],
     scheduled_at: post?.scheduled_at?.slice(0, 16) ?? "",
   });
 
@@ -71,12 +87,20 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
     setFieldErrors(errors ?? {});
     if (!errors) return;
     const seoFields = ["meta_title", "meta_description", "og_image_url"];
+    const endingFields = [
+      "conclusion_title",
+      "conclusion_text",
+      "references_html",
+      "related_post_ids",
+    ];
     const hasSeoError = seoFields.some((f) => f in errors);
+    const hasEndingError = endingFields.some((f) => f in errors);
     const hasContentError = Object.keys(errors).some(
-      (f) => !seoFields.includes(f),
+      (f) => !seoFields.includes(f) && !endingFields.includes(f),
     );
-    if (hasSeoError && !hasContentError) setActiveTab("seo");
-    else if (hasContentError) setActiveTab("content");
+    if (hasContentError) setActiveTab("content");
+    else if (hasSeoError) setActiveTab("seo");
+    else if (hasEndingError) setActiveTab("ending");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,6 +122,9 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
 
     const payload = {
       ...formData,
+      conclusion_title: formData.conclusion_title || null,
+      conclusion_text: formData.conclusion_text || null,
+      references_html: formData.references_html || null,
       category_id: formData.category_id || null,
       consultant_id: formData.consultant_id || null,
       thumbnail_url: formData.thumbnail_url || null,
@@ -218,8 +245,23 @@ export const BlogPostForm = ({ post, categories, consultants, mode }: Props) => 
           <TabsList>
             <TabsTrigger value="content">Contenu</TabsTrigger>
             <TabsTrigger value="informations">Informations</TabsTrigger>
+            <TabsTrigger value="ending">Fin d&apos;article</TabsTrigger>
             <TabsTrigger value="seo">SEO</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="ending" className="space-y-4">
+            <PostEndingFields
+              conclusionTitle={formData.conclusion_title}
+              conclusionText={formData.conclusion_text}
+              referencesHtml={formData.references_html}
+              relatedPostIds={formData.related_post_ids}
+              pinnablePosts={pinnablePosts}
+              onChange={(patch) =>
+                setFormData((prev) => ({ ...prev, ...patch }))
+              }
+              fieldError={fieldError}
+            />
+          </TabsContent>
 
             <TabsContent value="content" className="space-y-4">
               <Card>

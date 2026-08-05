@@ -25,6 +25,9 @@ export const NEWSLETTER_SOURCES = [
   // des deux autres parce que c'est un point d'entree tres different : le
   // visiteur venait lire, pas s'abonner.
   "sondage",
+  // Bloc de fin d'article de blog. Meme logique que « sondage » : la visiteuse
+  // venait lire, l'inscription est un effet de bord de la lecture.
+  "article_blog",
 ] as const;
 
 export type NewsletterSource = (typeof NEWSLETTER_SOURCES)[number];
@@ -88,5 +91,16 @@ export const NEWSLETTER_COPY = {
   form: {
     title: "Recevez le prochain numéro",
     body: "Ajoutez votre prénom et votre email, le mémo part dans la foulée.",
+  },
+
+  /**
+   * Bloc de fin d'article. Le ton part de ce que la lectrice vient de faire —
+   * lire un article jusqu'au bout — plutot que de vanter la newsletter : elle
+   * n'est pas venue s'abonner, elle est venue chercher une reponse.
+   */
+  articleCta: {
+    eyebrow: "Newsletter",
+    title: "Une question par semaine, une réponse claire",
+    body: "Vous avez lu cet article jusqu'ici : c'est exactement ce que reçoivent les abonnées chaque mardi, en cinq minutes de lecture. Le mémo « Conservation du lait maternel » est offert à l'inscription.",
   },
 } as const;

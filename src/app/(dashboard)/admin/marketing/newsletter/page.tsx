@@ -38,6 +38,8 @@ type Subscriber = {
 const SOURCE_LABELS: Record<string, string> = {
   page_newsletter: "Page dédiée",
   homepage_teaser: "Accueil",
+  sondage: "Sondage",
+  article_blog: "Article de blog",
 };
 
 const NewsletterSubscribersPage = async () => {

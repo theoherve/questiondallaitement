@@ -14,16 +14,25 @@ const NewBlogPostPage = async () => {
 
   const supabase = createAdminClient();
 
-  const [categoriesResult, consultantsResult] = await Promise.all([
-    supabase
-      .from("blog_categories")
-      .select("*")
-      .order("position", { ascending: true }),
-    supabase
-      .from("consultants")
-      .select("id, slug, profiles!consultants_id_fkey(first_name, last_name)")
-      .eq("is_active", true),
-  ]);
+  const [categoriesResult, consultantsResult, pinnableResult] =
+    await Promise.all([
+      supabase
+        .from("blog_categories")
+        .select("*")
+        .order("position", { ascending: true }),
+      supabase
+        .from("consultants")
+        .select("id, slug, profiles!consultants_id_fkey(first_name, last_name)")
+        .eq("is_active", true),
+      // Candidats a l'epinglage : uniquement des articles publies.
+      supabase
+        .from("blog_posts")
+        .select("id, title")
+        .eq("status", "published")
+        .is("deleted_at", null)
+        .order("published_at", { ascending: false })
+        .limit(200),
+    ]);
 
   const categories = categoriesResult.data ?? [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -61,6 +70,7 @@ const NewBlogPostPage = async () => {
     <BlogPostForm
       categories={categories}
       consultants={consultants}
+      pinnablePosts={pinnableResult.data ?? []}
       mode="create"
     />
   );
