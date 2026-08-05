@@ -91,15 +91,18 @@ n'a pas de condition d'historique.
 |---|---|
 | `promo_code_id`, `profile_id` | |
 | `order_kind` (`payment_type`), `reference_id` | Produit acheté. |
-| `stripe_session_id` | Unique. Idempotence face aux redeliveries. |
+| `stripe_session_id` | Unique, nullable. Renseigné après la création de la session. |
 | `stripe_payment_intent_id` | Rempli à la confirmation. |
 | `original_amount_cents`, `discount_cents`, `final_amount_cents` | Snapshot du calcul. |
 | `status` | `pending` → `confirmed` \| `cancelled`. |
 | `created_at`, `confirmed_at` | |
 
 **Cycle de vie.** La redemption est créée en `pending` *avant* la création de la
-session Stripe, passe en `confirmed` sur `checkout.session.completed`, et en
-`cancelled` sur `checkout.session.expired`. Une redemption `pending` de plus de
+session Stripe — son identifiant voyage donc dans les metadata Stripe
+(`promo_redemption_id`), et la session lui est rattachée juste après. Elle passe
+en `confirmed` sur `checkout.session.completed`, en `cancelled` sur
+`checkout.session.expired`. L'idempotence face aux redeliveries repose sur le
+filtre `status = 'pending'` de la confirmation. Une redemption `pending` de plus de
 24 h est considérée expirée par le calcul de quota (borne temporelle dans la
 requête, pas de job balai nécessaire).
 
