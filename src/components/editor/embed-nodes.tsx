@@ -164,7 +164,12 @@ const BannerView = ({ node, updateAttributes }: NodeViewProps) => {
 
       setUploading(true);
       const form = new FormData();
-      form.append("file", file);
+      form.set("file", file);
+      // `bucket` et `folder` sont exigés par l'action : sans eux elle refuse
+      // l'envoi. Mêmes valeurs que le bloc Image, pour que les visuels d'un
+      // article vivent tous au même endroit.
+      form.set("bucket", "blog");
+      form.set("folder", "content");
       const result = await uploadFileAction(form);
       setUploading(false);
 
