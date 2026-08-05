@@ -12,6 +12,8 @@ import {
   type EditorInstance,
   handleCommandNavigation,
   createSuggestionItems,
+  Command,
+  renderItems,
   StarterKit,
   Placeholder,
   TiptapLink,
@@ -78,7 +80,7 @@ import {
 } from "./wysiwyg-extensions";
 import { ImageCropDialog } from "./image-crop-dialog";
 import { SurveyEmbedNode } from "./survey-embed-node";
-import { EditorDragHandle } from "./editor-drag-handle";
+import { EditorBlockHandle } from "./editor-drag-handle";
 import { MoveBlockShortcuts } from "./move-block-shortcuts";
 import {
   VideoEmbed,
@@ -516,6 +518,17 @@ const slashCommandItems = createSuggestionItems([
     },
   },
 ]);
+
+/**
+ * Branche le menu « / » sur les entrées ci-dessus.
+ *
+ * Sans cette extension, `slashCommandItems` n'était qu'une liste inerte : le
+ * menu existait dans le JSX mais rien ne l'ouvrait, et taper « / » ne faisait
+ * qu'écrire une barre oblique.
+ */
+const slashCommand = Command.configure({
+  suggestion: { items: () => slashCommandItems, render: renderItems },
+});
 
 const htmlToContent = (html: string): JSONContent | undefined => {
   if (!html) return undefined;
@@ -968,11 +981,14 @@ export const WysiwygEditor = ({
     ? Placeholder.configure({ placeholder })
     : undefined;
 
-  const allExtensions = placeholderExt
-    ? extensions.map((ext) =>
-        ext.name === "placeholder" ? placeholderExt : ext
-      )
-    : extensions;
+  const allExtensions = [
+    ...(placeholderExt
+      ? extensions.map((ext) =>
+          ext.name === "placeholder" ? placeholderExt : ext,
+        )
+      : extensions),
+    slashCommand,
+  ];
 
   const handleToggleSidebar = () => {
     // Desktop: toggle inline sidebar. Mobile viewports prefer the Sheet.
@@ -1001,8 +1017,8 @@ export const WysiwygEditor = ({
             placerait par rapport à la page et dériverait au moindre scroll.
             `pl-7` dégage la marge où elle se pose, pour qu'elle ne recouvre
             jamais le texte. */}
-        <div ref={editorAreaRef} className="relative pl-7">
-        <EditorDragHandle editor={editor} containerRef={editorAreaRef} />
+        <div ref={editorAreaRef} className="relative pl-14">
+        <EditorBlockHandle editor={editor} containerRef={editorAreaRef} />
         <EditorContent
           className="prose prose-sm max-w-none p-4"
           extensions={allExtensions}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { handleOffset } from "./drag-handle-geometry";
+import { HANDLE_GUTTER, handleOffset } from "./drag-handle-geometry";
 
 describe("handleOffset", () => {
   it("centre la poignée sur la première ligne du bloc", () => {
@@ -13,14 +13,15 @@ describe("handleOffset", () => {
     expect(offset.top).toBe(104);
   });
 
-  it("place la poignée dans la marge, à gauche du bloc", () => {
+  it("place la marge active à gauche du bloc, hors du texte", () => {
     const offset = handleOffset(
-      { top: 200, left: 140, height: 24 },
+      { top: 200, left: 200, height: 24 },
       { top: 100, left: 100, height: 500 },
       16,
     );
 
-    expect(offset.left).toBe(12);
+    // 200 - 100 = 100 depuis la gauche du conteneur, moins la gouttière.
+    expect(offset.left).toBe(100 - HANDLE_GUTTER);
   });
 
   it("ne sort jamais du conteneur par la gauche", () => {
