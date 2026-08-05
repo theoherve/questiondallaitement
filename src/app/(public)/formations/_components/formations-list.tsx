@@ -42,6 +42,7 @@ export type EventData = {
   max_participants: number | null;
   price_cents: number;
   currency: string;
+  show_price: boolean;
   thumbnail_url: string | null;
   consultants: unknown;
   external_url: string | null;
@@ -596,7 +597,9 @@ const EventCard = ({ event }: { event: EventData }) => {
 
         <div className="mt-5 flex items-center justify-between border-t border-primary-green/10 pt-4">
           <div>
-            {isFree ? (
+            {!event.show_price ? (
+              <p className="text-sm text-primary-green/50">Tarif à venir</p>
+            ) : isFree ? (
               <Badge variant="secondary" className="bg-accent-honey-soft text-primary-green">
                 {FORMATION_SCHOOL_PRICE_LABEL}
               </Badge>

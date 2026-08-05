@@ -7,6 +7,7 @@ import {
   BookmarkPlus,
   Columns2,
   Columns3,
+  BarChart3,
   Heading1,
   Heading2,
   Heading3,
@@ -264,6 +265,28 @@ const CATALOG: SidebarCategory[] = [
         icon: <MousePointerClick className="h-4 w-4" />,
         keywords: ["cta", "bouton", "outline", "contour"],
         insert: (e) => insertCta(e, "outline"),
+      },
+    ],
+  },
+  {
+    id: "interactif",
+    label: "Interactif",
+    items: [
+      {
+        id: "survey-embed",
+        label: "Sondage",
+        description: "Formulaire ou graphique de résultats, en direct",
+        icon: <BarChart3 className="h-4 w-4" />,
+        keywords: ["sondage", "quiz", "survey", "graphique", "resultats"],
+        insert: (e) =>
+          e
+            .chain()
+            .focus()
+            .insertContent({
+              type: "surveyEmbed",
+              attrs: { slug: "", mode: "form" },
+            })
+            .run(),
       },
     ],
   },

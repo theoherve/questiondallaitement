@@ -47,6 +47,7 @@ const FormationsProPage = async () => {
       max_participants,
       price_cents,
       currency,
+      show_price,
       thumbnail_url,
       external_url,
       discounted_price_cents,
@@ -129,7 +130,7 @@ const FormationsProPage = async () => {
                 </span>
               </div>
             )}
-            {upcomingEvents.some((e) => e.price_cents === 0) && (
+            {upcomingEvents.some((e) => e.show_price && e.price_cents === 0) && (
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5" />
                 <span className="text-sm font-medium">

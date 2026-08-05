@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   EditorRoot,
   EditorContent,
@@ -48,6 +48,7 @@ import {
   Undo,
   Redo,
   Image as ImageIcon,
+  BarChart3,
   Columns2,
   Columns3,
   Info,
@@ -72,6 +73,9 @@ import {
   type CtaVariant,
 } from "./wysiwyg-extensions";
 import { ImageCropDialog } from "./image-crop-dialog";
+import { SurveyEmbedNode } from "./survey-embed-node";
+import { EditorDragHandle } from "./editor-drag-handle";
+import { MoveBlockShortcuts } from "./move-block-shortcuts";
 
 /**
  * Tiptap chains for our custom nodes are not in the global Commands<> shape
@@ -136,6 +140,11 @@ type WysiwygEditorProps = {
   className?: string;
   /** Show the right-hand blocks sidebar (default: true). */
   sidebar?: boolean;
+  /**
+   * Ouvre la bibliothèque de blocs au montage. Fermée par défaut : les
+   * éditeurs courts (snippets, descriptions) n'ont pas la largeur pour elle.
+   */
+  defaultSidebarOpen?: boolean;
   /** Show the Preview button in the toolbar (default: true). */
   preview?: boolean;
   /** Snippets to display in the sidebar "Snippets" section. */
@@ -176,6 +185,8 @@ const extensions = [
   Column,
   Callout,
   CtaButton,
+  SurveyEmbedNode,
+  MoveBlockShortcuts,
   Placeholder.configure({ placeholder: "Commencez à écrire..." }),
 ];
 
@@ -391,6 +402,23 @@ const slashCommandItems = createSuggestionItems([
     searchTerms: ["cta", "bouton", "outline", "contour"],
     command: ({ editor, range }) => {
       insertCtaButton(editor, range, "outline");
+    },
+  },
+  {
+    title: "Sondage",
+    description: "Insérer un sondage ou son graphique de résultats",
+    icon: <BarChart3 className="h-4 w-4" />,
+    searchTerms: ["sondage", "quiz", "survey", "graphique", "resultats"],
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent({
+          type: "surveyEmbed",
+          attrs: { slug: "", mode: "form" },
+        })
+        .run();
     },
   },
 ]);
@@ -816,15 +844,17 @@ export const WysiwygEditor = ({
   placeholder,
   className,
   sidebar = true,
+  defaultSidebarOpen = false,
   preview = true,
   snippets = [],
   onSaveSnippet,
 }: WysiwygEditorProps) => {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [currentHtml, setCurrentHtml] = useState(initialContent ?? "");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(defaultSidebarOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const editorAreaRef = useRef<HTMLDivElement>(null);
 
   const snippetsCtx = useWysiwygSnippets();
   const effectiveSnippets = snippets.length > 0 ? snippets : snippetsCtx?.snippets ?? [];
@@ -873,6 +903,12 @@ export const WysiwygEditor = ({
           onOpenPreview={preview ? () => setPreviewOpen(true) : undefined}
           showPreview={preview}
         />
+        {/* `relative` porte le positionnement de la poignée : sans lui, elle se
+            placerait par rapport à la page et dériverait au moindre scroll.
+            `pl-7` dégage la marge où elle se pose, pour qu'elle ne recouvre
+            jamais le texte. */}
+        <div ref={editorAreaRef} className="relative pl-7">
+        <EditorDragHandle editor={editor} containerRef={editorAreaRef} />
         <EditorContent
           className="prose prose-sm max-w-none p-4"
           extensions={allExtensions}
@@ -947,6 +983,7 @@ export const WysiwygEditor = ({
             </EditorCommandList>
           </EditorCommand>
         </EditorContent>
+        </div>
         </div>
 
         {/* Desktop inline sidebar */}

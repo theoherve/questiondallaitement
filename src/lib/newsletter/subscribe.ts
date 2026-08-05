@@ -42,6 +42,12 @@ const listId = () => {
 export const subscribeToNewsletter = async (
   input: Omit<NewsletterSignupInput, "website" | "consent">,
   consentIp: string | null,
+  /**
+   * Attributs Brevo supplementaires. Le sondage y passe la tranche d'age du
+   * bebe : c'est elle qui declenche la bonne sequence email, et la calculer
+   * plus tard imposerait de rejouer les reponses.
+   */
+  extraAttributes: Record<string, string> = {},
 ): Promise<NewsletterSignupOutcome> => {
   // Les adresses ne different pas par la casse. Sans normalisation, la
   // contrainte d'unicite laisserait passer Marie@… a cote de marie@… et le
@@ -94,7 +100,13 @@ export const subscribeToNewsletter = async (
   // Le contact doit exister chez Brevo avant l'envoi : le template de bienvenue
   // porte le lien de desinscription, que Brevo ne peut resoudre que pour un
   // contact qu'il connait.
-  await pushToBrevo({ id: subscriber.id, email, firstName, source: input.source });
+  await pushToBrevo({
+    id: subscriber.id,
+    email,
+    firstName,
+    source: input.source,
+    extraAttributes,
+  });
   await sendWelcomeEmail({
     subscriberId: subscriber.id,
     email,
@@ -116,11 +128,13 @@ const pushToBrevo = async ({
   email,
   firstName,
   source,
+  extraAttributes = {},
 }: {
   id: string;
   email: string;
   firstName: string;
   source: NewsletterSource;
+  extraAttributes?: Record<string, string>;
 }) => {
   const supabase = createAdminClient();
   const list = listId();
@@ -138,7 +152,7 @@ const pushToBrevo = async ({
 
   const { ok, status } = await createContact(
     email,
-    { PRENOM: firstName, SOURCE: source },
+    { PRENOM: firstName, SOURCE: source, ...extraAttributes },
     [list],
   );
 

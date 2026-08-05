@@ -18,7 +18,14 @@ export const NEWSLETTER_NAME = "L'allaitement, autrement.";
  * SOURCE de Brevo et dans la table d'evenements — les changer casse la
  * comparaison avec l'historique deja collecte.
  */
-export const NEWSLETTER_SOURCES = ["page_newsletter", "homepage_teaser"] as const;
+export const NEWSLETTER_SOURCES = [
+  "page_newsletter",
+  "homepage_teaser",
+  // Inscription obtenue en fin de sondage, dans un article de blog. Distinguee
+  // des deux autres parce que c'est un point d'entree tres different : le
+  // visiteur venait lire, pas s'abonner.
+  "sondage",
+] as const;
 
 export type NewsletterSource = (typeof NEWSLETTER_SOURCES)[number];
 

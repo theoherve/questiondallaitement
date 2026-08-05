@@ -274,16 +274,18 @@ const EventDetailPage = async ({ params, searchParams }: Props) => {
             </div>
 
             {/* Price highlight (desktop) */}
-            <div className="hidden lg:block lg:text-right">
-              <p className="font-serif text-4xl font-bold text-white">
-                {formatPrice(event.price_cents, event.currency)}
-              </p>
-              {isFree && (
-                <p className="mt-1 text-sm text-white/50">
-                  {FORMATION_SCHOOL_PRICE_HINT}
+            {event.show_price && (
+              <div className="hidden lg:block lg:text-right">
+                <p className="font-serif text-4xl font-bold text-white">
+                  {formatPrice(event.price_cents, event.currency)}
                 </p>
-              )}
-            </div>
+                {isFree && (
+                  <p className="mt-1 text-sm text-white/50">
+                    {FORMATION_SCHOOL_PRICE_HINT}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -390,7 +392,11 @@ const EventDetailPage = async ({ params, searchParams }: Props) => {
                 <CardContent className="space-y-5 pt-6">
                   {/* Price */}
                   <div className="text-center">
-                    {isFree ? (
+                    {!event.show_price ? (
+                      <p className="text-sm text-muted-foreground">
+                        Tarif à venir
+                      </p>
+                    ) : isFree ? (
                       <>
                         <Badge className="bg-accent-honey-soft px-4 py-1 text-lg text-primary-green">
                           {FORMATION_SCHOOL_PRICE_LABEL}
