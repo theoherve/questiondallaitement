@@ -303,8 +303,74 @@ export type Payment = {
   refunded_at: string | null;
   stripe_invoice_url: string | null;
   metadata: Record<string, unknown>;
+  promo_code_id: string | null;
+  discount_cents: number | null;
+  original_amount_cents: number | null;
   created_at: string;
   updated_at: string;
+};
+
+export type PromoDiscountType = "percent" | "fixed_cents";
+
+export type PromoTargetType =
+  | "formations_all"
+  | "events_all"
+  | "bookings_all"
+  | "formation"
+  | "event"
+  | "booking_service";
+
+export type PromoTriggerType = "event_purchase" | "formation_purchase";
+
+export type PromoRedemptionStatus = "pending" | "confirmed" | "cancelled";
+
+export type PromoCode = {
+  id: string;
+  code: string;
+  label: string | null;
+  discount_type: PromoDiscountType;
+  discount_value: number;
+  scope_all: boolean;
+  valid_from: string | null;
+  valid_until: string | null;
+  max_redemptions: number | null;
+  max_per_user: number;
+  min_order_cents: number;
+  trigger_delay_hours: number | null;
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PromoCodeTarget = {
+  id: string;
+  promo_code_id: string;
+  target_type: PromoTargetType;
+  target_id: string | null;
+};
+
+export type PromoCodeTrigger = {
+  id: string;
+  promo_code_id: string;
+  trigger_type: PromoTriggerType;
+  target_id: string | null;
+};
+
+export type PromoCodeRedemption = {
+  id: string;
+  promo_code_id: string;
+  profile_id: string;
+  order_kind: PaymentType;
+  reference_id: string;
+  stripe_session_id: string | null;
+  stripe_payment_intent_id: string | null;
+  original_amount_cents: number;
+  discount_cents: number;
+  final_amount_cents: number;
+  status: PromoRedemptionStatus;
+  created_at: string;
+  confirmed_at: string | null;
 };
 
 export type CrmNote = {
