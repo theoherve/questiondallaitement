@@ -4,6 +4,11 @@ import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createCheckoutSession } from "@/lib/stripe/connect";
 import { consultantCanSell } from "@/lib/invoicing/consultant-billing";
+import {
+  attachSessionToRedemption,
+  confirmRedemption,
+  resolvePromoForPurchase,
+} from "@/lib/promo/reserve";
 import { siteConfig } from "@/config/site";
 import type { ActionResult } from "@/types";
 
@@ -33,6 +38,7 @@ export const hasEventRegistration = async (
 
 export const registerForEvent = async (
   eventId: string,
+  promoCode?: string,
 ): Promise<ActionResult<{ redirect_url?: string }>> => {
   const user = await getSessionUser();
   if (!user) {
@@ -131,11 +137,55 @@ export const registerForEvent = async (
     };
   }
 
+  const promo = promoCode?.trim()
+    ? await resolvePromoForPurchase({
+        code: promoCode,
+        serviceKind: "event",
+        itemId: event.id,
+        amountCents: event.price_cents,
+        profileId: user.id,
+        reserve: true,
+        orderKind: "event",
+        referenceId: event.id,
+      })
+    : null;
+
+  if (promo && !promo.ok) {
+    return { success: false, error: promo.error };
+  }
+
+  const chargedCents = promo?.ok ? promo.finalCents : event.price_cents;
+
+  // Remise totale : Stripe refuse une session a zero, et il n'y a rien a
+  // encaisser. Meme traitement que l'evenement gratuit, plus haut.
+  if (chargedCents === 0) {
+    const { error } = await supabase.from("event_registrations").upsert(
+      {
+        client_id: user.id,
+        event_id: eventId,
+        stripe_payment_intent_id: null,
+        status: "registered",
+      },
+      { onConflict: "event_id,client_id" },
+    );
+
+    if (error) {
+      console.error("Registration error (remise totale):", error);
+      return { success: false, error: "Erreur lors de l'inscription" };
+    }
+
+    if (promo?.ok && promo.redemptionId) {
+      await confirmRedemption(promo.redemptionId, null);
+    }
+
+    return { success: true };
+  }
+
   try {
     const session = await createCheckoutSession({
       consultantStripeAccountId: consultant.stripe_account_id,
       commissionRate: consultant.commission_rate,
-      priceInCents: event.price_cents,
+      priceInCents: chargedCents,
       currency: event.currency,
       productName: event.title,
       productDescription: event.description ?? undefined,
@@ -146,12 +196,25 @@ export const registerForEvent = async (
         client_id: user.id,
         consultant_id: event.consultant_id,
         platform_fee_cents: Math.round(
-          event.price_cents * (consultant.commission_rate / 100),
+          chargedCents * (consultant.commission_rate / 100),
         ).toString(),
+        ...(promo?.ok
+          ? {
+              promo_code: promo.code,
+              promo_code_id: promo.promoCodeId,
+              promo_redemption_id: promo.redemptionId as string,
+              discount_cents: promo.discountCents.toString(),
+              original_price_cents: event.price_cents.toString(),
+            }
+          : {}),
       },
       successUrl: `${siteConfig.url}/formations/${event.slug}?registered=true`,
       cancelUrl: `${siteConfig.url}/formations/${event.slug}?cancelled=true`,
     });
+
+    if (promo?.ok && promo.redemptionId) {
+      await attachSessionToRedemption(promo.redemptionId, session.id);
+    }
 
     return {
       success: true,
