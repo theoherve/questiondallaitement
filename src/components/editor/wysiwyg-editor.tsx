@@ -49,20 +49,7 @@ import {
   Unlink,
   Undo,
   Redo,
-  Image as ImageIcon,
-  BarChart3,
-  SquareCode,
-  Table as TableIcon,
-  Youtube,
-  ChevronsUpDown,
-  Columns2,
-  Columns3,
-  Info,
-  Lightbulb,
-  AlertTriangle,
-  StickyNote,
   Crop,
-  MousePointerClick,
   PanelRightClose,
   PanelRightOpen,
   Eye,
@@ -75,79 +62,20 @@ import {
   Callout,
   CtaButton,
   blogImageUpload,
-  type CalloutVariant,
-  type CtaVariant,
 } from "./wysiwyg-extensions";
 import { ImageCropDialog } from "./image-crop-dialog";
 import { SurveyEmbedNode } from "./survey-embed-node";
 import { EditorBlockHandle } from "./editor-drag-handle";
 import { MoveBlockShortcuts } from "./move-block-shortcuts";
-import {
-  VideoEmbed,
-  Accordion,
-  AccordionSummary,
-  insertVideo,
-} from "./content-nodes";
+import { VideoEmbed, Accordion, AccordionSummary } from "./content-nodes";
+import { RawHtmlBlock, CtaBanner } from "./embed-nodes";
 import Table from "@tiptap/extension-table";
 import TableRow from "@tiptap/extension-table-row";
 import TableHeader from "@tiptap/extension-table-header";
 import TableCell from "@tiptap/extension-table-cell";
 
-/**
- * Tiptap chains for our custom nodes are not in the global Commands<> shape
- * (Maily already augments `columns` differently — see wysiwyg-extensions.tsx).
- * These helpers wrap the slash-command call sites with a single cast.
- */
-type ChainAny = {
-  focus(): ChainAny;
-  deleteRange(r: { from: number; to: number }): ChainAny;
-  setColumns(): ChainAny;
-  setColumns3(): ChainAny;
-  setCallout(v: CalloutVariant): ChainAny;
-  setCtaButton(attrs: {
-    url?: string;
-    variant?: CtaVariant;
-    text?: string;
-  }): ChainAny;
-  setVideoEmbed(url: string): ChainAny;
-  setAccordion(): ChainAny;
-  insertTable(options: {
-    rows: number;
-    cols: number;
-    withHeaderRow: boolean;
-  }): ChainAny;
-  toggleCodeBlock(): ChainAny;
-  run(): boolean;
-};
-const columns = (editor: Editor, range: { from: number; to: number }) =>
-  (editor.chain() as unknown as ChainAny).focus().deleteRange(range).setColumns().run();
-const columns3 = (editor: Editor, range: { from: number; to: number }) =>
-  (editor.chain() as unknown as ChainAny).focus().deleteRange(range).setColumns3().run();
-const callout = (
-  editor: Editor,
-  range: { from: number; to: number },
-  variant: CalloutVariant,
-) =>
-  (editor.chain() as unknown as ChainAny)
-    .focus()
-    .deleteRange(range)
-    .setCallout(variant)
-    .run();
-const insertCtaButton = (
-  editor: Editor,
-  range: { from: number; to: number } | null,
-  variant: CtaVariant,
-) => {
-  const url = window.prompt("URL du bouton", "https://") ?? "";
-  if (!url) return false;
-  const chain = (editor.chain() as unknown as ChainAny).focus();
-  if (range) chain.deleteRange(range);
-  return chain.setCtaButton({ url, variant, text: "Découvrir" }).run();
-};
 
 import { handleImageDrop, handleImagePaste } from "novel";
-import { uploadFileAction } from "@/lib/storage/actions";
-import { toast } from "sonner";
 import {
   Sheet,
   SheetContent,
@@ -155,6 +83,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { WysiwygSidebar, type SnippetItem } from "./wysiwyg-sidebar";
+import { CATALOG } from "./block-catalog";
 import { WysiwygPreviewDialog } from "./wysiwyg-preview-dialog";
 import { useWysiwygSnippets } from "@/lib/wysiwyg-snippets/context";
 
@@ -218,6 +147,8 @@ const extensions = [
   Callout,
   CtaButton,
   SurveyEmbedNode,
+  RawHtmlBlock,
+  CtaBanner,
   VideoEmbed,
   Accordion,
   AccordionSummary,
@@ -238,286 +169,36 @@ const extensions = [
   Placeholder.configure({ placeholder: "Commencez à écrire..." }),
 ];
 
-const slashCommandItems = createSuggestionItems([
-  {
-    title: "Texte",
-    description: "Paragraphe de texte",
-    icon: <Type className="h-4 w-4" />,
-    searchTerms: ["paragraph", "texte", "p"],
-    command: ({ editor, range }) => {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .toggleNode("paragraph", "paragraph")
-        .run();
-    },
-  },
-  {
-    title: "Titre 1",
-    description: "Grand titre de section",
-    icon: <Heading1 className="h-4 w-4" />,
-    searchTerms: ["title", "titre", "h1"],
-    command: ({ editor, range }) => {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .setNode("heading", { level: 1 })
-        .run();
-    },
-  },
-  {
-    title: "Titre 2",
-    description: "Titre de sous-section",
-    icon: <Heading2 className="h-4 w-4" />,
-    searchTerms: ["subtitle", "sous-titre", "h2"],
-    command: ({ editor, range }) => {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .setNode("heading", { level: 2 })
-        .run();
-    },
-  },
-  {
-    title: "Titre 3",
-    description: "Petit titre",
-    icon: <Heading3 className="h-4 w-4" />,
-    searchTerms: ["h3"],
-    command: ({ editor, range }) => {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .setNode("heading", { level: 3 })
-        .run();
-    },
-  },
-  {
-    title: "Liste à puces",
-    description: "Liste non ordonnée",
-    icon: <List className="h-4 w-4" />,
-    searchTerms: ["bullet", "liste", "puces"],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleBulletList().run();
-    },
-  },
-  {
-    title: "Liste numérotée",
-    description: "Liste ordonnée",
-    icon: <ListOrdered className="h-4 w-4" />,
-    searchTerms: ["ordered", "numérotée"],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleOrderedList().run();
-    },
-  },
-  {
-    title: "Tâches",
-    description: "Liste de tâches",
-    icon: <ListTodo className="h-4 w-4" />,
-    searchTerms: ["todo", "task", "tâche"],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleTaskList().run();
-    },
-  },
-  {
-    title: "Citation",
-    description: "Bloc de citation",
-    icon: <Quote className="h-4 w-4" />,
-    searchTerms: ["quote", "citation", "blockquote"],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).toggleBlockquote().run();
-    },
-  },
-  {
-    title: "Séparateur",
-    description: "Ligne horizontale",
-    icon: <Minus className="h-4 w-4" />,
-    searchTerms: ["hr", "separator", "ligne"],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).setHorizontalRule().run();
-    },
-  },
-  {
-    title: "Image",
-    description: "Uploader une image (max 5 Mo)",
-    icon: <ImageIcon className="h-4 w-4" />,
-    searchTerms: ["image", "img", "photo", "upload"],
-    command: ({ editor, range }) => {
-      editor.chain().focus().deleteRange(range).run();
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*";
-      input.onchange = async () => {
-        const file = input.files?.[0];
-        if (!file) return;
-        const fd = new FormData();
-        fd.set("file", file);
-        fd.set("bucket", "blog");
-        fd.set("folder", "content");
-        const result = await uploadFileAction(fd);
-        if (result.success && result.data) {
-          editor
-            .chain()
-            .focus()
-            .setImage({ src: result.data.url, alt: file.name })
-            .run();
-        } else {
-          toast.error(result.error ?? "Upload échoué");
-        }
-      };
-      input.click();
-    },
-  },
-  {
-    title: "Deux colonnes",
-    description: "Mise en page sur deux colonnes",
-    icon: <Columns2 className="h-4 w-4" />,
-    searchTerms: ["columns", "colonnes", "grid", "layout", "2"],
-    command: ({ editor, range }) => {
-      columns(editor, range);
-    },
-  },
-  {
-    title: "Trois colonnes",
-    description: "Mise en page sur trois colonnes",
-    icon: <Columns3 className="h-4 w-4" />,
-    searchTerms: ["columns", "colonnes", "grid", "layout", "3"],
-    command: ({ editor, range }) => {
-      columns3(editor, range);
-    },
-  },
-  {
-    title: "Encadré info",
-    description: "Bloc d'information mis en valeur",
-    icon: <Info className="h-4 w-4" />,
-    searchTerms: ["callout", "info", "encadre", "encadré", "section"],
-    command: ({ editor, range }) => {
-      callout(editor, range, "info");
-    },
-  },
-  {
-    title: "Encadré conseil",
-    description: "Conseil ou astuce",
-    icon: <Lightbulb className="h-4 w-4" />,
-    searchTerms: ["tip", "conseil", "astuce"],
-    command: ({ editor, range }) => {
-      callout(editor, range, "tip");
-    },
-  },
-  {
-    title: "Encadré attention",
-    description: "Avertissement / point d'attention",
-    icon: <AlertTriangle className="h-4 w-4" />,
-    searchTerms: ["warning", "attention", "alerte"],
-    command: ({ editor, range }) => {
-      callout(editor, range, "warning");
-    },
-  },
-  {
-    title: "Encadré note",
-    description: "Note simple",
-    icon: <StickyNote className="h-4 w-4" />,
-    searchTerms: ["note", "memo"],
-    command: ({ editor, range }) => {
-      callout(editor, range, "note");
-    },
-  },
-  {
-    title: "Bouton d'action (primaire)",
-    description: "Bouton CTA rempli",
-    icon: <MousePointerClick className="h-4 w-4" />,
-    searchTerms: ["cta", "bouton", "action", "call to action"],
-    command: ({ editor, range }) => {
-      insertCtaButton(editor, range, "primary");
-    },
-  },
-  {
-    title: "Bouton d'action (secondaire)",
-    description: "Bouton CTA vert forêt",
-    icon: <MousePointerClick className="h-4 w-4" />,
-    searchTerms: ["cta", "bouton", "action", "secondaire"],
-    command: ({ editor, range }) => {
-      insertCtaButton(editor, range, "secondary");
-    },
-  },
-  {
-    title: "Bouton d'action (contour)",
-    description: "Bouton CTA outline",
-    icon: <MousePointerClick className="h-4 w-4" />,
-    searchTerms: ["cta", "bouton", "outline", "contour"],
-    command: ({ editor, range }) => {
-      insertCtaButton(editor, range, "outline");
-    },
-  },
-  {
-    title: "Bloc de code",
-    description: "Extrait de code en chasse fixe",
-    icon: <SquareCode className="h-4 w-4" />,
-    searchTerms: ["code", "bloc", "pre", "snippet"],
-    command: ({ editor, range }) => {
-      (editor.chain() as unknown as ChainAny)
-        .focus()
-        .deleteRange(range)
-        .toggleCodeBlock()
-        .run();
-    },
-  },
-  {
-    title: "Tableau",
-    description: "Tableau 3 × 3 avec ligne d'en-tête",
-    icon: <TableIcon className="h-4 w-4" />,
-    searchTerms: ["tableau", "table", "grille", "colonnes"],
-    command: ({ editor, range }) => {
-      (editor.chain() as unknown as ChainAny)
-        .focus()
-        .deleteRange(range)
-        .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-        .run();
-    },
-  },
-  {
-    title: "Vidéo",
-    description: "Lecteur YouTube ou Vimeo",
-    icon: <Youtube className="h-4 w-4" />,
-    searchTerms: ["video", "youtube", "vimeo", "lecteur"],
-    command: ({ editor, range }) => {
-      insertVideo(editor, range);
-    },
-  },
-  {
-    title: "Accordéon",
-    description: "Question repliable, pour une FAQ",
-    icon: <ChevronsUpDown className="h-4 w-4" />,
-    searchTerms: ["accordeon", "faq", "question", "repliable", "details"],
-    command: ({ editor, range }) => {
-      (editor.chain() as unknown as ChainAny)
-        .focus()
-        .deleteRange(range)
-        .setAccordion()
-        .run();
-    },
-  },
-  {
-    title: "Sondage",
-    description: "Insérer un sondage ou son graphique de résultats",
-    icon: <BarChart3 className="h-4 w-4" />,
-    searchTerms: ["sondage", "quiz", "survey", "graphique", "resultats"],
-    command: ({ editor, range }) => {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .insertContent({
-          type: "surveyEmbed",
-          attrs: { slug: "", mode: "form" },
-        })
-        .run();
-    },
-  },
-]);
+/**
+ * Entrées du menu « / », dérivées du catalogue de blocs.
+ *
+ * Dupliquer la liste ici la faisait diverger : un bloc ajouté à la
+ * bibliothèque manquait au menu, et inversement. Une seule source, trois
+ * portes d'entrée — la marge, « / » et la bibliothèque.
+ */
+const slashCommandItems = createSuggestionItems(
+  CATALOG.flatMap((category) =>
+    category.items.map((item) => ({
+      title: item.label,
+      description: item.description ?? category.label,
+      icon: item.icon,
+      searchTerms: item.keywords,
+      command: ({
+        editor,
+        range,
+      }: {
+        editor: Editor;
+        range: { from: number; to: number };
+      }) => {
+        // La plage porte le « / » et ce qui a été tapé après : elle est
+        // supprimée avant l'insertion, sinon le texte de recherche resterait
+        // dans l'article.
+        editor.chain().focus().deleteRange(range).run();
+        item.insert(editor);
+      },
+    })),
+  ),
+);
 
 /**
  * Branche le menu « / » sur les entrées ci-dessus.

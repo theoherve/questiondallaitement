@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   BarChart3,
   ChevronsUpDown,
+  Code2,
   Columns2,
   Columns3,
   Heading1,
@@ -19,6 +20,7 @@ import {
   Minus,
   MousePointerClick,
   Quote,
+  Rows3,
   SquareCode,
   StickyNote,
   Table as TableIcon,
@@ -55,6 +57,8 @@ type ChainAny = {
     withHeaderRow: boolean;
   }): ChainAny;
   setAccordion(): ChainAny;
+  setRawHtml(html?: string): ChainAny;
+  setCtaBanner(): ChainAny;
   run(): boolean;
 };
 
@@ -320,6 +324,28 @@ export const CATALOG: SidebarCategory[] = [
         icon: <ChevronsUpDown className="h-4 w-4" />,
         keywords: ["accordeon", "faq", "question", "repliable"],
         insert: (e) => chainOf(e).setAccordion().run(),
+      },
+    ],
+  },
+  {
+    id: "sur-mesure",
+    label: "Sur mesure",
+    items: [
+      {
+        id: "cta-banner",
+        label: "Bannière CTA",
+        description: "Image, accroche et bouton — image et lien modifiables",
+        icon: <Rows3 className="h-4 w-4" />,
+        keywords: ["banniere", "cta", "bouton", "encart", "promo"],
+        insert: (e) => chainOf(e).setCtaBanner().run(),
+      },
+      {
+        id: "raw-html",
+        label: "Code HTML",
+        description: "Colle du HTML, il est interprété dans l'article",
+        icon: <Code2 className="h-4 w-4" />,
+        keywords: ["html", "code", "embed", "iframe", "brut", "personnalise"],
+        insert: (e) => chainOf(e).setRawHtml("").run(),
       },
     ],
   },
