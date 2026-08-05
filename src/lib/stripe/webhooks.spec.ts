@@ -103,8 +103,17 @@ vi.mock("@/lib/notifications", () => ({
   createNotification: vi.fn().mockResolvedValue(undefined),
 }));
 
+const mockConfirmRedemption = vi.fn().mockResolvedValue(undefined);
+const mockCancelRedemption = vi.fn().mockResolvedValue(undefined);
+
+vi.mock("@/lib/promo/reserve", () => ({
+  confirmRedemption: (...args: unknown[]) => mockConfirmRedemption(...args),
+  cancelRedemption: (...args: unknown[]) => mockCancelRedemption(...args),
+}));
+
 import {
   handleCheckoutCompleted,
+  handleCheckoutExpired,
   handleChargeRefunded,
   handleAccountUpdated,
   handleAccountDeauthorized,
@@ -684,5 +693,72 @@ describe("handleAccountDeauthorized", () => {
 
     const call = state.updateCalls.find((c) => c.table === "consultants");
     expect(call!.data).toMatchObject({ onboarding_completed: false });
+  });
+});
+
+// ─── Codes promo ──────────────────────────────────────────────
+
+describe("codes promo", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    state.upsertCalls.length = 0;
+    state.insertCalls.length = 0;
+    state.updateCalls.length = 0;
+    for (const key of Object.keys(db)) delete db[key];
+  });
+
+  it("confirme la reservation et reporte la remise sur le paiement", async () => {
+    await handleCheckoutCompleted({
+      id: "cs_test_promo",
+      amount_total: 8500,
+      currency: "eur",
+      payment_intent: PAYMENT_INTENT_ID,
+      metadata: {
+        type: "formation",
+        reference_id: FORMATION_ID,
+        client_id: CLIENT_ID,
+        consultant_id: CONSULTANT_ID,
+        platform_fee_cents: "1700",
+        promo_code: "SUPERMAMAN",
+        promo_code_id: "code-1",
+        promo_redemption_id: "redemption-1",
+        discount_cents: "1500",
+        original_price_cents: "10000",
+      },
+    } as unknown as Stripe.Checkout.Session);
+
+    expect(mockConfirmRedemption).toHaveBeenCalledWith(
+      "redemption-1",
+      PAYMENT_INTENT_ID,
+    );
+
+    const payment = state.upsertCalls.find((c) => c.table === "payments");
+    expect(payment?.data).toMatchObject({
+      amount_cents: 8500,
+      promo_code_id: "code-1",
+      discount_cents: 1500,
+      original_amount_cents: 10_000,
+    });
+  });
+
+  it("laisse les champs de remise nuls sans code", async () => {
+    await handleCheckoutCompleted(makeFormationSession());
+
+    const payment = state.upsertCalls.find((c) => c.table === "payments");
+    expect(payment?.data).toMatchObject({
+      promo_code_id: null,
+      discount_cents: null,
+      original_amount_cents: null,
+    });
+    expect(mockConfirmRedemption).not.toHaveBeenCalled();
+  });
+
+  it("annule la reservation quand la session expire", async () => {
+    await handleCheckoutExpired({
+      id: "cs_test_promo",
+      metadata: { promo_redemption_id: "redemption-1" },
+    } as unknown as Stripe.Checkout.Session);
+
+    expect(mockCancelRedemption).toHaveBeenCalledWith("redemption-1");
   });
 });

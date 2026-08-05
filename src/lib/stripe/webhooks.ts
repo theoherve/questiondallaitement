@@ -18,6 +18,7 @@ import { createNotification } from "@/lib/notifications";
 import { autoAssignLabelsOnEnrollment } from "@/lib/admin-workflows/labels";
 import { sendGuestSetupEmailIfNeeded } from "@/lib/auth/password-setup";
 import { emitInvoiceForPayment } from "@/lib/invoicing/emit";
+import { cancelRedemption, confirmRedemption } from "@/lib/promo/reserve";
 
 const getSupabase = () => createAdminClient();
 
@@ -67,6 +68,19 @@ export const handleCheckoutCompleted = async (
     await notifySlotConflict(session, client_id);
   }
 
+  // Confirmee avant l'ecriture du paiement : c'est la remise deja appliquee
+  // par Stripe qu'on enterine, pas une remise a decider ici.
+  const redemptionId = metadata.promo_redemption_id;
+  if (redemptionId && !slotConflict) {
+    await confirmRedemption(redemptionId, paymentIntentId ?? null);
+  }
+
+  // Creneau vendu deux fois : la vente n'a pas lieu, le code doit rester
+  // utilisable.
+  if (redemptionId && slotConflict) {
+    await cancelRedemption(redemptionId);
+  }
+
   const { data: paymentRow } = await getSupabase()
     .from("payments")
     .upsert(
@@ -80,6 +94,13 @@ export const handleCheckoutCompleted = async (
         type: type as "formation" | "booking" | "event",
         reference_id,
         status: slotConflict ? "refunded" : "succeeded",
+        promo_code_id: metadata.promo_code_id ?? null,
+        discount_cents: metadata.discount_cents
+          ? parseInt(metadata.discount_cents)
+          : null,
+        original_amount_cents: metadata.original_price_cents
+          ? parseInt(metadata.original_price_cents)
+          : null,
       },
       { onConflict: "stripe_payment_intent_id" },
     )
@@ -825,4 +846,16 @@ const logAudit = async (
     entity_id: entityId,
     metadata,
   });
+};
+
+/**
+ * Session abandonnee : la reservation posee avant le paiement doit etre
+ * liberee, sinon un code a quota limite s'epuise sur des tunnels jamais
+ * termines.
+ */
+export const handleCheckoutExpired = async (
+  session: Stripe.Checkout.Session,
+) => {
+  const redemptionId = session.metadata?.promo_redemption_id;
+  if (redemptionId) await cancelRedemption(redemptionId);
 };

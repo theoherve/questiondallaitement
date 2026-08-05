@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe/client";
 import {
   handleCheckoutCompleted,
+  handleCheckoutExpired,
   handlePaymentIntentSucceeded,
   handleChargeRefunded,
   handleAccountUpdated,
@@ -42,6 +43,12 @@ export const POST = async (request: Request) => {
     switch (event.type) {
       case "checkout.session.completed":
         await handleCheckoutCompleted(
+          event.data.object as import("stripe").Stripe.Checkout.Session
+        );
+        break;
+
+      case "checkout.session.expired":
+        await handleCheckoutExpired(
           event.data.object as import("stripe").Stripe.Checkout.Session
         );
         break;
