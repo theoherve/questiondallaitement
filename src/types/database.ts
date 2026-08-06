@@ -258,6 +258,9 @@ export type Event = {
   title: string;
   slug: string;
   description: string | null;
+  // Colonnes editoriales riches, rendues en HTML sur la page publique.
+  long_description: string | null;
+  summary_html: string | null;
   type: EventType;
   starts_at: string;
   ends_at: string;

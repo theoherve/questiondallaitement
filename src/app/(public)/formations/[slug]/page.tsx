@@ -187,7 +187,7 @@ const EventDetailPage = async ({ params, searchParams }: Props) => {
         ? MapPin
         : Users;
 
-  const { label: categoryLabel, color: categoryColor } = categorizeEvent(event.title);
+  const { label: categoryLabel } = categorizeEvent(event.title);
   const duration = formatDuration(event.starts_at, event.ends_at);
   const isFree = event.price_cents === 0;
   const isMultiDay = new Date(event.ends_at).getDate() !== new Date(event.starts_at).getDate();
@@ -201,42 +201,38 @@ const EventDetailPage = async ({ params, searchParams }: Props) => {
   return (
     <div>
       {/* ============================================================ */}
-      {/* Hero with image                                              */}
+      {/* Hero : aplat rose a gauche, visuel net a droite               */}
       {/* ============================================================ */}
-      <section className="relative bg-primary-green">
-        {event.thumbnail_url && (
-          <div className="absolute inset-0">
-            <Image
-              src={event.thumbnail_url}
-              alt={event.title}
-              fill
-              className="object-cover opacity-20"
-              sizes="100vw"
-              priority
-            />
-          </div>
-        )}
-        <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+      <section className="relative bg-primary-rose">
+        <div
+          className={`relative mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8 ${
+            event.thumbnail_url ? "lg:pr-[calc(38%+2rem)]" : ""
+          }`}
+        >
           {/* Back link */}
           <Link
             href="/formations"
-            className="mb-6 inline-flex items-center gap-1.5 text-sm text-white/60 transition-colors hover:text-white"
+            className="mb-6 inline-flex items-center gap-1.5 text-sm text-white/80 transition-colors hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
             Toutes les formations
           </Link>
 
-          <div className="grid items-end gap-8 lg:grid-cols-3">
-            <div className="lg:col-span-2">
+          <div>
+            <div>
               {/* Badges */}
               <div className="flex flex-wrap items-center gap-2">
-                <Badge className={categoryColor}>{categoryLabel}</Badge>
+                {/* Sur l'aplat rose, la pastille de categorie se pose en blanc :
+                    ses couleurs pleines (primary-red, pink-600) s'y noieraient. */}
+                <Badge className="bg-white text-primary-rose border-0">
+                  {categoryLabel}
+                </Badge>
                 <Badge className="bg-white/15 text-white border-0">
                   <TypeIcon className="mr-1 h-3 w-3" />
                   {typeLabel}
                 </Badge>
                 {isPast && (
-                  <Badge className="bg-white/10 text-white/60 border-0">
+                  <Badge className="bg-white/15 text-white/80 border-0">
                     Terminée
                   </Badge>
                 )}
@@ -249,13 +245,13 @@ const EventDetailPage = async ({ params, searchParams }: Props) => {
 
               {/* Short description */}
               {event.description && (
-                <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/75">
+                <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/90">
                   {event.description}
                 </p>
               )}
 
               {/* Quick meta */}
-              <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/60">
+              <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/80">
                 <div className="flex items-center gap-1.5">
                   <CalendarDays className="h-4 w-4" />
                   <span>
@@ -275,12 +271,12 @@ const EventDetailPage = async ({ params, searchParams }: Props) => {
 
             {/* Price highlight (desktop) */}
             {event.show_price && (
-              <div className="hidden lg:block lg:text-right">
+              <div className="mt-8 hidden border-t border-white/25 pt-6 lg:block">
                 <p className="font-serif text-4xl font-bold text-white">
                   {formatPrice(event.price_cents, event.currency)}
                 </p>
                 {isFree && (
-                  <p className="mt-1 text-sm text-white/50">
+                  <p className="mt-1 text-sm text-white/80">
                     {FORMATION_SCHOOL_PRICE_HINT}
                   </p>
                 )}
@@ -288,6 +284,22 @@ const EventDetailPage = async ({ params, searchParams }: Props) => {
             )}
           </div>
         </div>
+
+        {/* Visuel : sous le texte en mobile, cale a droite en desktop.
+            Aucun voile, et `contain` plutot que `cover` — les vignettes sont
+            des supports de formation composes, un recadrage les mutile. */}
+        {event.thumbnail_url && (
+          <div className="relative h-56 w-full sm:h-72 lg:absolute lg:inset-y-0 lg:right-0 lg:h-full lg:w-[38%]">
+            <Image
+              src={event.thumbnail_url}
+              alt={event.title}
+              fill
+              className="object-contain p-6 lg:p-10"
+              sizes="(min-width: 1024px) 38vw, 100vw"
+              priority
+            />
+          </div>
+        )}
       </section>
 
       {/* ============================================================ */}
@@ -299,19 +311,6 @@ const EventDetailPage = async ({ params, searchParams }: Props) => {
           {/* Left — Content                                           */}
           {/* -------------------------------------------------------- */}
           <div className="lg:col-span-2 space-y-10">
-            {/* Image (if exists, show below hero on mobile for context) */}
-            {event.thumbnail_url && (
-              <div className="relative aspect-video overflow-hidden sm:rounded-sm">
-                <Image
-                  src={event.thumbnail_url}
-                  alt={event.title}
-                  fill
-                  className="object-cover"
-                  sizes="(min-width: 1024px) 66vw, 100vw"
-                />
-              </div>
-            )}
-
             {/* Highlights strip */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {HIGHLIGHTS.map(({ icon: Icon, text }) => (

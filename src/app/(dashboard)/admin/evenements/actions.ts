@@ -13,6 +13,19 @@ const requireAdmin = async () => {
   return user;
 };
 
+/**
+ * L'editeur riche ne renvoie jamais null : un champ vide vaut "", "<p></p>"
+ * ou "<p><br></p>" selon le chemin de saisie. On ramene ces coquilles a null
+ * pour que la page publique teste simplement la presence de la valeur.
+ */
+export const normalizeRichText = (
+  value: string | null | undefined,
+): string | null => {
+  if (!value) return null;
+  const withoutMarkup = value.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ");
+  return withoutMarkup.trim() === "" ? null : value;
+};
+
 // ─── Create Event ───────────────────────────────────────────
 
 export const createEvent = async (
@@ -31,6 +44,8 @@ export const createEvent = async (
       title: parsed.data.title,
       slug: parsed.data.slug,
       description: parsed.data.description ?? null,
+      summary_html: normalizeRichText(parsed.data.summary_html),
+      long_description: normalizeRichText(parsed.data.long_description),
       type: parsed.data.type,
       starts_at: new Date(parsed.data.starts_at).toISOString(),
       ends_at: new Date(parsed.data.ends_at).toISOString(),
@@ -87,6 +102,8 @@ export const updateEvent = async (
       title: parsed.data.title,
       slug: parsed.data.slug,
       description: parsed.data.description ?? null,
+      summary_html: normalizeRichText(parsed.data.summary_html),
+      long_description: normalizeRichText(parsed.data.long_description),
       type: parsed.data.type,
       starts_at: new Date(parsed.data.starts_at).toISOString(),
       ends_at: new Date(parsed.data.ends_at).toISOString(),

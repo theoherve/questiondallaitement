@@ -13,6 +13,8 @@ export const eventSchema = z
         "Le slug ne peut contenir que des lettres minuscules, chiffres et tirets",
       ),
     description: z.string().optional().nullable(),
+    summary_html: z.string().optional().nullable(),
+    long_description: z.string().optional().nullable(),
     type: z.enum(["online", "in_person", "hybrid"]),
     starts_at: z.string().min(1, "La date de début est requise"),
     ends_at: z.string().min(1, "La date de fin est requise"),
