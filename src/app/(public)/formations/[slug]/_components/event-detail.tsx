@@ -282,7 +282,7 @@ export const EventDetail = ({
               {/* Price highlight (desktop) */}
               {event.show_price && (
                 <div className="mt-8 hidden border-t border-primary-green/15 pt-6 lg:block">
-                  <p className="font-serif text-4xl font-bold text-primary-green">
+                  <p className="font-serif text-2xl font-bold text-primary-green">
                     {formatPrice(event.price_cents, event.currency)}
                   </p>
                   {isFree && (
