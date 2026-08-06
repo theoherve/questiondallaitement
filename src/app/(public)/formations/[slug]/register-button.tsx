@@ -10,7 +10,8 @@ import {
 } from "@/components/promo/promo-code-field";
 import { registerForEvent } from "../actions";
 import { toast } from "sonner";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, ExternalLink } from "lucide-react";
+import { buildExternalUrl } from "@/lib/events/external-url";
 
 type Props = {
   eventId: string;
@@ -21,6 +22,8 @@ type Props = {
   isAuthenticated: boolean;
   priceCents: number;
   currency: string;
+  /** Lien d'inscription de l'organisme, si la formation est vendue par lui. */
+  externalUrl?: string | null;
   isPreview?: boolean;
 };
 
@@ -33,6 +36,7 @@ export const RegisterButton = ({
   isAuthenticated,
   priceCents,
   currency,
+  externalUrl,
   isPreview = false,
 }: Props) => {
   const [isPending, startTransition] = useTransition();
@@ -53,6 +57,28 @@ export const RegisterButton = ({
     return (
       <Button className="w-full" disabled>
         Événement terminé
+      </Button>
+    );
+  }
+
+  // Inscription chez l'organisme : on sort du site, donc aucune notion locale
+  // ne s'applique (compte, places restantes, promo). Place avant elles pour
+  // qu'un « Complet » calcule sur nos inscriptions ne bloque pas un lien qui
+  // ne les regarde pas.
+  if (externalUrl) {
+    return (
+      <Button
+        className="w-full bg-primary-red hover:bg-primary-red-dark"
+        asChild
+      >
+        <a
+          href={buildExternalUrl(externalUrl)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          S&apos;inscrire
+          <ExternalLink className="ml-2 h-4 w-4" />
+        </a>
       </Button>
     );
   }

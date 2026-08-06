@@ -17,6 +17,10 @@ export const eventSchema = z
     objectives_html: z.string().optional().nullable(),
     program_html: z.string().optional().nullable(),
     audience_html: z.string().optional().nullable(),
+    // Cles du catalogue des reperes. Le filtrage sur le catalogue se fait a
+    // l'ecriture (`filterEventHighlightKeys`) : une cle devenue obsolete doit
+    // etre ignoree, pas faire echouer l'enregistrement de toute la formation.
+    highlights: z.array(z.string()).optional(),
     type: z.enum(["online", "in_person", "hybrid"]),
     starts_at: z.string().min(1, "La date de début est requise"),
     ends_at: z.string().min(1, "La date de fin est requise"),

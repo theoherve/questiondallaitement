@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { EventContentFields } from "./event-content-fields";
+import { EventHighlightsField } from "./event-highlights-field";
+import { EVENT_HIGHLIGHT_KEYS } from "@/config/event-highlights";
 import {
   createEvent,
   updateEvent,
@@ -70,6 +72,9 @@ export const EventForm = ({
     objectives_html: event?.objectives_html ?? "",
     program_html: event?.program_html ?? "",
     audience_html: event?.audience_html ?? "",
+    // A la creation, le jeu complet est propose : c'est ce qu'affichaient
+    // toutes les fiches jusqu'ici, et retirer est plus rapide qu'ajouter.
+    highlights: event?.highlights ?? EVENT_HIGHLIGHT_KEYS,
     type: event?.type ?? ("online" as "online" | "in_person" | "hybrid"),
     starts_at: toLocalDatetime(event?.starts_at) || "",
     ends_at: toLocalDatetime(event?.ends_at) || "",
@@ -331,6 +336,20 @@ export const EventForm = ({
 
           <Card>
             <CardHeader>
+              <CardTitle>Repères affichés sur la fiche</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <EventHighlightsField
+                value={formData.highlights}
+                onChange={(highlights) =>
+                  setFormData((p) => ({ ...p, highlights }))
+                }
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Date et lieu</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -434,10 +453,11 @@ export const EventForm = ({
                   placeholder="https://organisme.fr/formations/..."
                 />
                 <p className="text-xs text-muted-foreground">
-                  Si renseigné, la formation n&apos;a plus de page de détail sur
-                  le site : le CTA renvoie directement vers l&apos;organisme
-                  (avec le code MILKPOWER). Aucune inscription n&apos;est
-                  possible ici.
+                  Si renseigné, la fiche reste consultable sur le site mais
+                  l&apos;inscription part chez l&apos;organisme : le bouton
+                  « S&apos;inscrire » ouvre ce lien dans un nouvel onglet (avec
+                  le code MILKPOWER), sans demander de connexion. Aucune
+                  inscription n&apos;est enregistrée ici.
                 </p>
               </div>
             </CardContent>

@@ -264,6 +264,8 @@ export type Event = {
   objectives_html: string | null;
   program_html: string | null;
   audience_html: string | null;
+  // Cles du catalogue src/config/event-highlights.ts. Jamais null cote base.
+  highlights: string[];
   type: EventType;
   starts_at: string;
   ends_at: string;

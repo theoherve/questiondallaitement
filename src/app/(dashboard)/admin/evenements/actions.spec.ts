@@ -83,6 +83,20 @@ describe("createEvent", () => {
     );
   });
 
+  it("ne garde que les reperes du catalogue, dans son ordre", async () => {
+    const chain = createChain({ data: { id: "event-1", slug: validInput.slug } });
+    mockFrom.mockReturnValue(chain);
+
+    await createEvent({
+      ...validInput,
+      highlights: ["ibclc", "repere-invente", "elearning"],
+    });
+
+    expect(chain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ highlights: ["elearning", "ibclc"] }),
+    );
+  });
+
   it("accepte une formation sans aucune section", async () => {
     const chain = createChain({ data: { id: "event-1", slug: validInput.slug } });
     mockFrom.mockReturnValue(chain);
@@ -96,6 +110,7 @@ describe("createEvent", () => {
         objectives_html: null,
         program_html: null,
         audience_html: null,
+        highlights: [],
       }),
     );
   });

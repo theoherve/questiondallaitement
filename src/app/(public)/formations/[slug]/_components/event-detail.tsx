@@ -9,17 +9,13 @@ import {
   Video,
   Users,
   GraduationCap,
-  Monitor,
-  MonitorPlay,
-  Presentation,
   Target,
   BookOpen,
   ArrowLeft,
-  ShieldCheck,
-  Award,
   CheckCircle,
   type LucideIcon,
 } from "lucide-react";
+import { resolveEventHighlights } from "@/config/event-highlights";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -61,20 +57,6 @@ const categorizeEvent = (title: string): { category: EventCategory; label: strin
   if (t.startsWith("live")) return { category: "live", label: "Live", color: "bg-pink-600 text-white" };
   return { category: "autre", label: "Événement", color: "bg-primary-green/80 text-white" };
 };
-
-/**
- * MonitorPlay pour l'e-learning (un module qu'on lance a son rythme) et
- * Presentation pour le webinaire (quelqu'un presente en direct) : les deux se
- * distinguent l'un de l'autre, et du Monitor nu de la visio Zoom.
- */
-const HIGHLIGHTS = [
-  { icon: MonitorPlay, text: "E-Learning" },
-  { icon: Presentation, text: "Webinaire" },
-  { icon: Monitor, text: "Formation en visio Zoom" },
-  { icon: ShieldCheck, text: "Attestation de formation" },
-  { icon: Award, text: "Approche fondée sur les preuves" },
-  { icon: GraduationCap, text: "Formatrice certifiée IBCLC" },
-];
 
 /**
  * Base commune aux trois sections editoriales : le contenu vient de
@@ -135,6 +117,8 @@ export type EventDetailProps = {
     objectives_html: string | null;
     program_html: string | null;
     audience_html: string | null;
+    highlights: string[] | null;
+    external_url: string | null;
     type: "online" | "in_person" | "hybrid";
     starts_at: string;
     ends_at: string;
@@ -188,7 +172,10 @@ export const EventDetail = ({
         ? MapPin
         : Users;
 
-  const { label: categoryLabel } = categorizeEvent(event.title);
+  const { label: categoryLabel, color: categoryColor } = categorizeEvent(
+    event.title,
+  );
+  const highlights = resolveEventHighlights(event.highlights);
   const duration = formatDuration(event.starts_at, event.ends_at);
   const isFree = event.price_cents === 0;
   const isPast = new Date(event.ends_at) < new Date();
@@ -200,149 +187,153 @@ export const EventDetail = ({
   return (
     <div>
       {/* ============================================================ */}
-      {/* Hero : aplat rose a gauche, visuel net a droite               */}
+      {/* Hero : aplat beige, visuel a droite, bande de reperes incluse */}
+      {/* Le beige etant clair, tout l'interieur passe en vert : les    */}
+      {/* pastilles reprennent leurs couleurs pleines, qui ressortent   */}
+      {/* ici alors qu'elles se noyaient sur l'ancien aplat rose.       */}
       {/* ============================================================ */}
-      <section className="relative bg-primary-rose">
-        <div
-          className={`relative mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8 ${
-            event.thumbnail_url ? "lg:pr-[calc(38%+2rem)]" : ""
-          }`}
-        >
-          {/* Back link */}
-          <Link
-            href="/formations"
-            className="mb-6 inline-flex items-center gap-1.5 text-sm text-white/80 transition-colors hover:text-white"
+      <section className="bg-background-beige-dark">
+        {/* Le visuel se cale sur ce bloc et non sur la section entiere,
+            sinon il passerait par-dessus la bande de reperes du bas. */}
+        <div className="relative">
+          <div
+            className={`mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8 ${
+              event.thumbnail_url ? "lg:pr-[calc(38%+2rem)]" : ""
+            }`}
           >
-            <ArrowLeft className="h-4 w-4" />
-            Toutes les formations
-          </Link>
+            {/* Back link */}
+            <Link
+              href="/formations"
+              className="mb-6 inline-flex items-center gap-1.5 text-sm text-primary-green/70 transition-colors hover:text-primary-green"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Toutes les formations
+            </Link>
 
-          <div>
             <div>
-              {/* Badges */}
-              <div className="flex flex-wrap items-center gap-2">
-                {/* Sur l'aplat rose, la pastille de categorie se pose en blanc :
-                    ses couleurs pleines (primary-red, pink-600) s'y noieraient. */}
-                <Badge className="bg-white text-primary-rose border-0">
-                  {categoryLabel}
-                </Badge>
-                <Badge className="bg-white/15 text-white border-0">
-                  <TypeIcon className="mr-1 h-3 w-3" />
-                  {typeLabel}
-                </Badge>
-                {isPast && (
-                  <Badge className="bg-white/15 text-white/80 border-0">
-                    Terminée
+              <div>
+                {/* Badges */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge className={`${categoryColor} border-0`}>
+                    {categoryLabel}
                   </Badge>
-                )}
-              </div>
-
-              {/* Title */}
-              <h1 className="mt-4 font-serif text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
-                {event.title}
-              </h1>
-
-              {/* Short description */}
-              {event.description && (
-                <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/90">
-                  {event.description}
-                </p>
-              )}
-
-              {/* Résumé — troisieme niveau de lecture, mis en forme.
-                  Filet vertical plutot qu'encadre : le bandeau est deja une
-                  surface pleine, une boite dedans ferait boite dans boite.
-                  `em` en miel sans italique, qui decroche sur l'aplat rose.
-                  Titres masques : l'editeur les autorise, mais ils entreraient
-                  en concurrence avec le h1 juste au-dessus. */}
-              {event.summary_html && (
-                <div
-                  className="mt-5 max-w-2xl border-l-2 border-white/40 pl-4
-                             text-[0.95rem] leading-relaxed text-white/85
-                             [&_p]:mb-2 [&_p:last-child]:mb-0
-                             [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1
-                             [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1
-                             [&_strong]:font-semibold [&_strong]:text-white
-                             [&_em]:not-italic [&_em]:text-accent-honey-soft
-                             [&_a]:underline [&_a]:underline-offset-2
-                             [&_h1]:hidden [&_h2]:hidden [&_h3]:hidden"
-                  dangerouslySetInnerHTML={{ __html: event.summary_html }}
-                />
-              )}
-
-              {/* Quick meta */}
-              <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/80">
-                <div className="flex items-center gap-1.5">
-                  <CalendarDays className="h-4 w-4" />
-                  <span>
-                    {format(new Date(event.starts_at), "d MMMM yyyy", { locale: fr })}
-                  </span>
+                  <Badge className="border-0 bg-primary-green/10 text-primary-green">
+                    <TypeIcon className="mr-1 h-3 w-3" />
+                    {typeLabel}
+                  </Badge>
+                  {isPast && (
+                    <Badge className="border-0 bg-primary-green/10 text-primary-green/60">
+                      Terminée
+                    </Badge>
+                  )}
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Clock className="h-4 w-4" />
-                  <span>{duration}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <GraduationCap className="h-4 w-4" />
-                  <span>{consultantName}</span>
-                </div>
-              </div>
-            </div>
 
-            {/* Price highlight (desktop) */}
-            {event.show_price && (
-              <div className="mt-8 hidden border-t border-white/25 pt-6 lg:block">
-                <p className="font-serif text-4xl font-bold text-white">
-                  {formatPrice(event.price_cents, event.currency)}
-                </p>
-                {isFree && (
-                  <p className="mt-1 text-sm text-white/80">
-                    {FORMATION_SCHOOL_PRICE_HINT}
+                {/* Title */}
+                <h1 className="mt-4 font-serif text-2xl font-bold text-primary-green sm:text-3xl lg:text-4xl">
+                  {event.title}
+                </h1>
+
+                {/* Short description */}
+                {event.description && (
+                  <p className="mt-4 max-w-2xl text-base leading-relaxed text-primary-green/75">
+                    {event.description}
                   </p>
                 )}
+
+                {/* Résumé — troisieme niveau de lecture, mis en forme.
+                    Filet vertical plutot qu'encadre : le bandeau est deja une
+                    surface pleine, une boite dedans ferait boite dans boite.
+                    Titres masques : l'editeur les autorise, mais ils
+                    entreraient en concurrence avec le h1 juste au-dessus. */}
+                {event.summary_html && (
+                  <div
+                    className="mt-5 max-w-2xl border-l-2 border-primary-red/40 pl-4
+                               text-[0.95rem] leading-relaxed text-primary-green/75
+                               [&_p]:mb-2 [&_p:last-child]:mb-0
+                               [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1
+                               [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1
+                               [&_strong]:font-semibold [&_strong]:text-primary-green
+                               [&_em]:not-italic [&_em]:text-primary-red
+                               [&_a]:underline [&_a]:underline-offset-2
+                               [&_h1]:hidden [&_h2]:hidden [&_h3]:hidden"
+                    dangerouslySetInnerHTML={{ __html: event.summary_html }}
+                  />
+                )}
+
+                {/* Quick meta */}
+                <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-primary-green/60">
+                  <div className="flex items-center gap-1.5">
+                    <CalendarDays className="h-4 w-4" />
+                    <span>
+                      {format(new Date(event.starts_at), "d MMMM yyyy", { locale: fr })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-4 w-4" />
+                    <span>{duration}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <GraduationCap className="h-4 w-4" />
+                    <span>{consultantName}</span>
+                  </div>
+                </div>
               </div>
-            )}
+
+              {/* Price highlight (desktop) */}
+              {event.show_price && (
+                <div className="mt-8 hidden border-t border-primary-green/15 pt-6 lg:block">
+                  <p className="font-serif text-4xl font-bold text-primary-green">
+                    {formatPrice(event.price_cents, event.currency)}
+                  </p>
+                  {isFree && (
+                    <p className="mt-1 text-sm text-primary-green/60">
+                      {FORMATION_SCHOOL_PRICE_HINT}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* Visuel : sous le texte en mobile, cale a droite en desktop.
+              Aucun voile, et `contain` plutot que `cover` — les vignettes sont
+              des supports de formation composes, un recadrage les mutile. */}
+          {event.thumbnail_url && (
+            <div className="relative h-56 w-full sm:h-72 lg:absolute lg:inset-y-0 lg:right-0 lg:h-full lg:w-[38%]">
+              <Image
+                src={event.thumbnail_url}
+                alt={event.title}
+                fill
+                className="object-contain p-6 lg:p-10"
+                sizes="(min-width: 1024px) 38vw, 100vw"
+                priority
+              />
+            </div>
+          )}
         </div>
 
-        {/* Visuel : sous le texte en mobile, cale a droite en desktop.
-            Aucun voile, et `contain` plutot que `cover` — les vignettes sont
-            des supports de formation composes, un recadrage les mutile. */}
-        {event.thumbnail_url && (
-          <div className="relative h-56 w-full sm:h-72 lg:absolute lg:inset-y-0 lg:right-0 lg:h-full lg:w-[38%]">
-            <Image
-              src={event.thumbnail_url}
-              alt={event.title}
-              fill
-              className="object-contain p-6 lg:p-10"
-              sizes="(min-width: 1024px) 38vw, 100vw"
-              priority
-            />
+        {/* Bande de reperes — pleine largeur, une seule ligne.
+            Tuiles blanches : le rapport s'inverse par rapport a avant, mais
+            deux beiges qui se touchent ne se distingueraient pas. En dessous
+            de `sm`, la bande defile plutot que de se replier. */}
+        {highlights.length > 0 && (
+          <div className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 sm:pb-12 lg:px-8">
+            <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+              {highlights.map(({ key, label, icon: Icon }) => (
+                <div
+                  key={key}
+                  className="flex min-w-32 flex-1 flex-col items-center justify-start gap-2 bg-white p-4 text-center"
+                >
+                  <Icon className="h-5 w-5 shrink-0 text-primary-red" />
+                  <span className="text-xs font-medium text-primary-green">
+                    {label}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </section>
-
-      {/* ============================================================ */}
-      {/* Bande de reperes — pleine largeur, une seule ligne            */}
-      {/* Sortie de la colonne de contenu : six tuiles n'y tiendraient  */}
-      {/* pas sur un rang. En dessous de `sm`, la bande defile          */}
-      {/* horizontalement plutot que de se replier.                     */}
-      {/* ============================================================ */}
-      <div className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
-        <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-          {HIGHLIGHTS.map(({ icon: Icon, text }) => (
-            <div
-              key={text}
-              className="flex min-w-32 flex-1 flex-col items-center justify-start gap-2 bg-background-beige-dark p-4 text-center"
-            >
-              <Icon className="h-5 w-5 shrink-0 text-primary-red" />
-              <span className="text-xs font-medium text-primary-green">
-                {text}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* ============================================================ */}
       {/* Main content + sidebar                                       */}
@@ -542,13 +533,17 @@ export const EventDetail = ({
                     isAuthenticated={isAuthenticated}
                     priceCents={event.price_cents}
                     currency={event.currency}
+                    externalUrl={event.external_url}
                     isPreview={isPreview}
                   />
 
                   {/* Trust indicators */}
                   <div className="space-y-2 pt-2">
+                    {/* Aucun paiement ne transite par le site quand
+                        l'inscription part chez l'organisme : l'annoncer ici
+                        serait faux. */}
                     {[
-                      "Paiement sécurisé",
+                      ...(event.external_url ? [] : ["Paiement sécurisé"]),
                       "Attestation de participation",
                       "Support disponible",
                     ].map((text) => (
