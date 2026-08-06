@@ -195,6 +195,27 @@ export const EventDetail = ({
                 </p>
               )}
 
+              {/* Résumé — troisieme niveau de lecture, mis en forme.
+                  Filet vertical plutot qu'encadre : le bandeau est deja une
+                  surface pleine, une boite dedans ferait boite dans boite.
+                  `em` en miel sans italique, qui decroche sur l'aplat rose.
+                  Titres masques : l'editeur les autorise, mais ils entreraient
+                  en concurrence avec le h1 juste au-dessus. */}
+              {event.summary_html && (
+                <div
+                  className="mt-5 max-w-2xl border-l-2 border-white/40 pl-4
+                             text-[0.95rem] leading-relaxed text-white/85
+                             [&_p]:mb-2 [&_p:last-child]:mb-0
+                             [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1
+                             [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1
+                             [&_strong]:font-semibold [&_strong]:text-white
+                             [&_em]:not-italic [&_em]:text-accent-honey-soft
+                             [&_a]:underline [&_a]:underline-offset-2
+                             [&_h1]:hidden [&_h2]:hidden [&_h3]:hidden"
+                  dangerouslySetInnerHTML={{ __html: event.summary_html }}
+                />
+              )}
+
               {/* Quick meta */}
               <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/80">
                 <div className="flex items-center gap-1.5">
