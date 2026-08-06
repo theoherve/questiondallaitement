@@ -11,9 +11,14 @@
   --font-sans: var(--font-dm-sans);
   --font-serif: var(--font-noto-serif);
 
+  /* Rouge = actions (boutons, liens forts, puces d'accent).
+     Rose = surfaces (bandeaux, sections pleines). Les deux teintes sont
+     trop proches pour cohabiter en petit format : sur un fond rose, un CTA
+     se pose en blanc ou en beige, jamais en primary-red. */
   --color-primary-red: #a0283e;
   --color-primary-red-light: #c4566a;
   --color-primary-red-dark: #7a1e2f;
+  --color-primary-rose: #c1334d;
   --color-primary-green: #203634;
   --color-primary-green-light: #2d4a47;
   --color-primary-green-dark: #162523;

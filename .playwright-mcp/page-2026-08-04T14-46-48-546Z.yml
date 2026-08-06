@@ -1,86 +1,86 @@
 - generic [active] [ref=e1]:
-  - generic [ref=e2]:
-    - banner [ref=e3]:
-      - generic [ref=e4]:
-        - link "Accueil Question d'Allaitement" [ref=e5] [cursor=pointer]:
-          - /url: /
-          - img "Question d'Allaitement" [ref=e6]
-        - navigation "Navigation principale" [ref=e7]:
-          - link "Accompagnements en ligne" [ref=e9] [cursor=pointer]:
-            - /url: /accompagnements
-          - link "Formations" [ref=e12] [cursor=pointer]:
-            - /url: /formations
-          - link "Livres" [ref=e13] [cursor=pointer]:
-            - /url: /livres
-          - link "Médias" [ref=e14] [cursor=pointer]:
-            - /url: /medias
-          - link "Blog" [ref=e15] [cursor=pointer]:
-            - /url: /blog
-          - link "À propos" [ref=e16] [cursor=pointer]:
-            - /url: /a-propos
-        - generic [ref=e17]:
-          - button "Se connecter" [ref=e18] [cursor=pointer]
-          - button "Découvrir le pack" [ref=e19] [cursor=pointer]
-    - main [ref=e20]:
-      - status [ref=e87]: Vous êtes de nouveau abonnée. À mardi !
-    - contentinfo [ref=e28]:
-      - generic [ref=e29]:
-        - generic [ref=e30]:
-          - generic [ref=e31]:
-            - link "Accueil" [ref=e32] [cursor=pointer]:
-              - /url: /
-              - text: Question d'Allaitement
-            - paragraph [ref=e33]: Consultante IBCLC, auteure et formatrice. 20+ ans d'expertise au service de l'allaitement.
-          - generic [ref=e34]:
-            - heading "Navigation" [level=3] [ref=e35]
-            - list [ref=e36]:
-              - listitem [ref=e37]:
-                - link "Accompagnements en ligne" [ref=e38] [cursor=pointer]:
-                  - /url: /accompagnements
-              - listitem [ref=e39]:
-                - link "Formations" [ref=e40] [cursor=pointer]:
-                  - /url: /formations
-              - listitem [ref=e41]:
-                - link "Livres" [ref=e42] [cursor=pointer]:
-                  - /url: /livres
-              - listitem [ref=e43]:
-                - link "Médias" [ref=e44] [cursor=pointer]:
-                  - /url: /medias
-              - listitem [ref=e45]:
-                - link "Blog" [ref=e46] [cursor=pointer]:
-                  - /url: /blog
-              - listitem [ref=e47]:
-                - link "À propos" [ref=e48] [cursor=pointer]:
-                  - /url: /a-propos
-          - generic [ref=e49]:
-            - heading "Légal" [level=3] [ref=e50]
-            - list [ref=e51]:
-              - listitem [ref=e52]:
-                - link "Mentions légales" [ref=e53] [cursor=pointer]:
-                  - /url: /mentions-legales
-              - listitem [ref=e54]:
-                - link "Confidentialité" [ref=e55] [cursor=pointer]:
-                  - /url: /politique-de-confidentialite
-              - listitem [ref=e56]:
-                - link "CGV" [ref=e57] [cursor=pointer]:
-                  - /url: /cgv
-          - generic [ref=e58]:
-            - heading "Suivez-moi" [level=3] [ref=e59]
-            - generic [ref=e60]:
-              - link "Instagram" [ref=e61] [cursor=pointer]:
-                - /url: https://www.instagram.com/carole.questiondallaitement/
-              - link "TikTok" [ref=e65] [cursor=pointer]:
-                - /url: https://www.tiktok.com/@carole_herve
-              - link "LinkedIn" [ref=e68] [cursor=pointer]:
-                - /url: https://www.linkedin.com/in/carole-herve-ibclc/
-        - paragraph [ref=e74]: © 2026 Question d'Allaitement. Tous droits réservés.
-  - region "Notifications alt+T"
-  - alert [ref=e75]
-  - dialog "Gestion des cookies" [ref=e76]:
-    - generic [ref=e78]:
-      - paragraph [ref=e79]:
-        - text: Nous utilisons des cookies pour mesurer l'audience de notre site (Vercel Speed Insights). Aucun cookie publicitaire tiers n'est déposé sans votre accord.
-        - button "Personnaliser" [ref=e80]
-      - generic [ref=e81]:
-        - button "Refuser" [ref=e82] [cursor=pointer]
-        - button "Tout accepter" [ref=e83] [cursor=pointer]
+    - generic [ref=e2]:
+        - banner [ref=e3]:
+            - generic [ref=e4]:
+                - link "Accueil Question d'Allaitement" [ref=e5] [cursor=pointer]:
+                    - /url: /
+                    - img "Question d'Allaitement" [ref=e6]
+                - navigation "Navigation principale" [ref=e7]:
+                    - link "Accompagnements en ligne" [ref=e9] [cursor=pointer]:
+                        - /url: /accompagnements
+                    - link "Formations" [ref=e12] [cursor=pointer]:
+                        - /url: /formations
+                    - link "Livres" [ref=e13] [cursor=pointer]:
+                        - /url: /livres
+                    - link "Médias" [ref=e14] [cursor=pointer]:
+                        - /url: /medias
+                    - link "Blog" [ref=e15] [cursor=pointer]:
+                        - /url: /blog
+                    - link "À propos" [ref=e16] [cursor=pointer]:
+                        - /url: /a-propos
+                - generic [ref=e17]:
+                    - button "Se connecter" [ref=e18] [cursor=pointer]
+                    - button "Découvrir le Pack" [ref=e19] [cursor=pointer]
+        - main [ref=e20]:
+            - status [ref=e87]: Vous êtes de nouveau abonnée. À mardi !
+        - contentinfo [ref=e28]:
+            - generic [ref=e29]:
+                - generic [ref=e30]:
+                    - generic [ref=e31]:
+                        - link "Accueil" [ref=e32] [cursor=pointer]:
+                            - /url: /
+                            - text: Question d'Allaitement
+                        - paragraph [ref=e33]: Consultante IBCLC, auteure et formatrice. 20+ ans d'expertise au service de l'allaitement.
+                    - generic [ref=e34]:
+                        - heading "Navigation" [level=3] [ref=e35]
+                        - list [ref=e36]:
+                            - listitem [ref=e37]:
+                                - link "Accompagnements en ligne" [ref=e38] [cursor=pointer]:
+                                    - /url: /accompagnements
+                            - listitem [ref=e39]:
+                                - link "Formations" [ref=e40] [cursor=pointer]:
+                                    - /url: /formations
+                            - listitem [ref=e41]:
+                                - link "Livres" [ref=e42] [cursor=pointer]:
+                                    - /url: /livres
+                            - listitem [ref=e43]:
+                                - link "Médias" [ref=e44] [cursor=pointer]:
+                                    - /url: /medias
+                            - listitem [ref=e45]:
+                                - link "Blog" [ref=e46] [cursor=pointer]:
+                                    - /url: /blog
+                            - listitem [ref=e47]:
+                                - link "À propos" [ref=e48] [cursor=pointer]:
+                                    - /url: /a-propos
+                    - generic [ref=e49]:
+                        - heading "Légal" [level=3] [ref=e50]
+                        - list [ref=e51]:
+                            - listitem [ref=e52]:
+                                - link "Mentions légales" [ref=e53] [cursor=pointer]:
+                                    - /url: /mentions-legales
+                            - listitem [ref=e54]:
+                                - link "Confidentialité" [ref=e55] [cursor=pointer]:
+                                    - /url: /politique-de-confidentialite
+                            - listitem [ref=e56]:
+                                - link "CGV" [ref=e57] [cursor=pointer]:
+                                    - /url: /cgv
+                    - generic [ref=e58]:
+                        - heading "Suivez-moi" [level=3] [ref=e59]
+                        - generic [ref=e60]:
+                            - link "Instagram" [ref=e61] [cursor=pointer]:
+                                - /url: https://www.instagram.com/carole.questiondallaitement/
+                            - link "TikTok" [ref=e65] [cursor=pointer]:
+                                - /url: https://www.tiktok.com/@carole_herve
+                            - link "LinkedIn" [ref=e68] [cursor=pointer]:
+                                - /url: https://www.linkedin.com/in/carole-herve-ibclc/
+                - paragraph [ref=e74]: © 2026 Question d'Allaitement. Tous droits réservés.
+    - region "Notifications alt+T"
+    - alert [ref=e75]
+    - dialog "Gestion des cookies" [ref=e76]:
+        - generic [ref=e78]:
+            - paragraph [ref=e79]:
+                - text: Nous utilisons des cookies pour mesurer l'audience de notre site (Vercel Speed Insights). Aucun cookie publicitaire tiers n'est déposé sans votre accord.
+                - button "Personnaliser" [ref=e80]
+            - generic [ref=e81]:
+                - button "Refuser" [ref=e82] [cursor=pointer]
+                - button "Tout accepter" [ref=e83] [cursor=pointer]

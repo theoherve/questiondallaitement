@@ -1,15 +1,6 @@
 import { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import {
-  CalendarDays,
-  Clock,
-  Monitor,
-  GraduationCap,
-  ShieldCheck,
-  Award,
-  History,
-  Sparkles,
-} from "lucide-react";
+import { CalendarDays, Clock, History, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { FormationsList } from "./_components/formations-list";
@@ -21,13 +12,6 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = "force-dynamic";
-
-const BENEFITS = [
-  { icon: Monitor, label: "En visio Zoom" },
-  { icon: GraduationCap, label: "Formatrice IBCLC" },
-  { icon: ShieldCheck, label: "Attestation fournie" },
-  { icon: Award, label: "Approche fondée sur les preuves" },
-];
 
 const FormationsProPage = async () => {
   const supabase = await createClient();
@@ -164,29 +148,6 @@ const FormationsProPage = async () => {
               <dd className="inline">réservés aux personnes accompagnées en ligne par Carole.</dd>
             </div>
           </dl>
-        </div>
-      </section>
-
-      {/* Benefits Strip */}
-      <section className="border-b border-primary-green/10 bg-background-beige-dark">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 gap-0 lg:grid-cols-4">
-            {BENEFITS.map(({ icon: Icon, label }, i) => (
-              <div
-                key={label}
-                className={`flex items-center gap-3 px-4 py-4 sm:px-6 sm:py-5 ${
-                  i < BENEFITS.length - 1 ? "lg:border-r lg:border-primary-green/10" : ""
-                }`}
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-primary-red/10">
-                  <Icon className="h-5 w-5 text-primary-red" />
-                </div>
-                <span className="text-sm font-medium text-primary-green">
-                  {label}
-                </span>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 

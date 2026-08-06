@@ -9,12 +9,14 @@ export const ACCOMPAGNEMENT_CTA_LABELS: Record<string, string> = {
   "je-me-prepare-a-allaiter": "Je me prépare sereinement",
   "mon-allaitement-des-premiers-jours": "Je pose des bases solides",
   "mon-allaitement-au-fil-des-mois": "Je retrouve un allaitement apaisé",
-  "je-reprends-une-activite-professionnelle": "Je prépare ma reprise sereinement",
+  "je-reprends-une-activite-professionnelle":
+    "Je prépare ma reprise sereinement",
   "la-diversification-de-mon-bebe-allaite": "Je diversifie en toute confiance",
   "je-souhaite-sevrer-mon-bebe": "Je sèvre en douceur et en confiance",
-  "mon-bebe-ne-fait-pas-ses-nuits": "Je comprends ce qui empêche mon enfant de dormir",
+  "mon-bebe-ne-fait-pas-ses-nuits":
+    "Je comprends ce qui empêche mon enfant de dormir",
   "les-urgences-allaitement": "Je soulage la douleur maintenant",
-  "pack-mon-allaitement-sur-mesure": "Je rejoins « Mon Allaitement Sur Mesure »",
+  "pack-mon-allaitement-sur-mesure": "Découvrir le Pack",
 };
 
 export const ctaLabelFor = (slug: string) => ACCOMPAGNEMENT_CTA_LABELS[slug];

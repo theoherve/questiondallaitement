@@ -91,27 +91,12 @@ export const consultantNav: NavItem[] = [
     iconKey: "LayoutDashboard",
   },
   {
-    title: "Accompagnements",
-    href: "/espace-consultante/formations",
-    iconKey: "BookOpen",
-  },
-  {
     title: "Réservations",
     href: "/espace-consultante/reservations",
     iconKey: "CalendarDays",
   },
-  {
-    title: "Événements",
-    href: "/espace-consultante/evenements",
-    iconKey: "CalendarClock",
-  },
   { title: "CRM", href: "/espace-consultante/crm", iconKey: "Users" },
   { title: "Emails", href: "/espace-consultante/emails", iconKey: "Mail" },
-  {
-    title: "Automations",
-    href: "/espace-consultante/automations",
-    iconKey: "Zap",
-  },
   {
     title: "Analytics",
     href: "/espace-consultante/analytics",

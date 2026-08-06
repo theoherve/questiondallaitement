@@ -3,6 +3,8 @@
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { eventSchema } from "@/validations/events";
+import { normalizeRichText } from "@/lib/html/rich-text";
+import { filterEventHighlightKeys } from "@/config/event-highlights";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/types";
@@ -31,6 +33,11 @@ export const createEvent = async (
       title: parsed.data.title,
       slug: parsed.data.slug,
       description: parsed.data.description ?? null,
+      summary_html: normalizeRichText(parsed.data.summary_html),
+      objectives_html: normalizeRichText(parsed.data.objectives_html),
+      program_html: normalizeRichText(parsed.data.program_html),
+      audience_html: normalizeRichText(parsed.data.audience_html),
+      highlights: filterEventHighlightKeys(parsed.data.highlights),
       type: parsed.data.type,
       starts_at: new Date(parsed.data.starts_at).toISOString(),
       ends_at: new Date(parsed.data.ends_at).toISOString(),
@@ -87,6 +94,11 @@ export const updateEvent = async (
       title: parsed.data.title,
       slug: parsed.data.slug,
       description: parsed.data.description ?? null,
+      summary_html: normalizeRichText(parsed.data.summary_html),
+      objectives_html: normalizeRichText(parsed.data.objectives_html),
+      program_html: normalizeRichText(parsed.data.program_html),
+      audience_html: normalizeRichText(parsed.data.audience_html),
+      highlights: filterEventHighlightKeys(parsed.data.highlights),
       type: parsed.data.type,
       starts_at: new Date(parsed.data.starts_at).toISOString(),
       ends_at: new Date(parsed.data.ends_at).toISOString(),

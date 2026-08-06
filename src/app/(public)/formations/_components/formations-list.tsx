@@ -455,11 +455,6 @@ export const FormationsList = ({
 /*  Event Card                                                         */
 /* ------------------------------------------------------------------ */
 
-const buildExternalUrl = (url: string): string => {
-  const separator = url.includes("?") ? "&" : "?";
-  return `${url}${separator}code=MILKPOWER`;
-};
-
 const EventCard = ({ event }: { event: EventData }) => {
   const typeInfo = EVENT_TYPE_LABELS[event.type] ?? EVENT_TYPE_LABELS.online;
   const TypeIcon = typeInfo.icon;
@@ -618,40 +613,21 @@ const EventCard = ({ event }: { event: EventData }) => {
               </p>
             )}
           </div>
+          {/* Meme intitule pour toutes les cartes : la fiche de detail existe
+              desormais aussi pour les formations vendues par un organisme.
+              C'est le bouton de la fiche qui sort du site, pas la carte. */}
           <Button
             variant="outline"
             size="sm"
             className="pointer-events-none border-primary-red text-primary-red transition-colors group-hover:bg-primary-red group-hover:text-white"
           >
-            {isExternal ? (
-              <>
-                Voir l&apos;offre
-                <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-              </>
-            ) : (
-              <>
-                En savoir plus
-                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-              </>
-            )}
+            En savoir plus
+            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
           </Button>
         </div>
       </CardContent>
     </Card>
   );
-
-  if (isExternal) {
-    return (
-      <a
-        href={buildExternalUrl(event.external_url!)}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block h-full rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-red"
-      >
-        {cardContent}
-      </a>
-    );
-  }
 
   return (
     <Link

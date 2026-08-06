@@ -258,6 +258,14 @@ export type Event = {
   title: string;
   slug: string;
   description: string | null;
+  // Sections editoriales riches, rendues en HTML sur la page publique.
+  // Chacune a sa forme a l'affichage, d'ou une colonne par section.
+  summary_html: string | null;
+  objectives_html: string | null;
+  program_html: string | null;
+  audience_html: string | null;
+  // Cles du catalogue src/config/event-highlights.ts. Jamais null cote base.
+  highlights: string[];
   type: EventType;
   starts_at: string;
   ends_at: string;

@@ -58,26 +58,13 @@ export function PackHero({
   const { eyebrow, titleOverride, subtitle, reassurances, ctaLabel } =
     PACK_CONTENT.hero;
   return (
-    <section className="relative overflow-hidden bg-primary-green px-4 py-20 sm:px-6 sm:py-28">
-      {/* Image du pack en fond, avec voile vert pour garder le texte lisible */}
-      {imageUrl && (
-        <>
-          <Image
-            src={imageUrl}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-center"
-          />
-          <div
-            className="absolute inset-0 bg-linear-to-b from-primary-green/80 via-primary-green/75 to-primary-green/90"
-            aria-hidden
-          />
-        </>
-      )}
-      <div className="relative z-10 mx-auto max-w-4xl text-center">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-sm">
+    <section className="relative overflow-hidden bg-primary-green">
+      <div
+        className={`relative z-10 mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28 ${
+          imageUrl ? "lg:pr-[calc(38%+2rem)]" : "text-center"
+        }`}
+      >
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1.5">
           <span className="h-1.5 w-1.5 rounded-full bg-primary-red" aria-hidden />
           <span className="font-sans text-xs font-medium uppercase tracking-widest text-white/90">
             {eyebrow}
@@ -88,11 +75,15 @@ export function PackHero({
           {titleOverride ?? title}
         </h1>
         {titleOverride && (
-          <p className="mt-4 font-sans text-sm font-medium uppercase tracking-widest text-background-beige/70">
+          <p className="mt-4 font-sans text-sm font-medium uppercase tracking-widest text-background-beige/85">
             {title}
           </p>
         )}
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/85">
+        <p
+          className={`mt-6 max-w-2xl text-lg leading-relaxed text-white/90 ${
+            imageUrl ? "" : "mx-auto"
+          }`}
+        >
           {subtitle}
         </p>
         <a
@@ -101,11 +92,15 @@ export function PackHero({
         >
           {ctaLabel} — {priceLabel}
         </a>
-        <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+        <ul
+          className={`mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 ${
+            imageUrl ? "" : "justify-center"
+          }`}
+        >
           {reassurances.map((r) => (
             <li
               key={r}
-              className="flex items-center gap-2 text-sm text-white/80"
+              className="flex items-center gap-2 text-sm text-white/90"
             >
               <CheckCircle
                 className="h-4 w-4 text-accent-sage"
@@ -116,6 +111,22 @@ export function PackHero({
           ))}
         </ul>
       </div>
+
+      {/* Visuel du pack : sous le texte en mobile, cale a droite en desktop.
+          Aucun voile, et `contain` plutot que `cover` — la vignette est un
+          visuel compose, un recadrage la mutile. */}
+      {imageUrl && (
+        <div className="relative h-56 w-full sm:h-72 lg:absolute lg:inset-y-0 lg:right-0 lg:h-full lg:w-[38%]">
+          <Image
+            src={imageUrl}
+            alt=""
+            fill
+            priority
+            sizes="(min-width: 1024px) 38vw, 100vw"
+            className="object-contain p-6 lg:p-10"
+          />
+        </div>
+      )}
     </section>
   );
 }
@@ -462,15 +473,16 @@ export function PackPricing({
 export function PackFinalCta() {
   const { title, subtitle, ctaLabel } = PACK_CONTENT.finalCta;
   return (
-    <section className="bg-primary-green px-4 py-20 sm:px-6">
+    <section className="bg-primary-rose px-4 py-20 sm:px-6">
       <div className="mx-auto max-w-2xl text-center">
         <h2 className="font-serif text-3xl font-bold text-white sm:text-4xl">
           {title}
         </h2>
-        <p className="mt-4 text-lg text-white/80">{subtitle}</p>
+        <p className="mt-4 text-lg text-white/90">{subtitle}</p>
+        {/* CTA en blanc : sur l'aplat rose, primary-red serait illisible. */}
         <a
           href="#tarif"
-          className="mt-8 inline-flex items-center rounded-md bg-primary-red px-8 py-3.5 text-base font-medium text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:bg-primary-red-dark"
+          className="mt-8 inline-flex items-center rounded-md bg-white px-8 py-3.5 text-base font-medium text-primary-rose shadow-lg transition-all duration-200 hover:scale-[1.02] hover:bg-background-beige"
         >
           {ctaLabel}
         </a>

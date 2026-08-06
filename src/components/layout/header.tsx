@@ -245,7 +245,7 @@ export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
               {features.bookingEnabled ? (
                 <Link href="/reserver">Prendre RDV</Link>
               ) : (
-                <Link href={PACK_SALES_PATH}>Découvrir le pack</Link>
+                <Link href={PACK_SALES_PATH}>Découvrir le Pack</Link>
               )}
             </Button>
           </div>
@@ -394,7 +394,7 @@ export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
                         href={PACK_SALES_PATH}
                         onClick={() => setMenuOpen(false)}
                       >
-                        Découvrir le pack
+                        Découvrir le Pack
                       </Link>
                     )}
                   </Button>
