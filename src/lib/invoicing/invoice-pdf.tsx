@@ -141,6 +141,18 @@ const InvoicePdf = ({ view }: { view: InvoiceView }) => (
       </View>
 
       <View style={s.totals}>
+        {view.discount && (
+          <>
+            <View style={s.totalLine}>
+              <Text>Sous-total</Text>
+              <Text>{view.discount.gross}</Text>
+            </View>
+            <View style={s.totalLine}>
+              <Text>{view.discount.label}</Text>
+              <Text>{view.discount.amount}</Text>
+            </View>
+          </>
+        )}
         <View style={s.totalLine}>
           <Text>Total HT</Text>
           <Text>{view.ht}</Text>

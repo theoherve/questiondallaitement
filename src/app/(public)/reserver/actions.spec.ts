@@ -25,6 +25,14 @@ vi.mock("@/lib/stripe/connect", () => ({
   createCheckoutSession: (...args: unknown[]) => mockCreateCheckoutSession(...args),
 }));
 
+const mockResolvePromo = vi.fn();
+const mockAttachSession = vi.fn();
+
+vi.mock("@/lib/promo/reserve", () => ({
+  resolvePromoForPurchase: (...args: unknown[]) => mockResolvePromo(...args),
+  attachSessionToRedemption: (...args: unknown[]) => mockAttachSession(...args),
+}));
+
 const mockSendGuestAccountEmail = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/lib/emails/send", () => ({
@@ -546,5 +554,92 @@ describe("3-3 : createBooking on_site — lien de creation de compte", () => {
     const [to, variables] = mockSendGuestAccountEmail.mock.calls[0];
     expect(to).toBe("marie@test.fr");
     expect(variables.setup_url).toMatch(/\/reset-password\?token=[0-9a-f]{64}$/);
+  });
+});
+
+// ─── Codes promo ──────────────────────────────────────────────
+
+describe("createBooking — code promo", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFrom.mockReset();
+    insertCalls.length = 0;
+    upsertCalls.length = 0;
+
+    mockFrom
+      .mockImplementationOnce((t: string) =>
+        createChain({ singleData: DURATION_OPTION }, t),
+      )
+      .mockImplementationOnce((t: string) =>
+        createChain({ singleData: CONSULTATION_TYPE }, t),
+      )
+      .mockImplementationOnce((t: string) =>
+        createChain({ singleData: { id: "client-uuid-existing" } }, t),
+      )
+      .mockImplementationOnce((t: string) => createChain({}, t))
+      .mockImplementationOnce((t: string) =>
+        createChain({ singleData: CONSULTANT }, t),
+      )
+      .mockImplementation((t: string) =>
+        createChain({ singleData: CONSULTANT_EXTRA }, t),
+      );
+
+    mockCreateCheckoutSession.mockResolvedValue({
+      id: "cs_test_booking",
+      url: "https://checkout.stripe.com/session_test",
+    });
+  });
+
+  it("remise le montant envoye a Stripe et recalcule la commission", async () => {
+    mockResolvePromo.mockResolvedValue({
+      ok: true,
+      promoCodeId: "code-1",
+      code: "VILLAGE",
+      discountCents: 1000,
+      finalCents: 4000,
+      redemptionId: "redemption-4",
+    });
+
+    await createBooking(makeBookingForm({ promo_code: "village" }));
+
+    const args = mockCreateCheckoutSession.mock.calls[0][0];
+    expect(args.priceInCents).toBe(4000);
+    // 10 % de 4000, et non de 5000 : la consultante supporte la remise.
+    expect(args.metadata.platform_fee_cents).toBe("400");
+    expect(args.metadata.promo_redemption_id).toBe("redemption-4");
+    expect(args.metadata.original_price_cents).toBe("5000");
+    expect(mockAttachSession).toHaveBeenCalledWith(
+      "redemption-4",
+      "cs_test_booking",
+    );
+  });
+
+  it("refuse la reservation quand le code est invalide", async () => {
+    mockResolvePromo.mockResolvedValue({
+      ok: false,
+      error: "Ce code n'est pas valable pour cet achat.",
+    });
+
+    const result = await createBooking(
+      makeBookingForm({ promo_code: "INCONNU" }),
+    );
+
+    expect(result).toEqual({
+      success: false,
+      error: "Ce code n'est pas valable pour cet achat.",
+    });
+    expect(mockCreateCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it("ignore le code sur un paiement sur place", async () => {
+    await createBooking(
+      makeBookingForm({
+        payment_method: "on_site",
+        location: "domicile",
+        promo_code: "VILLAGE",
+      }),
+    );
+
+    expect(mockResolvePromo).not.toHaveBeenCalled();
   });
 });

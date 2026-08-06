@@ -268,7 +268,9 @@ async function importPosts(posts, imageMap, categoryMap) {
       consultant_id: consultantId,
       status: "published",
       tags,
-      published_at: new Date().toISOString(),
+      // Date d'origine sur Wix, pas la date de l'import : sinon tous les
+      // articles repris se retrouvent publies le meme jour.
+      published_at: post.publishedAt || new Date().toISOString(),
       meta_description: (post.excerpt || "").substring(0, 160) || null,
     };
 

@@ -398,6 +398,8 @@ export function PackPricing({
   formationId,
   isLoggedIn,
   isEnrolled,
+  priceCents,
+  currency,
 }: {
   priceLabel: string;
   /** Ancrage de valeur dérivé de la DB (« X € d'économie… ») ; masqué si absent. */
@@ -405,6 +407,8 @@ export function PackPricing({
   formationId: string;
   isLoggedIn: boolean;
   isEnrolled: boolean;
+  priceCents: number;
+  currency: string;
 }) {
   const { title, subtitle, includes, guarantee } = PACK_CONTENT.pricing;
   return (
@@ -440,6 +444,8 @@ export function PackPricing({
             formationId={formationId}
             isLoggedIn={isLoggedIn}
             isEnrolled={isEnrolled}
+            priceCents={priceCents}
+            currency={currency}
             ctaLabel={ctaLabelFor(PACK_SLUG)}
           />
         </div>

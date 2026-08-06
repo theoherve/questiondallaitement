@@ -94,6 +94,30 @@ describe("createRefund", () => {
     );
   });
 
+  it("rembourse le montant paye apres remise, pas le prix catalogue", async () => {
+    // Vente a 100 EUR remisee a 85 EUR : la charge Stripe vaut 8500, et un
+    // remboursement total ne doit porter que sur ce qui a ete encaisse. Sans
+    // montant explicite, Stripe rembourse la charge entiere — c'est justement
+    // le comportement attendu, et ce test le verrouille.
+    mockChargesRetrieve.mockResolvedValue({
+      id: "ch_test_002",
+      amount: 8500,
+      transfer: { id: "tr_test_002", amount: 8500 },
+      application_fee: { id: "fee_test_002", amount: 1700, amount_refunded: 0 },
+    });
+    mockRefundsCreate.mockResolvedValue({ id: "re_test", amount: 8500 });
+
+    await createRefund(PI);
+
+    expect(mockRefundsCreate).toHaveBeenCalledWith({
+      payment_intent: PI,
+      reverse_transfer: true,
+    });
+    // Aucun montant transmis : Stripe rend la charge reelle (8500), jamais le
+    // prix affiche au catalogue.
+    expect(mockRefundsCreate.mock.calls[0][0].amount).toBeUndefined();
+  });
+
   it("rembourse partiellement sans toucher au reste", async () => {
     await createRefund(PI, 4000);
 

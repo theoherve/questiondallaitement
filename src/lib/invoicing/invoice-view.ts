@@ -22,6 +22,9 @@ export type InvoiceRecord = {
   issuer_legal_form: string | null;
   status: string;
   document_type?: string;
+  promo_code?: string | null;
+  discount_cents?: number | null;
+  gross_amount_ttc_cents?: number | null;
 };
 
 const CURRENCY_CODES: Record<string, string> = { eur: "EUR" };
@@ -61,6 +64,8 @@ export type InvoiceView = {
   isCreditNote: boolean;
   /** Titre du document : « Facture » ou « Avoir ». */
   documentLabel: string;
+  /** Ligne de remise, absente si la vente s'est faite au prix plein. */
+  discount?: { label: string; gross: string; amount: string };
   client: { name: string; email: string };
   issuer: {
     legalName: string;
@@ -82,6 +87,19 @@ export const buildInvoiceView = (record: InvoiceRecord): InvoiceView => ({
   isCancelled: record.status === "cancelled",
   isCreditNote: record.document_type === "credit_note",
   documentLabel: record.document_type === "credit_note" ? "Avoir" : "Facture",
+  ...(record.promo_code && record.discount_cents
+    ? {
+        discount: {
+          label: `Remise ${record.promo_code}`,
+          gross: formatMoneyCents(
+            record.gross_amount_ttc_cents ??
+              record.amount_ttc_cents + record.discount_cents,
+            record.currency,
+          ),
+          amount: `-${formatMoneyCents(record.discount_cents, record.currency)}`,
+        },
+      }
+    : {}),
   client: { name: record.client_name, email: record.client_email },
   issuer: {
     legalName: record.issuer_legal_name,

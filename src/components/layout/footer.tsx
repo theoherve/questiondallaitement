@@ -36,7 +36,7 @@ export const Footer = () => {
               Question d&apos;Allaitement
             </Link>
             <p className="mt-1.5 text-sm text-background-beige/60">
-              Consultante IBCLC, auteure et formatrice.
+              Consultante en lactation IBCLC, auteure, formatrice et conférencière internationale.
               20+ ans d&apos;expertise au service de l&apos;allaitement.
             </p>
           </div>

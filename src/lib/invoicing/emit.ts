@@ -31,7 +31,7 @@ export const emitInvoiceForPayment = async (
     const { data: payment } = await supabase
       .from("payments")
       .select(
-        "id, client_id, consultant_id, amount_cents, currency, type, reference_id, status",
+        "id, client_id, consultant_id, amount_cents, currency, type, reference_id, status, discount_cents, original_amount_cents, promo_code_id",
       )
       .eq("id", paymentId)
       .maybeSingle();
@@ -64,6 +64,18 @@ export const emitInvoiceForPayment = async (
       ? `${client.first_name ?? ""} ${client.last_name ?? ""}`.trim()
       : "";
 
+    // Le libelle du code est fige dans la facture : renommer un code plus tard
+    // ne doit pas reecrire une facture emise.
+    let promoCode: string | null = null;
+    if (payment.promo_code_id) {
+      const { data: promo } = await supabase
+        .from("promo_codes")
+        .select("code")
+        .eq("id", payment.promo_code_id)
+        .maybeSingle();
+      promoCode = (promo?.code as string | undefined) ?? null;
+    }
+
     const content = buildInvoiceContent({
       paymentId: payment.id,
       consultantId: payment.consultant_id,
@@ -79,6 +91,9 @@ export const emitInvoiceForPayment = async (
       ),
       clientName,
       clientEmail: client?.email ?? "",
+      promoCode,
+      discountCents: payment.discount_cents ?? null,
+      grossTtcCents: payment.original_amount_cents ?? null,
       issuer: billing,
     });
 

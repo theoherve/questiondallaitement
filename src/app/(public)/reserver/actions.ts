@@ -8,6 +8,10 @@ import {
   isPlatformOwnerConsultant,
 } from "@/lib/stripe/sale-routing";
 import { consultantCanSell } from "@/lib/invoicing/consultant-billing";
+import {
+  attachSessionToRedemption,
+  resolvePromoForPurchase,
+} from "@/lib/promo/reserve";
 import { bookingRequiresWaiver } from "@/lib/legal/withdrawal";
 import { recordWithdrawalWaiver } from "@/lib/legal/record-waiver";
 import { computeAvailableSlots } from "@/lib/booking/slots";
@@ -45,6 +49,11 @@ export type BookingFormData = {
    * la prestation serait executee avant l'expiration du delai legal.
    */
   withdrawal_waiver_accepted?: boolean;
+  /**
+   * Code promo saisi a l'etape paiement. Ignore hors paiement en ligne : un
+   * reglement sur place ne passe pas par la plateforme.
+   */
+  promo_code?: string;
 };
 
 // ─── Public queries ──────────────────────────────────────────
@@ -574,6 +583,25 @@ export const createBooking = async (
     // checkouts never leave orphan bookings in the database.
     const bookingId = crypto.randomUUID();
 
+    const promo = formData.promo_code?.trim()
+      ? await resolvePromoForPurchase({
+          code: formData.promo_code,
+          serviceKind: "booking",
+          itemId: formData.consultation_type_id,
+          amountCents: totalPriceCents,
+          profileId: clientId,
+          reserve: true,
+          orderKind: "booking",
+          referenceId: bookingId,
+        })
+      : null;
+
+    if (promo && !promo.ok) {
+      return { success: false, error: promo.error };
+    }
+
+    const chargedCents = promo?.ok ? promo.finalCents : totalPriceCents;
+
     if (waiverRequired) {
       const recorded = await recordWithdrawalWaiver(supabase, {
         clientId,
@@ -597,7 +625,7 @@ export const createBooking = async (
         holdOnPlatform: routing.holdOnPlatform,
         transferGroup: bookingId,
         commissionRate: routing.commissionRate,
-        priceInCents: totalPriceCents,
+        priceInCents: chargedCents,
         currency: consultationType.currency,
         productName: consultationType.title,
         productDescription: `Consultation avec ${consultantName} — ${durationOption.duration_minutes} min`,
@@ -614,12 +642,25 @@ export const createBooking = async (
           location: formData.location,
           reason: reason.substring(0, 500),
           platform_fee_cents: Math.round(
-            totalPriceCents * (routing.commissionRate / 100)
+            chargedCents * (routing.commissionRate / 100)
           ).toString(),
+          ...(promo?.ok
+            ? {
+                promo_code: promo.code,
+                promo_code_id: promo.promoCodeId,
+                promo_redemption_id: promo.redemptionId as string,
+                discount_cents: promo.discountCents.toString(),
+                original_price_cents: totalPriceCents.toString(),
+              }
+            : {}),
         },
         successUrl: `${siteConfig.url}/reserver/confirmation?booking_id=${bookingId}`,
         cancelUrl: `${siteConfig.url}/reserver?cancelled=true`,
       });
+
+      if (promo?.ok && promo.redemptionId) {
+        await attachSessionToRedemption(promo.redemptionId, session.id);
+      }
 
       return {
         success: true,

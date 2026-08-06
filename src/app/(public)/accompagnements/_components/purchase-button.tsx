@@ -4,12 +4,18 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShoppingCart } from "lucide-react";
 import { KlarnaNote } from "@/components/klarna-note";
+import {
+  PromoCodeField,
+  type AppliedPromo,
+} from "@/components/promo/promo-code-field";
 import { purchaseFormation } from "../actions";
 
 type PurchaseButtonProps = {
   formationId: string;
   isLoggedIn: boolean;
   isEnrolled: boolean;
+  priceCents: number;
+  currency: string;
   /**
    * Libellé orienté bénéfice, propre à l'accompagnement (« Je soulage la
    * douleur maintenant »…). Sans lui, on retombe sur un libellé générique.
@@ -21,10 +27,13 @@ export const PurchaseButton = ({
   formationId,
   isLoggedIn,
   isEnrolled,
+  priceCents,
+  currency,
   ctaLabel,
 }: PurchaseButtonProps) => {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [promo, setPromo] = useState<AppliedPromo | null>(null);
 
   if (isEnrolled) {
     return (
@@ -63,7 +72,7 @@ export const PurchaseButton = ({
   const handlePurchase = () => {
     setError(null);
     startTransition(async () => {
-      const result = await purchaseFormation(formationId);
+      const result = await purchaseFormation(formationId, promo?.code);
 
       if (result.success && result.data?.redirect_url) {
         window.location.href = result.data.redirect_url;
@@ -80,6 +89,13 @@ export const PurchaseButton = ({
 
   return (
     <div className="space-y-3">
+      <PromoCodeField
+        serviceKind="formation"
+        itemId={formationId}
+        amountCents={priceCents}
+        currency={currency}
+        onApplied={setPromo}
+      />
       <Button
         onClick={handlePurchase}
         disabled={isPending}

@@ -8,11 +8,16 @@ import {
   isPlatformOwnerConsultant,
 } from "@/lib/stripe/sale-routing";
 import { consultantCanSell } from "@/lib/invoicing/consultant-billing";
+import {
+  attachSessionToRedemption,
+  resolvePromoForPurchase,
+} from "@/lib/promo/reserve";
 import { siteConfig } from "@/config/site";
 import type { ActionResult } from "@/types";
 
 export const purchaseFormation = async (
   formationId: string,
+  promoCode?: string,
 ): Promise<ActionResult<{ redirect_url: string }>> => {
   const user = await getSessionUser();
   if (!user) {
@@ -102,12 +107,33 @@ export const purchaseFormation = async (
     };
   }
 
+  // La remise est resolue cote serveur, jamais transmise par le client : une
+  // server action est un endpoint POST, appelable sans passer par l'interface.
+  const promo = promoCode?.trim()
+    ? await resolvePromoForPurchase({
+        code: promoCode,
+        serviceKind: "formation",
+        itemId: formation.id,
+        amountCents: formation.price_cents,
+        profileId: user.id,
+        reserve: true,
+        orderKind: "formation",
+        referenceId: formation.id,
+      })
+    : null;
+
+  if (promo && !promo.ok) {
+    return { success: false, error: promo.error };
+  }
+
+  const chargedCents = promo?.ok ? promo.finalCents : formation.price_cents;
+
   try {
     const session = await createCheckoutSession({
       holdOnPlatform: routing.holdOnPlatform,
       consultantStripeAccountId: routing.destinationAccountId ?? undefined,
       commissionRate: routing.commissionRate,
-      priceInCents: formation.price_cents,
+      priceInCents: chargedCents,
       currency: formation.currency,
       productName: formation.title,
       productDescription: formation.short_description ?? undefined,
@@ -118,12 +144,27 @@ export const purchaseFormation = async (
         client_id: user.id,
         consultant_id: formation.consultant_id,
         platform_fee_cents: Math.round(
-          formation.price_cents * (routing.commissionRate / 100),
+          chargedCents * (routing.commissionRate / 100),
         ).toString(),
+        ...(promo?.ok
+          ? {
+              promo_code: promo.code,
+              promo_code_id: promo.promoCodeId,
+              promo_redemption_id: promo.redemptionId as string,
+              discount_cents: promo.discountCents.toString(),
+              original_price_cents: formation.price_cents.toString(),
+            }
+          : {}),
       },
       successUrl: `${siteConfig.url}/espace-client/accompagnements?purchased=${formation.id}`,
       cancelUrl: `${siteConfig.url}/accompagnements/${formationId}?cancelled=true`,
     });
+
+    // Rattache la reservation a la session : c'est le lien qui permet de
+    // l'annuler si la cliente abandonne le tunnel.
+    if (promo?.ok && promo.redemptionId) {
+      await attachSessionToRedemption(promo.redemptionId, session.id);
+    }
 
     return {
       success: true,
