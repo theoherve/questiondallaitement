@@ -206,6 +206,19 @@ export const EventForm = ({
           </h1>
         </div>
         <div className="flex gap-2">
+          {/* « Aperçu » couvre aussi les brouillons, c'est sa raison d'etre.
+              « Voir » reste reserve aux evenements publies. */}
+          {mode === "edit" && event && (
+            <Button type="button" variant="outline" asChild>
+              <Link
+                href={`/admin/evenements/${event.id}/preview`}
+                target="_blank"
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Aperçu
+              </Link>
+            </Button>
+          )}
           {mode === "edit" && event?.is_published && (
             <Button type="button" variant="outline" asChild>
               <Link href={`/evenements/${event.slug}`} target="_blank">
