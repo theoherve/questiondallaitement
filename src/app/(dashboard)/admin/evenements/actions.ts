@@ -3,6 +3,7 @@
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { eventSchema } from "@/validations/events";
+import { normalizeRichText } from "@/lib/html/rich-text";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/types";
@@ -11,19 +12,6 @@ const requireAdmin = async () => {
   const user = await getSessionUser();
   if (!user || !user.roles.includes("admin")) redirect("/connexion");
   return user;
-};
-
-/**
- * L'editeur riche ne renvoie jamais null : un champ vide vaut "", "<p></p>"
- * ou "<p><br></p>" selon le chemin de saisie. On ramene ces coquilles a null
- * pour que la page publique teste simplement la presence de la valeur.
- */
-export const normalizeRichText = (
-  value: string | null | undefined,
-): string | null => {
-  if (!value) return null;
-  const withoutMarkup = value.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ");
-  return withoutMarkup.trim() === "" ? null : value;
 };
 
 // ─── Create Event ───────────────────────────────────────────

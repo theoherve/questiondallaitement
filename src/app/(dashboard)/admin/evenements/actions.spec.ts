@@ -13,7 +13,7 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 
-import { createEvent, updateEvent, normalizeRichText } from "./actions";
+import { createEvent, updateEvent } from "./actions";
 
 /**
  * Chaine Supabase minimale : chaque methode renvoie la chaine, `single`
@@ -46,26 +46,6 @@ const validInput = {
 
 beforeEach(() => {
   mockFrom.mockReset();
-});
-
-describe("normalizeRichText", () => {
-  it("renvoie null pour une valeur absente", () => {
-    expect(normalizeRichText(null)).toBeNull();
-    expect(normalizeRichText(undefined)).toBeNull();
-  });
-
-  it("renvoie null pour les coquilles vides produites par l'editeur", () => {
-    expect(normalizeRichText("")).toBeNull();
-    expect(normalizeRichText("   ")).toBeNull();
-    expect(normalizeRichText("<p></p>")).toBeNull();
-    expect(normalizeRichText("<p><br></p>")).toBeNull();
-  });
-
-  it("conserve un contenu reel", () => {
-    expect(normalizeRichText("<p>Trois points cles</p>")).toBe(
-      "<p>Trois points cles</p>",
-    );
-  });
 });
 
 describe("createEvent", () => {
