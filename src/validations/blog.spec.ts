@@ -141,6 +141,40 @@ describe("blogPostSchema", () => {
     }
   });
 
+  it("accepte une date de publication dans le passé", () => {
+    const result = blogPostSchema.safeParse({
+      ...draft,
+      status: "published" as const,
+      published_at: "2024-07-07T17:53:19.354Z",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.published_at).toBe("2024-07-07T17:53:19.354Z");
+    }
+  });
+
+  it("normalise une date de publication vide en null", () => {
+    const result = blogPostSchema.safeParse({ ...draft, published_at: "" });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.published_at).toBeNull();
+    }
+  });
+
+  it("refuse une date de publication illisible", () => {
+    const result = blogPostSchema.safeParse({
+      ...draft,
+      published_at: "hier",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path[0]).toBe("published_at");
+    }
+  });
+
   it("refuse un titre d'encadré trop long", () => {
     const result = blogPostSchema.safeParse({
       ...draft,

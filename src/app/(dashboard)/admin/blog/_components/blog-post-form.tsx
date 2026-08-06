@@ -20,6 +20,19 @@ import { ArrowLeft, Save, Eye, Trash2, Calendar } from "lucide-react";
 import Link from "next/link";
 import type { BlogPost, BlogCategory, Consultant, Profile } from "@/types";
 
+/**
+ * Convertit un timestamp ISO (UTC) en valeur d'input `datetime-local`, qui
+ * attend une heure locale sans fuseau. Sans ca, une date stockee en UTC
+ * s'affiche decalee d'une ou deux heures a l'ecran.
+ */
+const toDatetimeLocalValue = (iso: string | null | undefined): string => {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
 type ConsultantWithProfile = Consultant & {
   profiles: Pick<Profile, "first_name" | "last_name"> | null;
 };
@@ -62,7 +75,8 @@ export const BlogPostForm = ({
     conclusion_text: post?.conclusion_text ?? "",
     references_html: post?.references_html ?? "",
     related_post_ids: post?.related_post_ids ?? [],
-    scheduled_at: post?.scheduled_at?.slice(0, 16) ?? "",
+    scheduled_at: toDatetimeLocalValue(post?.scheduled_at),
+    published_at: toDatetimeLocalValue(post?.published_at),
   });
 
   const slugify = (text: string): string =>
@@ -93,15 +107,49 @@ export const BlogPostForm = ({
       "references_html",
       "related_post_ids",
     ];
+    const infoFields = [
+      "status",
+      "scheduled_at",
+      "published_at",
+      "category_id",
+      "consultant_id",
+      "thumbnail_url",
+    ];
     const hasSeoError = seoFields.some((f) => f in errors);
     const hasEndingError = endingFields.some((f) => f in errors);
+    const hasInfoError = infoFields.some((f) => f in errors);
     const hasContentError = Object.keys(errors).some(
-      (f) => !seoFields.includes(f) && !endingFields.includes(f),
+      (f) =>
+        !seoFields.includes(f) &&
+        !endingFields.includes(f) &&
+        !infoFields.includes(f),
     );
     if (hasContentError) setActiveTab("content");
+    else if (hasInfoError) setActiveTab("informations");
     else if (hasSeoError) setActiveTab("seo");
     else if (hasEndingError) setActiveTab("ending");
   };
+
+  /**
+   * Normalise le formulaire avant envoi : les champs vides deviennent `null` et
+   * les dates saisies en heure locale repartent en ISO/UTC.
+   */
+  const buildPayload = () => ({
+    ...formData,
+    conclusion_title: formData.conclusion_title || null,
+    conclusion_text: formData.conclusion_text || null,
+    references_html: formData.references_html || null,
+    category_id: formData.category_id || null,
+    consultant_id: formData.consultant_id || null,
+    thumbnail_url: formData.thumbnail_url || null,
+    og_image_url: formData.og_image_url || null,
+    scheduled_at: formData.scheduled_at
+      ? new Date(formData.scheduled_at).toISOString()
+      : null,
+    published_at: formData.published_at
+      ? new Date(formData.published_at).toISOString()
+      : null,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,19 +168,7 @@ export const BlogPostForm = ({
 
     setFieldErrors({});
 
-    const payload = {
-      ...formData,
-      conclusion_title: formData.conclusion_title || null,
-      conclusion_text: formData.conclusion_text || null,
-      references_html: formData.references_html || null,
-      category_id: formData.category_id || null,
-      consultant_id: formData.consultant_id || null,
-      thumbnail_url: formData.thumbnail_url || null,
-      og_image_url: formData.og_image_url || null,
-      scheduled_at: formData.scheduled_at
-        ? new Date(formData.scheduled_at).toISOString()
-        : null,
-    };
+    const payload = buildPayload();
 
     startTransition(async () => {
       if (mode === "create") {
@@ -177,7 +213,7 @@ export const BlogPostForm = ({
 
     startTransition(async () => {
       const result = await updateBlogPost(post.id, {
-        ...formData,
+        ...buildPayload(),
         status: "published",
         scheduled_at: null,
       });
@@ -439,9 +475,33 @@ export const BlogPostForm = ({
                   </select>
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="published_at">Date de publication</Label>
+                  <Input
+                    id="published_at"
+                    type="datetime-local"
+                    value={formData.published_at}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        published_at: e.target.value,
+                      }))
+                    }
+                    aria-invalid={Boolean(fieldErrors.published_at)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Date affichée sur le site et utilisée pour le tri. Modifiable
+                    à tout moment, une date passée est acceptée. Laissez vide
+                    pour horodater à la publication.
+                  </p>
+                  {fieldError("published_at")}
+                </div>
+
                 {formData.status === "scheduled" && (
                   <div className="space-y-2">
-                    <Label htmlFor="scheduled_at">Date de publication</Label>
+                    <Label htmlFor="scheduled_at">
+                      Date de publication programmée
+                    </Label>
                     <Input
                       id="scheduled_at"
                       type="datetime-local"

@@ -132,6 +132,16 @@ export const blogPostSchema = z.object({
       (v) => !v || !Number.isNaN(Date.parse(v)),
       { message: "Date de publication invalide" },
     ),
+  // Date de publication reelle, corrigeable a la main : les articles repris de
+  // l'ancien site portent tous la date du backfill et non leur date d'origine.
+  // Le passe est donc autorise ; laisser vide veut dire « ne change rien ».
+  published_at: z
+    .union([z.string(), z.null()])
+    .transform((v) => (v ? v : null))
+    .optional()
+    .refine((v) => !v || !Number.isNaN(Date.parse(v)), {
+      message: "Date de publication invalide",
+    }),
 });
 
 export type BlogPostInput = z.infer<typeof blogPostSchema>;

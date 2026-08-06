@@ -156,9 +156,13 @@ export const createBlogPost = async (
     related_post_ids: parsed.data.related_post_ids ?? [],
   };
 
-  // If publishing immediately, set published_at
-  if (parsed.data.status === "published") {
+  // La date saisie prime ; sinon on horodate une publication immediate.
+  if (parsed.data.published_at) {
+    insertData.published_at = parsed.data.published_at;
+  } else if (parsed.data.status === "published") {
     insertData.published_at = new Date().toISOString();
+  } else {
+    insertData.published_at = null;
   }
 
   const { data: post, error } = await supabase
@@ -195,7 +199,7 @@ export const updateBlogPost = async (
   // Get current post to check status change
   const { data: currentPost } = await supabase
     .from("blog_posts")
-    .select("status, slug")
+    .select("status, slug, published_at")
     .eq("id", id)
     .single();
 
@@ -220,12 +224,18 @@ export const updateBlogPost = async (
     ),
   };
 
-  // If publishing for the first time, set published_at
-  if (
+  // Date de publication : la valeur saisie prime, sinon on horodate la premiere
+  // publication et on conserve la date existante dans tous les autres cas — un
+  // champ vide ne doit jamais effacer une date deja corrigee a la main.
+  if (parsed.data.published_at) {
+    updateData.published_at = parsed.data.published_at;
+  } else if (
     parsed.data.status === "published" &&
-    currentPost?.status !== "published"
+    !currentPost?.published_at
   ) {
     updateData.published_at = new Date().toISOString();
+  } else {
+    updateData.published_at = currentPost?.published_at ?? null;
   }
 
   const { error } = await supabase
@@ -282,7 +292,16 @@ export const updateBlogPostStatus = async (
 
   const updateData: Record<string, unknown> = { status };
   if (status === "published") {
-    updateData.published_at = new Date().toISOString();
+    // On n'horodate que la premiere publication : re-publier un article archive
+    // ne doit pas ecraser sa date d'origine.
+    const { data: current } = await supabase
+      .from("blog_posts")
+      .select("published_at")
+      .eq("id", id)
+      .single();
+    if (!current?.published_at) {
+      updateData.published_at = new Date().toISOString();
+    }
   }
 
   const { error } = await supabase
