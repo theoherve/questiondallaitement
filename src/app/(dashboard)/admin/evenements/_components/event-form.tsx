@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { EventContentFields } from "./event-content-fields";
 import {
   createEvent,
   updateEvent,
@@ -65,6 +66,8 @@ export const EventForm = ({
     title: event?.title ?? "",
     slug: event?.slug ?? "",
     description: event?.description ?? "",
+    summary_html: event?.summary_html ?? "",
+    long_description: event?.long_description ?? "",
     type: event?.type ?? ("online" as "online" | "in_person" | "hybrid"),
     starts_at: toLocalDatetime(event?.starts_at) || "",
     ends_at: toLocalDatetime(event?.ends_at) || "",
@@ -103,6 +106,8 @@ export const EventForm = ({
     const payload = {
       ...formData,
       description: formData.description || null,
+      summary_html: formData.summary_html || null,
+      long_description: formData.long_description || null,
       location: formData.location || null,
       max_participants:
         formData.max_participants === "" ? null : Number(formData.max_participants),
@@ -292,6 +297,14 @@ export const EventForm = ({
                   rows={6}
                 />
               </div>
+
+              <EventContentFields
+                summaryHtml={formData.summary_html}
+                longDescription={formData.long_description}
+                onChange={(field, html) =>
+                  setFormData((p) => ({ ...p, [field]: html }))
+                }
+              />
             </CardContent>
           </Card>
 
