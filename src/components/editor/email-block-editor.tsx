@@ -19,7 +19,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Eye, Crop, Info, Lightbulb, AlertTriangle, XCircle, MessageSquare } from "lucide-react";
+import {
+  Eye,
+  Crop,
+  Info,
+  Lightbulb,
+  AlertTriangle,
+  XCircle,
+  MessageSquare,
+  Image as ImageIcon,
+  PanelTop,
+} from "lucide-react";
 import { EmailPreviewDialog } from "./email-preview-dialog";
 import { ImageCropDialog } from "./image-crop-dialog";
 import {
@@ -28,6 +38,12 @@ import {
   type CalloutVariant,
 } from "./email-callout-presets";
 import { toPlainDesign, mimeToExt } from "./email-block-helpers";
+import {
+  buildBannerNode,
+  buildLogoNode,
+  type EmailBranding,
+} from "@/lib/emails/branding";
+import { getEmailBrandingAction } from "@/lib/emails/branding-action";
 import "@maily-to/core/style.css";
 
 /**
@@ -98,6 +114,27 @@ export const EmailBlockEditor = ({
   const [previewSnapshot, setPreviewSnapshot] = useState<JSONContent | null>(
     initialDesign ?? null,
   );
+
+  // Logo et banniere pre-definis dans l'administration. Charges une fois a
+  // l'ouverture de l'editeur : les boutons d'insertion restent desactives tant
+  // qu'aucun visuel n'est configure, plutot que d'inserer un bloc vide.
+  const [branding, setBranding] = useState<EmailBranding | null>(null);
+  useEffect(() => {
+    let active = true;
+    getEmailBrandingAction()
+      .then((b) => {
+        if (active) setBranding(b);
+      })
+      .catch(() => {
+        // Sans reglages, l'editeur fonctionne normalement, sans les raccourcis.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const canInsertLogo = Boolean(branding && buildLogoNode(branding));
+  const canInsertBanner = Boolean(branding && buildBannerNode(branding));
 
   const handleImageUpload = useCallback(
     async (file: Blob): Promise<string> => {
@@ -203,6 +240,18 @@ export const EmailBlockEditor = ({
     editor.chain().focus().insertContent(buildCalloutSectionNode(variant)).run();
   }, []);
 
+  const handleInsertBranding = useCallback(
+    (kind: "logo" | "banner") => {
+      const editor = editorRef.current;
+      if (!editor || !branding) return;
+      const node =
+        kind === "logo" ? buildLogoNode(branding) : buildBannerNode(branding);
+      if (!node) return;
+      editor.chain().focus().insertContent(node).run();
+    },
+    [branding],
+  );
+
   const handleCropped = useCallback((url: string) => {
     const editor = editorRef.current;
     if (!editor || !selectedImage) return;
@@ -220,6 +269,40 @@ export const EmailBlockEditor = ({
       // Maily ships its own styles under mly: prefix — no Tailwind conflict.
     >
       <div className="mb-2 flex flex-wrap items-center justify-end gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!canInsertLogo && !canInsertBanner}
+              title={
+                canInsertLogo || canInsertBanner
+                  ? "Insérer le logo ou la bannière pré-définis"
+                  : "Aucun visuel configuré — Paramètres plateforme › Identité visuelle des emails"
+              }
+            >
+              <PanelTop className="mr-2 h-4 w-4" />
+              Éléments de marque
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              disabled={!canInsertLogo}
+              onClick={() => handleInsertBranding("logo")}
+            >
+              <PanelTop className="mr-2 h-4 w-4 text-primary-green" />
+              Insérer le logo
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={!canInsertBanner}
+              onClick={() => handleInsertBranding("banner")}
+            >
+              <ImageIcon className="mr-2 h-4 w-4 text-primary-red" />
+              Insérer la bannière
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button type="button" variant="outline" size="sm">

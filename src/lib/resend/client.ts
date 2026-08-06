@@ -1,4 +1,6 @@
 import { Resend } from "resend";
+import { applyEmailBranding } from "@/lib/emails/branding";
+import { getEmailBranding } from "@/lib/emails/branding-store";
 
 let _resend: Resend | null = null;
 function getResend(): Resend {
@@ -24,21 +26,37 @@ type SendEmailParams = {
   html: string;
   from?: string;
   attachments?: EmailAttachment[];
+  /**
+   * Mettre a false pour envoyer le HTML tel quel, sans logo d'en-tete ni pied
+   * de page. Reserve aux cas ou l'habillage nuit (export, debug).
+   */
+  branded?: boolean;
 };
 
+/**
+ * Point de passage unique de tous les envois transactionnels — c'est donc ici
+ * qu'on applique l'identite visuelle (logo, pied de page), y compris pour les
+ * emails de repli ecrits en dur dans `send.ts`, qui ne passent pas par un
+ * template. Un changement de logo dans l'administration prend effet au
+ * prochain envoi, sans toucher aux templates.
+ */
 export const sendTransactionalEmail = async ({
   to,
   subject,
   html,
   from = DEFAULT_FROM,
   attachments,
+  branded = true,
 }: SendEmailParams) => {
   const resend = getResend();
+  const finalHtml = branded
+    ? applyEmailBranding(html, await getEmailBranding())
+    : html;
   const { data, error } = await resend.emails.send({
     from,
     to,
     subject,
-    html,
+    html: finalHtml,
     ...(attachments?.length ? { attachments } : {}),
   });
 

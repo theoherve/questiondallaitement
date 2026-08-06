@@ -16,6 +16,8 @@ import {
 } from "@/lib/brevo/client";
 import { syncAllContactsToBrevo } from "@/lib/brevo/sync";
 import { renderBlockEmail } from "@/lib/emails/render-block-email";
+import { applyEmailBranding } from "@/lib/emails/branding";
+import { getEmailBranding } from "@/lib/emails/branding-store";
 import {
   isRequiredTemplate,
   requiredTemplateReason,
@@ -44,13 +46,27 @@ const withRenderedHtml = async <T extends { body_html?: string; body_design?: Re
   input: T,
 ): Promise<RenderOutcome<T>> => {
   try {
+    // L'habillage (logo, pied de page) est applique ici et non a l'envoi :
+    // Brevo recoit du HTML fige, il n'y a pas d'etape d'envoi cote application
+    // ou l'injecter. `applyEmailBranding` est idempotent, donc reenregistrer
+    // une campagne ne duplique pas l'en-tete.
+    const branding = await getEmailBranding();
     if (input.body_design && Object.keys(input.body_design).length > 0) {
       const html = await renderBlockEmail(input.body_design as JSONContent, {
         replaceVariables: false,
       });
-      return { ok: true, value: { ...input, body_html: html } };
+      return {
+        ok: true,
+        value: { ...input, body_html: applyEmailBranding(html, branding) },
+      };
     }
-    return { ok: true, value: { ...input, body_html: input.body_html ?? "" } };
+    return {
+      ok: true,
+      value: {
+        ...input,
+        body_html: applyEmailBranding(input.body_html ?? "", branding),
+      },
+    };
   } catch (e) {
     // Sans ce filet, un design que le moteur d'email refuse fait remonter
     // l'exception jusqu'a la page ("Application error: a server-side
