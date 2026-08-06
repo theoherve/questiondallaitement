@@ -26,6 +26,7 @@ import {
   FORMATION_SCHOOL_PRICE_HINT,
   FORMATION_SCHOOL_PRICE_LABEL,
 } from "@/config/formations";
+import { stripHtml, truncate } from "@/lib/html/strip";
 import { RegisterButton } from "./register-button";
 import { RegistrationReconciler } from "./registration-reconciler";
 
@@ -41,18 +42,24 @@ export const generateMetadata = async ({
   const supabase = await createClient();
   const { data } = await supabase
     .from("events")
-    .select("title, description, thumbnail_url")
+    .select("title, description, summary_html, thumbnail_url")
     .eq("slug", slug)
     .eq("is_published", true)
     .single();
 
   if (!data) return { title: "Événement introuvable" };
+
+  // Le resume prend le relais quand la description courte n'est pas saisie :
+  // mieux vaut une phrase extraite du contenu editorial qu'aucune metadonnee.
+  const description =
+    data.description ?? truncate(stripHtml(data.summary_html), 155);
+
   return {
     title: data.title,
-    description: data.description ?? undefined,
+    description,
     openGraph: {
       title: data.title,
-      description: data.description ?? undefined,
+      description,
       type: "article",
       ...(data.thumbnail_url && { images: [{ url: data.thumbnail_url }] }),
     },
