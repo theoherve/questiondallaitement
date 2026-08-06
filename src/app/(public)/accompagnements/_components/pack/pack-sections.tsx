@@ -58,14 +58,14 @@ export function PackHero({
   const { eyebrow, titleOverride, subtitle, reassurances, ctaLabel } =
     PACK_CONTENT.hero;
   return (
-    <section className="relative overflow-hidden bg-primary-rose">
+    <section className="relative overflow-hidden bg-primary-green">
       <div
         className={`relative z-10 mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28 ${
           imageUrl ? "lg:pr-[calc(38%+2rem)]" : "text-center"
         }`}
       >
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-accent-honey" aria-hidden />
+          <span className="h-1.5 w-1.5 rounded-full bg-primary-red" aria-hidden />
           <span className="font-sans text-xs font-medium uppercase tracking-widest text-white/90">
             {eyebrow}
           </span>
@@ -86,10 +86,9 @@ export function PackHero({
         >
           {subtitle}
         </p>
-        {/* Sur l'aplat rose, le CTA se pose en blanc : primary-red s'y noierait. */}
         <a
           href="#tarif"
-          className="mt-8 inline-flex items-center rounded-md bg-white px-8 py-3.5 text-base font-medium text-primary-rose shadow-lg transition-all duration-200 hover:scale-[1.02] hover:bg-background-beige"
+          className="mt-8 inline-flex items-center rounded-md bg-primary-red px-8 py-3.5 text-base font-medium text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:bg-primary-red-dark"
         >
           {ctaLabel} — {priceLabel}
         </a>
@@ -104,7 +103,7 @@ export function PackHero({
               className="flex items-center gap-2 text-sm text-white/90"
             >
               <CheckCircle
-                className="h-4 w-4 text-accent-honey"
+                className="h-4 w-4 text-accent-sage"
                 aria-hidden
               />
               {r}

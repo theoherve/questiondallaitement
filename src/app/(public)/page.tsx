@@ -208,8 +208,8 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/85 sm:text-xl">
               Vous voulez allaiter sereinement, sans sacrifier votre santé,
               votre couple ou votre carrière. Je vous donne les repères
-              cliniques et le soutien humain pour y arriver — à votre rythme,
-              selon votre réalité.
+              cliniques et le soutien humain pour y arriver <span className="font-bold">à votre rythme,
+              selon votre réalité.</span>
             </p>
 
             <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
@@ -232,7 +232,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                 {features.bookingEnabled ? (
                   <Link href="/reserver">Prendre rendez-vous</Link>
                 ) : (
-                  <Link href={PACK_SALES_PATH}>Découvrir le pack</Link>
+                  <Link href={PACK_SALES_PATH}>Découvrir le Pack</Link>
                 )}
               </Button>
             </div>
@@ -872,7 +872,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                 {features.bookingEnabled ? (
                   <Link href="/reserver">Prendre rendez-vous</Link>
                 ) : (
-                  <Link href={PACK_SALES_PATH}>Découvrir le pack</Link>
+                  <Link href={PACK_SALES_PATH}>Découvrir le Pack</Link>
                 )}
               </Button>
               <Button

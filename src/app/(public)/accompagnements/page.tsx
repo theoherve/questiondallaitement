@@ -310,7 +310,7 @@ const AccompagnementsPage = async () => {
                     className="bg-primary-red hover:bg-primary-red-dark"
                   >
                     <Link href={`/accompagnements/${pack.slug}`}>
-                      Découvrir le pack
+                      Découvrir le Pack
                     </Link>
                   </Button>
                 </div>

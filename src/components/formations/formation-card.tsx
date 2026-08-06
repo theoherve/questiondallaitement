@@ -94,7 +94,7 @@ export const FormationCard = ({ formation, featured }: FormationCardProps) => {
                 className="bg-primary-red hover:bg-primary-red-dark"
               >
                 <Link href={`/accompagnements/${formation.slug}`}>
-                  Découvrir le pack
+                  Découvrir le Pack
                 </Link>
               </Button>
             </div>
