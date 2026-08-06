@@ -15,7 +15,7 @@ import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Plus, Eye, Pencil, Mail, FileText, RefreshCw } from "lucide-react";
+import { Plus, Eye, Pencil, Mail, FileText, RefreshCw, Tag } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { SyncButton } from "./_components/sync-button";
@@ -77,6 +77,12 @@ const MarketingPage = async () => {
         </div>
         <div className="flex items-center gap-2">
           <SyncButton />
+          <Button asChild variant="outline">
+            <Link href="/admin/marketing/codes-promo">
+              <Tag className="mr-2 h-4 w-4" />
+              Codes promo
+            </Link>
+          </Button>
           <Button asChild>
             <Link href="/admin/marketing/campagnes/nouveau">
               <Plus className="mr-2 h-4 w-4" />
