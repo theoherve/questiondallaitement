@@ -1,9 +1,13 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { KlarnaNote } from "@/components/klarna-note";
+import {
+  PromoCodeField,
+  type AppliedPromo,
+} from "@/components/promo/promo-code-field";
 import { registerForEvent } from "../actions";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2 } from "lucide-react";
@@ -15,6 +19,8 @@ type Props = {
   isAlreadyRegistered: boolean;
   isPast: boolean;
   isAuthenticated: boolean;
+  priceCents: number;
+  currency: string;
 };
 
 export const RegisterButton = ({
@@ -24,8 +30,11 @@ export const RegisterButton = ({
   isAlreadyRegistered,
   isPast,
   isAuthenticated,
+  priceCents,
+  currency,
 }: Props) => {
   const [isPending, startTransition] = useTransition();
+  const [promo, setPromo] = useState<AppliedPromo | null>(null);
   const router = useRouter();
 
   if (isPast) {
@@ -66,7 +75,7 @@ export const RegisterButton = ({
 
   const handleRegister = () => {
     startTransition(async () => {
-      const result = await registerForEvent(eventId);
+      const result = await registerForEvent(eventId, promo?.code);
       if (result.success) {
         if (result.data?.redirect_url) {
           // Paid event → redirect to Stripe
@@ -84,6 +93,16 @@ export const RegisterButton = ({
 
   return (
     <div className="space-y-2">
+      {/* Rien a remiser sur un evenement gratuit. */}
+      {!isFree && (
+        <PromoCodeField
+          serviceKind="event"
+          itemId={eventId}
+          amountCents={priceCents}
+          currency={currency}
+          onApplied={setPromo}
+        />
+      )}
       <Button
         className="w-full bg-primary-red hover:bg-primary-red-dark"
         onClick={handleRegister}

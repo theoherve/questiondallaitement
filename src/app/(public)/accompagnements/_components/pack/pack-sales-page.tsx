@@ -94,6 +94,8 @@ export function PackSalesPage({
         formationId={formation.id}
         isLoggedIn={isLoggedIn}
         isEnrolled={isEnrolled}
+        priceCents={formation.price_cents}
+        currency={formation.currency}
       />
       <PackHero
         title={formation.title}
@@ -117,6 +119,8 @@ export function PackSalesPage({
         formationId={formation.id}
         isLoggedIn={isLoggedIn}
         isEnrolled={isEnrolled}
+        priceCents={formation.price_cents}
+        currency={formation.currency}
       />
       <section id="faq" className="scroll-mt-20 bg-background-beige px-4 py-16 sm:px-6 sm:py-20">
         <PackFaq />

@@ -502,6 +502,8 @@ const EventDetailPage = async ({ params, searchParams }: Props) => {
                     isAlreadyRegistered={isAlreadyRegistered}
                     isPast={isPast}
                     isAuthenticated={!!user}
+                    priceCents={event.price_cents}
+                    currency={event.currency}
                   />
 
                   {/* Trust indicators */}

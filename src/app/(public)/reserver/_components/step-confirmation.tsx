@@ -13,12 +13,22 @@ import {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { BookingState } from "./booking-wizard";
+import {
+  PromoCodeField,
+  type AppliedPromo,
+} from "@/components/promo/promo-code-field";
 import { WITHDRAWAL_TEXTS } from "@/lib/legal/withdrawal";
 
 type StepConfirmationProps = {
   state: BookingState;
   services: { title: string; description: string | null }[];
   onConfirm: () => void;
+  /**
+   * Remontee du code promo valide. Le champ vit ici et non a l'etape
+   * paiement : celle-ci enchaine immediatement sur la confirmation des qu'un
+   * mode est choisi, sans laisser le temps de saisir quoi que ce soit.
+   */
+  onPromoApplied: (promo: AppliedPromo | null) => void;
   isPending: boolean;
   /** La consultation a lieu dans les quatorze jours : accord obligatoire. */
   waiverRequired: boolean;
@@ -53,6 +63,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 export const StepConfirmation = ({
   state,
   onConfirm,
+  onPromoApplied,
   isPending,
   waiverRequired,
   waiverAccepted,
@@ -138,6 +149,20 @@ export const StepConfirmation = ({
           <Badge variant="secondary" className="mt-2">
             {PAYMENT_LABELS[state.paymentMethod ?? ""] ?? ""}
           </Badge>
+
+          {/* Un reglement sur place ne passe pas par la plateforme : rien a
+              remiser. */}
+          {state.paymentMethod === "online" && state.consultationTypeId && (
+            <div className="mt-4">
+              <PromoCodeField
+                serviceKind="booking"
+                itemId={state.consultationTypeId}
+                amountCents={totalPrice}
+                currency={state.currency}
+                onApplied={onPromoApplied}
+              />
+            </div>
+          )}
         </div>
       </div>
 

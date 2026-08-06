@@ -332,6 +332,8 @@ const FormationDetailPage = async ({ params }: Props) => {
                 formationId={formation.id}
                 isLoggedIn={!!currentUser}
                 isEnrolled={isEnrolled}
+                priceCents={formation.price_cents}
+                currency={formation.currency}
                 ctaLabel={ctaLabelFor(formation.slug)}
               />
             </CardContent>

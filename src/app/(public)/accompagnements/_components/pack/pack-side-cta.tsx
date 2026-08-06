@@ -17,6 +17,8 @@ type Props = {
   formationId: string;
   isLoggedIn: boolean;
   isEnrolled: boolean;
+  priceCents: number;
+  currency: string;
 };
 
 const ANCHORS = [
@@ -41,6 +43,8 @@ export function PackSideCta({
   formationId,
   isLoggedIn,
   isEnrolled,
+  priceCents,
+  currency,
 }: Props) {
   const [visible, setVisible] = useState(false);
 
@@ -106,6 +110,8 @@ export function PackSideCta({
               formationId={formationId}
               isLoggedIn={isLoggedIn}
               isEnrolled={isEnrolled}
+              priceCents={priceCents}
+              currency={currency}
               ctaLabel={ctaLabelFor(PACK_SLUG)}
             />
           </div>

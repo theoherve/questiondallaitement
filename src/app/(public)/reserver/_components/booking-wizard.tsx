@@ -14,6 +14,7 @@ import { StepPayment } from "./step-payment";
 import { StepConfirmation } from "./step-confirmation";
 import { bookingRequiresWaiver } from "@/lib/legal/withdrawal";
 import { createBooking, computeSlotPrice, type BookingFormData } from "../actions";
+import type { AppliedPromo } from "@/components/promo/promo-code-field";
 import type { ConsultationLocation, BookingPaymentMethod, LocationConfig } from "@/types/database";
 
 type ServiceOption = {
@@ -87,6 +88,7 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
   const [state, setState] = useState<BookingState>(initialState);
   const [error, setError] = useState<string | null>(null);
   const [waiverAccepted, setWaiverAccepted] = useState(false);
+  const [promo, setPromo] = useState<AppliedPromo | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleBack = () => {
@@ -119,6 +121,7 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
         contact: state.contact!,
         payment_method: state.paymentMethod!,
         withdrawal_waiver_accepted: waiverAccepted,
+        promo_code: promo?.code,
       };
 
       const result = await createBooking(formData);
@@ -189,6 +192,9 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
               serviceTitle={state.serviceTitle}
               selectedDuration={state.durationMinutes || null}
               onSelect={(durationMinutes) => {
+                // Le montant change : une remise calculee sur l'ancien prix
+                // n'a plus de sens.
+                setPromo(null);
                 setState({
                   ...state,
                   durationMinutes,
@@ -217,6 +223,7 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
               locationConfigs={locationConfigs}
               selected={state.location}
               onSelect={(loc) => {
+                setPromo(null);
                 setState({
                   ...state,
                   location: loc,
@@ -239,6 +246,7 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
               location={state.location}
               durationMinutes={state.durationMinutes}
               onSelect={(consultantId, consultantName, consultationTypeId, surcharge, durationOptionId) => {
+                setPromo(null);
                 setState({
                   ...state,
                   consultantId,
@@ -260,6 +268,9 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
               consultationTypeId={state.consultationTypeId}
               durationMinutes={state.durationMinutes}
               onSelect={(slot) => {
+                // Un creneau week-end majore le prix : la remise doit etre
+                // recalculee.
+                setPromo(null);
                 // Compute final price after slot selection (weekend/holiday detection)
                 startTransition(async () => {
                   if (state.durationOptionId && state.consultantId && state.location) {
@@ -316,6 +327,7 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
               state={state}
               services={services}
               onConfirm={handleSubmit}
+              onPromoApplied={setPromo}
               isPending={isPending}
               waiverRequired={
                 !!state.selectedSlot &&
