@@ -4,6 +4,8 @@ import {
   CalendarDays,
   Clock,
   Monitor,
+  MonitorPlay,
+  Presentation,
   GraduationCap,
   ShieldCheck,
   Award,
@@ -22,7 +24,12 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+// MonitorPlay : un module qu'on lance a son rythme. Presentation : quelqu'un
+// presente en direct. Les deux se distinguent l'un de l'autre et du Monitor
+// nu de la visio Zoom.
 const BENEFITS = [
+  { icon: MonitorPlay, label: "E-Learning" },
+  { icon: Presentation, label: "Webinaire" },
   { icon: Monitor, label: "En visio Zoom" },
   { icon: GraduationCap, label: "Formatrice IBCLC" },
   { icon: ShieldCheck, label: "Attestation fournie" },
@@ -170,12 +177,15 @@ const FormationsProPage = async () => {
       {/* Benefits Strip */}
       <section className="border-b border-primary-green/10 bg-background-beige-dark">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 gap-0 lg:grid-cols-4">
+          {/* Un seul rang, quoi qu'il arrive : en dessous de la largeur
+              necessaire, la bande defile horizontalement plutot que de se
+              replier sur deux lignes. */}
+          <div className="-mx-4 flex gap-0 overflow-x-auto px-4 sm:mx-0 sm:px-0">
             {BENEFITS.map(({ icon: Icon, label }, i) => (
               <div
                 key={label}
-                className={`flex items-center gap-3 px-4 py-4 sm:px-6 sm:py-5 ${
-                  i < BENEFITS.length - 1 ? "lg:border-r lg:border-primary-green/10" : ""
+                className={`flex min-w-44 flex-1 shrink-0 items-center gap-3 px-4 py-4 sm:px-6 sm:py-5 ${
+                  i < BENEFITS.length - 1 ? "border-r border-primary-green/10" : ""
                 }`}
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-primary-red/10">

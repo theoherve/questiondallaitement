@@ -10,10 +10,15 @@ import {
   Users,
   GraduationCap,
   Monitor,
+  MonitorPlay,
+  Presentation,
+  Target,
+  BookOpen,
   ArrowLeft,
   ShieldCheck,
   Award,
   CheckCircle,
+  type LucideIcon,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -57,12 +62,59 @@ const categorizeEvent = (title: string): { category: EventCategory; label: strin
   return { category: "autre", label: "Événement", color: "bg-primary-green/80 text-white" };
 };
 
+/**
+ * MonitorPlay pour l'e-learning (un module qu'on lance a son rythme) et
+ * Presentation pour le webinaire (quelqu'un presente en direct) : les deux se
+ * distinguent l'un de l'autre, et du Monitor nu de la visio Zoom.
+ */
 const HIGHLIGHTS = [
+  { icon: MonitorPlay, text: "E-Learning" },
+  { icon: Presentation, text: "Webinaire" },
   { icon: Monitor, text: "Formation en visio Zoom" },
   { icon: ShieldCheck, text: "Attestation de formation" },
   { icon: Award, text: "Approche fondée sur les preuves" },
   { icon: GraduationCap, text: "Formatrice certifiée IBCLC" },
 ];
+
+/**
+ * Base commune aux trois sections editoriales : le contenu vient de
+ * l'editeur du back-office, donc on ne peut styler que par selecteur.
+ */
+const PROSE_BASE =
+  "text-primary-green/80 [&_p]:mb-3 [&_p:last-child]:mb-0 [&_p]:leading-relaxed [&_strong]:font-semibold [&_strong]:text-primary-green [&_em]:not-italic [&_em]:text-primary-red [&_a]:underline [&_a]:underline-offset-2";
+
+/**
+ * Objectifs : chaque puce devient une pastille cochee, sur deux colonnes des
+ * qu'il y a la place. La coche est un pseudo-element, donc elle s'applique
+ * quelle que soit la profondeur du balisage saisi.
+ */
+const PROSE_OBJECTIVES = `${PROSE_BASE} [&_ul]:grid [&_ul]:gap-x-6 [&_ul]:gap-y-3 sm:[&_ul]:grid-cols-2 [&_li]:relative [&_li]:list-none [&_li]:pl-8 [&_li]:leading-relaxed [&_li]:before:absolute [&_li]:before:left-0 [&_li]:before:top-0.5 [&_li]:before:flex [&_li]:before:h-5 [&_li]:before:w-5 [&_li]:before:items-center [&_li]:before:justify-center [&_li]:before:rounded-full [&_li]:before:bg-primary-green/10 [&_li]:before:text-[0.7rem] [&_li]:before:font-bold [&_li]:before:text-primary-green [&_li]:before:content-['✓']`;
+
+/**
+ * Programme : liste numerotee transformee en fil vertical. Le compteur CSS
+ * evite de dependre du numero saisi, et le trait de liaison est masque sur le
+ * dernier element pour ne pas pendre dans le vide.
+ */
+const PROSE_PROGRAM =
+  "[&_ol]:list-none [&_ol]:space-y-6 [&_ol]:[counter-reset:step] [&_ol]:pl-0 [&_ol>li]:relative [&_ol>li]:pl-14 [&_ol>li]:leading-relaxed [&_ol>li]:text-primary-green/80 [&_ol>li]:before:absolute [&_ol>li]:before:left-0 [&_ol>li]:before:top-0 [&_ol>li]:before:flex [&_ol>li]:before:h-9 [&_ol>li]:before:w-9 [&_ol>li]:before:items-center [&_ol>li]:before:justify-center [&_ol>li]:before:rounded-full [&_ol>li]:before:bg-primary-rose [&_ol>li]:before:text-sm [&_ol>li]:before:font-semibold [&_ol>li]:before:text-white [&_ol>li]:before:[counter-increment:step] [&_ol>li]:before:content-[counter(step)] [&_ol>li]:after:absolute [&_ol>li]:after:left-[1.0625rem] [&_ol>li]:after:top-10 [&_ol>li]:after:bottom-[-1.5rem] [&_ol>li]:after:w-px [&_ol>li]:after:bg-primary-green/15 [&_ol>li:last-child]:after:hidden [&_ol_strong]:font-semibold [&_ol_strong]:text-primary-green [&_ol_p]:mb-1 [&_ol_p:last-child]:mb-0";
+
+/** Un titre de section : pastille iconographiee + intitule serif. */
+const SectionHeading = ({
+  icon: Icon,
+  children,
+}: {
+  icon: LucideIcon;
+  children: React.ReactNode;
+}) => (
+  <div className="flex items-center gap-3">
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-rose/10 text-primary-rose">
+      <Icon className="h-4.5 w-4.5" />
+    </span>
+    <h2 className="font-serif text-xl font-semibold text-primary-green">
+      {children}
+    </h2>
+  </div>
+);
 
 export type EventDetailConsultant = {
   slug: string;
@@ -80,7 +132,9 @@ export type EventDetailProps = {
     slug: string;
     description: string | null;
     summary_html: string | null;
-    long_description: string | null;
+    objectives_html: string | null;
+    program_html: string | null;
+    audience_html: string | null;
     type: "online" | "in_person" | "hybrid";
     starts_at: string;
     ends_at: string;
@@ -269,6 +323,28 @@ export const EventDetail = ({
       </section>
 
       {/* ============================================================ */}
+      {/* Bande de reperes — pleine largeur, une seule ligne            */}
+      {/* Sortie de la colonne de contenu : six tuiles n'y tiendraient  */}
+      {/* pas sur un rang. En dessous de `sm`, la bande defile          */}
+      {/* horizontalement plutot que de se replier.                     */}
+      {/* ============================================================ */}
+      <div className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
+        <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+          {HIGHLIGHTS.map(({ icon: Icon, text }) => (
+            <div
+              key={text}
+              className="flex min-w-32 flex-1 flex-col items-center justify-start gap-2 bg-background-beige-dark p-4 text-center"
+            >
+              <Icon className="h-5 w-5 shrink-0 text-primary-red" />
+              <span className="text-xs font-medium text-primary-green">
+                {text}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ============================================================ */}
       {/* Main content + sidebar                                       */}
       {/* ============================================================ */}
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -277,43 +353,40 @@ export const EventDetail = ({
           {/* Left — Content                                           */}
           {/* -------------------------------------------------------- */}
           <div className="lg:col-span-2 space-y-10">
-            {/* Highlights strip */}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {HIGHLIGHTS.map(({ icon: Icon, text }) => (
-                <div
-                  key={text}
-                  className="flex flex-col items-center gap-2 bg-background-beige-dark p-4 text-center"
-                >
-                  <Icon className="h-5 w-5 text-primary-red" />
-                  <span className="text-xs font-medium text-primary-green">
-                    {text}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Detailed description */}
-            {event.long_description && (
+            {/* Objectifs pédagogiques — puces cochées */}
+            {event.objectives_html && (
               <div>
-                <h2 className="font-serif text-xl font-semibold text-primary-green">
-                  À propos de cette formation
-                </h2>
+                <SectionHeading icon={Target}>
+                  Ce que vous saurez faire
+                </SectionHeading>
                 <div
-                  className="prose-formation mt-4 max-w-none text-primary-green/80 [&_p]:mb-3 [&_p]:leading-relaxed [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-2 [&_li]:text-primary-green/80 [&_strong]:text-primary-green [&_strong]:font-semibold [&_em]:text-primary-red"
-                  dangerouslySetInnerHTML={{ __html: event.long_description }}
+                  className={`mt-5 max-w-none ${PROSE_OBJECTIVES}`}
+                  dangerouslySetInnerHTML={{ __html: event.objectives_html }}
                 />
               </div>
             )}
 
-            {/* Fallback if no long description */}
-            {!event.long_description && event.description && (
+            {/* Programme — fil vertical numéroté */}
+            {event.program_html && (
               <div>
-                <h2 className="font-serif text-xl font-semibold text-primary-green">
-                  À propos de cette formation
-                </h2>
-                <p className="mt-4 leading-relaxed text-primary-green/70">
-                  {event.description}
-                </p>
+                <SectionHeading icon={BookOpen}>Le programme</SectionHeading>
+                <div
+                  className={`mt-5 max-w-none ${PROSE_BASE} ${PROSE_PROGRAM}`}
+                  dangerouslySetInnerHTML={{ __html: event.program_html }}
+                />
+              </div>
+            )}
+
+            {/* Public visé — encadré, pour trancher avec les deux au-dessus */}
+            {event.audience_html && (
+              <div className="bg-background-beige-dark p-6 sm:p-8">
+                <SectionHeading icon={Users}>
+                  À qui s’adresse cette formation
+                </SectionHeading>
+                <div
+                  className={`mt-4 max-w-none ${PROSE_BASE} [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5`}
+                  dangerouslySetInnerHTML={{ __html: event.audience_html }}
+                />
               </div>
             )}
 
@@ -391,10 +464,10 @@ export const EventDetail = ({
                             ? `${format(new Date(event.starts_at), "d", { locale: fr })} — ${format(new Date(event.ends_at), "d MMMM yyyy", { locale: fr })}`
                             : format(new Date(event.starts_at), "EEEE d MMMM yyyy", { locale: fr })}
                         </p>
-                        <p className="text-xs text-primary-green/50 capitalize">
+                        <p className="text-xs text-primary-green/50">
                           {isMultiDay
-                            ? `${format(new Date(event.starts_at), "EEEE", { locale: fr })} et ${format(new Date(event.ends_at), "EEEE", { locale: fr })}`
-                            : format(new Date(event.starts_at), "EEEE", { locale: fr })}
+                            ? `${format(new Date(event.starts_at), "EEEE", { locale: fr }).charAt(0).toUpperCase() + format(new Date(event.starts_at), "EEEE", { locale: fr }).slice(1)} et ${format(new Date(event.ends_at), "EEEE", { locale: fr })}`
+                            : format(new Date(event.starts_at), "EEEE", { locale: fr }).charAt(0).toUpperCase() + format(new Date(event.starts_at), "EEEE", { locale: fr }).slice(1)}
                         </p>
                       </div>
                     </div>

@@ -49,21 +49,25 @@ beforeEach(() => {
 });
 
 describe("createEvent", () => {
-  it("persiste summary_html et long_description", async () => {
+  it("persiste les quatre sections editoriales", async () => {
     const chain = createChain({ data: { id: "event-1", slug: validInput.slug } });
     mockFrom.mockReturnValue(chain);
 
     const result = await createEvent({
       ...validInput,
       summary_html: "<p>Trois points cles</p>",
-      long_description: "<p>Le programme detaille</p>",
+      objectives_html: "<ul><li>Reperer une prise inefficace</li></ul>",
+      program_html: "<ol><li>Module un</li></ol>",
+      audience_html: "<p>Sages-femmes</p>",
     });
 
     expect(result.success).toBe(true);
     expect(chain.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         summary_html: "<p>Trois points cles</p>",
-        long_description: "<p>Le programme detaille</p>",
+        objectives_html: "<ul><li>Reperer une prise inefficace</li></ul>",
+        program_html: "<ol><li>Module un</li></ol>",
+        audience_html: "<p>Sages-femmes</p>",
       }),
     );
   });
@@ -79,7 +83,7 @@ describe("createEvent", () => {
     );
   });
 
-  it("accepte un evenement sans resume", async () => {
+  it("accepte une formation sans aucune section", async () => {
     const chain = createChain({ data: { id: "event-1", slug: validInput.slug } });
     mockFrom.mockReturnValue(chain);
 
@@ -87,27 +91,36 @@ describe("createEvent", () => {
 
     expect(result.success).toBe(true);
     expect(chain.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ summary_html: null, long_description: null }),
+      expect.objectContaining({
+        summary_html: null,
+        objectives_html: null,
+        program_html: null,
+        audience_html: null,
+      }),
     );
   });
 });
 
 describe("updateEvent", () => {
-  it("persiste summary_html et long_description", async () => {
+  it("persiste les quatre sections editoriales", async () => {
     const chain = createChain({ data: { slug: "ancien-slug" } });
     mockFrom.mockReturnValue(chain);
 
     const result = await updateEvent("event-1", {
       ...validInput,
       summary_html: "<p>Resume mis a jour</p>",
-      long_description: "<p>Programme mis a jour</p>",
+      objectives_html: "<ul><li>Objectif mis a jour</li></ul>",
+      program_html: "<ol><li>Module mis a jour</li></ol>",
+      audience_html: "<p>Public mis a jour</p>",
     });
 
     expect(result.success).toBe(true);
     expect(chain.update).toHaveBeenCalledWith(
       expect.objectContaining({
         summary_html: "<p>Resume mis a jour</p>",
-        long_description: "<p>Programme mis a jour</p>",
+        objectives_html: "<ul><li>Objectif mis a jour</li></ul>",
+        program_html: "<ol><li>Module mis a jour</li></ol>",
+        audience_html: "<p>Public mis a jour</p>",
       }),
     );
   });

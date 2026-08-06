@@ -67,7 +67,9 @@ export const EventForm = ({
     slug: event?.slug ?? "",
     description: event?.description ?? "",
     summary_html: event?.summary_html ?? "",
-    long_description: event?.long_description ?? "",
+    objectives_html: event?.objectives_html ?? "",
+    program_html: event?.program_html ?? "",
+    audience_html: event?.audience_html ?? "",
     type: event?.type ?? ("online" as "online" | "in_person" | "hybrid"),
     starts_at: toLocalDatetime(event?.starts_at) || "",
     ends_at: toLocalDatetime(event?.ends_at) || "",
@@ -107,7 +109,9 @@ export const EventForm = ({
       ...formData,
       description: formData.description || null,
       summary_html: formData.summary_html || null,
-      long_description: formData.long_description || null,
+      objectives_html: formData.objectives_html || null,
+      program_html: formData.program_html || null,
+      audience_html: formData.audience_html || null,
       location: formData.location || null,
       max_participants:
         formData.max_participants === "" ? null : Number(formData.max_participants),
@@ -312,8 +316,12 @@ export const EventForm = ({
               </div>
 
               <EventContentFields
-                summaryHtml={formData.summary_html}
-                longDescription={formData.long_description}
+                values={{
+                  summary_html: formData.summary_html,
+                  objectives_html: formData.objectives_html,
+                  program_html: formData.program_html,
+                  audience_html: formData.audience_html,
+                }}
                 onChange={(field, html) =>
                   setFormData((p) => ({ ...p, [field]: html }))
                 }
