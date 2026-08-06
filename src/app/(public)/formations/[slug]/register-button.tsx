@@ -21,6 +21,7 @@ type Props = {
   isAuthenticated: boolean;
   priceCents: number;
   currency: string;
+  isPreview?: boolean;
 };
 
 export const RegisterButton = ({
@@ -32,10 +33,21 @@ export const RegisterButton = ({
   isAuthenticated,
   priceCents,
   currency,
+  isPreview = false,
 }: Props) => {
   const [isPending, startTransition] = useTransition();
   const [promo, setPromo] = useState<AppliedPromo | null>(null);
   const router = useRouter();
+
+  // Apercu du back-office : le rendu doit etre celui du public, mais aucune
+  // inscription ne doit partir depuis un brouillon.
+  if (isPreview) {
+    return (
+      <Button className="w-full" disabled>
+        Inscription (désactivée en aperçu)
+      </Button>
+    );
+  }
 
   if (isPast) {
     return (
