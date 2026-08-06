@@ -618,28 +618,23 @@ const EventCard = ({ event }: { event: EventData }) => {
               </p>
             )}
           </div>
-          {isExternal ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-primary-red text-primary-red hover:bg-primary-red hover:text-white pointer-events-none"
-            >
-              Voir l&apos;offre
-              <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-            </Button>
-          ) : (
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className="border-primary-red text-primary-red hover:bg-primary-red hover:text-white"
-            >
-              <Link href={`/formations/${event.slug}`}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="pointer-events-none border-primary-red text-primary-red transition-colors group-hover:bg-primary-red group-hover:text-white"
+          >
+            {isExternal ? (
+              <>
+                Voir l&apos;offre
+                <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+              </>
+            ) : (
+              <>
                 En savoir plus
                 <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-              </Link>
-            </Button>
-          )}
+              </>
+            )}
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -651,14 +646,21 @@ const EventCard = ({ event }: { event: EventData }) => {
         href={buildExternalUrl(event.external_url!)}
         target="_blank"
         rel="noopener noreferrer"
-        className="block h-full"
+        className="block h-full rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-red"
       >
         {cardContent}
       </a>
     );
   }
 
-  return cardContent;
+  return (
+    <Link
+      href={`/formations/${event.slug}`}
+      className="block h-full rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-red"
+    >
+      {cardContent}
+    </Link>
+  );
 };
 
 /* ------------------------------------------------------------------ */
