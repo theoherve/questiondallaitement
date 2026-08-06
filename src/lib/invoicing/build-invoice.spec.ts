@@ -52,6 +52,31 @@ describe("buildInvoiceContent", () => {
     expect(row.sequence).toBeUndefined();
   });
 
+  it("reporte la remise dans le contenu de la facture", () => {
+    const row = buildInvoiceContent({
+      ...base,
+      ttcCents: 8500,
+      promoCode: "SUPERMAMAN",
+      discountCents: 1500,
+      grossTtcCents: 10_000,
+    });
+
+    expect(row).toMatchObject({
+      amount_ttc_cents: 8500,
+      promo_code: "SUPERMAMAN",
+      discount_cents: 1500,
+      gross_amount_ttc_cents: 10_000,
+    });
+  });
+
+  it("laisse les champs de remise nuls sans code", () => {
+    expect(buildInvoiceContent(base)).toMatchObject({
+      promo_code: null,
+      discount_cents: null,
+      gross_amount_ttc_cents: null,
+    });
+  });
+
   it("refuse d'emettre sans les mentions obligatoires de l'emettrice", () => {
     // Une facture sans raison sociale ni adresse n'a aucune valeur legale :
     // mieux vaut echouer que produire un document non conforme.

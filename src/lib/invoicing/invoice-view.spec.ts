@@ -66,6 +66,26 @@ describe("buildInvoiceView", () => {
     expect(avoir.isCreditNote).toBe(true);
   });
 
+  it("expose la ligne de remise quand la facture en porte une", () => {
+    const view = buildInvoiceView({
+      ...record,
+      amount_ttc_cents: 8500,
+      promo_code: "SUPERMAMAN",
+      discount_cents: 1500,
+      gross_amount_ttc_cents: 10_000,
+    });
+
+    expect(view.discount).toEqual({
+      label: "Remise SUPERMAMAN",
+      gross: "100,00 €",
+      amount: "-15,00 €",
+    });
+  });
+
+  it("n'expose pas de ligne de remise sans code", () => {
+    expect(buildInvoiceView(record).discount).toBeUndefined();
+  });
+
   it("gere un taux de TVA a virgule sans zero superflu", () => {
     const view = buildInvoiceView({ ...record, vat_rate: 5.5 });
     expect(view.vatRateLabel).toBe("5,5 %");

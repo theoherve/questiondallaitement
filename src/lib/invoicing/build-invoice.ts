@@ -31,6 +31,11 @@ export type BuildInvoiceInput = {
   clientName: string;
   clientEmail: string;
   vatRate?: number;
+  /** Remise appliquee a la vente, s'il y en a une. */
+  promoCode?: string | null;
+  discountCents?: number | null;
+  /** Montant TTC avant remise. */
+  grossTtcCents?: number | null;
   issuer: BillingProfile & { billing_legal_form: string | null };
 };
 
@@ -49,6 +54,9 @@ export type InvoiceContent = {
   description: string;
   client_name: string;
   client_email: string;
+  promo_code: string | null;
+  discount_cents: number | null;
+  gross_amount_ttc_cents: number | null;
   issuer_legal_name: string;
   issuer_address: string;
   issuer_siren: string;
@@ -81,6 +89,11 @@ export const buildInvoiceContent = (input: BuildInvoiceInput): InvoiceContent =>
     description: input.description,
     client_name: input.clientName,
     client_email: input.clientEmail,
+    // La TVA se calcule sur le TTC reellement encaisse : la remise n'apparait
+    // que comme information, elle ne modifie pas la decomposition.
+    promo_code: input.promoCode ?? null,
+    discount_cents: input.discountCents ?? null,
+    gross_amount_ttc_cents: input.grossTtcCents ?? null,
     // Snapshot fige : ces valeurs ne suivent pas les modifications ulterieures
     // du profil de la consultante.
     issuer_legal_name: input.issuer.billing_legal_name as string,

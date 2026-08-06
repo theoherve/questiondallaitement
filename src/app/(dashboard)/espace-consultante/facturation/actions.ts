@@ -7,7 +7,7 @@ import { buildCorrectionContent } from "@/lib/invoicing/correction";
 import type { ActionResult } from "@/types";
 
 const INVOICE_FIELDS =
-  "id, number, issued_at, type, currency, vat_rate, amount_ht_cents, amount_vat_cents, amount_ttc_cents, description, client_name, client_email, issuer_legal_name, issuer_address, issuer_siren, issuer_vat_number, issuer_legal_form, status";
+  "id, number, issued_at, type, currency, vat_rate, amount_ht_cents, amount_vat_cents, amount_ttc_cents, description, client_name, client_email, issuer_legal_name, issuer_address, issuer_siren, issuer_vat_number, issuer_legal_form, status, promo_code, discount_cents, gross_amount_ttc_cents";
 
 /**
  * Renvoie la facture a la cliente (lien + PDF). Contrairement a l'envoi
