@@ -14,7 +14,7 @@ const COMMISSION_RATE = 15;
 /**
  * 3-4 — Achat d'accompagnement : le second flux d'argent du site.
  *
- * Contrairement a la reservation, cet achat exige un compte : `purchaseFormation`
+ * Contrairement a la reservation, cet achat exige un compte : `purchaseAccompagnement`
  * refuse tout visiteur anonyme. La suite passe donc par le vrai formulaire de
  * connexion, ce qui couvre au passage le chemin `handleLogin` → NextAuth.
  *
@@ -33,7 +33,7 @@ test.describe("N2 — achat d'accompagnement", () => {
     // d'une cliente connectee.
     const context = await browser.newContext({ storageState: undefined });
     const page = await context.newPage();
-    // Ce n'est pas de la cosmetique : `purchaseFormation` rejette les anonymes.
+    // Ce n'est pas de la cosmetique : `purchaseAccompagnement` rejette les anonymes.
     // Si la page affichait le bouton d'achat, la cliente cliquerait dans le vide.
     await page.goto(`/accompagnements/${FORMATION_SLUG}`);
 
@@ -57,14 +57,14 @@ test.describe("N2 — achat d'accompagnement", () => {
 
       await page.getByTestId("purchase-button").click();
 
-      // `purchaseFormation` renvoie { success: false } sur six chemins distincts
+      // `purchaseAccompagnement` renvoie { success: false } sur six chemins distincts
       // (deja inscrite, accompagnement introuvable, Connect absent, erreur Stripe…)
       // et la page reste en place. Sans cette lecture, l'echec remonterait en
       // « timeout de navigation » et masquerait la cause — exactement la facon
       // dont le bug PGRST201 s'etait deguise en Phase 3.
       const alert = page.getByTestId("purchase-error");
       if (await alert.isVisible({ timeout: 3_000 }).catch(() => false)) {
-        throw new Error(`purchaseFormation a echoue : ${await alert.textContent()}`);
+        throw new Error(`purchaseAccompagnement a echoue : ${await alert.textContent()}`);
       }
 
       await page.waitForURL(/checkout\.stripe\.com/, { timeout: 30_000 });
@@ -78,7 +78,7 @@ test.describe("N2 — achat d'accompagnement", () => {
 
       // Ces metadonnees pilotent le fulfillment : si elles derivent, le paiement
       // aboutit et l'inscription ne se cree jamais — la cliente a paye pour rien.
-      expect(session.metadata.type).toBe("formation");
+      expect(session.metadata.type).toBe("accompagnement");
       expect(session.metadata.reference_id).toBe(FORMATION_ID);
       expect(Number(session.metadata.platform_fee_cents)).toBe(
         Math.round(PRICE_CENTS * (COMMISSION_RATE / 100)),

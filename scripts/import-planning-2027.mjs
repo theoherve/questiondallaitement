@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Import du planning de formations 2027 dans la table events.
+ * Import du planning de formations 2027 dans la table formations.
  *
  * Source : scripts/data/planning-2027.csv (transcription du Planning_2027_v5.csv
  * fourni par Carole, dates ISO resolues via la colonne Jour, lignes OFF /

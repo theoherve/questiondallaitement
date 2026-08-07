@@ -27,6 +27,24 @@ const GRANDFATHERED = [
   "00045_refresh_formation_access_template.sql",
 ];
 
+/**
+ * Exceptions explicites a la regle, distinctes du grandfathering.
+ *
+ * La regle vise un UPDATE qui *remplace* le contenu d'un template par une
+ * version figee dans le SQL : le travail de Carole disparait au deploiement.
+ * Un renommage de marqueur de fusion ne fait pas cela. Il applique un
+ * `replace()` cible sur `{{ancien}}` -> `{{nouveau}}` et laisse le reste du
+ * HTML intact, quel qu'il soit.
+ *
+ * Il ne peut pas non plus passer par l'admin : le nom de la variable change
+ * cote code au meme deploiement. Entre celui-ci et une retouche manuelle,
+ * chaque email partirait avec `{{formation_title}}` affiche en clair.
+ *
+ * N'ajouter une entree ici que pour un renommage mecanique de marqueur, jamais
+ * pour une correction de contenu — celle-la passe toujours par l'admin.
+ */
+const MARKER_RENAMES = ["00070_renommage_vocabulaire.sql"];
+
 const migrationNumber = (filename: string): number =>
   Number.parseInt(filename.slice(0, 5), 10);
 
@@ -74,7 +92,7 @@ describe("migrations et templates d'email", () => {
   it("aucune nouvelle migration ne modifie email_templates", () => {
     const offenders = files
       .filter((f) => migrationNumber(f) > RULE_ADOPTED_AFTER)
-      .filter((f) => !GRANDFATHERED.includes(f))
+      .filter((f) => !GRANDFATHERED.includes(f) && !MARKER_RENAMES.includes(f))
       .filter((f) =>
         mutatesEmailTemplates(readFileSync(resolve(MIGRATIONS_DIR, f), "utf8")),
       );
@@ -87,5 +105,32 @@ describe("migrations et templates d'email", () => {
         `Corriger le template dans l'admin, ou n'inserer que s'il n'existe pas ` +
         `(ON CONFLICT DO NOTHING).`,
     ).toEqual([]);
+  });
+
+  it("les exceptions de renommage ne font que du replace(), jamais d'ecrasement", () => {
+    // Sans ce test, MARKER_RENAMES deviendrait une porte ouverte : on pourrait
+    // y glisser un UPDATE qui reecrit un body_html entier.
+    for (const file of MARKER_RENAMES) {
+      const code = stripComments(
+        readFileSync(resolve(MIGRATIONS_DIR, file), "utf8"),
+      );
+      const statements = code
+        .split(";")
+        .filter((s) => /\bUPDATE\s+email_templates\b/i.test(s));
+
+      expect(statements.length, `${file} est liste sans modifier email_templates`)
+        .toBeGreaterThan(0);
+
+      for (const statement of statements) {
+        // Le renommage de la cle `name` est la seule affectation directe permise.
+        const isKeyRename = /SET\s+name\s*=\s*'[a-z_]+'\s*WHERE\s+name\s*=\s*'[a-z_]+'/i.test(
+          statement,
+        );
+        expect(
+          isKeyRename || /replace\s*\(/i.test(statement),
+          `${file} contient un UPDATE email_templates sans replace() :\n${statement.trim()}`,
+        ).toBe(true);
+      }
+    }
   });
 });
