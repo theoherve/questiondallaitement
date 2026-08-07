@@ -496,6 +496,51 @@ aussi `formation_id`, `event_id`, `event_title`, `event_starts_at`, mais **n'est
 c'est un objet de passage construit à l'exécution. Ses champs suivent le renommage de code sans
 migration correspondante.
 
+- [ ] **Step 5 ter: Renommer les valeurs d'ENUM PostgreSQL côté code**
+
+Découvert pendant l'exécution, absent de la spec. Deux ENUM portent le vocabulaire dans leurs
+**valeurs**, donc dans des littéraux de chaîne du code :
+
+```bash
+grep -rl '"formation"\|"event"' src --include='*.ts' --include='*.tsx' \
+| xargs perl -pi -e 's/"formation"/"ZZPAYZZ"/g; s/"event"/"formation"/g; s/"ZZPAYZZ"/"accompagnement"/g;'
+
+grep -rl '"formation_purchase"\|"event_purchase"' src \
+| xargs perl -pi -e 's/"formation_purchase"/"ZZPROZZ"/g; s/"event_purchase"/"formation_purchase"/g; s/"ZZPROZZ"/"accompagnement_purchase"/g;'
+```
+
+Le sentinelle `ZZPAYZZ` évite le piège de l'échange : sans lui, `"event"` deviendrait
+`"formation"` puis serait immédiatement réécrit en `"accompagnement"`.
+
+Attention à la portée : `"event"` peut désigner autre chose qu'une valeur de `payment_type`.
+Contrôler chaque occurrence avant d'appliquer, notamment dans les gestionnaires d'évènements DOM
+et les webhooks Stripe (`event.type`).
+
+- [ ] **Step 5 quater: Renommer les variables de fusion des emails**
+
+Découvert pendant l'exécution, absent de la spec. Six variables et une clé de modèle, soumises au
+même échange circulaire — `formation_title` doit libérer la place avant qu'`event_title` ne
+l'occupe :
+
+```
+formation_access  -> accompagnement_access   (email_templates.name)
+formation_title   -> accompagnement_title
+formation_url     -> accompagnement_url
+event_title       -> formation_title
+event_date        -> formation_date
+event_time        -> formation_time
+event_location    -> formation_location
+```
+
+Fichiers porteurs côté code : `src/lib/emails/send.ts`,
+`src/lib/emails/default-template-designs.ts`, `src/lib/emails/sample-vars.ts`,
+`src/lib/emails/required-templates.ts`, `src/lib/admin-workflows/types.ts`
+(`WORKFLOW_EMAIL_VARIABLES`), `src/lib/admin-workflows/executor.ts`,
+`src/app/api/cron/route.ts`, `src/lib/stripe/webhooks.ts`, et les placeholders d'aide de
+`espace-consultante/automations/_components/automation-form-dialog.tsx`.
+
+Appliquer dans l'ordre : les trois `formation_*` d'abord, les quatre `event_*` ensuite.
+
 - [ ] **Step 6: Vérifier**
 
 ```bash
@@ -505,7 +550,7 @@ pnpm lint
 pnpm build
 ```
 
-Attendu : silencieux, 558 tests, propre, build réussi. Les tests unitaires mockent Supabase : ils
+Attendu : silencieux, 581 tests, propre, build réussi. Les tests unitaires mockent Supabase : ils
 valident que le code appelle les **nouveaux** noms de tables, sans avoir besoin de la base.
 
 - [ ] **Step 7: Contrôle final de non-régression**
@@ -562,6 +607,7 @@ Créer `supabase/migrations/00070_renommage_vocabulaire.sql` :
 --     -t formation_collaborators -t events -t event_registrations \
 --     -t recurring_event_definitions -t automations -t admin_workflows \
 --     -t admin_workflow_steps -t scheduled_workflow_actions -t labels \
+    -t email_templates -t email_campaigns \
 --     > backups/pre-00070.sql
 
 BEGIN;
@@ -746,6 +792,86 @@ L'ordre à l'intérieur du bloc JSONB est aussi contraignant que celui des table
 `event_ids` ne devienne `formation_ids`, sinon la seconde requête réécrit ce que la première
 vient de produire.
 
+- [ ] **Step 3 bis: Ajouter le bloc 5 — ENUM PostgreSQL**
+
+Découvert pendant l'exécution. Deux ENUM par leur nom, deux par leurs valeurs.
+`ALTER TYPE ... RENAME VALUE` refuse un nom déjà pris : l'ordre est aussi contraint qu'ailleurs.
+
+```sql
+-- ─── Bloc 5 : types enumeres ────────────────────────────────
+
+ALTER TYPE formation_status RENAME TO accompagnement_status;
+ALTER TYPE event_type       RENAME TO formation_type;
+
+ALTER TYPE payment_type RENAME VALUE 'formation' TO 'accompagnement';
+ALTER TYPE payment_type RENAME VALUE 'event'     TO 'formation';
+
+ALTER TYPE promo_trigger_type RENAME VALUE 'formation_purchase' TO 'accompagnement_purchase';
+ALTER TYPE promo_trigger_type RENAME VALUE 'event_purchase'     TO 'formation_purchase';
+```
+
+Renommer un type ou une valeur ne reecrit aucune ligne : les colonnes referencent le type par OID
+et les valeurs sont stockees par numero d'ordre. L'operation est instantanee meme sur une grosse
+table.
+
+- [ ] **Step 3 ter: Ajouter le bloc 6 — contenu des emails**
+
+Découvert pendant l'exécution. Les variables de fusion vivent dans du contenu rédigé à la main.
+Quatre tables, sept colonnes. Les colonnes `jsonb` passent par `::text` puis reviennent en
+`::jsonb` — un `replace` cible ainsi le HTML imbriqué du block editor sans avoir à parcourir
+l'arbre.
+
+```sql
+-- ─── Bloc 6 : variables de fusion des emails ────────────────
+--
+-- Meme echange circulaire : formation_* libere la place avant que event_*
+-- ne l'occupe, a l'interieur des memes colonnes de contenu.
+
+UPDATE email_templates SET name = 'accompagnement_access' WHERE name = 'formation_access';
+
+UPDATE email_templates SET
+  subject     = replace(replace(subject, '{{formation_title}}', '{{accompagnement_title}}'),
+                        '{{formation_url}}', '{{accompagnement_url}}'),
+  body_html   = replace(replace(body_html, '{{formation_title}}', '{{accompagnement_title}}'),
+                        '{{formation_url}}', '{{accompagnement_url}}'),
+  body_design = replace(replace(body_design::text, '{{formation_title}}', '{{accompagnement_title}}'),
+                        '{{formation_url}}', '{{accompagnement_url}}')::jsonb,
+  variables   = replace(replace(variables::text, '"formation_title"', '"accompagnement_title"'),
+                        '"formation_url"', '"accompagnement_url"')::jsonb;
+
+UPDATE email_templates SET
+  subject     = replace(replace(replace(replace(subject,
+                  '{{event_title}}', '{{formation_title}}'),
+                  '{{event_date}}', '{{formation_date}}'),
+                  '{{event_time}}', '{{formation_time}}'),
+                  '{{event_location}}', '{{formation_location}}'),
+  body_html   = replace(replace(replace(replace(body_html,
+                  '{{event_title}}', '{{formation_title}}'),
+                  '{{event_date}}', '{{formation_date}}'),
+                  '{{event_time}}', '{{formation_time}}'),
+                  '{{event_location}}', '{{formation_location}}'),
+  body_design = replace(replace(replace(replace(body_design::text,
+                  '{{event_title}}', '{{formation_title}}'),
+                  '{{event_date}}', '{{formation_date}}'),
+                  '{{event_time}}', '{{formation_time}}'),
+                  '{{event_location}}', '{{formation_location}}')::jsonb,
+  variables   = replace(replace(replace(replace(variables::text,
+                  '"event_title"', '"formation_title"'),
+                  '"event_date"', '"formation_date"'),
+                  '"event_time"', '"formation_time"'),
+                  '"event_location"', '"formation_location"')::jsonb;
+```
+
+Repeter les deux memes `UPDATE` (dans le meme ordre) sur :
+
+- `email_campaigns` — colonnes `subject`, `body_html`, `body_design` ; pas de `name` ni de
+  `variables`.
+- `admin_workflow_steps` — colonne `action_config` seule, en `::text` / `::jsonb`.
+- `automations` — colonne `actions` seule, en `::text` / `::jsonb`.
+
+`body_design` peut etre `NULL` : `replace(NULL, …)` renvoie `NULL`, donc la colonne reste intacte
+sans qu'un garde soit necessaire.
+
 - [ ] **Step 4: Contrôler la cohérence code ↔ migration**
 
 ```bash
@@ -914,6 +1040,7 @@ pg_dump "$DATABASE_URL" --data-only \
   -t formation_collaborators -t events -t event_registrations \
   -t recurring_event_definitions -t automations -t admin_workflows \
   -t admin_workflow_steps -t scheduled_workflow_actions -t labels \
+    -t email_templates -t email_campaigns \
   > backups/pre-00070.sql
 wc -l backups/pre-00070.sql
 ```
