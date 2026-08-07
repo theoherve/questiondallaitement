@@ -20,7 +20,7 @@ type PendingActionRow = {
   workflow_id: string;
   step_id: string;
   profile_id: string;
-  anchor_event_id: string | null;
+  anchor_formation_id: string | null;
   admin_workflow_steps: {
     action_type: string;
     action_config: Record<string, unknown>;
@@ -58,7 +58,7 @@ export const executeScheduledActions = async (): Promise<{
       workflow_id,
       step_id,
       profile_id,
-      anchor_event_id,
+      anchor_formation_id,
       admin_workflow_steps!inner(action_type, action_config),
       admin_workflows!inner(is_active, audience_config)
     `,
@@ -111,7 +111,7 @@ export const executeScheduledActions = async (): Promise<{
         step.action_type,
         step.action_config,
         action.profile_id,
-        action.anchor_event_id,
+        action.anchor_formation_id,
       );
 
       if (result.success) {
@@ -175,21 +175,21 @@ const executeAction = async (
     replay_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/replay-lives`,
   };
 
-  // Load event data if available
+  // Load formation data if available
   if (eventId) {
-    const { data: event } = await supabase
-      .from("events")
+    const { data: formation } = await supabase
+      .from("formations")
       .select("title, starts_at, location, zoom_join_url")
       .eq("id", eventId)
       .single();
 
-    if (event) {
-      const startsAt = new Date(event.starts_at);
-      vars.event_title = event.title;
-      vars.event_date = format(startsAt, "EEEE d MMMM yyyy", { locale: fr });
-      vars.event_time = format(startsAt, "HH'h'mm", { locale: fr });
-      vars.event_location = event.location ?? "";
-      vars.zoom_join_url = event.zoom_join_url ?? "";
+    if (formation) {
+      const startsAt = new Date(formation.starts_at);
+      vars.formation_title = formation.title;
+      vars.formation_date = format(startsAt, "EEEE d MMMM yyyy", { locale: fr });
+      vars.formation_time = format(startsAt, "HH'h'mm", { locale: fr });
+      vars.formation_location = formation.location ?? "";
+      vars.zoom_join_url = formation.zoom_join_url ?? "";
     }
   }
 

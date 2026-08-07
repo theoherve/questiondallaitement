@@ -1,0 +1,337 @@
+"use client";
+
+import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import {
+  Loader2,
+  Search,
+  UserPlus,
+  Mail,
+  Phone,
+  UserSearch,
+  X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  searchClientsForEnroll,
+  manualEnrollExistingClient,
+  manualEnrollNewClient,
+  type ClientSearchResult,
+} from "@/app/(dashboard)/admin/accompagnements/[id]/enroll-actions";
+import { formatClientName } from "./enrollment-utils";
+
+type EnrollModalProps = {
+  accompagnementId: string;
+  accompagnementTitle: string;
+  trigger?: React.ReactNode;
+};
+
+export const EnrollModal = ({
+  accompagnementId,
+  accompagnementTitle,
+  trigger,
+}: EnrollModalProps) => {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  // Search tab
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<ClientSearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  // New account tab
+  const [form, setForm] = useState({
+    email: "",
+    first_name: "",
+    last_name: "",
+    phone: "",
+  });
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (!next) {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+      setQuery("");
+      setResults([]);
+      setSearching(false);
+      setForm({ email: "", first_name: "", last_name: "", phone: "" });
+    }
+  };
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const trimmed = value.trim();
+    if (trimmed.length < 2) {
+      setResults([]);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    debounceRef.current = setTimeout(async () => {
+      const result = await searchClientsForEnroll(trimmed, accompagnementId);
+      if (result.success) {
+        setResults(result.data ?? []);
+      } else {
+        setResults([]);
+        toast.error(result.error ?? "Erreur de recherche");
+      }
+      setSearching(false);
+    }, 300);
+  };
+
+  const handleEnrollExisting = (clientId: string) => {
+    startTransition(async () => {
+      const result = await manualEnrollExistingClient(accompagnementId, clientId);
+      if (result.success) {
+        toast.success("Utilisateur inscrit. Email envoyé.");
+        setOpen(false);
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "Erreur");
+      }
+    });
+  };
+
+  const handleCreateAndEnroll = () => {
+    startTransition(async () => {
+      const result = await manualEnrollNewClient(accompagnementId, form);
+      if (result.success) {
+        toast.success("Compte créé et inscrit. Email envoyé.");
+        setOpen(false);
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "Erreur");
+      }
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        {trigger ?? (
+          <Button variant="default" size="sm">
+            <UserPlus className="mr-2 h-4 w-4" />
+            Ajouter un participant
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Ajouter un participant</DialogTitle>
+          <DialogDescription>
+            Inscrire manuellement à <strong>{accompagnementTitle}</strong>. Un email
+            sera envoyé avec le lien d&apos;accès.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Tabs defaultValue="search" className="mt-2">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="search">
+              <Search className="mr-2 h-4 w-4" />
+              Chercher un compte
+            </TabsTrigger>
+            <TabsTrigger value="create">
+              <UserPlus className="mr-2 h-4 w-4" />
+              Nouveau compte
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="search" className="mt-4 space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="search-query">Email, prénom ou nom</Label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="search-query"
+                  value={query}
+                  onChange={(e) => handleQueryChange(e.target.value)}
+                  placeholder="alice@example.fr"
+                  className="pl-9 pr-9"
+                  autoFocus
+                  autoComplete="off"
+                  aria-describedby="search-query-hint"
+                />
+                {query.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleQueryChange("")}
+                    aria-label="Effacer la recherche"
+                    className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              <p
+                id="search-query-hint"
+                className="text-xs text-muted-foreground"
+              >
+                2 caractères minimum
+              </p>
+            </div>
+
+            <div className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
+              {searching && (
+                <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Recherche…
+                </div>
+              )}
+              {!searching &&
+                query.trim().length >= 2 &&
+                results.length === 0 && (
+                  <div className="flex flex-col items-center gap-2 py-8 text-center">
+                    <UserSearch className="h-8 w-8 text-muted-foreground/50" />
+                    <p className="text-sm text-muted-foreground">
+                      Aucun utilisateur trouvé.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Utilisez l&apos;onglet « Nouveau compte ».
+                    </p>
+                  </div>
+                )}
+              {!searching && query.trim().length < 2 && results.length === 0 && (
+                <div className="flex flex-col items-center gap-2 py-8 text-center">
+                  <Search className="h-8 w-8 text-muted-foreground/40" />
+                  <p className="text-xs text-muted-foreground">
+                    Commencez à taper pour rechercher un utilisateur
+                  </p>
+                </div>
+              )}
+              {results.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => handleEnrollExisting(c.id)}
+                  className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-md border bg-background px-3 py-2.5 text-left transition-colors hover:border-primary-green/40 hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <div className="min-w-0 flex-1 space-y-0.5">
+                    <p className="truncate text-sm font-medium">
+                      {formatClientName(c)}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1">
+                        <Mail className="h-3 w-3" />
+                        <span className="truncate">{c.email}</span>
+                      </span>
+                      {c.phone && (
+                        <span className="inline-flex items-center gap-1">
+                          <Phone className="h-3 w-3" />
+                          {c.phone}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-xs font-medium text-primary-green">
+                    Inscrire →
+                  </span>
+                </button>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="create" className="mt-4 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="first_name">
+                  Prénom <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="first_name"
+                  value={form.first_name}
+                  autoComplete="given-name"
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, first_name: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="last_name">
+                  Nom <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="last_name"
+                  value={form.last_name}
+                  autoComplete="family-name"
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, last_name: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email">
+                Email <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={form.email}
+                autoComplete="email"
+                inputMode="email"
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, email: e.target.value }))
+                }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="phone">Téléphone</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={form.phone}
+                autoComplete="tel"
+                inputMode="tel"
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, phone: e.target.value }))
+                }
+              />
+            </div>
+            <DialogFooter className="gap-2 pt-2 sm:gap-2">
+              <Button
+                variant="outline"
+                disabled={isPending}
+                onClick={() => setOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleCreateAndEnroll}
+                disabled={
+                  isPending ||
+                  !form.email.trim() ||
+                  !form.first_name.trim() ||
+                  !form.last_name.trim()
+                }
+              >
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Créer le compte et inscrire
+              </Button>
+            </DialogFooter>
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  );
+};

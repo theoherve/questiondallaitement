@@ -83,25 +83,25 @@ const matchesCondition = (
   triggerConfig: Record<string, unknown>,
   data: TriggerData
 ): boolean => {
-  if (triggerType === "formation_purchased") {
-    const formationIds = triggerConfig.formation_ids as string[] | undefined;
+  if (triggerType === "accompagnement_purchased") {
+    const formationIds = triggerConfig.accompagnement_ids as string[] | undefined;
     if (!formationIds?.length) return true;
-    return !!data.formation_id && formationIds.includes(data.formation_id);
+    return !!data.accompagnement_id && formationIds.includes(data.accompagnement_id);
   }
   if (triggerType === "booking_confirmed") {
     const ctIds = triggerConfig.consultation_type_ids as string[] | undefined;
     if (!ctIds?.length) return true;
     return !!data.consultation_type_id && ctIds.includes(data.consultation_type_id);
   }
-  if (triggerType === "event_registered") {
-    const eventIds = triggerConfig.event_ids as string[] | undefined;
+  if (triggerType === "formation_registered") {
+    const eventIds = triggerConfig.formation_ids as string[] | undefined;
     if (!eventIds?.length) return true;
-    return !!data.event_id && eventIds.includes(data.event_id);
+    return !!data.formation_id && eventIds.includes(data.formation_id);
   }
-  if (triggerType === "delay_after_event") {
-    const eventIds = triggerConfig.event_ids as string[] | undefined;
+  if (triggerType === "delay_after_formation") {
+    const eventIds = triggerConfig.formation_ids as string[] | undefined;
     if (!eventIds?.length) return true;
-    return !!data.event_id && eventIds.includes(data.event_id);
+    return !!data.formation_id && eventIds.includes(data.formation_id);
   }
   return true;
 };

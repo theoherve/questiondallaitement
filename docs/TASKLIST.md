@@ -4,6 +4,14 @@
 > Reference : [PLATFORM_ARCHITECTURE.md](./PLATFORM_ARCHITECTURE.md) | [roadmap.md](./roadmap.md)
 >
 > Derniere mise a jour : 2026-04-03 (EPIC-24 terminé)
+>
+> **Vocabulaire.** Ce document est un journal : il emploie les noms en vigueur
+> au moment de chaque tache. Depuis le renommage du 2026-08-07, « formation »
+> designe une session pour professionnelles (ex-`events`) et « accompagnement »
+> un parcours en ligne pour clientes (ex-`formations`). Une ligne qui parle de
+> `/admin/formations` avant cette date parle donc de ce qui s'appelle
+> aujourd'hui `/admin/accompagnements`. Correspondance complete dans
+> [PLATFORM_ARCHITECTURE.md](./PLATFORM_ARCHITECTURE.md).
 
 ## Legende
 

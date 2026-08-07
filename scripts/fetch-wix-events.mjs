@@ -2,7 +2,7 @@
 /**
  * Fetch all events from Wix REST API and save to formations-scraper/wix-formations-pro.json
  *
- * - Fetches all events (UPCOMING, ENDED, CANCELED) via Wix Events V3 API
+ * - Fetches all formations (UPCOMING, ENDED, CANCELED) via Wix Events V3 API
  * - Converts Ricos description → HTML
  * - Downloads main images to formations-scraper/formations-images/
  * - Outputs wix-formations-pro.json

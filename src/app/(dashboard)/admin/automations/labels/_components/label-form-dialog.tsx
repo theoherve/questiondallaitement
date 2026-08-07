@@ -16,7 +16,7 @@ import { createLabel, updateLabel } from "../../actions";
 import type { Label } from "@/lib/admin-workflows/types";
 
 type Props = {
-  formations: { id: string; title: string }[];
+  accompagnements: { id: string; title: string }[];
   label?: Label;
 };
 
@@ -28,7 +28,7 @@ const slugify = (str: string): string =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
-export const LabelFormDialog = ({ formations, label }: Props) => {
+export const LabelFormDialog = ({ accompagnements, label }: Props) => {
   const isEdit = !!label;
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -40,7 +40,7 @@ export const LabelFormDialog = ({ formations, label }: Props) => {
     !!label?.auto_assign_rule,
   );
   const [formationIds, setFormationIds] = useState<string[]>(
-    label?.auto_assign_rule?.formation_ids ?? [],
+    label?.auto_assign_rule?.accompagnement_ids ?? [],
   );
 
   const handleSubmit = () => {
@@ -50,8 +50,8 @@ export const LabelFormDialog = ({ formations, label }: Props) => {
       color,
       auto_assign_rule: autoAssign
         ? {
-            trigger: "formation_enrolled" as const,
-            ...(formationIds.length > 0 ? { formation_ids: formationIds } : {}),
+            trigger: "accompagnement_enrolled" as const,
+            ...(formationIds.length > 0 ? { accompagnement_ids: formationIds } : {}),
           }
         : null,
     };
@@ -146,7 +146,7 @@ export const LabelFormDialog = ({ formations, label }: Props) => {
                 <p className="text-xs text-muted-foreground">
                   Laisser vide = tout accompagnement
                 </p>
-                {formations.map((f) => (
+                {accompagnements.map((f) => (
                   <label key={f.id} className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"

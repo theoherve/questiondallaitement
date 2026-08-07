@@ -9,9 +9,9 @@
 
 Plateforme SaaS multi-consultantes dans le domaine de la sante (lactation, sommeil, etc.) avec :
 
-- Vente de formations en ligne (LMS) avec contenu WYSIWYG
+- Vente d'accompagnements en ligne (LMS) avec contenu WYSIWYG
 - Reservation de consultations
-- Evenements (visio / presentiel)
+- Formations (visio / presentiel)
 - Blog avec programmation de publication
 - Paiement Stripe Connect avec commission plateforme variable
 - CRM interne
@@ -44,7 +44,7 @@ Plateforme SaaS multi-consultantes dans le domaine de la sante (lactation, somme
 
 ### ADR-004 : JSONB pour les Blocs de Formation
 
-**Decision** : Le contenu des blocs de formation est stocke en JSONB.
+**Decision** : Le contenu des blocs d'accompagnement est stocke en JSONB.
 **Raison** : Flexibilite maximale pour les types de contenu (text, video, image, quiz, download).
 **Consequence** : Validation Zod cote application, pas de contraintes SQL strictes sur le contenu.
 
@@ -64,7 +64,7 @@ Plateforme SaaS multi-consultantes dans le domaine de la sante (lactation, somme
 
 **Decision** : Les entites critiques ne sont jamais supprimees physiquement.
 **Raison** : Auditabilite, conformite RGPD (droit a l'effacement = anonymisation apres 30j).
-**Tables concernees** : profiles, formations, bookings, payments, blog_posts.
+**Tables concernees** : profiles, accompagnements, bookings, payments, blog_posts.
 
 ### ADR-008 : Migration Supabase Auth → NextAuth
 
@@ -82,12 +82,12 @@ Plateforme SaaS multi-consultantes dans le domaine de la sante (lactation, somme
 ### ADR-009 : Admin = Seul Createur de Contenu (Formations)
 
 **Date** : 2026-02
-**Decision** : Seul l'admin peut creer et editer les formations depuis le backoffice.
+**Decision** : Seul l'admin peut creer et editer les accompagnements depuis le backoffice.
 **Raison** : Controle editorial centralise, coherence du catalogue, workflow de publication maitrise.
 **Consequence** :
-- L'espace consultante affiche les formations en lecture seule (stats, enrollments)
-- Le CRUD formations est dans `/admin/formations/`
-- Les consultantes sont associees aux formations comme `consultant_id` (proprietaire) ou `formation_collaborators`
+- L'espace consultante affiche les accompagnements en lecture seule (stats, enrollments)
+- Le CRUD accompagnements est dans `/admin/accompagnements/`
+- Les consultantes sont associees aux accompagnements comme `consultant_id` (proprietaire) ou `accompagnement_collaborators`
 - L'admin peut assigner n'importe quelle consultante comme proprietaire
 
 ### ADR-010 : Novel (Tiptap) pour l'Edition WYSIWYG
@@ -96,9 +96,9 @@ Plateforme SaaS multi-consultantes dans le domaine de la sante (lactation, somme
 **Decision** : Utilisation de Novel (basee sur Tiptap, UX Notion-like) pour l'edition de contenu riche.
 **Raison** : Integration React headless, extensions (images, videos, embeds), output HTML/JSON, UX intuitive pour un non-developpeur.
 **Utilisation** :
-- Blocs de formation de type `text` : contenu HTML riche
+- Blocs d'accompagnement de type `text` : contenu HTML riche
 - Articles de blog : corps de l'article en HTML riche
-- Descriptions longues (events, formations)
+- Descriptions longues (formations, accompagnements)
 
 ### ADR-011 : Systeme Blog avec Programmation
 
@@ -119,8 +119,8 @@ Plateforme SaaS multi-consultantes dans le domaine de la sante (lactation, somme
 **Raison** : Integration native avec Supabase, RLS sur les buckets, CDN inclus.
 **Buckets** :
 - `avatars` : Photos de profil (public read, authenticated write own)
-- `formations` : Thumbnails et images de formations (public read, admin write)
-- `downloads` : Fichiers telechargeables des blocs formation (authenticated read enrolled, admin write)
+- `formations` : Thumbnails et images d'accompagnements (public read, admin write) — nom historique, conserve : il est incruste dans les URLs publiques deja stockees
+- `downloads` : Fichiers telechargeables des blocs accompagnement (authenticated read enrolled, admin write)
 - `blog` : Images d'articles de blog (public read, admin write)
 
 ### ADR-013 : Flow de Reservation (Booking)
@@ -238,8 +238,8 @@ Design tokens integres dans `globals.css` via `@theme inline` :
 |------|-------------|
 | visitor | Utilisateur non authentifie |
 | client | Client authentifie, peut acheter et reserver |
-| consultant | Consultante complete, acces a son espace (lecture formations, gestion bookings, CRM, emails) |
-| consultant_limited | Consultante restreinte (pas CRM, pas events, formations read-only) |
+| consultant | Consultante complete, acces a son espace (lecture accompagnements, gestion bookings, CRM, emails) |
+| consultant_limited | Consultante restreinte (pas CRM, pas formations, accompagnements read-only) |
 | marketing_manager | Acces emails marketing et analytics marketing uniquement |
 | admin | Acces total : creation de contenu, gestion plateforme, supervision |
 
@@ -267,7 +267,7 @@ Design tokens integres dans `globals.css` via `@theme inline` :
 
 ### Changement cle (ADR-009)
 
-Les consultantes ne creent plus de formations. Elles voient leurs formations (stats, enrollments, revenus) en lecture seule dans leur espace. Tout le CRUD formations, blog, events est centralise dans l'admin.
+Les consultantes ne creent plus d'accompagnements. Elles voient leurs accompagnements (stats, enrollments, revenus) en lecture seule dans leur espace. Tout le CRUD accompagnements, blog, formations est centralise dans l'admin.
 
 ---
 
@@ -277,11 +277,11 @@ Les consultantes ne creent plus de formations. Elles voient leurs formations (st
 
 - `user_role` : visitor, client, consultant, consultant_limited, marketing_manager, admin
 - `booking_status` : pending, confirmed, cancelled, completed, no_show
-- `formation_status` : draft, published, archived
+- `accompagnement_status` : draft, published, archived
 - `block_type` : text, video, image, quiz, download
-- `event_type` : online, in_person, hybrid
+- `formation_type` : online, in_person, hybrid
 - `payment_status` : pending, succeeded, failed, refunded, partially_refunded
-- `payment_type` : formation, booking, event
+- `payment_type` : accompagnement, booking, event
 - `consultation_location` : cabinet, teleconsultation, domicile *(nouveau - ADR-013)*
 - `booking_payment_method` : online, on_site *(nouveau - ADR-013)*
 - `blog_status` : draft, scheduled, published, archived *(nouveau - ADR-011)*
@@ -290,7 +290,7 @@ Les consultantes ne creent plus de formations. Elles voient leurs formations (st
 
 Voir migrations SQL dans `supabase/migrations/` pour le schema complet.
 
-**Existantes** : profiles, consultants, availabilities, availability_exceptions, consultation_types, bookings, formations, formation_collaborators, formation_sections, formation_blocks, formation_enrollments, formation_progress, events, event_registrations, payments, crm_notes, crm_tags, crm_contact_tags, email_templates, email_campaigns, automations, automation_logs, audit_logs, platform_settings.
+**Existantes** : profiles, consultants, availabilities, availability_exceptions, consultation_types, bookings, accompagnements, accompagnement_collaborators, accompagnement_sections, accompagnement_blocks, accompagnement_enrollments, accompagnement_progress, formations, formation_registrations, payments, crm_notes, crm_tags, crm_contact_tags, email_templates, email_campaigns, automations, automation_logs, audit_logs, platform_settings.
 
 **A creer (MVP - Booking flow ADR-013)** :
 
@@ -391,11 +391,11 @@ L'admin est le hub central. Toutes les operations de creation/edition de contenu
 |-------|---------------|
 | `/admin` | Dashboard global (stats, revenus, activite recente) |
 | `/admin/consultantes` | Liste, creation, activation, commission, Stripe Connect status |
-| `/admin/formations` | CRUD formations avec WYSIWYG (Novel), sections, blocs |
-| `/admin/formations/[id]/edit` | Editeur complet : metadata + sections + blocs drag & drop |
+| `/admin/accompagnements` | CRUD accompagnements avec WYSIWYG (Novel), sections, blocs |
+| `/admin/accompagnements/[id]/edit` | Editeur complet : metadata + sections + blocs drag & drop |
 | `/admin/blog` | Articles de blog : CRUD, WYSIWYG, programmation, categories |
 | `/admin/blog/[id]/edit` | Editeur article avec Novel, SEO fields, scheduling |
-| `/admin/evenements` | CRUD events, programmation, gestion inscriptions |
+| `/admin/formations` | CRUD formations, programmation, gestion inscriptions |
 | `/admin/paiements` | Vue consolidee, filtres, export, refunds |
 | `/admin/marketing` | Campagnes email (Brevo), templates, stats |
 | `/admin/parametres` | Settings plateforme, commission default, annulation, maintenance |
@@ -406,7 +406,7 @@ L'admin est le hub central. Toutes les operations de creation/edition de contenu
 | Route | Fonctionnalite |
 |-------|---------------|
 | `/espace-consultante` | Dashboard personnel (stats, prochains RDV) |
-| `/espace-consultante/formations` | Lecture seule : mes formations, stats, enrollments |
+| `/espace-consultante/accompagnements` | Lecture seule : mes accompagnements, stats, enrollments |
 | `/espace-consultante/reservations` | Gestion de ses bookings (confirmer rdv on_site, annuler, voir details) |
 | `/espace-consultante/crm` | Notes clients, tags |
 | `/espace-consultante/emails` | Templates et campagnes personnelles |
@@ -425,9 +425,9 @@ L'admin est le hub central. Toutes les operations de creation/edition de contenu
 4. Redirect vers Stripe Express onboarding
 5. Webhook `account.updated` -> maj `stripe_account_status`
 
-### Paiement (formations, events, bookings online)
+### Paiement (accompagnements, formations, bookings online)
 
-1. Client choisit formation/booking/event
+1. Client choisit accompagnement/booking/event
 2. Creation Checkout Session avec `application_fee_amount` et `transfer_data.destination`
 3. Webhook `checkout.session.completed` -> fulfillment (enrollment, booking confirmation, event registration)
 4. Stripe transfere automatiquement les fonds
@@ -450,9 +450,9 @@ L'admin est le hub central. Toutes les operations de creation/edition de contenu
 
 ### Co-creation Formations
 
-- Paiement au compte de la consultante principale (`formations.consultant_id`)
+- Paiement au compte de la consultante principale (`accompagnements.consultant_id`)
 - Split entre co-creatrices via `stripe.transfers.create()`
-- Revenue shares dans `formation_collaborators.revenue_share`
+- Revenue shares dans `accompagnement_collaborators.revenue_share`
 
 ---
 
@@ -519,7 +519,7 @@ L'admin est le hub central. Toutes les operations de creation/edition de contenu
 | Bucket | Acces | Usage |
 |--------|-------|-------|
 | `avatars` | Public read, authenticated write own | Photos de profil |
-| `formations` | Public read, admin write | Thumbnails, images de formation |
+| `formations` | Public read, admin write | Thumbnails, images d'accompagnement |
 | `downloads` | Authenticated read (enrolled), admin write | PDFs, fichiers telechargeables des blocs |
 | `blog` | Public read, admin write | Images d'articles |
 
@@ -531,11 +531,11 @@ Policies Supabase Storage a configurer avec RLS sur chaque bucket.
 
 ### MVP (Phase 1 - 8-10 semaines)
 
-Auth, roles, middleware RBAC, pages publiques, backoffice admin complet (formations CRUD + WYSIWYG Novel), booking client, Stripe Connect, webhooks, dashboards (client + consultante lecture + admin), emails transactionnels, annulation 48h, RLS, Supabase Storage.
+Auth, roles, middleware RBAC, pages publiques, backoffice admin complet (accompagnements CRUD + WYSIWYG Novel), booking client, Stripe Connect, webhooks, dashboards (client + consultante lecture + admin), emails transactionnels, annulation 48h, RLS, Supabase Storage.
 
 ### V1.5 (Phase 2 - 4-6 semaines)
 
-Blog (CRUD + WYSIWYG + scheduling + SEO), evenements CRUD admin, Zoom OAuth, CRM basique, co-creation formations, analytics.
+Blog (CRUD + WYSIWYG + scheduling + SEO), formations CRUD admin, Zoom OAuth, CRM basique, co-creation accompagnements, analytics.
 
 ### V2 (Phase 3 - 6-8 semaines)
 
@@ -552,8 +552,8 @@ App mobile, API publique, avis/reviews, fidelite, multi-langue.
 Le plan et les scripts de migration sont dans `scripts/migration/` :
 
 - **README.md** : Phases (audit, export, transformation, import, redirects, tests, DNS, post-migration)
-- **wix-formations.ts** : Structure des formations Wix scrapees (sections, steps)
-- **scrape-wix-formations.ts** : Scraping des formations depuis le site Wix
+- **wix-formations.ts** : Structure des formations pro Wix scrapees (sections, steps)
+- **scrape-wix-formations.ts** : Scraping des formations pro depuis le site Wix
 - **transform-contacts.ts** : Transforme un CSV de contacts Wix en JSON profils
 - **import-data.ts** : Importe les profils dans Supabase
 - Les redirections anciennes URLs -> nouvelles routes se configurent dans `next.config.ts` (redirects)

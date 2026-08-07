@@ -2,8 +2,9 @@
 
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { formationSchema, sectionSchema } from "@/validations/formations";
-import { formationCollaboratorSchema } from "@/validations/crm";
+import { formationSchema } from "@/validations/formations";
+import { normalizeRichText } from "@/lib/html/rich-text";
+import { filterFormationHighlightKeys } from "@/config/formation-highlights";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/types";
@@ -14,7 +15,7 @@ const requireAdmin = async () => {
   return user;
 };
 
-// ─── Formations ─────────────────────────────────────────────
+// ─── Create Formation ───────────────────────────────────────────
 
 export const createFormation = async (
   data: unknown,
@@ -29,8 +30,27 @@ export const createFormation = async (
   const { data: formation, error } = await supabase
     .from("formations")
     .insert({
-      ...parsed.data,
-      thumbnail_url: parsed.data.thumbnail_url || null,
+      title: parsed.data.title,
+      slug: parsed.data.slug,
+      description: parsed.data.description ?? null,
+      summary_html: normalizeRichText(parsed.data.summary_html),
+      objectives_html: normalizeRichText(parsed.data.objectives_html),
+      program_html: normalizeRichText(parsed.data.program_html),
+      audience_html: normalizeRichText(parsed.data.audience_html),
+      highlights: filterFormationHighlightKeys(parsed.data.highlights),
+      type: parsed.data.type,
+      starts_at: new Date(parsed.data.starts_at).toISOString(),
+      ends_at: new Date(parsed.data.ends_at).toISOString(),
+      location: parsed.data.location ?? null,
+      max_participants: parsed.data.max_participants ?? null,
+      price_cents: parsed.data.price_cents,
+      discounted_price_cents: parsed.data.discounted_price_cents ?? null,
+      currency: parsed.data.currency,
+      show_price: parsed.data.show_price,
+      provider_id: parsed.data.provider_id ?? null,
+      external_url: parsed.data.external_url ?? null,
+      consultant_id: parsed.data.consultant_id,
+      is_published: parsed.data.is_published,
     })
     .select("id, slug")
     .single();
@@ -39,12 +59,16 @@ export const createFormation = async (
     if (error.code === "23505") {
       return { success: false, error: "Ce slug est déjà utilisé" };
     }
+    console.error("Create formation error:", error);
     return { success: false, error: "Erreur lors de la création" };
   }
 
   revalidatePath("/admin/formations");
+  revalidatePath("/formations");
   return { success: true, data: formation };
 };
+
+// ─── Update Formation ───────────────────────────────────────────
 
 export const updateFormation = async (
   id: string,
@@ -57,178 +81,70 @@ export const updateFormation = async (
   }
 
   const supabase = createAdminClient();
-  const updateData: Record<string, unknown> = {
-    ...parsed.data,
-    thumbnail_url: parsed.data.thumbnail_url || null,
-  };
 
-  if (parsed.data.status === "published") {
-    updateData.published_at = new Date().toISOString();
-  }
+  const { data: currentFormation } = await supabase
+    .from("formations")
+    .select("slug")
+    .eq("id", id)
+    .single();
 
   const { error } = await supabase
     .from("formations")
-    .update(updateData)
+    .update({
+      title: parsed.data.title,
+      slug: parsed.data.slug,
+      description: parsed.data.description ?? null,
+      summary_html: normalizeRichText(parsed.data.summary_html),
+      objectives_html: normalizeRichText(parsed.data.objectives_html),
+      program_html: normalizeRichText(parsed.data.program_html),
+      audience_html: normalizeRichText(parsed.data.audience_html),
+      highlights: filterFormationHighlightKeys(parsed.data.highlights),
+      type: parsed.data.type,
+      starts_at: new Date(parsed.data.starts_at).toISOString(),
+      ends_at: new Date(parsed.data.ends_at).toISOString(),
+      location: parsed.data.location ?? null,
+      max_participants: parsed.data.max_participants ?? null,
+      price_cents: parsed.data.price_cents,
+      discounted_price_cents: parsed.data.discounted_price_cents ?? null,
+      currency: parsed.data.currency,
+      show_price: parsed.data.show_price,
+      provider_id: parsed.data.provider_id ?? null,
+      external_url: parsed.data.external_url ?? null,
+      consultant_id: parsed.data.consultant_id,
+      is_published: parsed.data.is_published,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", id);
 
   if (error) {
+    if (error.code === "23505") {
+      return { success: false, error: "Ce slug est déjà utilisé" };
+    }
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 
   revalidatePath("/admin/formations");
   revalidatePath(`/admin/formations/${id}/edit`);
   revalidatePath(`/formations/${parsed.data.slug}`);
+  if (currentFormation?.slug && currentFormation.slug !== parsed.data.slug) {
+    revalidatePath(`/formations/${currentFormation.slug}`);
+  }
+  revalidatePath("/formations");
   return { success: true };
 };
 
-const slugify = (text: string): string =>
-  text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+// ─── Toggle Publish ─────────────────────────────────────────
 
-/** Slug libre : ajoute -2, -3… tant qu'un accompagnement porte déjà le même. */
-const findAvailableSlug = async (base: string): Promise<string> => {
-  const supabase = createAdminClient();
-  const { data } = await supabase
-    .from("formations")
-    .select("slug")
-    .like("slug", `${base}%`);
-
-  const taken = new Set((data ?? []).map((row) => row.slug));
-  if (!taken.has(base)) return base;
-
-  let suffix = 2;
-  while (taken.has(`${base}-${suffix}`)) suffix += 1;
-  return `${base}-${suffix}`;
-};
-
-/**
- * Duplique un accompagnement avec toutes ses sections et tous ses blocs.
- *
- * La copie part en brouillon et son prix est remis à zéro : dupliquer sert à
- * bâtir une variante (un pack premium, par exemple), et laisser filer en ligne
- * un doublon au prix de l'original serait le pire accident possible ici.
- * Les collaboratrices ne sont pas reprises — les parts de revenus se
- * redéfinissent à chaque offre.
- */
-export const duplicateFormation = async (
+export const toggleFormationPublish = async (
   id: string,
-  newTitle?: string,
-): Promise<ActionResult<{ id: string }>> => {
-  await requireAdmin();
-  const supabase = createAdminClient();
-
-  const { data: source, error: sourceError } = await supabase
-    .from("formations")
-    .select(
-      "title, description, short_description, long_description_html, thumbnail_url, consultant_id",
-    )
-    .eq("id", id)
-    .single();
-
-  if (sourceError || !source) {
-    return { success: false, error: "Accompagnement introuvable" };
-  }
-
-  const title = newTitle?.trim() || `${source.title} (copie)`;
-  const slug = await findAvailableSlug(slugify(title));
-
-  const { data: copy, error: insertError } = await supabase
-    .from("formations")
-    .insert({
-      title,
-      slug,
-      description: source.description,
-      short_description: source.short_description,
-      long_description_html: source.long_description_html,
-      thumbnail_url: source.thumbnail_url,
-      consultant_id: source.consultant_id,
-      price_cents: 0,
-      status: "draft",
-    })
-    .select("id")
-    .single();
-
-  if (insertError || !copy) {
-    return { success: false, error: "Erreur lors de la duplication" };
-  }
-
-  const { data: sections } = await supabase
-    .from("formation_sections")
-    .select("id, title, position, formation_blocks(type, content, position)")
-    .eq("formation_id", id)
-    .order("position", { ascending: true });
-
-  for (const section of sections ?? []) {
-    const { data: newSection, error: sectionError } = await supabase
-      .from("formation_sections")
-      .insert({
-        formation_id: copy.id,
-        title: section.title,
-        position: section.position,
-      })
-      .select("id")
-      .single();
-
-    if (sectionError || !newSection) continue;
-
-    const blocks = (section.formation_blocks ?? []) as {
-      type: string;
-      content: Record<string, unknown>;
-      position: number;
-    }[];
-
-    if (blocks.length === 0) continue;
-
-    await supabase.from("formation_blocks").insert(
-      blocks.map((block) => ({
-        section_id: newSection.id,
-        type: block.type,
-        content: block.content,
-        position: block.position,
-      })),
-    );
-  }
-
-  revalidatePath("/admin/formations");
-  return { success: true, data: { id: copy.id } };
-};
-
-export const deleteFormation = async (id: string): Promise<ActionResult> => {
-  await requireAdmin();
-  const supabase = createAdminClient();
-
-  const { error } = await supabase
-    .from("formations")
-    .update({ deleted_at: new Date().toISOString(), status: "archived" })
-    .eq("id", id);
-
-  if (error) {
-    return { success: false, error: "Erreur lors de la suppression" };
-  }
-
-  revalidatePath("/admin/formations");
-  return { success: true };
-};
-
-export const updateFormationStatus = async (
-  id: string,
-  status: "draft" | "published" | "archived",
+  isPublished: boolean,
 ): Promise<ActionResult> => {
   await requireAdmin();
   const supabase = createAdminClient();
 
-  const updateData: Record<string, unknown> = { status };
-  if (status === "published") {
-    updateData.published_at = new Date().toISOString();
-  }
-
   const { error } = await supabase
     .from("formations")
-    .update(updateData)
+    .update({ is_published: isPublished, updated_at: new Date().toISOString() })
     .eq("id", id);
 
   if (error) {
@@ -237,322 +153,51 @@ export const updateFormationStatus = async (
 
   revalidatePath("/admin/formations");
   revalidatePath(`/admin/formations/${id}/edit`);
+  revalidatePath("/formations");
   return { success: true };
 };
 
-// ─── Sections ───────────────────────────────────────────────
+// ─── Delete Formation ───────────────────────────────────────────
 
-export const createSection = async (
-  formationId: string,
-  data: unknown,
-): Promise<ActionResult<{ id: string }>> => {
+export const deleteFormation = async (id: string): Promise<ActionResult> => {
   await requireAdmin();
-  const parsed = sectionSchema.safeParse(data);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message };
-  }
-
   const supabase = createAdminClient();
-  const { data: section, error } = await supabase
-    .from("formation_sections")
-    .insert({ formation_id: formationId, ...parsed.data })
-    .select("id")
-    .single();
 
-  if (error) {
+  // Check if there are registrations
+  const { count } = await supabase
+    .from("formation_registrations")
+    .select("*", { count: "exact", head: true })
+    .eq("formation_id", id);
+
+  if (count && count > 0) {
     return {
       success: false,
-      error: "Erreur lors de la création de la section",
+      error: `Impossible de supprimer : ${count} inscription(s) existante(s)`,
     };
   }
 
-  revalidatePath(`/admin/formations/${formationId}/edit`);
-  return { success: true, data: section };
-};
-
-export const updateSection = async (
-  id: string,
-  formationId: string,
-  data: unknown,
-): Promise<ActionResult> => {
-  await requireAdmin();
-  const parsed = sectionSchema.safeParse(data);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message };
-  }
-
-  const supabase = createAdminClient();
-  const { error } = await supabase
-    .from("formation_sections")
-    .update(parsed.data)
-    .eq("id", id);
-
-  if (error) {
-    return { success: false, error: "Erreur lors de la mise à jour" };
-  }
-
-  revalidatePath(`/admin/formations/${formationId}/edit`);
-  return { success: true };
-};
-
-export const deleteSection = async (
-  id: string,
-  formationId: string,
-): Promise<ActionResult> => {
-  await requireAdmin();
-  const supabase = createAdminClient();
-  const { error } = await supabase
-    .from("formation_sections")
-    .delete()
-    .eq("id", id);
+  const { error } = await supabase.from("formations").delete().eq("id", id);
 
   if (error) {
     return { success: false, error: "Erreur lors de la suppression" };
   }
 
-  revalidatePath(`/admin/formations/${formationId}/edit`);
+  revalidatePath("/admin/formations");
+  revalidatePath("/formations");
   return { success: true };
 };
 
-export const reorderSections = async (
+// ─── Get Formation Registrations Count ──────────────────────────
+
+export const getFormationRegistrationsCount = async (
   formationId: string,
-  orderedIds: string[],
-): Promise<ActionResult> => {
-  await requireAdmin();
+): Promise<number> => {
   const supabase = createAdminClient();
-
-  const updates = orderedIds.map((id, index) =>
-    supabase
-      .from("formation_sections")
-      .update({ position: index })
-      .eq("id", id),
-  );
-
-  const results = await Promise.all(updates);
-  const failed = results.find((r) => r.error);
-  if (failed?.error) {
-    return { success: false, error: "Erreur lors du réordonnancement" };
-  }
-
-  revalidatePath(`/admin/formations/${formationId}/edit`);
-  return { success: true };
-};
-
-// ─── Blocks ─────────────────────────────────────────────────
-
-export const createBlock = async (
-  sectionId: string,
-  formationId: string,
-  type: string,
-  content: unknown,
-  position: number,
-): Promise<ActionResult<{ id: string }>> => {
-  await requireAdmin();
-  const supabase = createAdminClient();
-
-  const { data: block, error } = await supabase
-    .from("formation_blocks")
-    .insert({
-      section_id: sectionId,
-      type,
-      content: content as Record<string, unknown>,
-      position,
-    })
-    .select("id")
-    .single();
-
-  if (error) {
-    return { success: false, error: "Erreur lors de la création du bloc" };
-  }
-
-  revalidatePath(`/admin/formations/${formationId}/edit`);
-  return { success: true, data: block };
-};
-
-export const updateBlock = async (
-  id: string,
-  formationId: string,
-  content: unknown,
-): Promise<ActionResult> => {
-  await requireAdmin();
-  const supabase = createAdminClient();
-
-  const { error } = await supabase
-    .from("formation_blocks")
-    .update({ content: content as Record<string, unknown> })
-    .eq("id", id);
-
-  if (error) {
-    return { success: false, error: "Erreur lors de la mise à jour" };
-  }
-
-  revalidatePath(`/admin/formations/${formationId}/edit`);
-  return { success: true };
-};
-
-export const deleteBlock = async (
-  id: string,
-  formationId: string,
-): Promise<ActionResult> => {
-  await requireAdmin();
-  const supabase = createAdminClient();
-  const { error } = await supabase
-    .from("formation_blocks")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return { success: false, error: "Erreur lors de la suppression" };
-  }
-
-  revalidatePath(`/admin/formations/${formationId}/edit`);
-  return { success: true };
-};
-
-export const reorderBlocks = async (
-  sectionId: string,
-  formationId: string,
-  orderedIds: string[],
-): Promise<ActionResult> => {
-  await requireAdmin();
-  const supabase = createAdminClient();
-
-  const updates = orderedIds.map((id, index) =>
-    supabase.from("formation_blocks").update({ position: index }).eq("id", id),
-  );
-
-  const results = await Promise.all(updates);
-  const failed = results.find((r) => r.error);
-  if (failed?.error) {
-    return { success: false, error: "Erreur lors du réordonnancement" };
-  }
-
-  revalidatePath(`/admin/formations/${formationId}/edit`);
-  return { success: true };
-};
-
-// ─── Collaborators ──────────────────────────────────────────
-
-export type FormationCollaboratorRow = {
-  consultant_id: string;
-  revenue_share: number;
-  consultant: {
-    first_name: string | null;
-    last_name: string | null;
-    email: string;
-  };
-};
-
-export const getFormationCollaborators = async (
-  formationId: string,
-): Promise<FormationCollaboratorRow[]> => {
-  await requireAdmin();
-  const supabase = createAdminClient();
-
-  const { data } = await supabase
-    .from("formation_collaborators")
-    .select(
-      "consultant_id, revenue_share, profiles!formation_collaborators_consultant_id_fkey(first_name, last_name, email)",
-    )
-    .eq("formation_id", formationId);
-
-  return (data ?? []).map((row) => ({
-    consultant_id: row.consultant_id,
-    revenue_share: Number(row.revenue_share),
-    consultant:
-      row.profiles as unknown as FormationCollaboratorRow["consultant"],
-  }));
-};
-
-export const addCollaborator = async (
-  formationId: string,
-  data: unknown,
-): Promise<ActionResult> => {
-  await requireAdmin();
-  const parsed = formationCollaboratorSchema.safeParse(data);
-  if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message };
-  }
-
-  const supabase = createAdminClient();
-
-  // Verify the consultant exists and has consultant role
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, roles")
-    .eq("id", parsed.data.consultant_id)
-    .single();
-
-  if (!profile || !(profile.roles as string[]).includes("consultant")) {
-    return { success: false, error: "Ce profil n'est pas une consultante" };
-  }
-
-  const { error } = await supabase.from("formation_collaborators").insert({
-    formation_id: formationId,
-    consultant_id: parsed.data.consultant_id,
-    revenue_share: parsed.data.revenue_share,
-  });
-
-  if (error) {
-    if (error.code === "23505") {
-      return {
-        success: false,
-        error: "Cette consultante est déjà collaboratrice",
-      };
-    }
-    return {
-      success: false,
-      error: "Erreur lors de l'ajout de la collaboratrice",
-    };
-  }
-
-  revalidatePath(`/admin/formations/${formationId}/edit`);
-  return { success: true };
-};
-
-export const updateCollaboratorShare = async (
-  formationId: string,
-  consultantId: string,
-  revenueShare: number,
-): Promise<ActionResult> => {
-  await requireAdmin();
-
-  if (revenueShare < 0 || revenueShare > 100) {
-    return { success: false, error: "Le pourcentage doit être entre 0 et 100" };
-  }
-
-  const supabase = createAdminClient();
-  const { error } = await supabase
-    .from("formation_collaborators")
-    .update({ revenue_share: revenueShare })
+  const { count } = await supabase
+    .from("formation_registrations")
+    .select("*", { count: "exact", head: true })
     .eq("formation_id", formationId)
-    .eq("consultant_id", consultantId);
+    .eq("status", "registered");
 
-  if (error) {
-    return { success: false, error: "Erreur lors de la mise à jour" };
-  }
-
-  revalidatePath(`/admin/formations/${formationId}/edit`);
-  return { success: true };
-};
-
-export const removeCollaborator = async (
-  formationId: string,
-  consultantId: string,
-): Promise<ActionResult> => {
-  await requireAdmin();
-  const supabase = createAdminClient();
-
-  const { error } = await supabase
-    .from("formation_collaborators")
-    .delete()
-    .eq("formation_id", formationId)
-    .eq("consultant_id", consultantId);
-
-  if (error) {
-    return { success: false, error: "Erreur lors de la suppression" };
-  }
-
-  revalidatePath(`/admin/formations/${formationId}/edit`);
-  return { success: true };
+  return count ?? 0;
 };

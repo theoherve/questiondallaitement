@@ -58,9 +58,9 @@ const STATUS_CONFIG: Record<
 };
 
 const TYPE_CONFIG: Record<string, { label: string }> = {
-  formation: { label: "Accompagnement" },
+  accompagnement: { label: "Accompagnement" },
   booking: { label: "Consultation" },
-  event: { label: "Événement" },
+  formation: { label: "Formation" },
 };
 
 const PaiementsPage = async ({
@@ -231,9 +231,9 @@ const PaiementsPage = async ({
                 aria-label="Filtrer par type"
               >
                 <option value="all">Tous</option>
-                <option value="formation">Accompagnement</option>
+                <option value="accompagnement">Accompagnement</option>
                 <option value="booking">Consultation</option>
-                <option value="event">Événement</option>
+                <option value="formation">Formation</option>
               </select>
             </div>
             <div className="flex flex-col gap-2">

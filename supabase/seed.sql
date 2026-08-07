@@ -100,7 +100,7 @@ WHERE c.slug = 'carole-herve'
       AND ct.title = t.title
   );
 -- 3. Formations (9: 1 pack + 8 modules) — fixed UUIDs for pack sections reference
-INSERT INTO formations (
+INSERT INTO accompagnements (
     id,
     consultant_id,
     title,
@@ -196,7 +196,7 @@ SET title = EXCLUDED.title,
   published_at = EXCLUDED.published_at,
   updated_at = now();
 -- 4. Formation sections for the Pack (7 modules)
-INSERT INTO formation_sections (formation_id, title, position)
+INSERT INTO accompagnement_sections (accompagnement_id, title, position)
 SELECT 'f0000001-0001-4000-8000-000000000001'::uuid,
   s.title,
   s.pos
@@ -211,8 +211,8 @@ FROM (
   ) AS s(pos, title)
 WHERE NOT EXISTS (
     SELECT 1
-    FROM formation_sections fs
-    WHERE fs.formation_id = 'f0000001-0001-4000-8000-000000000001'::uuid
+    FROM accompagnement_sections fs
+    WHERE fs.accompagnement_id = 'f0000001-0001-4000-8000-000000000001'::uuid
       AND fs.title = s.title
   );
 -- 5. Events (formations pro — scraped from Wix)
@@ -286,11 +286,11 @@ FROM (
         '["client_name", "date", "refund_info"]'
       ),
       (
-        'formation_access',
-        'Accès à votre formation',
-        '<h1>Formation disponible</h1><p>Bonjour {{client_name}},</p><p>Vous avez maintenant accès à la formation "{{formation_title}}". Cliquez ci-dessous pour commencer.</p>',
+        'accompagnement_access',
+        'Accès à votre accompagnement',
+        '<h1>Accompagnement disponible</h1><p>Bonjour {{client_name}},</p><p>Vous avez maintenant accès à l''accompagnement "{{accompagnement_title}}". Cliquez ci-dessous pour commencer.</p>',
         'transactional',
-        '["client_name", "formation_title"]'
+        '["client_name", "accompagnement_title"]'
       ),
       (
         'welcome',

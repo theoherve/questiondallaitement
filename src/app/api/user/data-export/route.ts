@@ -27,8 +27,8 @@ export const GET = async () => {
         .eq("client_id", user.id)
         .order("created_at", { ascending: false }),
       supabase
-        .from("formation_enrollments")
-        .select("id, formation_id, enrolled_at, status")
+        .from("accompagnement_enrollments")
+        .select("id, accompagnement_id, enrolled_at, status")
         .eq("client_id", user.id)
         .order("enrolled_at", { ascending: false }),
     ]);
@@ -37,7 +37,7 @@ export const GET = async () => {
     export_date: new Date().toISOString(),
     profile: profile ?? null,
     bookings: bookings ?? [],
-    formation_enrollments: enrollments ?? [],
+    accompagnement_enrollments: enrollments ?? [],
   };
 
   const json = JSON.stringify(exportData, null, 2);

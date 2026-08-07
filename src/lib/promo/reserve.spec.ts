@@ -69,12 +69,12 @@ describe("resolvePromoForPurchase", () => {
 
     const result = await resolvePromoForPurchase({
       code: "supermaman",
-      serviceKind: "formation",
+      serviceKind: "accompagnement",
       itemId: "formation-1",
       amountCents: 10_000,
       profileId: "profile-1",
       reserve: true,
-      orderKind: "formation",
+      orderKind: "accompagnement",
       referenceId: "formation-1",
     });
 
@@ -96,7 +96,7 @@ describe("resolvePromoForPurchase", () => {
 
     const result = await resolvePromoForPurchase({
       code: "SUPERMAMAN",
-      serviceKind: "formation",
+      serviceKind: "accompagnement",
       itemId: "formation-1",
       amountCents: 10_000,
       profileId: "profile-1",
@@ -112,7 +112,7 @@ describe("resolvePromoForPurchase", () => {
 
     const result = await resolvePromoForPurchase({
       code: "INCONNU",
-      serviceKind: "formation",
+      serviceKind: "accompagnement",
       itemId: "formation-1",
       amountCents: 10_000,
       profileId: "profile-1",
@@ -133,7 +133,7 @@ describe("resolvePromoForPurchase", () => {
 
     const result = await resolvePromoForPurchase({
       code: "SUPERMAMAN",
-      serviceKind: "formation",
+      serviceKind: "accompagnement",
       itemId: "formation-1",
       amountCents: 10_000,
       profileId: "profile-1",

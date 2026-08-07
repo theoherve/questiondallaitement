@@ -22,10 +22,10 @@ export const POST = async (request: Request) => {
     );
   }
 
-  let event;
+  let formation;
 
   try {
-    event = stripe.webhooks.constructEvent(
+    formation = stripe.webhooks.constructEvent(
       body,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
@@ -40,45 +40,45 @@ export const POST = async (request: Request) => {
   }
 
   try {
-    switch (event.type) {
+    switch (formation.type) {
       case "checkout.session.completed":
         await handleCheckoutCompleted(
-          event.data.object as import("stripe").Stripe.Checkout.Session
+          formation.data.object as import("stripe").Stripe.Checkout.Session
         );
         break;
 
       case "checkout.session.expired":
         await handleCheckoutExpired(
-          event.data.object as import("stripe").Stripe.Checkout.Session
+          formation.data.object as import("stripe").Stripe.Checkout.Session
         );
         break;
 
       case "payment_intent.succeeded":
         await handlePaymentIntentSucceeded(
-          event.data.object as import("stripe").Stripe.PaymentIntent
+          formation.data.object as import("stripe").Stripe.PaymentIntent
         );
         break;
 
       case "charge.refunded":
         await handleChargeRefunded(
-          event.data.object as import("stripe").Stripe.Charge
+          formation.data.object as import("stripe").Stripe.Charge
         );
         break;
 
       case "account.updated":
         await handleAccountUpdated(
-          event.data.object as import("stripe").Stripe.Account
+          formation.data.object as import("stripe").Stripe.Account
         );
         break;
 
       case "account.application.deauthorized":
         await handleAccountDeauthorized(
-          event.data.object as unknown as import("stripe").Stripe.Account
+          formation.data.object as unknown as import("stripe").Stripe.Account
         );
         break;
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        console.log(`Unhandled formation type: ${formation.type}`);
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

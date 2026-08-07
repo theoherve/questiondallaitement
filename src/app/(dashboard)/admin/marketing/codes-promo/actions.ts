@@ -6,7 +6,11 @@ import { promoCodeSchema } from "@/validations/promo-codes";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/types";
-import type { PromoCode } from "@/types/database";
+import type {
+  PromoCode,
+  PromoTargetType,
+  PromoTriggerType,
+} from "@/types/database";
 
 const ROUTE = "/admin/marketing/codes-promo";
 
@@ -213,8 +217,8 @@ export const listPromoCodes = async (): Promise<PromoCodeListRow[]> => {
 };
 
 export type PromoCodeDetail = PromoCode & {
-  targets: { target_type: string; target_id: string | null }[];
-  triggers: { trigger_type: string; target_id: string | null }[];
+  targets: { target_type: PromoTargetType; target_id: string | null }[];
+  triggers: { trigger_type: PromoTriggerType; target_id: string | null }[];
 };
 
 export const getPromoCode = async (
@@ -284,22 +288,22 @@ export const getPromoCodeStats = async (
 
 /** Catalogue propose comme cibles dans le formulaire. */
 export const listPromoTargetOptions = async (): Promise<{
+  accompagnements: { id: string; title: string }[];
   formations: { id: string; title: string }[];
-  events: { id: string; title: string }[];
   consultationTypes: { id: string; title: string }[];
 }> => {
   await requireAdmin();
   const supabase = createAdminClient();
 
-  const [formations, events, consultationTypes] = await Promise.all([
+  const [accompagnements, formations, consultationTypes] = await Promise.all([
     supabase
-      .from("formations")
+      .from("accompagnements")
       .select("id, title")
       .eq("status", "published")
       .is("deleted_at", null)
       .order("title"),
     supabase
-      .from("events")
+      .from("formations")
       .select("id, title")
       .eq("is_published", true)
       .order("starts_at", { ascending: false }),
@@ -307,8 +311,8 @@ export const listPromoTargetOptions = async (): Promise<{
   ]);
 
   return {
+    accompagnements: (accompagnements.data ?? []) as { id: string; title: string }[],
     formations: (formations.data ?? []) as { id: string; title: string }[],
-    events: (events.data ?? []) as { id: string; title: string }[],
     consultationTypes: (consultationTypes.data ?? []) as {
       id: string;
       title: string;

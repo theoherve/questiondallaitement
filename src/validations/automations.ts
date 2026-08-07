@@ -36,14 +36,14 @@ export const automationSchema = z
   })
   .refine(
     (data) => {
-      if (data.trigger_type === "delay_after_event") {
+      if (data.trigger_type === "delay_after_formation") {
         const cfg = data.trigger_config as { delay_days?: number };
         return typeof cfg.delay_days === "number" && cfg.delay_days >= 1;
       }
       return true;
     },
     {
-      message: "Indiquez le nombre de jours pour delay_after_event",
+      message: "Indiquez le nombre de jours pour delay_after_formation",
       path: ["trigger_config"],
     },
   );

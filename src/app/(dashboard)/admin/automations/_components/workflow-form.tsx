@@ -21,7 +21,7 @@ import type {
   AdminWorkflow,
   AdminWorkflowStep,
   Label,
-  RecurringEventDefinition,
+  RecurringFormationDefinition,
   AdminWorkflowActionType,
 } from "@/lib/admin-workflows/types";
 
@@ -37,8 +37,8 @@ type StepDraft = {
 type Props = {
   workflow?: AdminWorkflow & { steps: AdminWorkflowStep[] };
   labels: Label[];
-  recurringDefinitions: RecurringEventDefinition[];
-  formations: { id: string; title: string }[];
+  recurringDefinitions: RecurringFormationDefinition[];
+  accompagnements: { id: string; title: string }[];
   emailTemplates: {
     id: string;
     name: string;
@@ -52,7 +52,7 @@ export const WorkflowForm = ({
   workflow,
   labels,
   recurringDefinitions,
-  formations,
+  accompagnements,
   emailTemplates,
 }: Props) => {
   const isEdit = !!workflow;
@@ -65,7 +65,7 @@ export const WorkflowForm = ({
     workflow?.description ?? "",
   );
   const [triggerType, setTriggerType] = useState(
-    workflow?.trigger_type ?? "recurring_event",
+    workflow?.trigger_type ?? "recurring_formation",
   );
   const [triggerConfig, setTriggerConfig] = useState<Record<string, unknown>>(
     (workflow?.trigger_config as Record<string, unknown>) ?? {},
@@ -258,17 +258,17 @@ export const WorkflowForm = ({
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               value={triggerType}
               onChange={(e) => {
-                setTriggerType(e.target.value as "recurring_event" | "formation_enrolled" | "manual");
+                setTriggerType(e.target.value as "recurring_formation" | "accompagnement_enrolled" | "manual");
                 setTriggerConfig({});
               }}
             >
-              <option value="recurring_event">Événement récurrent</option>
-              <option value="formation_enrolled">Achat accompagnement</option>
+              <option value="recurring_formation">Formation récurrente</option>
+              <option value="accompagnement_enrolled">Achat accompagnement</option>
               <option value="manual">Manuel</option>
             </select>
           </div>
 
-          {triggerType === "recurring_event" && (
+          {triggerType === "recurring_formation" && (
             <div>
               <label className="mb-1 block text-sm font-medium">
                 Définition récurrente
@@ -294,13 +294,13 @@ export const WorkflowForm = ({
             </div>
           )}
 
-          {triggerType === "formation_enrolled" && (
+          {triggerType === "accompagnement_enrolled" && (
             <div>
               <label className="mb-1 block text-sm font-medium">
                 Accompagnements (laisser vide = tous)
               </label>
               <div className="max-h-40 space-y-1 overflow-y-auto rounded border p-2">
-                {formations.map((f) => (
+                {accompagnements.map((f) => (
                   <label
                     key={f.id}
                     className="flex items-center gap-2 text-sm"
@@ -308,15 +308,15 @@ export const WorkflowForm = ({
                     <input
                       type="checkbox"
                       checked={
-                        ((triggerConfig.formation_ids as string[]) ?? []).includes(
+                        ((triggerConfig.accompagnement_ids as string[]) ?? []).includes(
                           f.id,
                         )
                       }
                       onChange={(e) => {
                         const current =
-                          (triggerConfig.formation_ids as string[]) ?? [];
+                          (triggerConfig.accompagnement_ids as string[]) ?? [];
                         setTriggerConfig({
-                          formation_ids: e.target.checked
+                          accompagnement_ids: e.target.checked
                             ? [...current, f.id]
                             : current.filter((id) => id !== f.id),
                         });

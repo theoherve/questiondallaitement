@@ -4,7 +4,7 @@ import type { AutoAssignRule, AudienceConfig } from "./types";
 /**
  * Auto-assign labels when a client purchases a formation.
  * Checks all labels with auto_assign_rule and assigns matching ones.
- * Also schedules catch-up workflow actions for future events.
+ * Also schedules catch-up workflow actions for future formations.
  */
 export const autoAssignLabelsOnEnrollment = async (
   clientId: string,
@@ -23,10 +23,10 @@ export const autoAssignLabelsOnEnrollment = async (
 
   for (const label of labels) {
     const rule = label.auto_assign_rule as AutoAssignRule | null;
-    if (!rule || rule.trigger !== "formation_enrolled") continue;
+    if (!rule || rule.trigger !== "accompagnement_enrolled") continue;
 
-    // No formation_ids = any formation triggers this label
-    if (!rule.formation_ids?.length || rule.formation_ids.includes(formationId)) {
+    // No accompagnement_ids = any formation triggers this label
+    if (!rule.accompagnement_ids?.length || rule.accompagnement_ids.includes(formationId)) {
       labelsToAssign.push(label.id);
     }
   }
@@ -44,13 +44,13 @@ export const autoAssignLabelsOnEnrollment = async (
     .from("contact_labels")
     .upsert(rows, { onConflict: "profile_id,label_id" });
 
-  // Catch-up: schedule workflow actions for future events
+  // Catch-up: schedule workflow actions for future formations
   await scheduleCatchUpActions(clientId, labelsToAssign);
 };
 
 /**
  * When a user gets new labels, check if there are active workflows
- * targeting those labels with future scheduled events. Schedule any
+ * targeting those labels with future scheduled formations. Schedule any
  * missing actions for steps that haven't passed yet.
  */
 const scheduleCatchUpActions = async (
@@ -64,7 +64,7 @@ const scheduleCatchUpActions = async (
     .from("admin_workflows")
     .select("id, trigger_type, trigger_config, audience_config")
     .eq("is_active", true)
-    .eq("trigger_type", "recurring_event");
+    .eq("trigger_type", "recurring_formation");
 
   if (!workflows?.length) return;
 
@@ -83,14 +83,14 @@ const scheduleCatchUpActions = async (
     };
     if (!triggerConfig.recurring_definition_id) continue;
 
-    // Find future events for this recurring definition
-    const { data: futureEvents } = await supabase
-      .from("events")
+    // Find future formations for this recurring definition
+    const { data: futureFormations } = await supabase
+      .from("formations")
       .select("id, occurrence_date")
       .eq("recurring_definition_id", triggerConfig.recurring_definition_id)
       .gte("starts_at", now.toISOString());
 
-    if (!futureEvents?.length) continue;
+    if (!futureFormations?.length) continue;
 
     // Get workflow steps
     const { data: steps } = await supabase
@@ -102,12 +102,12 @@ const scheduleCatchUpActions = async (
     if (!steps?.length) continue;
 
     // Schedule actions for future steps only
-    for (const event of futureEvents) {
-      if (!event.occurrence_date) continue;
+    for (const formation of futureFormations) {
+      if (!formation.occurrence_date) continue;
 
       for (const step of steps) {
         const scheduledFor = computeScheduledFor(
-          event.occurrence_date,
+          formation.occurrence_date,
           step.delay_days,
           step.send_time,
         );
@@ -123,7 +123,7 @@ const scheduleCatchUpActions = async (
             workflow_id: workflow.id,
             step_id: step.id,
             profile_id: profileId,
-            anchor_event_id: event.id,
+            anchor_formation_id: formation.id,
             scheduled_for: scheduledFor,
             status: "pending",
           });

@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { splitFormationRevenue } from "./revenue-split";
+import { splitAccompagnementRevenue } from "./revenue-split";
 
 const OWNER = "proprietaire";
 
-describe("splitFormationRevenue", () => {
+describe("splitAccompagnementRevenue", () => {
   it("verse tout a la proprietaire sans collaboratrice", () => {
-    const parts = splitFormationRevenue({
+    const parts = splitAccompagnementRevenue({
       amountCents: 9900,
       platformFeeCents: 1485,
       ownerId: OWNER,
@@ -19,7 +19,7 @@ describe("splitFormationRevenue", () => {
     // Le net (8415) se partage : 30 % a la collaboratrice, le reste a la
     // proprietaire. Avant, la charge destination versait 8415 a la
     // proprietaire *puis* la plateforme payait la collaboratrice de sa poche.
-    const parts = splitFormationRevenue({
+    const parts = splitAccompagnementRevenue({
       amountCents: 9900,
       platformFeeCents: 1485,
       ownerId: OWNER,
@@ -36,7 +36,7 @@ describe("splitFormationRevenue", () => {
     // 3 collaboratrices a 33 % d'un net indivisible : la proprietaire absorbe
     // le reste, sinon la somme des virements depasserait la charge et Stripe
     // refuserait le dernier.
-    const parts = splitFormationRevenue({
+    const parts = splitAccompagnementRevenue({
       amountCents: 10000,
       platformFeeCents: 1,
       ownerId: OWNER,
@@ -55,7 +55,7 @@ describe("splitFormationRevenue", () => {
     // Une saisie a 60 % + 60 % laisserait une part negative a la proprietaire :
     // Stripe rejetterait le virement et la vente resterait a moitie repartie.
     expect(() =>
-      splitFormationRevenue({
+      splitAccompagnementRevenue({
         amountCents: 9900,
         platformFeeCents: 1485,
         ownerId: OWNER,
@@ -68,7 +68,7 @@ describe("splitFormationRevenue", () => {
   });
 
   it("omet une part nulle plutot que de tenter un virement de zero", () => {
-    const parts = splitFormationRevenue({
+    const parts = splitAccompagnementRevenue({
       amountCents: 9900,
       platformFeeCents: 1485,
       ownerId: OWNER,
@@ -79,7 +79,7 @@ describe("splitFormationRevenue", () => {
   });
 
   it("accepte que les collaboratrices prennent tout le net", () => {
-    const parts = splitFormationRevenue({
+    const parts = splitAccompagnementRevenue({
       amountCents: 9900,
       platformFeeCents: 1485,
       ownerId: OWNER,

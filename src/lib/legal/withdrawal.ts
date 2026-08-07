@@ -34,7 +34,7 @@ export const WITHDRAWAL_TEXTS = {
     "avant l'expiration du délai de rétractation de quatorze jours. Je " +
     "reconnais qu'une fois la consultation pleinement exécutée, je ne pourrai " +
     "plus exercer ce droit.",
-  formation:
+  accompagnement:
     "Je demande à accéder immédiatement au contenu et renonce expressément à " +
     "mon droit de rétractation de quatorze jours, que je perds dès le début de " +
     "l'exécution.",

@@ -41,7 +41,7 @@ const baseInput = {
   scope_all: false,
   targets: [
     {
-      target_type: "formation" as const,
+      target_type: "accompagnement" as const,
       target_id: "11111111-1111-4111-8111-111111111111",
     },
   ],
@@ -72,7 +72,7 @@ describe("createPromoCode", () => {
       data: [
         {
           promo_code_id: "code-1",
-          target_type: "formation",
+          target_type: "accompagnement",
           target_id: "11111111-1111-4111-8111-111111111111",
         },
       ],

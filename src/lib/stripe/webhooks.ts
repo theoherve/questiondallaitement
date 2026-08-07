@@ -3,11 +3,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createTransfer, createRefund } from "@/lib/stripe/connect";
 import { stripe as stripeClient } from "@/lib/stripe/client";
 import {
-  splitFormationRevenue,
+  splitAccompagnementRevenue,
   type Collaborator,
 } from "@/lib/stripe/revenue-split";
 import {
-  sendFormationAccess,
+  sendAccompagnementAccess,
   sendBookingConfirmation,
   sendBookingConfirmedToConsultant,
   sendBookingSlotConflict,
@@ -38,7 +38,7 @@ export const handleCheckoutCompleted = async (
   let bookingOutcome: BookingOutcome = "created";
 
   switch (type) {
-    case "formation":
+    case "accompagnement":
       await handleFormationPurchase(
         client_id,
         reference_id,
@@ -51,8 +51,8 @@ export const handleCheckoutCompleted = async (
         paymentIntentId ?? null,
       );
       break;
-    case "event":
-      await handleEventRegistration(
+    case "formation":
+      await handleFormationRegistration(
         client_id,
         reference_id,
         paymentIntentId ?? null,
@@ -91,7 +91,7 @@ export const handleCheckoutCompleted = async (
         amount_cents: session.amount_total ?? 0,
         platform_fee_cents: parseInt(metadata.platform_fee_cents ?? "0"),
         currency: session.currency ?? "eur",
-        type: type as "formation" | "booking" | "event",
+        type: type as "accompagnement" | "booking" | "formation",
         reference_id,
         status: slotConflict ? "refunded" : "succeeded",
         promo_code_id: metadata.promo_code_id ?? null,
@@ -271,14 +271,14 @@ const handleFormationPurchase = async (
   const supabase = getSupabase();
 
   // 1. Create enrollment
-  await supabase.from("formation_enrollments").upsert(
+  await supabase.from("accompagnement_enrollments").upsert(
     {
       client_id: clientId,
-      formation_id: formationId,
+      accompagnement_id: formationId,
       stripe_payment_intent_id: paymentIntentId,
       enrolled_at: new Date().toISOString(),
     },
-    { onConflict: "client_id,formation_id" },
+    { onConflict: "client_id,accompagnement_id" },
   );
 
   // 2. Process collaborator revenue splits
@@ -313,16 +313,16 @@ const distributeFormationRevenue = async (
   const supabase = getSupabase();
 
   const { data: collaborators } = await supabase
-    .from("formation_collaborators")
+    .from("accompagnement_collaborators")
     .select(
-      "consultant_id, revenue_share, consultants!formation_collaborators_consultant_id_fkey(stripe_account_id, stripe_account_status)",
+      "consultant_id, revenue_share, consultants!accompagnement_collaborators_consultant_id_fkey(stripe_account_id, stripe_account_status)",
     )
-    .eq("formation_id", formationId);
+    .eq("accompagnement_id", formationId);
 
   if (!collaborators?.length) return;
 
   const { data: formation } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("consultant_id")
     .eq("id", formationId)
     .single();
@@ -347,7 +347,7 @@ const distributeFormationRevenue = async (
     await logAudit(
       formation.consultant_id,
       "collaborator_split_impossible",
-      "formation",
+      "accompagnement",
       formationId,
       {
         reason: "charge_versee_directement_a_la_consultante",
@@ -374,7 +374,7 @@ const distributeFormationRevenue = async (
       await logAudit(
         collab.consultant_id,
         "collaborator_transfer_skipped",
-        "formation",
+        "accompagnement",
         formationId,
         {
           reason: "no_active_stripe_account",
@@ -392,7 +392,7 @@ const distributeFormationRevenue = async (
 
   let parts;
   try {
-    parts = splitFormationRevenue({
+    parts = splitAccompagnementRevenue({
       amountCents: payment.amount_cents,
       platformFeeCents: payment.platform_fee_cents,
       ownerId: formation.consultant_id,
@@ -402,7 +402,7 @@ const distributeFormationRevenue = async (
     await logAudit(
       formation.consultant_id,
       "collaborator_split_invalid",
-      "formation",
+      "accompagnement",
       formationId,
       { error: error instanceof Error ? error.message : "Unknown error" },
     );
@@ -421,7 +421,7 @@ const distributeFormationRevenue = async (
         account,
         {
           type: "formation_revenue_split",
-          formation_id: formationId,
+          accompagnement_id: formationId,
           consultant_id: part.consultantId,
           payment_intent_id: paymentIntentId,
         },
@@ -437,7 +437,7 @@ const distributeFormationRevenue = async (
       await logAudit(
         part.consultantId,
         "collaborator_transfer_completed",
-        "formation",
+        "accompagnement",
         formationId,
         { amount_cents: part.amountCents },
       );
@@ -445,7 +445,7 @@ const distributeFormationRevenue = async (
       await logAudit(
         part.consultantId,
         "collaborator_transfer_failed",
-        "formation",
+        "accompagnement",
         formationId,
         {
           error: error instanceof Error ? error.message : "Unknown error",
@@ -650,19 +650,19 @@ const notifySlotConflict = async (
   }
 };
 
-const handleEventRegistration = async (
+const handleFormationRegistration = async (
   clientId: string,
   eventId: string,
   paymentIntentId: string | null,
 ) => {
-  await getSupabase().from("event_registrations").upsert(
+  await getSupabase().from("formation_registrations").upsert(
     {
       client_id: clientId,
-      event_id: eventId,
+      formation_id: eventId,
       stripe_payment_intent_id: paymentIntentId,
       status: "registered",
     },
-    { onConflict: "event_id,client_id" },
+    { onConflict: "formation_id,client_id" },
   );
 };
 
@@ -697,17 +697,17 @@ const sendCheckoutEmails = async (
       password_hash: clientProfile.password_hash,
     });
 
-    if (type === "formation") {
+    if (type === "accompagnement") {
       const { data: formation } = await supabase
-        .from("formations")
+        .from("accompagnements")
         .select("title")
         .eq("id", referenceId)
         .single();
 
       if (formation) {
-        await sendFormationAccess(clientProfile.email, {
+        await sendAccompagnementAccess(clientProfile.email, {
           client_name: clientName,
-          formation_title: formation.title,
+          accompagnement_title: formation.title,
         });
       }
     }
@@ -789,16 +789,16 @@ const fireCheckoutAutomations = async (
       client_name: client?.first_name ?? "",
     };
 
-    if (type === "formation") {
+    if (type === "accompagnement") {
       const { data: formation } = await supabase
-        .from("formations")
+        .from("accompagnements")
         .select("title")
         .eq("id", referenceId)
         .single();
-      await runAutomations("formation_purchased", consultantId, {
+      await runAutomations("accompagnement_purchased", consultantId, {
         ...triggerData,
-        formation_id: referenceId,
-        formation_title: formation?.title,
+        accompagnement_id: referenceId,
+        accompagnement_title: formation?.title,
       });
     } else if (type === "booking") {
       const { data: booking } = await supabase
@@ -814,17 +814,17 @@ const fireCheckoutAutomations = async (
         consultation_type_id: (booking as { consultation_type_id?: string })?.consultation_type_id,
         consultation_type_title: ct?.title,
       });
-    } else if (type === "event") {
-      const { data: event } = await supabase
-        .from("events")
+    } else if (type === "formation") {
+      const { data: formation } = await supabase
+        .from("formations")
         .select("title, starts_at")
         .eq("id", referenceId)
         .single();
-      await runAutomations("event_registered", consultantId, {
+      await runAutomations("formation_registered", consultantId, {
         ...triggerData,
-        event_id: referenceId,
-        event_title: event?.title,
-        event_starts_at: event?.starts_at,
+        formation_id: referenceId,
+        formation_title: formation?.title,
+        event_starts_at: formation?.starts_at,
       });
     }
   } catch {

@@ -11,9 +11,9 @@ export const IDS = {
   consultantProfile: id("200"),
   consultationType: id("300"),
   durationOption: id("310"),
-  formation: id("400"),
+  accompagnement: id("400"),
   cabinetLocation: id("320"),
-  event: id("500"),
+  formation: id("500"),
   // Reference IDs carried in Stripe metadata
   booking: id("600"),
   /**
@@ -60,17 +60,17 @@ export const COMMISSION_RATE = 15;
 
 /** Payment intent IDs, one per scenario, so assertions never collide. */
 export const PI = {
-  formation: "pi_e2e_formation_0001",
+  accompagnement: "pi_e2e_accompagnement_0001",
   booking: "pi_e2e_booking_0001",
-  event: "pi_e2e_event_0001",
+  formation: "pi_e2e_formation_0001",
   refundFull: "pi_e2e_refund_full_0001",
   refundPartial: "pi_e2e_refund_partial_0001",
 };
 
 export const PRICES = {
-  formation: 9900,
+  accompagnement: 9900,
   booking: 8000,
-  event: 3500,
+  formation: 3500,
 };
 
 export const platformFee = (amountCents) =>

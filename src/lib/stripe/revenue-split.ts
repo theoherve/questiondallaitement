@@ -24,7 +24,7 @@ export type RevenuePart = {
   amountCents: number;
 };
 
-export const splitFormationRevenue = ({
+export const splitAccompagnementRevenue = ({
   amountCents,
   platformFeeCents,
   ownerId,

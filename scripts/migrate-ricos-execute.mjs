@@ -5,7 +5,7 @@
  * Steps:
  *   1. Dump full backup JSON to backups/ricos-migration-<ts>.json (includes
  *      formations / sections / blocks / progress / bookmarks / enrollments).
- *   2. Wipe formation_bookmarks, formation_progress (clean slate on progression).
+ *   2. Wipe accompagnement_bookmarks, accompagnement_progress (clean slate on progression).
  *   3. For each section: delete existing blocks, insert parsed replacements.
  *   4. Export missing-downloads.csv (same as dry-run) for manual re-upload.
  *
@@ -41,8 +41,8 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
 
 if (!CONFIRM) {
   console.error("❌ Refusing to run without --confirm flag.");
-  console.error("   This script will TRUNCATE formation_bookmarks + formation_progress,");
-  console.error("   DELETE all formation_blocks, and INSERT new parsed blocks.");
+  console.error("   This script will TRUNCATE accompagnement_bookmarks + accompagnement_progress,");
+  console.error("   DELETE all accompagnement_blocks, and INSERT new parsed blocks.");
   console.error("   A full JSON backup is written first but verify before proceeding.");
   console.error("   Re-run with: node scripts/migrate-ricos-execute.mjs --confirm");
   process.exit(1);
@@ -62,13 +62,13 @@ const csvEscape = (v) => {
 // ─── Step 1: fetch everything + write backup ────────────────────────────────
 const fetchAll = async () => {
   const tables = [
-    "formations",
-    "formation_sections",
-    "formation_blocks",
-    "formation_enrollments",
-    "formation_progress",
+    "accompagnements",
+    "accompagnement_sections",
+    "accompagnement_blocks",
+    "accompagnement_enrollments",
+    "accompagnement_progress",
   ];
-  const optionalTables = ["formation_bookmarks"];
+  const optionalTables = ["accompagnement_bookmarks"];
   const dump = {};
   for (const t of tables) {
     const { data, error } = await supabase.from(t).select("*");
@@ -99,23 +99,23 @@ const writeBackup = (dump) => {
 
 // ─── Step 2: wipe progression tables ────────────────────────────────────────
 const wipeProgression = async (dump) => {
-  if (dump.formation_bookmarks !== null) {
+  if (dump.accompagnement_bookmarks !== null) {
     const { error: e1 } = await supabase
-      .from("formation_bookmarks")
+      .from("accompagnement_bookmarks")
       .delete()
       .not("id", "is", null);
     if (e1) throw new Error(`wipe bookmarks: ${e1.message}`);
-    console.log("✓ Wiped formation_bookmarks");
+    console.log("✓ Wiped accompagnement_bookmarks");
   } else {
-    console.log("  (formation_bookmarks not in DB — skip wipe)");
+    console.log("  (accompagnement_bookmarks not in DB — skip wipe)");
   }
 
   const { error: e2 } = await supabase
-    .from("formation_progress")
+    .from("accompagnement_progress")
     .delete()
     .not("enrollment_id", "is", null);
   if (e2) throw new Error(`wipe progress: ${e2.message}`);
-  console.log("✓ Wiped formation_progress");
+  console.log("✓ Wiped accompagnement_progress");
 };
 
 // ─── Step 3: per-section delete + insert ────────────────────────────────────
@@ -137,7 +137,7 @@ const buildEmittedForSection = (section, sourceBlocks) => {
       emitted.push(...out.blocks);
       for (const dl of out.missingDownloads) {
         missingDownloads.push({
-          formationId: section.formation_id,
+          formationId: section.accompagnement_id,
           sectionTitle: section.title,
           stepTitle: src.content?.title ?? "",
           filename: dl.filename,
@@ -155,7 +155,7 @@ const replaceSectionBlocks = async (section, sourceBlocks) => {
 
   // Delete existing blocks for this section
   const { error: delErr } = await supabase
-    .from("formation_blocks")
+    .from("accompagnement_blocks")
     .delete()
     .eq("section_id", section.id);
   if (delErr) throw new Error(`delete blocks for ${section.id}: ${delErr.message}`);
@@ -171,7 +171,7 @@ const replaceSectionBlocks = async (section, sourceBlocks) => {
     position: idx,
   }));
 
-  const { error: insErr } = await supabase.from("formation_blocks").insert(rows);
+  const { error: insErr } = await supabase.from("accompagnement_blocks").insert(rows);
   if (insErr) throw new Error(`insert blocks for ${section.id}: ${insErr.message}`);
 
   return { inserted: rows.length, missingDownloads };
@@ -189,11 +189,11 @@ const main = async () => {
   await wipeProgression(dump);
 
   console.log("\n→ Step 3/4: replacing blocks per section…");
-  const sections = dump.formation_sections.sort(
+  const sections = dump.accompagnement_sections.sort(
     (a, b) => a.position - b.position
   );
   const blocksBySection = new Map();
-  for (const b of dump.formation_blocks) {
+  for (const b of dump.accompagnement_blocks) {
     const arr = blocksBySection.get(b.section_id) ?? [];
     arr.push(b);
     blocksBySection.set(b.section_id, arr);

@@ -70,13 +70,13 @@ export const getContacts = async (params?: {
       .eq("consultant_id", user.id)
       .not("status", "eq", "cancelled"),
     supabase
-      .from("formation_enrollments")
-      .select("client_id, formation_id")
+      .from("accompagnement_enrollments")
+      .select("client_id, accompagnement_id")
       .in(
-        "formation_id",
+        "accompagnement_id",
         (
           await supabase
-            .from("formations")
+            .from("accompagnements")
             .select("id")
             .eq("consultant_id", user.id)
         ).data?.map((f) => f.id) ?? [],
@@ -164,7 +164,7 @@ export const getContacts = async (params?: {
     enrollmentCounts.set(id, (enrollmentCounts.get(id) ?? 0) + 1);
   }
 
-  // Load payments + events for score calculation (2 shared queries, no N×RPC)
+  // Load payments + formations for score calculation (2 shared queries, no N×RPC)
   const profileIds = profiles.map((p) => p.id);
   const [paymentsRes, eventsRes] = await Promise.all([
     supabase
@@ -174,7 +174,7 @@ export const getContacts = async (params?: {
       .eq("status", "succeeded")
       .in("client_id", profileIds),
     supabase
-      .from("event_registrations")
+      .from("formation_registrations")
       .select("client_id")
       .eq("status", "confirmed")
       .in("client_id", profileIds),
@@ -184,9 +184,9 @@ export const getContacts = async (params?: {
   for (const p of paymentsRes.data ?? []) {
     totalSpentMap.set(p.client_id, (totalSpentMap.get(p.client_id) ?? 0) + p.amount_cents);
   }
-  const eventCountMap = new Map<string, number>();
+  const formationCountMap = new Map<string, number>();
   for (const e of eventsRes.data ?? []) {
-    eventCountMap.set(e.client_id, (eventCountMap.get(e.client_id) ?? 0) + 1);
+    formationCountMap.set(e.client_id, (formationCountMap.get(e.client_id) ?? 0) + 1);
   }
 
   const now = Date.now();
@@ -200,7 +200,7 @@ export const getContacts = async (params?: {
       completedBookings: bookingCounts.get(p.id) ?? 0,
       totalSpentCents: totalSpentMap.get(p.id) ?? 0,
       formationsEnrolled: enrollmentCounts.get(p.id) ?? 0,
-      eventsAttended: eventCountMap.get(p.id) ?? 0,
+      eventsAttended: formationCountMap.get(p.id) ?? 0,
       inactiveDays,
     });
 
@@ -220,7 +220,7 @@ export const getContacts = async (params?: {
 
 // ─── Contact Detail ─────────────────────────────────────────
 
-export type InteractionType = "booking" | "enrollment" | "event" | "note";
+export type InteractionType = "booking" | "enrollment" | "formation" | "note";
 
 export type Interaction = {
   id: string;
@@ -269,7 +269,7 @@ export const getContactDetail = async (
   const consultantFormationIds =
     (
       await supabase
-        .from("formations")
+        .from("accompagnements")
         .select("id")
         .eq("consultant_id", user.id)
     ).data?.map((f) => f.id) ?? [];
@@ -284,15 +284,15 @@ export const getContactDetail = async (
         .order("starts_at", { ascending: false }),
       consultantFormationIds.length > 0
         ? supabase
-            .from("formation_enrollments")
-            .select("formation_id, enrolled_at, formations(title)")
+            .from("accompagnement_enrollments")
+            .select("accompagnement_id, enrolled_at, accompagnements(title)")
             .eq("client_id", clientId)
-            .in("formation_id", consultantFormationIds)
+            .in("accompagnement_id", consultantFormationIds)
             .order("enrolled_at", { ascending: false })
         : Promise.resolve({ data: [] }),
       supabase
-        .from("event_registrations")
-        .select("id, registered_at, status, events(title)")
+        .from("formation_registrations")
+        .select("id, registered_at, status, formations(title)")
         .eq("client_id", clientId)
         .order("registered_at", { ascending: false }),
       supabase
@@ -342,14 +342,14 @@ export const getContactDetail = async (
   }
 
   for (const e of (enrollmentsRes.data ?? []) as unknown as {
-    formation_id: string;
+    accompagnement_id: string;
     enrolled_at: string;
-    formations: { title: string } | null;
+    accompagnements: { title: string } | null;
   }[]) {
     interactions.push({
-      id: e.formation_id,
+      id: e.accompagnement_id,
       type: "enrollment",
-      title: e.formations?.title ?? "Formation",
+      title: e.accompagnements?.title ?? "Accompagnement",
       date: e.enrolled_at,
     });
   }
@@ -358,12 +358,12 @@ export const getContactDetail = async (
     id: string;
     registered_at: string;
     status: string;
-    events: { title: string } | null;
+    formations: { title: string } | null;
   }[]) {
     interactions.push({
       id: ev.id,
-      type: "event",
-      title: ev.events?.title ?? "Événement",
+      type: "formation",
+      title: ev.formations?.title ?? "Formation",
       date: ev.registered_at,
       status: ev.status,
     });

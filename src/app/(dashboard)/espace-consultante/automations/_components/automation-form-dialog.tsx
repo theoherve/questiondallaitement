@@ -25,16 +25,16 @@ import { createAutomation, updateAutomation } from "../actions";
 import { AUTOMATION_TRIGGER_TYPES } from "@/lib/automations/types";
 
 const TRIGGER_LABELS: Record<string, string> = {
-  formation_purchased: "Achat formation",
+  accompagnement_purchased: "Achat formation",
   booking_confirmed: "Réservation confirmée",
-  event_registered: "Inscription événement",
-  delay_after_event: "Jours après événement",
+  formation_registered: "Inscription formation",
+  delay_after_formation: "Jours après formation",
 };
 
 type FormOptions = {
-  formations: { id: string; title: string }[];
+  accompagnements: { id: string; title: string }[];
   consultationTypes: { id: string; title: string }[];
-  events: { id: string; title: string }[];
+  formations: { id: string; title: string }[];
   tags: { id: string; name: string }[];
 };
 
@@ -65,7 +65,7 @@ export const AutomationFormDialog = ({
 
   const [name, setName] = useState(automation?.name ?? "");
   const [triggerType, setTriggerType] = useState(
-    automation?.trigger_type ?? "formation_purchased"
+    automation?.trigger_type ?? "accompagnement_purchased"
   );
   const [triggerConfig, setTriggerConfig] = useState<
     Record<string, unknown>
@@ -81,10 +81,10 @@ export const AutomationFormDialog = ({
     if (open) {
       /* eslint-disable react-hooks/set-state-in-effect -- Batch form reset on dialog open */
       setName(automation?.name ?? "");
-      const tt = automation?.trigger_type ?? "formation_purchased";
+      const tt = automation?.trigger_type ?? "accompagnement_purchased";
       setTriggerType(tt);
       const cfg = automation?.trigger_config ?? {};
-      if (tt === "delay_after_event" && !(cfg as { delay_days?: number }).delay_days) {
+      if (tt === "delay_after_formation" && !(cfg as { delay_days?: number }).delay_days) {
         setTriggerConfig({ ...cfg, delay_days: 2 });
       } else {
         setTriggerConfig(cfg);
@@ -173,7 +173,7 @@ export const AutomationFormDialog = ({
               onValueChange={(v) => {
                 setTriggerType(v);
                 setTriggerConfig(
-                  v === "delay_after_event" ? { delay_days: 2 } : {}
+                  v === "delay_after_formation" ? { delay_days: 2 } : {}
                 );
               }}
             >
@@ -190,12 +190,12 @@ export const AutomationFormDialog = ({
             </Select>
           </div>
 
-          {triggerType === "formation_purchased" && formOptions.formations.length > 0 && (
+          {triggerType === "accompagnement_purchased" && formOptions.formations.length > 0 && (
             <div>
               <Label>Formations concernées (vide = toutes)</Label>
               <div className="mt-2 flex flex-wrap gap-2">
                 {formOptions.formations.map((f) => {
-                  const ids = (triggerConfig.formation_ids as string[]) ?? [];
+                  const ids = (triggerConfig.accompagnement_ids as string[]) ?? [];
                   const checked = ids.includes(f.id);
                   return (
                     <label
@@ -208,7 +208,7 @@ export const AutomationFormDialog = ({
                           const next = c
                             ? [...ids, f.id]
                             : ids.filter((x) => x !== f.id);
-                          setTriggerConfig({ ...triggerConfig, formation_ids: next });
+                          setTriggerConfig({ ...triggerConfig, accompagnement_ids: next });
                         }}
                       />
                       {f.title}
@@ -251,12 +251,12 @@ export const AutomationFormDialog = ({
             </div>
           )}
 
-          {(triggerType === "event_registered" || triggerType === "delay_after_event") &&
-            formOptions.events.length > 0 && (
+          {(triggerType === "formation_registered" || triggerType === "delay_after_formation") &&
+            formOptions.formations.length > 0 && (
               <div className="space-y-2">
-                {triggerType === "delay_after_event" && (
+                {triggerType === "delay_after_formation" && (
                   <div>
-                    <Label htmlFor="delay_days">Nombre de jours après l&apos;événement</Label>
+                    <Label htmlFor="delay_days">Nombre de jours après la formation</Label>
                     <Input
                       id="delay_days"
                       type="number"
@@ -272,10 +272,10 @@ export const AutomationFormDialog = ({
                   </div>
                 )}
                 <div>
-                  <Label>Événements concernés (vide = tous)</Label>
+                  <Label>Formations concernées (vide = tous)</Label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {formOptions.events.map((ev) => {
-                      const ids = (triggerConfig.event_ids as string[]) ?? [];
+                    {formOptions.formations.map((ev) => {
+                      const ids = (triggerConfig.formation_ids as string[]) ?? [];
                       const checked = ids.includes(ev.id);
                       return (
                         <label
@@ -290,7 +290,7 @@ export const AutomationFormDialog = ({
                                 : ids.filter((x) => x !== ev.id);
                               setTriggerConfig({
                                 ...triggerConfig,
-                                event_ids: next,
+                                formation_ids: next,
                               });
                             }}
                           />
@@ -333,12 +333,12 @@ export const AutomationFormDialog = ({
                     {a.type === "send_email" && (
                       <>
                         <Input
-                          placeholder="Sujet ({{client_name}}, {{formation_title}}...)"
+                          placeholder="Sujet ({{client_name}}, {{accompagnement_title}}...)"
                           value={(a.subject as string) ?? ""}
                           onChange={(e) => updateAction(i, "subject", e.target.value)}
                         />
                         <Textarea
-                          placeholder="Contenu HTML (variables: {{client_name}}, {{formation_title}}, {{consultation_type_title}}, {{event_title}})"
+                          placeholder="Contenu HTML (variables: {{client_name}}, {{accompagnement_title}}, {{consultation_type_title}}, {{formation_title}})"
                           value={(a.body_html as string) ?? ""}
                           onChange={(e) => updateAction(i, "body_html", e.target.value)}
                           rows={4}

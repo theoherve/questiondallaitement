@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
-import { FormationReader } from "./_components/formation-reader";
+import { AccompagnementReader } from "./_components/accompagnement-reader";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -13,7 +13,7 @@ export const generateMetadata = async ({
   const { id } = await params;
   const { supabase } = await getSupabaseAndUser();
   const { data } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("title")
     .eq("id", id)
     .single();
@@ -21,31 +21,31 @@ export const generateMetadata = async ({
   return { title: data?.title ?? "Accompagnement" };
 };
 
-const FormationReaderPage = async ({ params }: Props) => {
+const AccompagnementReaderPage = async ({ params }: Props) => {
   const { id } = await params;
   const { supabase, user } = await getSupabaseAndUser();
 
   const { data: enrollment } = await supabase
-    .from("formation_enrollments")
+    .from("accompagnement_enrollments")
     .select("id")
     .eq("client_id", user.id)
-    .eq("formation_id", id)
+    .eq("accompagnement_id", id)
     .single();
 
   if (!enrollment) redirect("/espace-client/accompagnements");
 
-  const { data: formation } = await supabase
-    .from("formations")
+  const { data: accompagnement } = await supabase
+    .from("accompagnements")
     .select(
       `
       id,
       title,
       description,
-      formation_sections (
+      accompagnement_sections (
         id,
         title,
         position,
-        formation_blocks (
+        accompagnement_blocks (
           id,
           type,
           content,
@@ -58,15 +58,15 @@ const FormationReaderPage = async ({ params }: Props) => {
     .is("deleted_at", null)
     .single();
 
-  if (!formation) notFound();
+  if (!accompagnement) notFound();
 
   const [progressResult, bookmarksResult] = await Promise.all([
     supabase
-      .from("formation_progress")
+      .from("accompagnement_progress")
       .select("block_id, completed")
       .eq("enrollment_id", enrollment.id),
     supabase
-      .from("formation_bookmarks")
+      .from("accompagnement_bookmarks")
       .select("block_id")
       .eq("enrollment_id", enrollment.id),
   ]);
@@ -80,22 +80,22 @@ const FormationReaderPage = async ({ params }: Props) => {
     (b) => b.block_id
   );
 
-  const sections = (formation.formation_sections ?? [])
+  const sections = (accompagnement.accompagnement_sections ?? [])
     .sort(
       (a: { position: number }, b: { position: number }) =>
         a.position - b.position
     )
-    .map((section: { id: string; title: string; position: number; formation_blocks?: { id: string; type: string; content: unknown; position: number }[] }) => ({
+    .map((section: { id: string; title: string; position: number; accompagnement_blocks?: { id: string; type: string; content: unknown; position: number }[] }) => ({
       ...section,
-      formation_blocks: (section.formation_blocks ?? []).sort(
+      accompagnement_blocks: (section.accompagnement_blocks ?? []).sort(
         (a: { position: number }, b: { position: number }) =>
           a.position - b.position
       ),
     }));
 
   const totalBlocks = sections.reduce(
-    (acc: number, s: { formation_blocks?: unknown[] }) =>
-      acc + (s.formation_blocks?.length ?? 0),
+    (acc: number, s: { accompagnement_blocks?: unknown[] }) =>
+      acc + (s.accompagnement_blocks?.length ?? 0),
     0
   );
   const completedCount = completedBlockIds.size;
@@ -109,9 +109,9 @@ const FormationReaderPage = async ({ params }: Props) => {
     (section: {
       id: string;
       title: string;
-      formation_blocks: { id: string; type: string; content: unknown }[];
+      accompagnement_blocks: { id: string; type: string; content: unknown }[];
     }) =>
-      section.formation_blocks
+      section.accompagnement_blocks
         .filter((b) => b.type === "download")
         .map((b) => {
           const c = (b.content ?? {}) as DownloadContent;
@@ -129,11 +129,11 @@ const FormationReaderPage = async ({ params }: Props) => {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <FormationReader
-        formation={{
-          id: formation.id,
-          title: formation.title,
-          description: formation.description,
+      <AccompagnementReader
+        accompagnement={{
+          id: accompagnement.id,
+          title: accompagnement.title,
+          description: accompagnement.description,
         }}
         sections={sections}
         enrollmentId={enrollment.id}
@@ -147,4 +147,4 @@ const FormationReaderPage = async ({ params }: Props) => {
   );
 };
 
-export default FormationReaderPage;
+export default AccompagnementReaderPage;

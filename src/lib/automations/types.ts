@@ -1,8 +1,8 @@
 export const AUTOMATION_TRIGGER_TYPES = [
-  "formation_purchased",
+  "accompagnement_purchased",
   "booking_confirmed",
-  "event_registered",
-  "delay_after_event",
+  "formation_registered",
+  "delay_after_formation",
 ] as const;
 
 export type AutomationTriggerType = (typeof AUTOMATION_TRIGGER_TYPES)[number];
@@ -37,40 +37,40 @@ export type AutomationAction =
   | AddCrmTagAction
   | WebhookAction;
 
-export type FormationPurchasedConfig = {
-  formation_ids?: string[];
+export type AccompagnementPurchasedConfig = {
+  accompagnement_ids?: string[];
 };
 
 export type BookingConfirmedConfig = {
   consultation_type_ids?: string[];
 };
 
-export type EventRegisteredConfig = {
-  event_ids?: string[];
+export type FormationRegisteredConfig = {
+  formation_ids?: string[];
 };
 
-export type DelayAfterEventConfig = {
-  event_ids?: string[];
+export type DelayAfterFormationConfig = {
+  formation_ids?: string[];
   delay_days: number;
 };
 
 export type AutomationTriggerConfig =
-  | FormationPurchasedConfig
+  | AccompagnementPurchasedConfig
   | BookingConfirmedConfig
-  | EventRegisteredConfig
-  | DelayAfterEventConfig;
+  | FormationRegisteredConfig
+  | DelayAfterFormationConfig;
 
 export type TriggerData = {
   client_id: string;
   client_email?: string;
   client_name?: string;
-  formation_id?: string;
-  formation_title?: string;
+  accompagnement_id?: string;
+  accompagnement_title?: string;
   booking_id?: string;
   consultation_type_id?: string;
   consultation_type_title?: string;
-  event_id?: string;
-  event_title?: string;
+  formation_id?: string;
+  formation_title?: string;
   event_starts_at?: string;
   [key: string]: unknown;
 };

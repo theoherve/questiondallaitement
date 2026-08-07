@@ -154,16 +154,16 @@ export const seed = async () => {
   );
 
   check(
-    "formations (accompagnement en ligne)",
-    await supabase.from("formations").upsert(
+    "accompagnements (accompagnement en ligne)",
+    await supabase.from("accompagnements").upsert(
       {
-        id: IDS.formation,
+        id: IDS.accompagnement,
         consultant_id: IDS.consultantProfile,
         title: "Accompagnement E2E",
         slug: "accompagnement-e2e",
         short_description: "Accompagnement de test.",
         description: "Accompagnement en ligne utilise par la suite E2E.",
-        price_cents: PRICES.formation,
+        price_cents: PRICES.accompagnement,
         currency: "eur",
         status: "published",
         published_at: new Date().toISOString(),
@@ -193,18 +193,18 @@ export const seed = async () => {
   const eventEnd = new Date(eventStart.getTime() + 90 * 60 * 1000);
 
   check(
-    "events",
-    await supabase.from("events").upsert(
+    "formations",
+    await supabase.from("formations").upsert(
       {
-        id: IDS.event,
+        id: IDS.formation,
         consultant_id: IDS.consultantProfile,
         title: "Atelier E2E",
         slug: "atelier-e2e",
-        description: "Evenement de test.",
+        description: "Formation de test.",
         type: "online",
         starts_at: eventStart.toISOString(),
         ends_at: eventEnd.toISOString(),
-        price_cents: PRICES.event,
+        price_cents: PRICES.formation,
         currency: "eur",
         is_published: true,
       },

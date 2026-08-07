@@ -75,26 +75,26 @@ const ConsultantAnalyticsPage = async ({
       .lte("starts_at", end.toISOString()),
     // Total enrollments
     supabase
-      .from("formation_enrollments")
-      .select("formation_id", { count: "exact", head: true })
+      .from("accompagnement_enrollments")
+      .select("accompagnement_id", { count: "exact", head: true })
       .in(
-        "formation_id",
+        "accompagnement_id",
         (
           await supabase
-            .from("formations")
+            .from("accompagnements")
             .select("id")
             .eq("consultant_id", user.id)
         ).data?.map((f) => f.id) ?? [],
       ),
     // Enrollments in period
     supabase
-      .from("formation_enrollments")
-      .select("formation_id, enrolled_at")
+      .from("accompagnement_enrollments")
+      .select("accompagnement_id, enrolled_at")
       .in(
-        "formation_id",
+        "accompagnement_id",
         (
           await supabase
-            .from("formations")
+            .from("accompagnements")
             .select("id")
             .eq("consultant_id", user.id)
         ).data?.map((f) => f.id) ?? [],

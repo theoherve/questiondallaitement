@@ -6,14 +6,14 @@ import type { Interaction, InteractionType } from "../actions";
 const ICON_MAP: Record<InteractionType, React.ReactNode> = {
   booking: <Calendar className="h-4 w-4" />,
   enrollment: <BookOpen className="h-4 w-4" />,
-  event: <Mic className="h-4 w-4" />,
+  formation: <Mic className="h-4 w-4" />,
   note: <FileText className="h-4 w-4" />,
 };
 
 const TYPE_LABEL: Record<InteractionType, string> = {
   booking: "Réservation",
   enrollment: "Accompagnement",
-  event: "Événement",
+  formation: "Formation",
   note: "Note",
 };
 

@@ -45,12 +45,12 @@ describe("recordWithdrawalWaiver", () => {
   it("enregistre le texte propre a l'accompagnement", async () => {
     await recordWithdrawalWaiver(makeSupabase(), {
       clientId: "client-1",
-      context: "formation",
+      context: "accompagnement",
       referenceId: "formation-1",
     });
 
     expect(inserts[0]).toMatchObject({
-      accepted_text: WITHDRAWAL_TEXTS.formation,
+      accepted_text: WITHDRAWAL_TEXTS.accompagnement,
     });
   });
 

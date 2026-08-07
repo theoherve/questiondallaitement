@@ -25,12 +25,12 @@ export const metadata: Metadata = {
 type EnrollmentRow = {
   id: string;
   enrolled_at: string;
-  formations: {
+  accompagnements: {
     id: string;
     title: string;
     slug: string;
     thumbnail_url?: string | null;
-    formation_sections: { formation_blocks: { id: string }[] }[];
+    accompagnement_sections: { accompagnement_blocks: { id: string }[] }[];
   } | null;
 };
 
@@ -39,9 +39,9 @@ const ClientDashboardPage = async () => {
 
   const [enrollmentsResult, bookingsResult, profileResult] = await Promise.all([
     supabase
-      .from("formation_enrollments")
+      .from("accompagnement_enrollments")
       .select(
-        `id, enrolled_at, formations(id, title, slug, thumbnail_url, formation_sections(formation_blocks(id)))`
+        `id, enrolled_at, accompagnements(id, title, slug, thumbnail_url, accompagnement_sections(accompagnement_blocks(id)))`
       )
       .eq("client_id", user.id)
       .order("enrolled_at", { ascending: false })
@@ -68,7 +68,7 @@ const ClientDashboardPage = async () => {
   const firstName = profileResult.data?.first_name ?? null;
 
   const { count: totalEnrollments } = await supabase
-    .from("formation_enrollments")
+    .from("accompagnement_enrollments")
     .select("id", { count: "exact", head: true })
     .eq("client_id", user.id);
 
@@ -81,7 +81,7 @@ const ClientDashboardPage = async () => {
   const { data: progressData } =
     enrollmentIds.length > 0
       ? await supabase
-          .from("formation_progress")
+          .from("accompagnement_progress")
           .select("enrollment_id, block_id, completed")
           .in("enrollment_id", enrollmentIds)
       : { data: [] };
@@ -105,8 +105,8 @@ const ClientDashboardPage = async () => {
 
   enrollments.forEach((e) => {
     const blocks =
-      e.formations?.formation_sections?.reduce(
-        (acc, s) => acc + s.formation_blocks.length,
+      e.accompagnements?.accompagnement_sections?.reduce(
+        (acc, s) => acc + s.accompagnement_blocks.length,
         0
       ) ?? 0;
     const done = completedByEnrollment.get(e.id)?.size ?? 0;
@@ -128,7 +128,7 @@ const ClientDashboardPage = async () => {
     (s) =>
       s.progressPercent > 0 &&
       s.progressPercent < 100 &&
-      s.enrollment.formations
+      s.enrollment.accompagnements
   );
 
   const STATUS_LABELS: Record<string, string> = {
@@ -209,11 +209,11 @@ const ClientDashboardPage = async () => {
         )}
       </section>
 
-      {resumeCandidate?.enrollment.formations && (
+      {resumeCandidate?.enrollment.accompagnements && (
         <ResumeBanner
           candidate={{
-            formationId: resumeCandidate.enrollment.formations.id,
-            title: resumeCandidate.enrollment.formations.title,
+            formationId: resumeCandidate.enrollment.accompagnements.id,
+            title: resumeCandidate.enrollment.accompagnements.title,
             progressPercent: resumeCandidate.progressPercent,
           }}
         />
@@ -282,7 +282,7 @@ const ClientDashboardPage = async () => {
                     totalBlocks: blocks,
                     completedBlocks,
                   }) => {
-                    const formation = enrollment.formations;
+                    const formation = enrollment.accompagnements;
                     if (!formation) return null;
                     const isComplete = progressPercent === 100;
                     return (

@@ -12,7 +12,7 @@ type DownloadBlockProps = {
     filename: string;
     size_bytes: number;
   };
-  formationId: string;
+  accompagnementId: string;
   blockId: string;
 };
 
@@ -24,7 +24,7 @@ const formatFileSize = (bytes: number): string => {
 
 export const DownloadBlock = ({
   content,
-  formationId,
+  accompagnementId,
   blockId,
 }: DownloadBlockProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
@@ -34,7 +34,7 @@ export const DownloadBlock = ({
     try {
       // Les pièces jointes vivent dans un bucket privé : le lien direct ne
       // s'ouvre pas. Le serveur vérifie l'inscription et renvoie un lien signé.
-      const result = await getAttachmentUrl(formationId, blockId);
+      const result = await getAttachmentUrl(accompagnementId, blockId);
       if (!result.success || !result.data) {
         toast.error(result.error ?? "Téléchargement indisponible");
         return;

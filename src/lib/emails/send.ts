@@ -155,26 +155,26 @@ export const sendBookingCancelled = async (
   await sendTransactionalEmail({ to: clientEmail, subject, html });
 };
 
-export const sendFormationAccess = async (
+export const sendAccompagnementAccess = async (
   clientEmail: string,
   variables: {
     client_name: string;
-    formation_title: string;
+    accompagnement_title: string;
     access_url?: string;
     is_new_account?: boolean;
   },
 ) => {
-  const template = await getTemplate("formation_access");
+  const template = await getTemplate("accompagnement_access");
   if (!template) return;
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
   const accessUrl = variables.access_url ?? `${siteUrl}/espace-client/accompagnements`;
   const { subject, html } = await renderTemplateRow(template, {
     client_name: variables.client_name,
-    formation_title: variables.formation_title,
+    accompagnement_title: variables.accompagnement_title,
     access_url: accessUrl,
     // Legacy var retained for back-compat with older template copies.
-    formation_url: accessUrl,
+    accompagnement_url: accessUrl,
     is_new_account: variables.is_new_account ? "true" : "false",
   });
   await sendTransactionalEmail({ to: clientEmail, subject, html });

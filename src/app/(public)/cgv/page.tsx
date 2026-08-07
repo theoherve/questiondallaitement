@@ -60,7 +60,7 @@ const CgvPage = () => (
             l&apos;espace personnel après achat ;
           </li>
           <li>
-            <strong>Événements et ateliers</strong>, à date fixe.
+            <strong>Formations et ateliers</strong>, à date fixe.
           </li>
         </ul>
         <p className="mt-3">

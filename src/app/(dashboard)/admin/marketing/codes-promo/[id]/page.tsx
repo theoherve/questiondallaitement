@@ -74,8 +74,8 @@ const EditPromoCodePage = async ({ params }: Props) => {
 
       <PromoCodeForm
         initial={code}
+        accompagnements={options.accompagnements}
         formations={options.formations}
-        events={options.events}
         consultationTypes={options.consultationTypes}
       />
     </div>

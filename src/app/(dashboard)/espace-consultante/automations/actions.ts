@@ -11,7 +11,7 @@ export const getAutomationFormOptions = async () => {
   const [formationsRes, consultationTypesRes, eventsRes, tagsRes] =
     await Promise.all([
       supabase
-        .from("formations")
+        .from("accompagnements")
         .select("id, title")
         .eq("consultant_id", user.id)
         .eq("status", "published")
@@ -24,7 +24,7 @@ export const getAutomationFormOptions = async () => {
         .eq("is_active", true)
         .order("title"),
       supabase
-        .from("events")
+        .from("formations")
         .select("id, title")
         .eq("consultant_id", user.id)
         .eq("is_published", true)
@@ -38,9 +38,9 @@ export const getAutomationFormOptions = async () => {
     ]);
 
   return {
-    formations: formationsRes.data ?? [],
+    accompagnements: formationsRes.data ?? [],
     consultationTypes: consultationTypesRes.data ?? [],
-    events: eventsRes.data ?? [],
+    formations: eventsRes.data ?? [],
     tags: tagsRes.data ?? [],
   };
 };

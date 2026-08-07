@@ -13,7 +13,7 @@ export const markBlockComplete = async (
   const { supabase, user } = await getSupabaseAndUser();
 
   const { data: enrollment } = await supabase
-    .from("formation_enrollments")
+    .from("accompagnement_enrollments")
     .select("id")
     .eq("id", enrollmentId)
     .eq("client_id", user.id)
@@ -23,7 +23,7 @@ export const markBlockComplete = async (
     return { success: false, error: "Inscription introuvable" };
   }
 
-  const { error } = await supabase.from("formation_progress").upsert(
+  const { error } = await supabase.from("accompagnement_progress").upsert(
     {
       enrollment_id: enrollmentId,
       block_id: blockId,
@@ -49,7 +49,7 @@ export const toggleBookmark = async (
   const { supabase, user } = await getSupabaseAndUser();
 
   const { data: enrollment } = await supabase
-    .from("formation_enrollments")
+    .from("accompagnement_enrollments")
     .select("id")
     .eq("id", enrollmentId)
     .eq("client_id", user.id)
@@ -60,14 +60,14 @@ export const toggleBookmark = async (
   }
 
   if (bookmarked) {
-    const { error } = await supabase.from("formation_bookmarks").upsert(
+    const { error } = await supabase.from("accompagnement_bookmarks").upsert(
       { enrollment_id: enrollmentId, block_id: blockId },
       { onConflict: "enrollment_id,block_id" }
     );
     if (error) return { success: false, error: "Erreur ajout favori" };
   } else {
     const { error } = await supabase
-      .from("formation_bookmarks")
+      .from("accompagnement_bookmarks")
       .delete()
       .eq("enrollment_id", enrollmentId)
       .eq("block_id", blockId);
@@ -84,7 +84,7 @@ export const markBlockIncomplete = async (
   const { supabase, user } = await getSupabaseAndUser();
 
   const { data: enrollment } = await supabase
-    .from("formation_enrollments")
+    .from("accompagnement_enrollments")
     .select("id")
     .eq("id", enrollmentId)
     .eq("client_id", user.id)
@@ -95,7 +95,7 @@ export const markBlockIncomplete = async (
   }
 
   const { error } = await supabase
-    .from("formation_progress")
+    .from("accompagnement_progress")
     .update({ completed: false, completed_at: null })
     .eq("enrollment_id", enrollmentId)
     .eq("block_id", blockId);
@@ -116,15 +116,15 @@ export const markBlockIncomplete = async (
  * l'accompagnement, puis on signe une URL temporaire pour ce fichier.
  */
 export const getAttachmentUrl = async (
-  formationId: string,
+  accompagnementId: string,
   blockId: string
 ): Promise<ActionResult<{ url: string }>> => {
   const { supabase, user } = await getSupabaseAndUser();
 
   const { data: enrollment } = await supabase
-    .from("formation_enrollments")
+    .from("accompagnement_enrollments")
     .select("id")
-    .eq("formation_id", formationId)
+    .eq("accompagnement_id", accompagnementId)
     .eq("client_id", user.id)
     .maybeSingle();
 
@@ -134,10 +134,10 @@ export const getAttachmentUrl = async (
 
   const admin = createAdminClient();
   const { data: block } = await admin
-    .from("formation_blocks")
-    .select("content, formation_sections!inner(formation_id)")
+    .from("accompagnement_blocks")
+    .select("content, accompagnement_sections!inner(accompagnement_id)")
     .eq("id", blockId)
-    .eq("formation_sections.formation_id", formationId)
+    .eq("accompagnement_sections.accompagnement_id", accompagnementId)
     .maybeSingle();
 
   const url = (block?.content as { url?: string } | null)?.url;

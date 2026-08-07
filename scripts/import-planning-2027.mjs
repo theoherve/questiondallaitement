@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * Import du planning de formations 2027 dans la table events.
+ * Import du planning de formations 2027 dans la table formations.
  *
  * Source : scripts/data/planning-2027.csv (transcription du Planning_2027_v5.csv
  * fourni par Carole, dates ISO resolues via la colonne Jour, lignes OFF /
  * feries / mercredis preserves / formations suivies par Carole exclues).
  *
- * Les evenements sont crees NON PUBLIES, sans tarif affiche : Carole repasse
+ * Les formations sont creees NON PUBLIEES, sans tarif affiche : Carole repasse
  * ensuite pour completer description, prix, lieu, lien externe et publier.
  *
  * Usage :
@@ -203,7 +203,7 @@ const main = async () => {
   }
 
   const { data: existing } = await supabase
-    .from("events")
+    .from("formations")
     .select("slug")
     .in("slug", events.map((e) => e.slug));
   const existingSlugs = new Set((existing ?? []).map((e) => e.slug));
@@ -225,12 +225,12 @@ const main = async () => {
   }
   if (toInsert.length === 0) return;
 
-  const { error } = await supabase.from("events").insert(toInsert);
+  const { error } = await supabase.from("formations").insert(toInsert);
   if (error) {
     console.error("Insertion echouee :", error.message);
     process.exit(1);
   }
-  console.log(`\n${toInsert.length} evenements crees (non publies).`);
+  console.log(`\n formations creees (non publiees).`);
 };
 
 main();

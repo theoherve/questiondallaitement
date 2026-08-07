@@ -6,7 +6,7 @@ import type {
 } from "@/types/database";
 
 /** Les trois familles de produits payants de la plateforme. */
-export type PromoServiceKind = "formation" | "event" | "booking";
+export type PromoServiceKind = "accompagnement" | "formation" | "booking";
 
 export type PromoCodeWithRules = PromoCode & {
   targets: { target_type: PromoTargetType; target_id: string | null }[];
@@ -22,7 +22,7 @@ export type PromoPurchase = {
 
 export type PromoContext = {
   serviceKind: PromoServiceKind;
-  /** formation.id, event.id ou consultation_type_id. */
+  /** formation.id, formation.id ou consultation_type_id. */
   itemId: string;
   amountCents: number;
   nowMs: number;

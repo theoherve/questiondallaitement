@@ -18,7 +18,7 @@ import { features } from "@/config/features";
 type CompletionCelebrationProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  formationTitle: string;
+  accompagnementTitle: string;
 };
 
 const BRAND_COLORS = ["#a0283e", "#c4566a", "#f0b8a8", "#a8c4a0", "#e8c98a"];
@@ -57,7 +57,7 @@ const fireConfetti = () => {
 export const CompletionCelebration = ({
   open,
   onOpenChange,
-  formationTitle,
+  accompagnementTitle,
 }: CompletionCelebrationProps) => {
   const reduce = useReducedMotion();
 
@@ -104,7 +104,7 @@ export const CompletionCelebration = ({
             <DialogDescription className="text-balance text-base text-muted-foreground">
               Vous avez terminé{" "}
               <span className="font-semibold text-primary-red">
-                {formationTitle}
+                {accompagnementTitle}
               </span>
               . Prenez un instant pour savourer le chemin parcouru.
             </DialogDescription>

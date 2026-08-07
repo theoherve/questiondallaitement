@@ -17,12 +17,16 @@ import {
 import { Loader2, Plus, X } from "lucide-react";
 import { createPromoCode, updatePromoCode } from "../actions";
 import { TARGET_TYPE_LABELS, TRIGGER_TYPE_LABELS } from "./format";
-import type { PromoDiscountType } from "@/types/database";
+import type {
+  PromoDiscountType,
+  PromoTargetType,
+  PromoTriggerType,
+} from "@/types/database";
 
 type Option = { id: string; title: string };
 
-type TargetDraft = { target_type: string; target_id: string | null };
-type TriggerDraft = { trigger_type: string; target_id: string | null };
+type TargetDraft = { target_type: PromoTargetType; target_id: string | null };
+type TriggerDraft = { trigger_type: PromoTriggerType; target_id: string | null };
 
 type PromoCodeFormProps = {
   initial?: {
@@ -42,13 +46,13 @@ type PromoCodeFormProps = {
     targets: TargetDraft[];
     triggers: TriggerDraft[];
   };
+  accompagnements: Option[];
   formations: Option[];
-  events: Option[];
   consultationTypes: Option[];
 };
 
 /** Types de cible exigeant le choix d'un item precis. */
-const ITEM_TARGET_TYPES = ["formation", "event", "booking_service"];
+const ITEM_TARGET_TYPES = ["accompagnement", "formation", "booking_service"];
 
 /** `datetime-local` ne comprend pas l'ISO complet avec fuseau. */
 const toLocalInput = (iso: string | null): string =>
@@ -59,8 +63,8 @@ const fromLocalInput = (value: string): string | null =>
 
 export const PromoCodeForm = ({
   initial,
+  accompagnements,
   formations,
-  events,
   consultationTypes,
 }: PromoCodeFormProps) => {
   const router = useRouter();
@@ -105,14 +109,14 @@ export const PromoCodeForm = ({
   );
   const [isActive, setIsActive] = useState(initial?.is_active ?? true);
 
-  const [draftTargetType, setDraftTargetType] = useState("formations_all");
+  const [draftTargetType, setDraftTargetType] = useState<PromoTargetType>("accompagnements_all");
   const [draftTargetId, setDraftTargetId] = useState("");
-  const [draftTriggerType, setDraftTriggerType] = useState("event_purchase");
+  const [draftTriggerType, setDraftTriggerType] = useState<PromoTriggerType>("formation_purchase");
   const [draftTriggerId, setDraftTriggerId] = useState("");
 
-  const optionsFor = (targetType: string): Option[] => {
+  const optionsFor = (targetType: PromoTargetType): Option[] => {
+    if (targetType === "accompagnement") return accompagnements;
     if (targetType === "formation") return formations;
-    if (targetType === "event") return events;
     if (targetType === "booking_service") return consultationTypes;
     return [];
   };
@@ -288,7 +292,7 @@ export const PromoCodeForm = ({
                   <Select
                     value={draftTargetType}
                     onValueChange={(v) => {
-                      setDraftTargetType(v);
+                      setDraftTargetType(v as PromoTargetType);
                       setDraftTargetId("");
                     }}
                   >
@@ -426,7 +430,7 @@ export const PromoCodeForm = ({
               <Select
                 value={draftTriggerType}
                 onValueChange={(v) => {
-                  setDraftTriggerType(v);
+                  setDraftTriggerType(v as PromoTriggerType);
                   setDraftTriggerId("");
                 }}
               >
@@ -450,9 +454,9 @@ export const PromoCodeForm = ({
                   <SelectValue placeholder="N'importe lequel" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(draftTriggerType === "event_purchase"
-                    ? events
-                    : formations
+                  {(draftTriggerType === "formation_purchase"
+                    ? formations
+                    : accompagnements
                   ).map((option) => (
                     <SelectItem key={option.id} value={option.id}>
                       {option.title}

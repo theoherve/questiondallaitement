@@ -31,7 +31,7 @@ export const syncContactToBrevo = async (
   }
 };
 
-// ─── Event-based sync (called from auth/webhook flows) ──────
+// ─── Formation-based sync (called from auth/webhook flows) ──────
 
 export const syncOnSignup = async (profile: {
   email: string;

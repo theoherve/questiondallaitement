@@ -223,7 +223,7 @@ export const exportUserData = async (
 
   const supabase = createAdminClient();
 
-  const [profile, bookings, enrollments, payments, events, tags, notes] =
+  const [profile, bookings, enrollments, payments, formations, tags, notes] =
     await Promise.all([
       supabase.from("profiles").select("*").eq("id", parsedId).single(),
       supabase
@@ -232,8 +232,8 @@ export const exportUserData = async (
         .eq("client_id", parsedId)
         .order("created_at", { ascending: false }),
       supabase
-        .from("formation_enrollments")
-        .select("*, formations(title)")
+        .from("accompagnement_enrollments")
+        .select("*, accompagnements(title)")
         .eq("client_id", parsedId),
       supabase
         .from("payments")
@@ -241,8 +241,8 @@ export const exportUserData = async (
         .eq("client_id", parsedId)
         .order("created_at", { ascending: false }),
       supabase
-        .from("event_registrations")
-        .select("*, events(title)")
+        .from("formation_registrations")
+        .select("*, formations(title)")
         .eq("client_id", parsedId),
       supabase
         .from("crm_contact_tags")
@@ -265,7 +265,7 @@ export const exportUserData = async (
       bookings: bookings.data ?? [],
       enrollments: enrollments.data ?? [],
       payments: payments.data ?? [],
-      events: events.data ?? [],
+      formations: formations.data ?? [],
       tags: tags.data ?? [],
       notes: notes.data ?? [],
       exported_at: new Date().toISOString(),

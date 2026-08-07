@@ -33,7 +33,7 @@ export const generateMetadata = async ({
   const { slug } = await params;
   const supabase = await createClient();
   const { data } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("title, short_description, thumbnail_url")
     .eq("slug", slug)
     .eq("status", "published")
@@ -68,17 +68,17 @@ const formatPrice = (cents: number, currency: string): string => {
   }).format(cents / 100);
 };
 
-const FormationDetailPage = async ({ params }: Props) => {
+const AccompagnementDetailPage = async ({ params }: Props) => {
   const { slug } = await params;
   const supabase = await createClient();
   const currentUser = await getSessionUser();
 
-  const { data: formation } = await supabase
-    .from("formations")
+  const { data: accompagnement } = await supabase
+    .from("accompagnements")
     .select(
       `
       *,
-      consultants!formations_consultant_id_fkey (
+      consultants!accompagnements_consultant_id_fkey (
         slug,
         bio,
         profiles!consultants_id_fkey (
@@ -87,11 +87,11 @@ const FormationDetailPage = async ({ params }: Props) => {
           avatar_url
         )
       ),
-      formation_sections (
+      accompagnement_sections (
         id,
         title,
         position,
-        formation_blocks (
+        accompagnement_blocks (
           id,
           type,
           position
@@ -104,43 +104,43 @@ const FormationDetailPage = async ({ params }: Props) => {
     .is("deleted_at", null)
     .single();
 
-  if (!formation) notFound();
+  if (!accompagnement) notFound();
 
   // L'appli s'authentifie via NextAuth, pas Supabase Auth : `auth.uid()` est
   // toujours nul cote RLS. Le client RLS (`createClient`) ne verrait donc jamais
   // l'inscription. On lit via le client admin, borne au client courant — comme
-  // le reste des lectures authentifiees (voir getSupabaseAndUser, purchaseFormation).
+  // le reste des lectures authentifiees (voir getSupabaseAndUser, purchaseAccompagnement).
   let isEnrolled = false;
   if (currentUser) {
     const admin = createAdminClient();
     const { data: enrollment } = await admin
-      .from("formation_enrollments")
+      .from("accompagnement_enrollments")
       .select("id")
       .eq("client_id", currentUser.id)
-      .eq("formation_id", formation.id)
+      .eq("accompagnement_id", accompagnement.id)
       .maybeSingle();
     isEnrolled = !!enrollment;
   }
 
   if (slug === PACK_SLUG) {
     const moduleRows = await fetchPackModuleRows();
-    const packSections = (formation.formation_sections ?? []) as {
-      formation_blocks?: unknown[];
+    const packSections = (accompagnement.accompagnement_sections ?? []) as {
+      accompagnement_blocks?: unknown[];
     }[];
     const sectionsCount = packSections.length;
     const lessonsCount = packSections.reduce(
-      (acc, s) => acc + (s.formation_blocks?.length ?? 0),
+      (acc, s) => acc + (s.accompagnement_blocks?.length ?? 0),
       0
     );
     return (
       <PackSalesPage
-        formation={{
-          id: formation.id,
-          title: formation.title,
-          price_cents: formation.price_cents,
-          currency: formation.currency,
-          thumbnail_url: formation.thumbnail_url,
-          consultants: formation.consultants as PackSalesPageConsultant,
+        accompagnement={{
+          id: accompagnement.id,
+          title: accompagnement.title,
+          price_cents: accompagnement.price_cents,
+          currency: accompagnement.currency,
+          thumbnail_url: accompagnement.thumbnail_url,
+          consultants: accompagnement.consultants as PackSalesPageConsultant,
         }}
         sectionsCount={sectionsCount}
         lessonsCount={lessonsCount}
@@ -151,16 +151,16 @@ const FormationDetailPage = async ({ params }: Props) => {
     );
   }
 
-  const sections = (formation.formation_sections ?? []).sort(
+  const sections = (accompagnement.accompagnement_sections ?? []).sort(
     (a: { position: number }, b: { position: number }) => a.position - b.position
   );
   const totalBlocks = sections.reduce(
-    (acc: number, s: { formation_blocks?: unknown[] }) =>
-      acc + (s.formation_blocks?.length ?? 0),
+    (acc: number, s: { accompagnement_blocks?: unknown[] }) =>
+      acc + (s.accompagnement_blocks?.length ?? 0),
     0
   );
 
-  const consultant = formation.consultants as unknown as {
+  const consultant = accompagnement.consultants as unknown as {
     slug: string;
     bio: string | null;
     profiles: {
@@ -174,7 +174,7 @@ const FormationDetailPage = async ({ params }: Props) => {
     ? `${consultant.profiles.first_name ?? ""} ${consultant.profiles.last_name ?? ""}`.trim()
     : "Consultante";
 
-  const longDescHtml = (formation as Record<string, unknown>).long_description_html as string | null;
+  const longDescHtml = (accompagnement as Record<string, unknown>).long_description_html as string | null;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
@@ -187,11 +187,11 @@ const FormationDetailPage = async ({ params }: Props) => {
             Accompagnement en ligne
           </Badge>
           <h1 className="mt-4 font-serif text-3xl font-bold text-primary-green sm:text-4xl">
-            {formation.title}
+            {accompagnement.title}
           </h1>
-          {formation.short_description && (
+          {accompagnement.short_description && (
             <p className="mt-4 text-lg text-primary-green/70">
-              {formation.short_description}
+              {accompagnement.short_description}
             </p>
           )}
 
@@ -204,10 +204,10 @@ const FormationDetailPage = async ({ params }: Props) => {
           )}
 
           {/* Fallback short description if no long desc */}
-          {!longDescHtml && formation.description && (
+          {!longDescHtml && accompagnement.description && (
             <div
               className="mt-6 prose prose-green max-w-none text-primary-green/80"
-              dangerouslySetInnerHTML={{ __html: formation.description }}
+              dangerouslySetInnerHTML={{ __html: accompagnement.description }}
             />
           )}
 
@@ -230,11 +230,11 @@ const FormationDetailPage = async ({ params }: Props) => {
                     section: {
                       id: string;
                       title: string;
-                      formation_blocks?: { id: string; type: string }[];
+                      accompagnement_blocks?: { id: string; type: string }[];
                     },
                     idx: number
                   ) => {
-                    const blockCount = section.formation_blocks?.length ?? 0;
+                    const blockCount = section.accompagnement_blocks?.length ?? 0;
                     return (
                       <Card key={section.id} className="overflow-hidden">
                         <CardContent className="flex items-center justify-between py-4 px-5">
@@ -295,17 +295,17 @@ const FormationDetailPage = async ({ params }: Props) => {
         <div className="lg:col-span-1">
           <Card className="sticky top-24">
             <CardContent className="space-y-6 pt-6">
-              {formation.thumbnail_url && (
+              {accompagnement.thumbnail_url && (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
-                  src={formation.thumbnail_url}
-                  alt={formation.title}
+                  src={accompagnement.thumbnail_url}
+                  alt={accompagnement.title}
                   className="w-full rounded-md object-cover"
                 />
               )}
               <div className="text-center">
                 <p className="font-serif text-3xl font-bold text-primary-green">
-                  {formatPrice(formation.price_cents, formation.currency)}
+                  {formatPrice(accompagnement.price_cents, accompagnement.currency)}
                 </p>
               </div>
               <div className="space-y-3 text-sm text-primary-green/70">
@@ -329,12 +329,12 @@ const FormationDetailPage = async ({ params }: Props) => {
                 </div>
               </div>
               <PurchaseButton
-                formationId={formation.id}
+                accompagnementId={accompagnement.id}
                 isLoggedIn={!!currentUser}
                 isEnrolled={isEnrolled}
-                priceCents={formation.price_cents}
-                currency={formation.currency}
-                ctaLabel={ctaLabelFor(formation.slug)}
+                priceCents={accompagnement.price_cents}
+                currency={accompagnement.currency}
+                ctaLabel={ctaLabelFor(accompagnement.slug)}
               />
             </CardContent>
           </Card>
@@ -344,4 +344,4 @@ const FormationDetailPage = async ({ params }: Props) => {
   );
 };
 
-export default FormationDetailPage;
+export default AccompagnementDetailPage;

@@ -43,7 +43,7 @@ const ConsultantDashboardPage = async () => {
         .order("starts_at", { ascending: true })
         .limit(5),
       supabase
-        .from("formations")
+        .from("accompagnements")
         .select("id", { count: "exact", head: true })
         .eq("consultant_id", user.id)
         .is("deleted_at", null),

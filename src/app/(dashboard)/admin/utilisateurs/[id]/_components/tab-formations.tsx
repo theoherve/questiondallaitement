@@ -8,84 +8,102 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { EnrollToFormationModal } from "@/app/(dashboard)/admin/utilisateurs/_components/enroll-to-formation-modal";
 
-type Enrollment = {
+type FormationRegistration = {
   id: string;
-  enrolled_at: string;
-  formations: { title: string; status: string } | null;
-  progress_pct: number;
+  registered_at: string;
+  status: string;
+  formations: {
+    title: string;
+    starts_at: string;
+    type: string;
+  } | null;
+};
+
+const STATUS_MAP: Record<
+  string,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
+  confirmed: { label: "Confirmée", variant: "default" },
+  pending: { label: "En attente", variant: "secondary" },
+  cancelled: { label: "Annulée", variant: "destructive" },
+};
+
+const TYPE_MAP: Record<string, string> = {
+  online: "En ligne",
+  in_person: "Présentiel",
+  hybrid: "Hybride",
 };
 
 export const TabFormations = ({
-  enrollments,
-  userId,
+  registrations,
 }: {
-  enrollments: Enrollment[];
-  userId: string;
+  registrations: FormationRegistration[];
 }) => {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+      <CardHeader>
         <CardTitle className="text-primary-green">
-          Accompagnements ({enrollments.length})
+          Formations ({registrations.length})
         </CardTitle>
-        <EnrollToFormationModal clientId={userId} />
       </CardHeader>
       <CardContent>
-        {enrollments.length === 0 ? (
+        {registrations.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Aucun accompagnement acheté.
+            Aucune inscription à une formation.
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Accompagnement</TableHead>
-                <TableHead>Date d&apos;inscription</TableHead>
-                <TableHead>Progression</TableHead>
+                <TableHead>Formation</TableHead>
+                <TableHead>Date formation</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Inscrit le</TableHead>
+                <TableHead>Statut</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {enrollments.map((e) => (
-                <TableRow key={e.id}>
-                  <TableCell className="font-medium">
-                    {e.formations?.title ?? "—"}
-                  </TableCell>
-                  <TableCell>
-                    {new Date(e.enrolled_at).toLocaleDateString("fr-FR", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-24 overflow-hidden rounded-full bg-muted">
-                        <div
-                          className={`h-2 rounded-full transition-all ${
-                            e.progress_pct === 100
-                              ? "bg-green-500"
-                              : "bg-primary-green"
-                          }`}
-                          style={{ width: `${e.progress_pct}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {e.progress_pct}%
-                      </span>
-                      {e.progress_pct === 100 && (
-                        <Badge
-                          variant="outline"
-                          className="border-green-200 text-green-700"
-                        >
-                          Terminé
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {registrations.map((r) => {
+                const s = STATUS_MAP[r.status] ?? {
+                  label: r.status,
+                  variant: "outline" as const,
+                };
+                return (
+                  <TableRow key={r.id}>
+                    <TableCell className="font-medium">
+                      {r.formations?.title ?? "—"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {r.formations?.starts_at
+                        ? new Date(r.formations.starts_at).toLocaleDateString(
+                            "fr-FR",
+                            {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            },
+                          )
+                        : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {r.formations?.type
+                        ? (TYPE_MAP[r.formations.type] ?? r.formations.type)
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {new Date(r.registered_at).toLocaleDateString("fr-FR", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={s.variant}>{s.label}</Badge>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         )}

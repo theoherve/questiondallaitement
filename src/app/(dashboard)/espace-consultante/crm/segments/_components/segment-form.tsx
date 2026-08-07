@@ -19,8 +19,8 @@ import type { CrmSegment, SegmentCondition } from "@/types/database";
 const FIELD_LABELS: Record<string, string> = {
   booking_count: "Nombre de consultations",
   total_spent_cents: "Total dépensé (centimes)",
-  formation_count: "Nombre d'accompagnements",
-  event_count: "Nombre d'événements",
+  accompagnement_count: "Nombre d'accompagnements",
+  formation_count: "Nombre de formations",
   inactive_days: "Jours d'inactivité",
   days_since_registration: "Jours depuis l'inscription",
 };

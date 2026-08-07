@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,25 +15,42 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Pencil, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Eye, MapPin, Video, Users } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { FormationStatusToggle } from "./_components/formation-status-toggle";
-import { DuplicateFormationButton } from "./_components/duplicate-formation-button";
 
 export const metadata: Metadata = {
-  title: "Gestion des accompagnements",
+  title: "Gestion des formations",
 };
 
-const formatPrice = (cents: number): string =>
-  new Intl.NumberFormat("fr-FR", {
+const TYPE_CONFIG: Record<
+  string,
+  { label: string; variant: "default" | "secondary" | "outline" }
+> = {
+  online: { label: "En ligne", variant: "secondary" },
+  in_person: { label: "Présentiel", variant: "default" },
+  hybrid: { label: "Hybride", variant: "outline" },
+};
+
+const TypeIcon = ({ type }: { type: string }) => {
+  const iconClass = "h-3 w-3 mr-1";
+  if (type === "online") return <Video className={iconClass} />;
+  if (type === "in_person") return <MapPin className={iconClass} />;
+  return <Users className={iconClass} />;
+};
+
+const formatPrice = (cents: number, currency: string): string => {
+  if (cents === 0) return "Gratuit";
+  return new Intl.NumberFormat("fr-FR", {
     style: "currency",
-    currency: "EUR",
+    currency,
   }).format(cents / 100);
+};
 
 type Props = {
   searchParams: Promise<{
-    status?: string;
+    type?: string;
+    published?: string;
     consultant?: string;
     q?: string;
   }>;
@@ -52,29 +70,35 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
       id,
       title,
       slug,
-      status,
+      type,
+      starts_at,
+      ends_at,
+      location,
+      max_participants,
       price_cents,
-      created_at,
-      published_at,
+      currency,
+      is_published,
       consultant_id,
-      consultants!formations_consultant_id_fkey (
+      created_at,
+      consultants (
         id,
         profiles!consultants_id_fkey (
           first_name,
           last_name
         )
-      ),
-      formation_sections (
-        id,
-        formation_blocks ( id )
       )
-    `
+    `,
     )
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+    .order("starts_at", { ascending: false });
 
-  if (params.status && params.status !== "all") {
-    query = query.eq("status", params.status);
+  if (params.type && params.type !== "all") {
+    query = query.eq("type", params.type);
+  }
+
+  if (params.published === "true") {
+    query = query.eq("is_published", true);
+  } else if (params.published === "false") {
+    query = query.eq("is_published", false);
   }
 
   if (params.consultant) {
@@ -85,27 +109,40 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
     query = query.ilike("title", `%${params.q}%`);
   }
 
-  const { data: formations, error: formationsError } = await query;
-
-  const { data: consultants } = await supabase
-    .from("consultants")
-    .select("id, profiles!consultants_id_fkey(first_name, last_name)")
-    .eq("is_active", true);
+  const [formationsResult, consultantsResult, registrationsResult] =
+    await Promise.all([
+      query,
+      supabase
+        .from("consultants")
+        .select("id, profiles!consultants_id_fkey(first_name, last_name)")
+        .eq("is_active", true),
+      supabase
+        .from("formation_registrations")
+        .select("formation_id")
+        .eq("status", "registered"),
+    ]);
 
   type FormationRow = {
     id: string;
     title: string;
     slug: string;
-    status: string;
+    type: string;
+    starts_at: string;
+    ends_at: string;
+    location: string | null;
+    max_participants: number | null;
     price_cents: number;
-    created_at: string;
-    published_at: string | null;
+    currency: string;
+    is_published: boolean;
     consultant_id: string;
+    created_at: string;
     consultants: {
       id: string;
-      profiles: { first_name: string | null; last_name: string | null } | null;
+      profiles: {
+        first_name: string | null;
+        last_name: string | null;
+      } | null;
     } | null;
-    formation_sections: { id: string; formation_blocks: { id: string }[] }[];
   };
 
   type ConsultantOption = {
@@ -113,25 +150,26 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
     profiles: { first_name: string | null; last_name: string | null } | null;
   };
 
-  const rows = (formations ?? []) as unknown as FormationRow[];
-  const consultantOptions = (
-    (consultants ?? []) as unknown as ConsultantOption[]
-  ).sort((a, b) => {
-    const aName = `${a.profiles?.last_name ?? ""} ${a.profiles?.first_name ?? ""}`.trim();
-    const bName = `${b.profiles?.last_name ?? ""} ${b.profiles?.first_name ?? ""}`.trim();
-    return aName.localeCompare(bName);
-  });
+  const rows = (formationsResult.data ?? []) as unknown as FormationRow[];
+  const consultantOptions =
+    (consultantsResult.data ?? []) as unknown as ConsultantOption[];
+
+  // Count registrations per formation
+  const regCounts = new Map<string, number>();
+  for (const reg of registrationsResult.data ?? []) {
+    regCounts.set(reg.formation_id, (regCounts.get(reg.formation_id) ?? 0) + 1);
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-2xl font-bold text-primary-green">
-          Accompagnements
+          Formations
         </h1>
         <Button asChild className="bg-primary-red hover:bg-primary-red-dark">
-          <Link href="/admin/formations/nouveau" tabIndex={0}>
+          <Link href="/admin/formations/nouveau">
             <Plus className="mr-2 h-4 w-4" />
-            Nouvel accompagnement
+            Nouvelle formation
           </Link>
         </Button>
       </div>
@@ -140,7 +178,7 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
       <Card>
         <CardContent>
           <form className="flex flex-wrap items-end gap-4">
-            <div className="flex-1 min-w-50">
+            <div className="min-w-50 flex-1">
               <label
                 htmlFor="search"
                 className="mb-1 block text-sm font-medium"
@@ -150,46 +188,63 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
               <Input
                 id="search"
                 name="q"
-                placeholder="Rechercher par titre..."
-                defaultValue={params.q ?? ""}
+                placeholder="Rechercher une formation..."
+                defaultValue={params.q}
               />
             </div>
-            <div>
+            <div className="w-40">
+              <label htmlFor="type" className="mb-1 block text-sm font-medium">
+                Type
+              </label>
+              <select
+                id="type"
+                name="type"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                defaultValue={params.type || "all"}
+              >
+                <option value="all">Tous</option>
+                <option value="online">En ligne</option>
+                <option value="in_person">Présentiel</option>
+                <option value="hybrid">Hybride</option>
+              </select>
+            </div>
+            <div className="w-40">
               <label
-                htmlFor="status-filter"
+                htmlFor="published"
                 className="mb-1 block text-sm font-medium"
               >
                 Statut
               </label>
               <select
-                id="status-filter"
-                name="status"
-                defaultValue={params.status ?? "all"}
-                className="h-9 rounded-md border bg-white px-3 text-sm"
+                id="published"
+                name="published"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                defaultValue={params.published || "all"}
               >
                 <option value="all">Tous</option>
-                <option value="draft">Brouillon</option>
-                <option value="published">Publiée</option>
-                <option value="archived">Archivée</option>
+                <option value="true">Publié</option>
+                <option value="false">Brouillon</option>
               </select>
             </div>
-            <div>
+            <div className="w-48">
               <label
-                htmlFor="consultant-filter"
+                htmlFor="consultant"
                 className="mb-1 block text-sm font-medium"
               >
                 Consultante
               </label>
               <select
-                id="consultant-filter"
+                id="consultant"
                 name="consultant"
-                defaultValue={params.consultant ?? ""}
-                className="h-9 rounded-md border bg-white px-3 text-sm"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                defaultValue={params.consultant || ""}
               >
                 <option value="">Toutes</option>
                 {consultantOptions.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.profiles?.first_name ?? ""} {c.profiles?.last_name ?? ""}
+                    {c.profiles
+                      ? `${c.profiles.first_name ?? ""} ${c.profiles.last_name ?? ""}`.trim()
+                      : c.id.slice(0, 8)}
                   </option>
                 ))}
               </select>
@@ -201,111 +256,136 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
         </CardContent>
       </Card>
 
-      {formationsError && (
-        <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          Erreur lors du chargement des accompagnements : {formationsError.message}
-        </p>
-      )}
-
       {/* Table */}
       <Card>
         <CardContent className="p-0 overflow-hidden">
           <Table className="table-fixed w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[35%]">Titre</TableHead>
-                <TableHead>Consultante</TableHead>
-                <TableHead>Contenu</TableHead>
-                <TableHead>Prix</TableHead>
-                <TableHead>Statut</TableHead>
+                <TableHead className="w-[30%]">Titre</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Date</TableHead>
+                <TableHead>Consultante</TableHead>
+                <TableHead>Prix</TableHead>
+                <TableHead>Inscrits</TableHead>
+                <TableHead>Statut</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    Aucun accompagnement trouvé. Créez-en un !
+                  <TableCell
+                    colSpan={8}
+                    className="py-8 text-center text-muted-foreground"
+                  >
+                    Aucune formation trouvée
                   </TableCell>
                 </TableRow>
               ) : (
                 rows.map((formation) => {
+                  const typeConfig =
+                    TYPE_CONFIG[formation.type] ?? TYPE_CONFIG.online;
                   const consultantName = formation.consultants?.profiles
                     ? `${formation.consultants.profiles.first_name ?? ""} ${formation.consultants.profiles.last_name ?? ""}`.trim()
                     : "—";
 
-                  const sectionCount = formation.formation_sections?.length ?? 0;
-                  const blockCount =
-                    formation.formation_sections?.reduce(
-                      (acc, s) => acc + (s.formation_blocks?.length ?? 0),
-                      0
-                    ) ?? 0;
+                  const regCount = regCounts.get(formation.id) ?? 0;
+                  const spotsLabel = formation.max_participants
+                    ? `${regCount}/${formation.max_participants}`
+                    : `${regCount}`;
+
+                  const isPast = new Date(formation.ends_at) < new Date();
 
                   return (
-                    <TableRow key={formation.id}>
+                    <TableRow key={formation.id} className={isPast ? "opacity-60" : ""}>
                       <TableCell>
-                        <Link
-                          href={`/admin/formations/${formation.id}/edit`}
-                          className="font-medium text-primary-green hover:underline truncate block"
-                          tabIndex={0}
-                          title={formation.title}
-                        >
-                          {formation.title}
-                        </Link>
+                        <div className="min-w-0">
+                          <p className="font-medium truncate" title={formation.title}>{formation.title}</p>
+                          <p className="text-xs text-muted-foreground truncate" title={`/formations/${formation.slug}`}>
+                            /formations/{formation.slug}
+                          </p>
+                        </div>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell>
+                        <Badge variant={typeConfig.variant} className="gap-1">
+                          <TypeIcon type={formation.type} />
+                          {typeConfig.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <div>
+                          {format(new Date(formation.starts_at), "d MMM yyyy", {
+                            locale: fr,
+                          })}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {format(new Date(formation.starts_at), "HH'h'mm", {
+                            locale: fr,
+                          })}{" "}
+                          –{" "}
+                          {format(new Date(formation.ends_at), "HH'h'mm", {
+                            locale: fr,
+                          })}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">
                         <span className="block truncate" title={consultantName}>
                           {consultantName}
                         </span>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {sectionCount > 0 || blockCount > 0 ? (
-                          <span>
-                            {sectionCount} sec. · {blockCount} leç.
-                          </span>
-                        ) : (
-                          <span className="italic text-muted-foreground/60">
-                            Vide
-                          </span>
-                        )}
+                      <TableCell className="text-sm">
+                        {formatPrice(formation.price_cents, formation.currency)}
                       </TableCell>
-                      <TableCell>{formatPrice(formation.price_cents)}</TableCell>
-                      <TableCell>
-                        <FormationStatusToggle
-                          formationId={formation.id}
-                          currentStatus={
-                            (formation.status as "draft" | "published" | "archived") ??
-                            "draft"
+                      <TableCell className="text-sm">
+                        <span
+                          className={
+                            formation.max_participants &&
+                            regCount >= formation.max_participants
+                              ? "font-medium text-destructive"
+                              : ""
                           }
-                        />
+                        >
+                          {spotsLabel}
+                        </span>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {format(new Date(formation.created_at), "d MMM yyyy", {
-                          locale: fr,
-                        })}
+                      <TableCell>
+                        {formation.is_published ? (
+                          <Badge variant="default">Publié</Badge>
+                        ) : (
+                          <Badge variant="secondary">Brouillon</Badge>
+                        )}
+                        {isPast && (
+                          <Badge variant="outline" className="ml-1">
+                            Passé
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button asChild variant="ghost" size="icon">
-                            <Link
-                              href={`/accompagnements/${formation.slug}`}
-                              target="_blank"
-                              tabIndex={0}
-                              aria-label={`Voir ${formation.title} sur le site`}
+                          {formation.is_published && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              asChild
+                              title="Voir"
                             >
-                              <ExternalLink className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                          <DuplicateFormationButton
-                            formationId={formation.id}
-                            formationTitle={formation.title}
-                          />
-                          <Button asChild variant="ghost" size="icon">
+                              <Link
+                                href={`/formations/${formation.slug}`}
+                                target="_blank"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Link>
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            asChild
+                            title="Modifier"
+                          >
                             <Link
                               href={`/admin/formations/${formation.id}/edit`}
-                              tabIndex={0}
-                              aria-label={`Modifier ${formation.title}`}
                             >
                               <Pencil className="h-4 w-4" />
                             </Link>

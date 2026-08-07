@@ -3,20 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { hasEventRegistration } from "../actions";
+import { hasFormationRegistration } from "../actions";
 
 /**
  * Comble la course entre le retour du paiement et le webhook Stripe qui
  * enregistre l'inscription. La page serveur ne rend cet ilot que lorsque
- * `?registered=true` est present, que l'evenement est payant et que
+ * `?registered=true` est present, que la formation est payant et que
  * l'inscription n'apparait pas encore : on sonde jusqu'a ce que le webhook ait
  * cree la ligne, puis `router.refresh()` re-rend la page (le bouton passe a
  * « Vous etes inscrit(e) »). Sans lui, la cliente devait rafraichir a la main.
  */
 export const RegistrationReconciler = ({
-  eventId,
+  formationId,
 }: {
-  eventId: string;
+  formationId: string;
 }) => {
   const router = useRouter();
   const [timedOut, setTimedOut] = useState(false);
@@ -34,7 +34,7 @@ export const RegistrationReconciler = ({
     const poll = async () => {
       if (cancelled) return;
 
-      const ready = await hasEventRegistration(eventId).catch(() => false);
+      const ready = await hasFormationRegistration(formationId).catch(() => false);
       if (cancelled) return;
 
       if (ready) {
@@ -57,7 +57,7 @@ export const RegistrationReconciler = ({
     return () => {
       cancelled = true;
     };
-  }, [eventId, router]);
+  }, [formationId, router]);
 
   return (
     <div

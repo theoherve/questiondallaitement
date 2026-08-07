@@ -53,9 +53,9 @@ const STATUS_CONFIG: Record<
 };
 
 const TYPE_LABELS: Record<string, string> = {
-  formation: "Accompagnement",
+  accompagnement: "Accompagnement",
   booking: "Consultation",
-  event: "Événement",
+  formation: "Formation",
 };
 
 const PaymentDetailPage = async ({ params }: Props) => {

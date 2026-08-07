@@ -63,7 +63,7 @@ const setupClientStats = ({
   enrollments = [] as { client_id: string; enrolled_at: string }[],
   profiles = [] as { id: string; first_name: string | null; last_name: string | null; email: string; created_at: string }[],
   payments = [] as { client_id: string; amount_cents: number }[],
-  events = [] as { client_id: string }[],
+  formations = [] as { client_id: string }[],
   score = 0,
 } = {}) => {
   // mockFrom retourne un chaînable dont chaque méthode retourne `this`
@@ -86,11 +86,11 @@ const setupClientStats = ({
         then: (_resolve: (v: unknown) => unknown) =>
           _resolve(
             table === "bookings" ? { data: bookings } :
-            table === "formations" ? { data: formationIds.map((id) => ({ id })) } :
-            table === "formation_enrollments" ? { data: enrollments } :
+            table === "accompagnements" ? { data: formationIds.map((id) => ({ id })) } :
+            table === "accompagnement_enrollments" ? { data: enrollments } :
             table === "profiles" ? { data: profiles } :
             table === "payments" ? { data: payments } :
-            table === "event_registrations" ? { data: events } :
+            table === "formation_registrations" ? { data: formations } :
             { data: [] },
           ),
       });
@@ -220,8 +220,8 @@ describe("evaluateSegment — filtrage par conditions (matchesConditions)", () =
     expect(result.map((c) => c.id)).not.toContain(CLIENT_A);
   });
 
-  it("opérateur = : correspondance exacte sur formation_count", async () => {
-    mockSegment([{ field: "formation_count", op: "=", value: 1 }]);
+  it("opérateur = : correspondance exacte sur accompagnement_count", async () => {
+    mockSegment([{ field: "accompagnement_count", op: "=", value: 1 }]);
     setupClientStats({
       profiles: [clientA, clientB],
       formationIds: ["form-001"],
@@ -277,11 +277,11 @@ describe("evaluateSegment — filtrage par conditions (matchesConditions)", () =
   });
 
   it("conditions multiples (AND) : une seule condition fausse suffit à exclure le client", async () => {
-    // booking_count >= 1 ET formation_count >= 2
+    // booking_count >= 1 ET accompagnement_count >= 2
     // CLIENT_A : 1 booking, 1 formation → exclue (2ème condition échoue)
     mockSegment([
       { field: "booking_count", op: ">=", value: 1 },
-      { field: "formation_count", op: ">=", value: 2 },
+      { field: "accompagnement_count", op: ">=", value: 2 },
     ]);
     setupClientStats({
       bookings: [

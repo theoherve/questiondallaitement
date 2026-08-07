@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { FormationCard } from "@/components/formations/formation-card";
+import { AccompagnementCard } from "@/components/accompagnements/accompagnement-card";
 import { AccompagnementsCarousel } from "./_components/accompagnements-carousel";
 import { ArrowRight, Video, MapPin, BookOpen, GraduationCap } from "lucide-react";
 import { TestimonialCarousel } from "./_components/testimonial-carousel";
@@ -32,10 +32,10 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
 
   const [formationsRes, blogRes, consultantsRes, consultationTypesRes] = await Promise.all([
     supabase
-      .from("formations")
+      .from("accompagnements")
       .select(
         `id, title, slug, short_description, thumbnail_url, price_cents, currency, consultant_id,
-        consultants!formations_consultant_id_fkey (slug, profiles!consultants_id_fkey (first_name, last_name))`
+        consultants!accompagnements_consultant_id_fkey (slug, profiles!consultants_id_fkey (first_name, last_name))`
       )
       .eq("status", "published")
       .is("deleted_at", null)
@@ -415,11 +415,11 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
             {featuredFormation && (
               <ScrollReveal>
                 <div className="mt-12">
-                  <FormationCard
-                    formation={
+                  <AccompagnementCard
+                    accompagnement={
                       featuredFormation as unknown as Parameters<
-                        typeof FormationCard
-                      >[0]["formation"]
+                        typeof AccompagnementCard
+                      >[0]["accompagnement"]
                     }
                     featured
                   />
@@ -432,10 +432,10 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
               <div className="mt-10">
                 <AccompagnementsCarousel
                   label="Tous les accompagnements"
-                  formations={
+                  accompagnements={
                     otherFormations as unknown as Parameters<
                       typeof AccompagnementsCarousel
-                    >[0]["formations"]
+                    >[0]["accompagnements"]
                   }
                 />
               </div>

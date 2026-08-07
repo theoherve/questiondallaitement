@@ -47,7 +47,7 @@ describe("middleware — protection des routes", () => {
 
   // ─── Routes publiques ──────────────────────────────────────
   describe("routes publiques (sans auth)", () => {
-    it.each(["/", "/formations", "/consultantes", "/evenements", "/blog", "/reserver"])(
+    it.each(["/", "/formations", "/consultantes", "/blog", "/reserver"])(
       "laisse passer %s sans authentification",
       (path) => {
         middleware(makeReq(path));

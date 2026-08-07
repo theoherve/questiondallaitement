@@ -14,7 +14,7 @@ type Props = {
   sectionsCount: number;
   lessonsCount: number;
   instructorName: string;
-  formationId: string;
+  accompagnementId: string;
   isLoggedIn: boolean;
   isEnrolled: boolean;
   priceCents: number;
@@ -40,7 +40,7 @@ export function PackSideCta({
   sectionsCount,
   lessonsCount,
   instructorName,
-  formationId,
+  accompagnementId,
   isLoggedIn,
   isEnrolled,
   priceCents,
@@ -107,7 +107,7 @@ export function PackSideCta({
 
           <div className="mt-4">
             <PurchaseButton
-              formationId={formationId}
+              accompagnementId={accompagnementId}
               isLoggedIn={isLoggedIn}
               isEnrolled={isEnrolled}
               priceCents={priceCents}

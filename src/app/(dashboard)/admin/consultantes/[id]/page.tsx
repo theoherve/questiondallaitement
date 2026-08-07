@@ -114,7 +114,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
 
   const [formationsRes, bookingsRes, paymentsRes, consultationTypes, consultationTypeTemplates, consultantLocations, availabilities, locationConfigs] = await Promise.all([
     supabase
-      .from("formations")
+      .from("accompagnements")
       .select("id, title, slug, status, price_cents, currency")
       .eq("consultant_id", id)
       .is("deleted_at", null)
@@ -394,7 +394,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/admin/formations/${f.id}/edit`}>
+                        <Link href={`/admin/accompagnements/${f.id}/edit`}>
                           Éditer
                         </Link>
                       </Button>

@@ -7,7 +7,7 @@ import {
   getWorkflow,
   getLabels,
   getRecurringDefinitions,
-  getFormations,
+  getAccompagnements,
   getEmailTemplates,
   getWorkflowLogs,
   getScheduledActions,
@@ -32,7 +32,7 @@ const EditWorkflowPage = async ({ params }: Props) => {
       getWorkflow(id),
       getLabels(),
       getRecurringDefinitions(),
-      getFormations(),
+      getAccompagnements(),
       getEmailTemplates(),
       getWorkflowLogs(id),
       getScheduledActions(id),
@@ -46,7 +46,7 @@ const EditWorkflowPage = async ({ params }: Props) => {
         workflow={workflow}
         labels={labels}
         recurringDefinitions={recurringDefs}
-        formations={formations}
+        accompagnements={formations}
         emailTemplates={emailTemplates}
       />
       <WorkflowLogs logs={logs} scheduledActions={scheduledActions} />

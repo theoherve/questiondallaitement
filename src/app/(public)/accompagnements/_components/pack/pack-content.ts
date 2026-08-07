@@ -4,7 +4,7 @@
  * Les modules affichés et le prix viennent de la DB, pas d'ici.
  *
  * `titleOverride` ne s'applique qu'au H1 de cette page : le nom produit
- * (formations.title) reste utilisé dans les listings, le panier et les factures.
+ * (accompagnements.title) reste utilisé dans les listings, le panier et les factures.
  */
 export const PACK_CONTENT = {
   hero: {

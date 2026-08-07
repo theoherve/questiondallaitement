@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 type BlockStepProps = {
   blockId: string;
-  formationId: string;
+  accompagnementId: string;
   index: number;
   total: number;
   isCompleted: boolean;
@@ -20,7 +20,7 @@ type BlockStepProps = {
 
 export const BlockStep = ({
   blockId,
-  formationId,
+  accompagnementId,
   index,
   total,
   isCompleted,
@@ -46,7 +46,7 @@ export const BlockStep = ({
         for (const entry of entries) {
           if (entry.isIntersecting && entry.intersectionRatio > 0.4) {
             try {
-              localStorage.setItem(`qda:lastBlock:${formationId}`, blockId);
+              localStorage.setItem(`qda:lastBlock:${accompagnementId}`, blockId);
             } catch {
               // storage unavailable — silently ignore
             }
@@ -57,7 +57,7 @@ export const BlockStep = ({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [blockId, formationId]);
+  }, [blockId, accompagnementId]);
 
   return (
     <motion.article

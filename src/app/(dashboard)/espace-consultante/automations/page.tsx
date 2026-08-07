@@ -39,7 +39,7 @@ const AutomationsPage = async () => {
       <p className="text-muted-foreground">
         Créez des automations pour envoyer des emails, ajouter des tags CRM ou
         déclencher des webhooks après un achat d&apos;accompagnement, une réservation ou une
-        inscription à un événement.
+        inscription à une formation.
       </p>
 
       <AutomationsList

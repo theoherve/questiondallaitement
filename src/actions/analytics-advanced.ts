@@ -209,7 +209,7 @@ export type LtvClient = {
   email: string;
   total_spent_cents: number;
   booking_count: number;
-  formation_count: number;
+  accompagnement_count: number;
   last_activity: string | null;
 };
 
@@ -233,7 +233,7 @@ export const getLtvData = async (): Promise<LtvData> => {
     .eq("status", "completed");
 
   const { data: enrollments } = await supabase
-    .from("formation_enrollments")
+    .from("accompagnement_enrollments")
     .select("client_id");
 
   const clientRevenue = new Map<string, number>();
@@ -303,7 +303,7 @@ export const getLtvData = async (): Promise<LtvData> => {
         email: profile.email,
         total_spent_cents: clientRevenue.get(id) ?? 0,
         booking_count: bookingCount.get(id) ?? 0,
-        formation_count: formationCount.get(id) ?? 0,
+        accompagnement_count: formationCount.get(id) ?? 0,
         last_activity: lastActivity.get(id) ?? null,
       };
     })

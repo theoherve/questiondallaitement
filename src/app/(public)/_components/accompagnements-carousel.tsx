@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FormationCard } from "@/components/formations/formation-card";
+import { AccompagnementCard } from "@/components/accompagnements/accompagnement-card";
 
-type Formation = {
+type Accompagnement = {
   id: string;
   title: string;
   slug: string;
@@ -23,10 +23,10 @@ type Formation = {
 };
 
 export const AccompagnementsCarousel = ({
-  formations,
+  accompagnements,
   label = "Tous les accompagnements",
 }: {
-  formations: Formation[];
+  accompagnements: Accompagnement[];
   label?: string;
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -71,9 +71,9 @@ export const AccompagnementsCarousel = ({
           ref={scrollRef}
           className="-mx-5 flex gap-6 overflow-x-auto px-5 pb-4 scrollbar-none sm:-mx-8 sm:px-8 lg:-mx-0 lg:px-0"
         >
-          {formations.map((formation) => (
-            <div key={formation.id} data-card className="w-72 shrink-0 sm:w-80">
-              <FormationCard formation={formation} />
+          {accompagnements.map((accompagnement) => (
+            <div key={accompagnement.id} data-card className="w-72 shrink-0 sm:w-80">
+              <AccompagnementCard accompagnement={accompagnement} />
             </div>
           ))}
         </div>

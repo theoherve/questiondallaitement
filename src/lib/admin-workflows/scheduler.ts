@@ -3,21 +3,21 @@ import { resolveAudience, computeScheduledFor } from "./labels";
 import type { AudienceConfig } from "./types";
 
 /**
- * Schedule workflow actions for all upcoming events that don't have actions yet.
- * Called by the cron job after event generation.
+ * Schedule workflow actions for all upcoming formations that don't have actions yet.
+ * Called by the cron job after formation generation.
  */
-export const scheduleWorkflowActionsForUpcomingEvents = async (): Promise<{
+export const scheduleWorkflowActionsForUpcomingFormations = async (): Promise<{
   scheduled: number;
 }> => {
   const supabase = createAdminClient();
   let scheduled = 0;
 
-  // Find active recurring_event workflows
+  // Find active recurring_formation workflows
   const { data: workflows } = await supabase
     .from("admin_workflows")
     .select("id, trigger_type, trigger_config, audience_config")
     .eq("is_active", true)
-    .eq("trigger_type", "recurring_event");
+    .eq("trigger_type", "recurring_formation");
 
   if (!workflows?.length) return { scheduled };
 
@@ -27,14 +27,14 @@ export const scheduleWorkflowActionsForUpcomingEvents = async (): Promise<{
     };
     if (!triggerConfig.recurring_definition_id) continue;
 
-    // Get future events for this definition
-    const { data: events } = await supabase
-      .from("events")
+    // Get future formations for this definition
+    const { data: formations } = await supabase
+      .from("formations")
       .select("id, occurrence_date")
       .eq("recurring_definition_id", triggerConfig.recurring_definition_id)
       .gte("starts_at", new Date().toISOString());
 
-    if (!events?.length) continue;
+    if (!formations?.length) continue;
 
     // Get workflow steps
     const { data: steps } = await supabase
@@ -56,7 +56,7 @@ export const scheduleWorkflowActionsForUpcomingEvents = async (): Promise<{
       .from("admin_workflow_logs")
       .insert({
         workflow_id: workflow.id,
-        trigger_data: { event_count: events.length, audience_count: profileIds.length },
+        trigger_data: { formation_count: formations.length, audience_count: profileIds.length },
         status: "pending",
       })
       .select("id")
@@ -64,12 +64,12 @@ export const scheduleWorkflowActionsForUpcomingEvents = async (): Promise<{
 
     let workflowScheduled = 0;
 
-    for (const event of events) {
-      if (!event.occurrence_date) continue;
+    for (const formation of formations) {
+      if (!formation.occurrence_date) continue;
 
       for (const step of steps) {
         const scheduledForStr = computeScheduledFor(
-          event.occurrence_date,
+          formation.occurrence_date,
           step.delay_days,
           step.send_time,
         );
@@ -78,7 +78,7 @@ export const scheduleWorkflowActionsForUpcomingEvents = async (): Promise<{
         if (new Date(scheduledForStr) <= new Date()) continue;
 
         for (const profileId of profileIds) {
-          // The migration's unique index is PARTIAL (WHERE anchor_event_id
+          // The migration's unique index is PARTIAL (WHERE anchor_formation_id
           // IS NOT NULL), so PG's ON CONFLICT can't infer it. We INSERT and
           // swallow duplicate-key (23505) errors — the partial index still
           // enforces uniqueness at write time.
@@ -88,7 +88,7 @@ export const scheduleWorkflowActionsForUpcomingEvents = async (): Promise<{
               workflow_id: workflow.id,
               step_id: step.id,
               profile_id: profileId,
-              anchor_event_id: event.id,
+              anchor_formation_id: formation.id,
               scheduled_for: scheduledForStr,
               status: "pending",
             });
@@ -189,7 +189,7 @@ export const triggerManualWorkflow = async (
           workflow_id: workflowId,
           step_id: step.id,
           profile_id: profileId,
-          anchor_event_id: null,
+          anchor_formation_id: null,
           scheduled_for: scheduledForStr,
           status: "pending",
         });

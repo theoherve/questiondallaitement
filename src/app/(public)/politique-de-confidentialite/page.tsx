@@ -67,8 +67,8 @@ const PolitiqueConfidentialitePage = () => (
         <ul className="mt-3 list-inside list-disc space-y-1 text-sm">
           <li>Création et gestion de votre compte utilisateur</li>
           <li>Réservation et gestion des consultations</li>
-          <li>Accès aux formations en ligne et suivi de progression</li>
-          <li>Inscription aux événements</li>
+          <li>Accès aux accompagnements en ligne et suivi de progression</li>
+          <li>Inscription aux formations</li>
           <li>Traitement des paiements (via Stripe)</li>
           <li>
             Communication transactionnelle (confirmations, rappels,

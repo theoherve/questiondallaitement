@@ -1,0 +1,689 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { FileUpload } from "@/components/ui/file-upload";
+import { WysiwygEditor } from "@/components/editor/wysiwyg-editor";
+import { SectionEditor } from "./section-editor";
+import { SortableSection } from "./sortable-section";
+import {
+  updateAccompagnement,
+  updateAccompagnementStatus,
+  deleteAccompagnement,
+  createSection,
+  reorderSections,
+  duplicateAccompagnement,
+} from "../actions";
+import { toast } from "sonner";
+import {
+  Save,
+  Globe,
+  Eye,
+  EyeOff,
+  Archive,
+  Trash2,
+  Plus,
+  ArrowLeft,
+  MoreHorizontal,
+  Copy,
+} from "lucide-react";
+import Link from "next/link";
+
+type SectionData = {
+  id: string;
+  title: string;
+  position: number;
+  accompagnement_blocks: {
+    id: string;
+    type: string;
+    content: Record<string, unknown>;
+    position: number;
+  }[];
+};
+
+type ConsultantOption = {
+  id: string;
+  profiles: { first_name: string | null; last_name: string | null };
+};
+
+type AccompagnementData = {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  short_description: string | null;
+  long_description_html: string | null;
+  thumbnail_url: string | null;
+  price_cents: number;
+  status: string;
+  consultant_id: string;
+};
+
+type AccompagnementEditorProps = {
+  accompagnement: AccompagnementData;
+  sections: SectionData[];
+  consultants: ConsultantOption[];
+  headerActions?: React.ReactNode;
+};
+
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; variant: "default" | "secondary" | "outline" }
+> = {
+  draft: { label: "Brouillon", variant: "secondary" },
+  published: { label: "Publiée", variant: "default" },
+  archived: { label: "Archivée", variant: "outline" },
+};
+
+const slugify = (text: string): string =>
+  text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+export const AccompagnementEditor = ({
+  accompagnement,
+  sections,
+  consultants,
+  headerActions,
+}: AccompagnementEditorProps) => {
+  const router = useRouter();
+  const [isSaving, setIsSaving] = useState(false);
+  const [thumbnailUrl, setThumbnailUrl] = useState(
+    accompagnement.thumbnail_url ?? ""
+  );
+  const [consultantId, setConsultantId] = useState(accompagnement.consultant_id);
+  const [longDescriptionHtml, setLongDescriptionHtml] = useState(
+    accompagnement.long_description_html ?? ""
+  );
+  const [newSectionTitle, setNewSectionTitle] = useState("");
+  const [isAddingSection, setIsAddingSection] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [duplicateTitle, setDuplicateTitle] = useState(
+    `${accompagnement.title} Premium`
+  );
+  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [orderedSections, setOrderedSections] = useState(sections);
+  const [prevServerSections, setPrevServerSections] = useState(sections);
+
+  // Réaligne l'ordre local sur le serveur après un router.refresh().
+  if (prevServerSections !== sections) {
+    setPrevServerSections(sections);
+    setOrderedSections(sections);
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const statusConfig = STATUS_CONFIG[accompagnement.status] ?? STATUS_CONFIG.draft;
+
+  const handleSectionDragEnd = async (formation: DragEndEvent) => {
+    const { active, over } = formation;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = orderedSections.findIndex((s) => s.id === active.id);
+    const newIndex = orderedSections.findIndex((s) => s.id === over.id);
+    const next = arrayMove(orderedSections, oldIndex, newIndex);
+    setOrderedSections(next);
+
+    const result = await reorderSections(
+      accompagnement.id,
+      next.map((s) => s.id)
+    );
+
+    if (result.success) {
+      toast.success("Ordre des sections enregistré");
+    } else {
+      setOrderedSections(sections);
+      toast.error(result.error ?? "Erreur lors du réordonnancement");
+    }
+  };
+
+  const handleSaveMetadata = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSaving(true);
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const data = {
+      title: formData.get("title") as string,
+      slug: slugify(formData.get("title") as string),
+      description: (formData.get("description") as string) || undefined,
+      short_description:
+        (formData.get("short_description") as string) || undefined,
+      long_description_html: longDescriptionHtml || undefined,
+      price_cents: Math.round(
+        parseFloat(formData.get("price") as string) * 100
+      ),
+      status: accompagnement.status as "draft" | "published" | "archived",
+      consultant_id: consultantId || undefined,
+      thumbnail_url: thumbnailUrl || undefined,
+    };
+
+    const result = await updateAccompagnement(accompagnement.id, data);
+    setIsSaving(false);
+
+    if (result.success) {
+      toast.success("Accompagnement enregistré");
+      router.refresh();
+    } else {
+      toast.error(result.error ?? "Erreur lors de la sauvegarde");
+    }
+  };
+
+  const handleStatusChange = async (
+    newStatus: "draft" | "published" | "archived"
+  ) => {
+    const result = await updateAccompagnementStatus(accompagnement.id, newStatus);
+    setStatusDialogOpen(false);
+    setPendingStatus(null);
+
+    if (result.success) {
+      toast.success(
+        newStatus === "published"
+          ? "Accompagnement publié"
+          : newStatus === "archived"
+            ? "Accompagnement archivé"
+            : "Accompagnement dépublié"
+      );
+      router.refresh();
+    } else {
+      toast.error(result.error ?? "Erreur");
+    }
+  };
+
+  const handleDuplicate = async () => {
+    setIsDuplicating(true);
+    const result = await duplicateAccompagnement(accompagnement.id, duplicateTitle);
+    setIsDuplicating(false);
+
+    if (result.success && result.data) {
+      setDuplicateDialogOpen(false);
+      toast.success("Copie créée en brouillon");
+      router.push(`/admin/accompagnements/${result.data.id}/edit`);
+    } else {
+      toast.error(result.error ?? "Erreur lors de la duplication");
+    }
+  };
+
+  const handleDelete = async () => {
+    const result = await deleteAccompagnement(accompagnement.id);
+    setDeleteDialogOpen(false);
+
+    if (result.success) {
+      toast.success("Accompagnement supprimé");
+      router.push("/admin/accompagnements");
+    } else {
+      toast.error(result.error ?? "Erreur");
+    }
+  };
+
+  const handleAddSection = async () => {
+    if (!newSectionTitle.trim()) return;
+    setIsAddingSection(true);
+
+    const result = await createSection(accompagnement.id, {
+      title: newSectionTitle.trim(),
+      position: sections.length,
+    });
+
+    setIsAddingSection(false);
+    if (result.success) {
+      setNewSectionTitle("");
+      toast.success("Section ajoutée");
+      router.refresh();
+    } else {
+      toast.error(result.error ?? "Erreur");
+    }
+  };
+
+  return (
+    <div
+      className="mx-auto max-w-4xl space-y-6"
+      style={{ ["--wysiwyg-toolbar-top" as string]: "64px" }}
+    >
+      {/* Header — sticky for always-on-hand actions */}
+      <div className="sticky top-0 z-20 -mx-4 border-b border-border/60 bg-background-beige/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background-beige/80">
+        <div className="flex items-center gap-3">
+          <Button asChild variant="ghost" size="icon" className="shrink-0">
+            <Link href="/admin/accompagnements" aria-label="Retour" tabIndex={0}>
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <h1
+              className="truncate font-serif text-xl font-bold text-primary-green"
+              title={accompagnement.title}
+            >
+              {accompagnement.title}
+            </h1>
+            <Badge variant={statusConfig.variant} className="shrink-0">
+              {statusConfig.label}
+            </Badge>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            {headerActions}
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/admin/accompagnements/${accompagnement.id}/preview`}>
+                <Eye className="mr-2 h-4 w-4" />
+                Preview
+              </Link>
+            </Button>
+
+            {/* Status + destructive actions regrouped in a single menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Plus d'actions"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {accompagnement.status === "draft" && (
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setPendingStatus("published");
+                      setStatusDialogOpen(true);
+                    }}
+                  >
+                    <Globe className="mr-2 h-4 w-4" />
+                    Publier
+                  </DropdownMenuItem>
+                )}
+                {accompagnement.status === "published" && (
+                  <>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setPendingStatus("draft");
+                        handleStatusChange("draft");
+                      }}
+                    >
+                      <EyeOff className="mr-2 h-4 w-4" />
+                      Dépublier
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setPendingStatus("archived");
+                        handleStatusChange("archived");
+                      }}
+                    >
+                      <Archive className="mr-2 h-4 w-4" />
+                      Archiver
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {accompagnement.status === "archived" && (
+                  <DropdownMenuItem
+                    onSelect={() => handleStatusChange("draft")}
+                  >
+                    <EyeOff className="mr-2 h-4 w-4" />
+                    Restaurer en brouillon
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setDuplicateTitle(`${accompagnement.title} Premium`);
+                    setDuplicateDialogOpen(true);
+                  }}
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Dupliquer
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Supprimer
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {/* Publish confirmation dialog — lives outside the menu so it remains reachable */}
+        <Dialog
+          open={statusDialogOpen && pendingStatus === "published"}
+          onOpenChange={(o) => {
+            setStatusDialogOpen(o);
+            if (!o) setPendingStatus(null);
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Publier l&apos;accompagnement ?</DialogTitle>
+              <DialogDescription>
+                L&apos;accompagnement sera visible publiquement.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setStatusDialogOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                className="bg-primary-red hover:bg-primary-red-dark"
+                onClick={() => handleStatusChange("published")}
+              >
+                Publier
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Duplicate dialog — la copie sert de base à une variante payante */}
+        <Dialog
+          open={duplicateDialogOpen}
+          onOpenChange={setDuplicateDialogOpen}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Dupliquer l&apos;accompagnement</DialogTitle>
+              <DialogDescription>
+                Sections, blocs, description et vignette sont recopiés. La copie
+                est créée en brouillon, à 0 € : fixez son prix avant de la
+                publier.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="duplicate-title">Titre de la copie</Label>
+              <Input
+                id="duplicate-title"
+                value={duplicateTitle}
+                onChange={(e) => setDuplicateTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && duplicateTitle.trim()) {
+                    e.preventDefault();
+                    handleDuplicate();
+                  }
+                }}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDuplicateDialogOpen(false)}
+                disabled={isDuplicating}
+              >
+                Annuler
+              </Button>
+              <Button
+                className="bg-primary-red hover:bg-primary-red-dark"
+                onClick={handleDuplicate}
+                disabled={isDuplicating || !duplicateTitle.trim()}
+              >
+                {isDuplicating ? "Duplication…" : "Dupliquer"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete confirmation dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Supprimer l&apos;accompagnement ?</DialogTitle>
+              <DialogDescription>
+                L&apos;accompagnement sera archivé et ne sera plus visible.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDeleteDialogOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button variant="destructive" onClick={handleDelete}>
+                Supprimer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Metadata form */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-serif text-lg">
+            Inaccompagnements générales
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSaveMetadata} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="title">Titre</Label>
+                <Input
+                  id="title"
+                  name="title"
+                  defaultValue={accompagnement.title}
+                  required
+                  minLength={3}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="consultant_id">Consultante</Label>
+                <Select value={consultantId} onValueChange={setConsultantId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choisir" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {consultants.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.profiles?.first_name ?? ""} {c.profiles?.last_name ?? ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="short_description">Description courte</Label>
+              <Input
+                id="short_description"
+                name="short_description"
+                defaultValue={accompagnement.short_description ?? ""}
+                maxLength={200}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                defaultValue={accompagnement.description ?? ""}
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Description longue (WYSIWYG)</Label>
+              <WysiwygEditor
+                initialContent={accompagnement.long_description_html ?? ""}
+                onChange={setLongDescriptionHtml}
+                placeholder="Décrivez l'accompagnement en détail..."
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="price">Prix (€)</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  defaultValue={(accompagnement.price_cents / 100).toFixed(2)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Vignette</Label>
+                <FileUpload
+                  bucket="formations"
+                  folder="thumbnails"
+                  accept="image/*"
+                  maxSizeMb={5}
+                  value={thumbnailUrl}
+                  onUpload={(url) => setThumbnailUrl(url)}
+                  onRemove={() => setThumbnailUrl("")}
+                  label="Ajouter une image"
+                  cropAspect="16:9"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Recadrez en 16:9 : c&apos;est le format des cartes sur le site.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isSaving}
+              className="bg-primary-red hover:bg-primary-red-dark"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {isSaving ? "Enregistrement..." : "Enregistrer"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Sections & Blocks */}
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <h2 className="font-serif text-xl font-semibold text-primary-green">
+            Sections & Contenu
+          </h2>
+          {orderedSections.length > 1 && (
+            <p className="text-sm text-muted-foreground">
+              Glissez la poignée à gauche d&apos;une section pour la déplacer.
+              Au clavier : Tab jusqu&apos;à la poignée, Espace, puis les flèches.
+            </p>
+          )}
+        </div>
+
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleSectionDragEnd}
+        >
+          <SortableContext
+            items={orderedSections.map((s) => s.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-4">
+              {orderedSections.map((section) => (
+                <SortableSection key={section.id} section={section}>
+                  <SectionEditor
+                    section={section}
+                    accompagnementId={accompagnement.id}
+                  />
+                </SortableSection>
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+
+        {/* Add section */}
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Titre de la nouvelle section"
+                value={newSectionTitle}
+                onChange={(e) => setNewSectionTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddSection();
+                  }
+                }}
+              />
+              <Button
+                variant="outline"
+                disabled={isAddingSection || !newSectionTitle.trim()}
+                onClick={handleAddSection}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Ajouter
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};

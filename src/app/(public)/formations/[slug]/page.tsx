@@ -5,10 +5,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getSessionUser } from "@/lib/auth";
 import { stripHtml, truncate } from "@/lib/html/strip";
 import {
-  EventDetail,
-  type EventDetailConsultant,
-  type EventDetailProps,
-} from "./_components/event-detail";
+  FormationDetail,
+  type FormationDetailConsultant,
+  type FormationDetailProps,
+} from "./_components/formation-detail";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -21,13 +21,13 @@ export const generateMetadata = async ({
   const { slug } = await params;
   const supabase = await createClient();
   const { data } = await supabase
-    .from("events")
+    .from("formations")
     .select("title, description, summary_html, thumbnail_url")
     .eq("slug", slug)
     .eq("is_published", true)
     .single();
 
-  if (!data) return { title: "Événement introuvable" };
+  if (!data) return { title: "Formation introuvable" };
 
   // Le resume prend le relais quand la description courte n'est pas saisie :
   // mieux vaut une phrase extraite du contenu editorial qu'aucune metadonnee.
@@ -46,13 +46,13 @@ export const generateMetadata = async ({
   };
 };
 
-const EventDetailPage = async ({ params, searchParams }: Props) => {
+const FormationDetailPage = async ({ params, searchParams }: Props) => {
   const { slug } = await params;
   const { registered } = await searchParams;
   const supabase = await createClient();
 
-  const { data: event } = await supabase
-    .from("events")
+  const { data: formation } = await supabase
+    .from("formations")
     .select(
       `
       *,
@@ -70,22 +70,22 @@ const EventDetailPage = async ({ params, searchParams }: Props) => {
     .eq("is_published", true)
     .single();
 
-  if (!event) notFound();
+  if (!formation) notFound();
 
   const adminSupabase = createAdminClient();
   const user = await getSessionUser();
 
   const [regCountResult, userRegResult] = await Promise.all([
     adminSupabase
-      .from("event_registrations")
+      .from("formation_registrations")
       .select("*", { count: "exact", head: true })
-      .eq("event_id", event.id)
+      .eq("formation_id", formation.id)
       .eq("status", "registered"),
     user
       ? adminSupabase
-          .from("event_registrations")
+          .from("formation_registrations")
           .select("id")
-          .eq("event_id", event.id)
+          .eq("formation_id", formation.id)
           .eq("client_id", user.id)
           .eq("status", "registered")
           .single()
@@ -95,19 +95,19 @@ const EventDetailPage = async ({ params, searchParams }: Props) => {
   const registrationsCount = regCountResult.count ?? 0;
   const isAlreadyRegistered = !!userRegResult.data;
   const isFullyBooked =
-    !!event.max_participants && registrationsCount >= event.max_participants;
-  const isFree = event.price_cents === 0;
+    !!formation.max_participants && registrationsCount >= formation.max_participants;
+  const isFree = formation.price_cents === 0;
 
-  const consultant = event.consultants as unknown as EventDetailConsultant;
+  const consultant = formation.consultants as unknown as FormationDetailConsultant;
 
-  // Retour d'un paiement : n'attendre le webhook que pour un evenement payant
-  // dont l'inscription n'apparait pas encore. Un evenement gratuit s'inscrit en
+  // Retour d'un paiement : n'attendre le webhook que pour une formation payante
+  // dont l'inscription n'apparait pas encore. Une formation gratuite s'inscrit en
   // synchrone dans l'action, sans course a combler.
   const awaitingRegistration = !!registered && !isFree && !isAlreadyRegistered;
 
   return (
-    <EventDetail
-      event={event as EventDetailProps["event"]}
+    <FormationDetail
+      formation={formation as FormationDetailProps["formation"]}
       consultant={consultant}
       isAlreadyRegistered={isAlreadyRegistered}
       isFullyBooked={isFullyBooked}
@@ -118,4 +118,4 @@ const EventDetailPage = async ({ params, searchParams }: Props) => {
   );
 };
 
-export default EventDetailPage;
+export default FormationDetailPage;

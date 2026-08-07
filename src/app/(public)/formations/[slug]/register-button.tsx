@@ -8,13 +8,13 @@ import {
   PromoCodeField,
   type AppliedPromo,
 } from "@/components/promo/promo-code-field";
-import { registerForEvent } from "../actions";
+import { registerForFormation } from "../actions";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, ExternalLink } from "lucide-react";
-import { buildExternalUrl } from "@/lib/events/external-url";
+import { buildExternalUrl } from "@/lib/formations/external-url";
 
 type Props = {
-  eventId: string;
+  formationId: string;
   isFree: boolean;
   isFullyBooked: boolean;
   isAlreadyRegistered: boolean;
@@ -28,7 +28,7 @@ type Props = {
 };
 
 export const RegisterButton = ({
-  eventId,
+  formationId,
   isFree,
   isFullyBooked,
   isAlreadyRegistered,
@@ -56,7 +56,7 @@ export const RegisterButton = ({
   if (isPast) {
     return (
       <Button className="w-full" disabled>
-        Événement terminé
+        Formation terminée
       </Button>
     );
   }
@@ -113,13 +113,13 @@ export const RegisterButton = ({
 
   const handleRegister = () => {
     startTransition(async () => {
-      const result = await registerForEvent(eventId, promo?.code);
+      const result = await registerForFormation(formationId, promo?.code);
       if (result.success) {
         if (result.data?.redirect_url) {
-          // Paid event → redirect to Stripe
+          // Paid formation → redirect to Stripe
           window.location.href = result.data.redirect_url;
         } else {
-          // Free event → registered directly
+          // Free formation → registered directly
           toast.success("Inscription confirmée !");
           router.refresh();
         }
@@ -131,11 +131,11 @@ export const RegisterButton = ({
 
   return (
     <div className="space-y-2">
-      {/* Rien a remiser sur un evenement gratuit. */}
+      {/* Rien a remiser sur une formation gratuite. */}
       {!isFree && (
         <PromoCodeField
-          serviceKind="event"
-          itemId={eventId}
+          serviceKind="formation"
+          itemId={formationId}
           amountCents={priceCents}
           currency={currency}
           onApplied={setPromo}

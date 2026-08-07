@@ -9,7 +9,7 @@ import {
 
 type Reader = SupabaseClient;
 
-type PaymentType = "formation" | "booking" | "event";
+type PaymentType = "accompagnement" | "booking" | "formation";
 
 /**
  * Emet la facture d'un paiement confirme, designe par son identifiant.
@@ -144,6 +144,15 @@ const describeSale = async (
   type: PaymentType,
   referenceId: string,
 ): Promise<string> => {
+  if (type === "accompagnement") {
+    const { data } = await supabase
+      .from("accompagnements")
+      .select("title")
+      .eq("id", referenceId)
+      .maybeSingle();
+    return data?.title ?? "Accompagnement";
+  }
+
   if (type === "formation") {
     const { data } = await supabase
       .from("formations")
@@ -151,15 +160,6 @@ const describeSale = async (
       .eq("id", referenceId)
       .maybeSingle();
     return data?.title ?? "Formation";
-  }
-
-  if (type === "event") {
-    const { data } = await supabase
-      .from("events")
-      .select("title")
-      .eq("id", referenceId)
-      .maybeSingle();
-    return data?.title ?? "Événement";
   }
 
   // booking : le libelle porte le type de consultation quand on le retrouve.

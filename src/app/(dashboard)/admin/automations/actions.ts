@@ -4,7 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   labelSchema,
-  recurringEventDefinitionSchema,
+  recurringFormationDefinitionSchema,
   adminWorkflowSchema,
 } from "@/validations/admin-workflows";
 import { revalidatePath } from "next/cache";
@@ -14,7 +14,7 @@ import type {
   AdminWorkflow,
   AdminWorkflowStep,
   Label,
-  RecurringEventDefinition,
+  RecurringFormationDefinition,
   AdminWorkflowLog,
   ScheduledWorkflowAction,
 } from "@/lib/admin-workflows/types";
@@ -117,44 +117,44 @@ export const deleteLabel = async (id: string): Promise<ActionResult> => {
   return { success: true };
 };
 
-// ─── Recurring Event Definitions ────────────────────────────
+// ─── Recurring Formation Definitions ────────────────────────────
 
 export const getRecurringDefinitions = async (): Promise<
-  RecurringEventDefinition[]
+  RecurringFormationDefinition[]
 > => {
   await requireAdmin();
   const supabase = createAdminClient();
   const { data } = await supabase
-    .from("recurring_event_definitions")
+    .from("recurring_formation_definitions")
     .select("*")
     .order("created_at", { ascending: false });
-  return (data ?? []) as RecurringEventDefinition[];
+  return (data ?? []) as RecurringFormationDefinition[];
 };
 
 export const getRecurringDefinition = async (
   id: string,
-): Promise<RecurringEventDefinition | null> => {
+): Promise<RecurringFormationDefinition | null> => {
   await requireAdmin();
   const supabase = createAdminClient();
   const { data } = await supabase
-    .from("recurring_event_definitions")
+    .from("recurring_formation_definitions")
     .select("*")
     .eq("id", id)
     .single();
-  return data as RecurringEventDefinition | null;
+  return data as RecurringFormationDefinition | null;
 };
 
 export const createRecurringDefinition = async (
   data: unknown,
 ): Promise<ActionResult<{ id: string }>> => {
   await requireAdmin();
-  const parsed = recurringEventDefinitionSchema.safeParse(data);
+  const parsed = recurringFormationDefinitionSchema.safeParse(data);
   if (!parsed.success)
     return { success: false, error: parsed.error.issues[0]?.message };
 
   const supabase = createAdminClient();
   const { data: def, error } = await supabase
-    .from("recurring_event_definitions")
+    .from("recurring_formation_definitions")
     .insert(parsed.data)
     .select("id")
     .single();
@@ -169,13 +169,13 @@ export const updateRecurringDefinition = async (
   data: unknown,
 ): Promise<ActionResult> => {
   await requireAdmin();
-  const parsed = recurringEventDefinitionSchema.safeParse(data);
+  const parsed = recurringFormationDefinitionSchema.safeParse(data);
   if (!parsed.success)
     return { success: false, error: parsed.error.issues[0]?.message };
 
   const supabase = createAdminClient();
   const { error } = await supabase
-    .from("recurring_event_definitions")
+    .from("recurring_formation_definitions")
     .update(parsed.data)
     .eq("id", id);
 
@@ -190,7 +190,7 @@ export const deleteRecurringDefinition = async (
   await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase
-    .from("recurring_event_definitions")
+    .from("recurring_formation_definitions")
     .delete()
     .eq("id", id);
   if (error) return { success: false, error: error.message };
@@ -533,13 +533,13 @@ export const getConsultants = async (): Promise<
   });
 };
 
-export const getFormations = async (): Promise<
+export const getAccompagnements = async (): Promise<
   { id: string; title: string }[]
 > => {
   await requireAdmin();
   const supabase = createAdminClient();
   const { data } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("id, title")
     .eq("status", "published")
     .order("title");

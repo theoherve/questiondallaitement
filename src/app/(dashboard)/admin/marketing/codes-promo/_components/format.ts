@@ -1,4 +1,8 @@
-import type { PromoDiscountType } from "@/types/database";
+import type {
+  PromoDiscountType,
+  PromoTargetType,
+  PromoTriggerType,
+} from "@/types/database";
 
 export const formatMoney = (cents: number): string =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
@@ -19,16 +23,16 @@ export const targetsSummary = (
   return targetCount === 1 ? "1 cible" : `${targetCount} cibles`;
 };
 
-export const TARGET_TYPE_LABELS: Record<string, string> = {
-  formations_all: "Tous les accompagnements",
-  events_all: "Toutes les formations",
+export const TARGET_TYPE_LABELS: Record<PromoTargetType, string> = {
+  accompagnements_all: "Tous les accompagnements",
+  formations_all: "Toutes les formations",
   bookings_all: "Tous les rendez-vous",
-  formation: "Un accompagnement",
-  event: "Une formation",
+  accompagnement: "Un accompagnement",
+  formation: "Une formation",
   booking_service: "Un type de consultation",
 };
 
-export const TRIGGER_TYPE_LABELS: Record<string, string> = {
-  event_purchase: "Achat d'une formation",
-  formation_purchase: "Achat d'un accompagnement",
+export const TRIGGER_TYPE_LABELS: Record<PromoTriggerType, string> = {
+  formation_purchase: "Achat d'une formation",
+  accompagnement_purchase: "Achat d'un accompagnement",
 };

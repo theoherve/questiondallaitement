@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ArrowLeft } from "lucide-react";
-import { getLabelsWithCounts, getFormations } from "../actions";
+import { getLabelsWithCounts, getAccompagnements } from "../actions";
 import { LabelFormDialog } from "./_components/label-form-dialog";
 import { DeleteLabelButton } from "./_components/delete-label-button";
 
@@ -28,7 +28,7 @@ const AdminLabelsPage = async () => {
 
   const [labels, formations] = await Promise.all([
     getLabelsWithCounts(),
-    getFormations(),
+    getAccompagnements(),
   ]);
 
   return (
@@ -44,7 +44,7 @@ const AdminLabelsPage = async () => {
             Labels
           </h1>
         </div>
-        <LabelFormDialog formations={formations} />
+        <LabelFormDialog accompagnements={formations} />
       </div>
 
       <Card>
@@ -74,11 +74,11 @@ const AdminLabelsPage = async () => {
                 labels.map((label) => {
                   const rule = label.auto_assign_rule as {
                     trigger?: string;
-                    formation_ids?: string[];
+                    accompagnement_ids?: string[];
                   } | null;
                   const autoAssignDesc = rule?.trigger
-                    ? rule.formation_ids?.length
-                      ? `À l'achat de ${rule.formation_ids.length} accompagnement(s)`
+                    ? rule.accompagnement_ids?.length
+                      ? `À l'achat de ${rule.accompagnement_ids.length} accompagnement(s)`
                       : "À l'achat de tout accompagnement"
                     : "—";
 
@@ -110,7 +110,7 @@ const AdminLabelsPage = async () => {
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <LabelFormDialog
-                            formations={formations}
+                            accompagnements={formations}
                             label={label}
                           />
                           <DeleteLabelButton labelId={label.id} />

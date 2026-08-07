@@ -9,7 +9,7 @@
  * - Parses "Libellés" column (semicolon-separated tags)
  * - For each label:
  *     - Creates/links `labels` + `contact_labels` row
- *     - Fuzzy-matches against formations → creates `formation_enrollments`
+ *     - Fuzzy-matches against formations → creates `accompagnement_enrollments`
  *       (stripe_payment_intent_id = "wix-migration")
  *     - If label looks formation-like but no match → adds "import-a-verifier" label
  *
@@ -216,12 +216,12 @@ async function main() {
 
   // Fetch all formations for matching
   const { data: formations, error: formErr } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("id, title, slug")
     .is("deleted_at", null);
 
   if (formErr) {
-    console.error("Failed to fetch formations:", formErr.message);
+    console.error("Failed to fetch accompagnements:", formErr.message);
     process.exit(1);
   }
   console.log(`Loaded ${formations.length} formations for matching`);
@@ -383,9 +383,9 @@ async function main() {
       // Match against formations
       const match = matchFormation(lbl, formations);
       if (match && match.score >= MATCH_THRESHOLD) {
-        const { error: enrollErr } = await supabase.from("formation_enrollments").insert({
+        const { error: enrollErr } = await supabase.from("accompagnement_enrollments").insert({
           client_id: profileId,
-          formation_id: match.formation.id,
+          accompagnement_id: match.formation.id,
           stripe_payment_intent_id: "wix-migration",
         });
         if (!enrollErr) {

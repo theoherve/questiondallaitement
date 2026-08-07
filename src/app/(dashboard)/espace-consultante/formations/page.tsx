@@ -1,177 +1,242 @@
 import { Metadata } from "next";
-import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSessionUser } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Euro, Handshake } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Eye, MapPin, Video, Users } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export const metadata: Metadata = {
-  title: "Mes accompagnements",
+  title: "Mes formations",
 };
 
-const STATUS_CONFIG: Record<
+const TYPE_CONFIG: Record<
   string,
   { label: string; variant: "default" | "secondary" | "outline" }
 > = {
-  draft: { label: "Brouillon", variant: "secondary" },
-  published: { label: "Publiée", variant: "default" },
-  archived: { label: "Archivée", variant: "outline" },
+  online: { label: "En ligne", variant: "secondary" },
+  in_person: { label: "Présentiel", variant: "default" },
+  hybrid: { label: "Hybride", variant: "outline" },
 };
 
-const formatPrice = (cents: number): string =>
-  new Intl.NumberFormat("fr-FR", {
+const formatPrice = (cents: number, currency: string): string => {
+  if (cents === 0) return "Gratuit";
+  return new Intl.NumberFormat("fr-FR", {
     style: "currency",
-    currency: "EUR",
+    currency,
   }).format(cents / 100);
+};
 
-const ConsultantFormationsPage = async () => {
-  const { supabase, user } = await getSupabaseAndUser();
+const ConsultanteFormationsPage = async () => {
+  const user = await getSessionUser();
+  if (!user) redirect("/connexion");
 
-  // Get formations owned by this consultant
-  const { data: ownedFormations } = await supabase
-    .from("formations")
-    .select("id, title, slug, status, price_cents, created_at, published_at")
-    .eq("consultant_id", user.id)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+  const supabase = createAdminClient();
 
-  // Get formations where this consultant is a collaborator
-  const { data: collaborations } = await supabase
-    .from("formation_collaborators")
-    .select("formation_id, revenue_share")
-    .eq("consultant_id", user.id);
+  // Get the consultant record for this user
+  const { data: consultant } = await supabase
+    .from("consultants")
+    .select("id")
+    .eq("id", user.id)
+    .single();
 
-  const collabFormationIds = (collaborations ?? []).map(
-    (c) => c.formation_id,
-  );
-  const collabShareMap = new Map(
-    (collaborations ?? []).map((c) => [c.formation_id, Number(c.revenue_share)]),
-  );
-
-  let collabFormations: typeof ownedFormations = [];
-  if (collabFormationIds.length > 0) {
-    const { data } = await supabase
-      .from("formations")
-      .select(
-        "id, title, slug, status, price_cents, created_at, published_at",
-      )
-      .in("id", collabFormationIds)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false });
-    collabFormations = data;
-  }
-
-  const allFormationIds = [
-    ...(ownedFormations ?? []).map((f) => f.id),
-    ...collabFormationIds,
-  ];
-
-  const [enrollmentsRes, paymentsRes] = await Promise.all([
-    allFormationIds.length > 0
-      ? supabase
-          .from("formation_enrollments")
-          .select("formation_id")
-          .in("formation_id", allFormationIds)
-      : Promise.resolve({ data: [] }),
-    supabase
-      .from("payments")
-      .select("reference_id, amount_cents, platform_fee_cents")
-      .eq("consultant_id", user.id)
-      .eq("type", "formation")
-      .eq("status", "succeeded"),
-  ]);
-
-  const enrollments = enrollmentsRes.data ?? [];
-  const payments = paymentsRes.data ?? [];
-
-  const getEnrollmentCount = (formationId: string) =>
-    enrollments.filter((e) => e.formation_id === formationId).length;
-
-  const getRevenue = (formationId: string) =>
-    payments
-      .filter((p) => p.reference_id === formationId)
-      .reduce((sum, p) => sum + (p.amount_cents - p.platform_fee_cents), 0);
-
-  const renderFormationCard = (
-    formation: NonNullable<typeof ownedFormations>[number],
-    isCollab: boolean,
-  ) => {
-    const config = STATUS_CONFIG[formation.status] ?? STATUS_CONFIG.draft;
-    const enrollmentCount = getEnrollmentCount(formation.id);
-    const revenue = getRevenue(formation.id);
-    const share = collabShareMap.get(formation.id);
-
+  if (!consultant) {
     return (
-      <Card key={formation.id}>
-        <CardContent className="flex items-center justify-between py-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-primary-green">
-                {formation.title}
-              </h3>
-              <Badge variant={config.variant}>{config.label}</Badge>
-              {isCollab && (
-                <Badge variant="secondary" className="gap-1">
-                  <Handshake className="h-3 w-3" />
-                  Co-création ({share}%)
-                </Badge>
-              )}
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {formatPrice(formation.price_cents)} &middot; Créée le{" "}
-              {format(new Date(formation.created_at), "d MMM yyyy", {
-                locale: fr,
-              })}
-            </p>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1" title="Inscrits">
-              <Users className="h-3.5 w-3.5" />
-              {enrollmentCount}
-            </span>
-            <span className="flex items-center gap-1" title="Revenus nets">
-              <Euro className="h-3.5 w-3.5" />
-              {isCollab && share
-                ? formatPrice(Math.round(revenue * (share / 100)))
-                : formatPrice(revenue)}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  const hasAny =
-    (ownedFormations?.length ?? 0) + (collabFormations?.length ?? 0) > 0;
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="space-y-6">
         <h1 className="font-serif text-2xl font-bold text-primary-green">
-          Mes accompagnements
+          Mes formations
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Lecture seule — les accompagnements sont gérés par l&apos;administration
-        </p>
-      </div>
-
-      {hasAny ? (
-        <div className="space-y-3">
-          {(ownedFormations ?? []).map((f) => renderFormationCard(f, false))}
-          {(collabFormations ?? []).map((f) => renderFormationCard(f, true))}
-        </div>
-      ) : (
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground">
-              Aucun accompagnement associé à votre profil.
+              Accès réservé aux consultantes.
             </p>
           </CardContent>
         </Card>
-      )}
+      </div>
+    );
+  }
+
+  const { data: formations } = await supabase
+    .from("formations")
+    .select("id, title, slug, type, starts_at, ends_at, location, max_participants, price_cents, currency, is_published, created_at")
+    .eq("consultant_id", consultant.id)
+    .order("starts_at", { ascending: false });
+
+  // Count registrations for all formations
+  const formationIds = (formations ?? []).map((e) => e.id);
+  const { data: registrations } = formationIds.length
+    ? await supabase
+        .from("formation_registrations")
+        .select("formation_id")
+        .in("formation_id", formationIds)
+        .eq("status", "registered")
+    : { data: [] };
+
+  const regCounts = new Map<string, number>();
+  for (const reg of registrations ?? []) {
+    regCounts.set(reg.formation_id, (regCounts.get(reg.formation_id) ?? 0) + 1);
+  }
+
+  type FormationRow = {
+    id: string;
+    title: string;
+    slug: string;
+    type: string;
+    starts_at: string;
+    ends_at: string;
+    location: string | null;
+    max_participants: number | null;
+    price_cents: number;
+    currency: string;
+    is_published: boolean;
+    created_at: string;
+  };
+
+  const rows = (formations ?? []) as FormationRow[];
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-serif text-2xl font-bold text-primary-green">
+        Mes formations
+      </h1>
+
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-60">Titre</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Prix</TableHead>
+                <TableHead>Inscrits</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="py-8 text-center text-muted-foreground"
+                  >
+                    Aucune formation trouvée
+                  </TableCell>
+                </TableRow>
+              ) : (
+                rows.map((formation) => {
+                  const typeConfig =
+                    TYPE_CONFIG[formation.type] ?? TYPE_CONFIG.online;
+                  const regCount = regCounts.get(formation.id) ?? 0;
+                  const spotsLabel = formation.max_participants
+                    ? `${regCount}/${formation.max_participants}`
+                    : `${regCount}`;
+                  const isPast = new Date(formation.ends_at) < new Date();
+
+                  return (
+                    <TableRow
+                      key={formation.id}
+                      className={isPast ? "opacity-60" : ""}
+                    >
+                      <TableCell>
+                        <p className="font-medium">{formation.title}</p>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={typeConfig.variant} className="gap-1">
+                          {formation.type === "online" ? (
+                            <Video className="mr-1 h-3 w-3" />
+                          ) : formation.type === "in_person" ? (
+                            <MapPin className="mr-1 h-3 w-3" />
+                          ) : (
+                            <Users className="mr-1 h-3 w-3" />
+                          )}
+                          {typeConfig.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <div>
+                          {format(new Date(formation.starts_at), "d MMM yyyy", {
+                            locale: fr,
+                          })}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {format(new Date(formation.starts_at), "HH'h'mm", {
+                            locale: fr,
+                          })}{" "}
+                          –{" "}
+                          {format(new Date(formation.ends_at), "HH'h'mm", {
+                            locale: fr,
+                          })}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {formatPrice(formation.price_cents, formation.currency)}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <span
+                          className={
+                            formation.max_participants &&
+                            regCount >= formation.max_participants
+                              ? "font-medium text-destructive"
+                              : ""
+                          }
+                        >
+                          {spotsLabel}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {formation.is_published ? (
+                          <Badge variant="default">Publié</Badge>
+                        ) : (
+                          <Badge variant="secondary">Brouillon</Badge>
+                        )}
+                        {isPast && (
+                          <Badge variant="outline" className="ml-1">
+                            Passé
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formation.is_published && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            asChild
+                            title="Voir"
+                          >
+                            <Link
+                              href={`/formations/${formation.slug}`}
+                              target="_blank"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };
 
-export default ConsultantFormationsPage;
+export default ConsultanteFormationsPage;

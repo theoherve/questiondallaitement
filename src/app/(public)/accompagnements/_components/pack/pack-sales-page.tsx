@@ -18,7 +18,7 @@ import {
 } from "./pack-sections";
 
 type PackSalesPageProps = {
-  formation: {
+  accompagnement: {
     id: string;
     title: string;
     price_cents: number;
@@ -40,11 +40,11 @@ type PackSalesPageProps = {
   isEnrolled: boolean;
 };
 
-/** Charge les formations-modules (hors pack) pour la grille « programme ». */
+/** Charge les accompagnements-modules (hors pack) pour la grille « programme ». */
 export async function fetchPackModuleRows(): Promise<ModuleRow[]> {
   const supabase = await createClient();
   const { data } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select(
       "id, title, slug, short_description, thumbnail_url, price_cents, currency"
     )
@@ -55,14 +55,14 @@ export async function fetchPackModuleRows(): Promise<ModuleRow[]> {
 }
 
 export function PackSalesPage({
-  formation,
+  accompagnement,
   sectionsCount,
   lessonsCount,
   moduleRows,
   isLoggedIn,
   isEnrolled,
 }: PackSalesPageProps) {
-  const priceLabel = formatPrice(formation.price_cents, formation.currency);
+  const priceLabel = formatPrice(accompagnement.price_cents, accompagnement.currency);
   const modules = buildModuleCards(moduleRows);
 
   // Ancrage de valeur (spec) : économie du pack vs somme des modules à l'unité.
@@ -71,13 +71,13 @@ export function PackSalesPage({
     (acc, m) => acc + (m.price_cents ?? 0),
     0
   );
-  const savingsCents = modulesTotalCents - formation.price_cents;
+  const savingsCents = modulesTotalCents - accompagnement.price_cents;
   const anchorLabel =
     savingsCents > 0
-      ? `Soit ${formatPrice(savingsCents, formation.currency)} d'économie par rapport aux modules achetés à l'unité`
+      ? `Soit ${formatPrice(savingsCents, accompagnement.currency)} d'économie par rapport aux modules achetés à l'unité`
       : null;
 
-  const profile = formation.consultants?.profiles;
+  const profile = accompagnement.consultants?.profiles;
   const instructorName =
     profile && (profile.first_name || profile.last_name)
       ? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
@@ -87,20 +87,20 @@ export function PackSalesPage({
     <>
       <PackSideCta
         priceLabel={priceLabel}
-        imageUrl={formation.thumbnail_url}
+        imageUrl={accompagnement.thumbnail_url}
         sectionsCount={sectionsCount}
         lessonsCount={lessonsCount}
         instructorName={instructorName}
-        formationId={formation.id}
+        accompagnementId={accompagnement.id}
         isLoggedIn={isLoggedIn}
         isEnrolled={isEnrolled}
-        priceCents={formation.price_cents}
-        currency={formation.currency}
+        priceCents={accompagnement.price_cents}
+        currency={accompagnement.currency}
       />
       <PackHero
-        title={formation.title}
+        title={accompagnement.title}
         priceLabel={priceLabel}
-        imageUrl={formation.thumbnail_url}
+        imageUrl={accompagnement.thumbnail_url}
       />
       <PackProblem />
       <PackPromise />
@@ -109,18 +109,18 @@ export function PackSalesPage({
       <PackForWho />
       <PackInstructor
         name={instructorName}
-        bio={formation.consultants?.bio ?? null}
+        bio={accompagnement.consultants?.bio ?? null}
         avatarUrl={profile?.avatar_url ?? null}
       />
       <PackTestimonials />
       <PackPricing
         priceLabel={priceLabel}
         anchorLabel={anchorLabel}
-        formationId={formation.id}
+        accompagnementId={accompagnement.id}
         isLoggedIn={isLoggedIn}
         isEnrolled={isEnrolled}
-        priceCents={formation.price_cents}
-        currency={formation.currency}
+        priceCents={accompagnement.price_cents}
+        currency={accompagnement.currency}
       />
       <section id="faq" className="scroll-mt-20 bg-background-beige px-4 py-16 sm:px-6 sm:py-20">
         <PackFaq />

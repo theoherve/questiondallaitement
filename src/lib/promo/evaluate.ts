@@ -14,14 +14,14 @@ import type {
 } from "./types";
 
 const ALL_TARGET_BY_KIND: Record<PromoServiceKind, string> = {
+  accompagnement: "accompagnements_all",
   formation: "formations_all",
-  event: "events_all",
   booking: "bookings_all",
 };
 
 const ITEM_TARGET_BY_KIND: Record<PromoServiceKind, string> = {
+  accompagnement: "accompagnement",
   formation: "formation",
-  event: "event",
   booking: "booking_service",
 };
 
@@ -53,7 +53,7 @@ const triggerSatisfied = (
 
   return code.triggers.some((trigger) => {
     const kind: PromoServiceKind =
-      trigger.trigger_type === "event_purchase" ? "event" : "formation";
+      trigger.trigger_type === "formation_purchase" ? "formation" : "accompagnement";
 
     return ctx.triggeringPurchases.some(
       (purchase) =>

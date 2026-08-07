@@ -43,15 +43,15 @@ const main = async () => {
   console.log("→ Fetching formations, sections, blocks…");
 
   const { data: formations } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("id, title, slug")
     .is("deleted_at", null)
     .order("title");
   const { data: sections } = await supabase
-    .from("formation_sections")
-    .select("id, formation_id, title, position");
+    .from("accompagnement_sections")
+    .select("id, accompagnement_id, title, position");
   const { data: blocks } = await supabase
-    .from("formation_blocks")
+    .from("accompagnement_blocks")
     .select("id, section_id, type, content, position");
 
   console.log(`  formations=${formations.length} sections=${sections.length} blocks=${blocks.length}`);
@@ -59,9 +59,9 @@ const main = async () => {
   // Index sections and blocks
   const sectionsByFormation = new Map();
   for (const sec of sections) {
-    const arr = sectionsByFormation.get(sec.formation_id) ?? [];
+    const arr = sectionsByFormation.get(sec.accompagnement_id) ?? [];
     arr.push(sec);
-    sectionsByFormation.set(sec.formation_id, arr);
+    sectionsByFormation.set(sec.accompagnement_id, arr);
   }
   const blocksBySection = new Map();
   for (const b of blocks) {

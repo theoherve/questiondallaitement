@@ -173,14 +173,14 @@ export const SurveyBuilder = ({ survey }: { survey: AdminSurvey | null }) => {
               <Input
                 id="survey-title"
                 value={draft.title}
-                onChange={(event) =>
+                onChange={(formation) =>
                   setDraft((current) => ({
                     ...current,
-                    title: event.target.value,
+                    title: formation.target.value,
                     // Le slug suit le titre tant que le sondage n'existe pas.
                     // Une fois créé, il est figé : il est écrit dans le HTML
                     // des articles qui embarquent le sondage.
-                    slug: current.id ? current.slug : slugify(event.target.value),
+                    slug: current.id ? current.slug : slugify(formation.target.value),
                   }))
                 }
               />
@@ -191,10 +191,10 @@ export const SurveyBuilder = ({ survey }: { survey: AdminSurvey | null }) => {
                 id="survey-slug"
                 value={draft.slug}
                 readOnly={Boolean(draft.id)}
-                onChange={(event) =>
+                onChange={(formation) =>
                   setDraft((current) => ({
                     ...current,
-                    slug: slugify(event.target.value),
+                    slug: slugify(formation.target.value),
                   }))
                 }
               />
@@ -213,8 +213,8 @@ export const SurveyBuilder = ({ survey }: { survey: AdminSurvey | null }) => {
               id="survey-intro"
               value={draft.intro}
               rows={3}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, intro: event.target.value }))
+              onChange={(formation) =>
+                setDraft((current) => ({ ...current, intro: formation.target.value }))
               }
             />
           </div>
@@ -225,10 +225,10 @@ export const SurveyBuilder = ({ survey }: { survey: AdminSurvey | null }) => {
               id="survey-thanks"
               value={draft.thank_you_message}
               rows={3}
-              onChange={(event) =>
+              onChange={(formation) =>
                 setDraft((current) => ({
                   ...current,
-                  thank_you_message: event.target.value,
+                  thank_you_message: formation.target.value,
                 }))
               }
             />
@@ -240,10 +240,10 @@ export const SurveyBuilder = ({ survey }: { survey: AdminSurvey | null }) => {
               id="survey-status"
               className="mt-1 block rounded border border-primary-green/20 px-2 py-1.5 text-sm"
               value={draft.status}
-              onChange={(event) =>
+              onChange={(formation) =>
                 setDraft((current) => ({
                   ...current,
-                  status: event.target.value as Draft["status"],
+                  status: formation.target.value as Draft["status"],
                 }))
               }
             >
@@ -280,8 +280,8 @@ export const SurveyBuilder = ({ survey }: { survey: AdminSurvey | null }) => {
               <Input
                 id={`question-${index}-label`}
                 value={question.label}
-                onChange={(event) =>
-                  patchQuestion(index, { label: event.target.value })
+                onChange={(formation) =>
+                  patchQuestion(index, { label: formation.target.value })
                 }
               />
             </div>
@@ -290,9 +290,9 @@ export const SurveyBuilder = ({ survey }: { survey: AdminSurvey | null }) => {
               <select
                 className="rounded border border-primary-green/20 px-2 py-1.5 text-sm"
                 value={question.kind}
-                onChange={(event) =>
+                onChange={(formation) =>
                   patchQuestion(index, {
-                    kind: event.target.value as QuestionDraft["kind"],
+                    kind: formation.target.value as QuestionDraft["kind"],
                   })
                 }
               >
@@ -419,14 +419,14 @@ const EntryList = ({
         <Input
           value={entry.label}
           placeholder="Libellé affiché"
-          onChange={(event) => onChange(index, { label: event.target.value })}
+          onChange={(formation) => onChange(index, { label: formation.target.value })}
         />
         <Input
           value={entry.key}
           placeholder="clé (auto)"
           readOnly={locked && Boolean(entry.key)}
           className="max-w-48 font-mono text-xs"
-          onChange={(event) => onChange(index, { key: event.target.value })}
+          onChange={(formation) => onChange(index, { key: formation.target.value })}
         />
         <Button variant="ghost" size="sm" onClick={() => onRemove(index)}>
           <Trash2 className="h-4 w-4" />
