@@ -64,7 +64,7 @@ export const createEvent = async (
   }
 
   revalidatePath("/admin/evenements");
-  revalidatePath("/evenements");
+  revalidatePath("/formations");
   return { success: true, data: event };
 };
 
@@ -129,7 +129,7 @@ export const updateEvent = async (
   if (currentEvent?.slug && currentEvent.slug !== parsed.data.slug) {
     revalidatePath(`/evenements/${currentEvent.slug}`);
   }
-  revalidatePath("/evenements");
+  revalidatePath("/formations");
   return { success: true };
 };
 
@@ -153,7 +153,7 @@ export const toggleEventPublish = async (
 
   revalidatePath("/admin/evenements");
   revalidatePath(`/admin/evenements/${id}/edit`);
-  revalidatePath("/evenements");
+  revalidatePath("/formations");
   return { success: true };
 };
 
@@ -183,7 +183,7 @@ export const deleteEvent = async (id: string): Promise<ActionResult> => {
   }
 
   revalidatePath("/admin/evenements");
-  revalidatePath("/evenements");
+  revalidatePath("/formations");
   return { success: true };
 };
 

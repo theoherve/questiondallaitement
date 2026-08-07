@@ -5,7 +5,6 @@ const PUBLIC_ROUTES = [
   "/",
   "/formations",
   "/consultantes",
-  "/evenements",
   "/reserver",
   "/politique-de-confidentialite",
   "/mentions-legales",

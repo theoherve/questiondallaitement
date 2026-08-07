@@ -16,7 +16,7 @@
 - **Ne pas toucher** : `training_providers`, `newsletter_events`, `trackNewsletterEvent`, le type `NewsletterEvent`, `withdrawal_waivers`, `src/config/formations.ts`, les shims `/espace-client/formations`.
 - **Ne pas réécrire les migrations `00001`–`00069`** ni les specs/plans antérieurs à celui-ci. Ce sont des journaux, pas des états.
 - **`tsc --noEmit` a 35 erreurs préexistantes** dans `src/middleware.spec.ts`, `src/app/(dashboard)/admin/marketing/actions.spec.ts` et `src/app/(dashboard)/espace-consultante/crm/segments/actions.spec.ts`. Le critère est « aucune erreur nouvelle », jamais « zéro erreur ».
-- **Baseline de tests : 558 tests, 65 fichiers.** Le compte doit rester identique — ce chantier n'ajoute ni ne retire de comportement.
+- **Baseline de tests : 581 tests, 66 fichiers** (mesurée après la tâche 1, qui retire un cas du `it.each` du middleware ; 582 avant). Le compte doit rester à 581 pour toutes les tâches suivantes — ce chantier n'ajoute ni ne retire de comportement.
 - **Tous les déplacements de fichiers passent par `git mv`**, pour que l'historique suive.
 - **Ne jamais lancer `pnpm db:push`** sans validation explicite de Théo : il cible la base **de production**.
 
