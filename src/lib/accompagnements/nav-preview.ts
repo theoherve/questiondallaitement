@@ -16,7 +16,7 @@ export type AccompagnementsNavPreview = {
   modules: AccompagnementPreview[];
 };
 
-type FormationPreviewRow = {
+type AccompagnementPreviewRow = {
   title: string;
   slug: string;
   short_description: string | null;
@@ -27,7 +27,7 @@ type FormationPreviewRow = {
 
 const EMPTY: AccompagnementsNavPreview = { pack: null, modules: [] };
 
-const toPreview = (row: FormationPreviewRow): AccompagnementPreview => ({
+const toPreview = (row: AccompagnementPreviewRow): AccompagnementPreview => ({
   title: row.title,
   slug: row.slug,
   shortDescription: row.short_description,
@@ -56,7 +56,7 @@ export const getAccompagnementsNavPreview =
 
     if (error || !data) return EMPTY;
 
-    const rows = data as FormationPreviewRow[];
+    const rows = data as AccompagnementPreviewRow[];
     const pack = rows.find((r) => r.slug === PACK_SLUG);
     const modules = sortByModuleOrder(rows.filter((r) => r.slug !== PACK_SLUG));
 

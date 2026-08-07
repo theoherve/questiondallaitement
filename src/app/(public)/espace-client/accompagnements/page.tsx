@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title: "Mes accompagnements",
 };
 
-type FormationShape = {
+type AccompagnementShape = {
   id: string;
   title: string;
   slug: string;
@@ -24,7 +24,7 @@ type FormationShape = {
   formation_sections: { formation_blocks: { id: string }[] }[];
 };
 
-const ClientFormationsPage = async ({
+const ClientAccompagnementsPage = async ({
   searchParams,
 }: {
   searchParams: Promise<{ purchased?: string }>;
@@ -75,13 +75,13 @@ const ClientFormationsPage = async ({
   // Retour d'un paiement : n'attendre le webhook que si l'inscription
   // n'apparait pas encore, sinon l'ilot clignoterait pour rien.
   const { purchased } = await searchParams;
-  const enrolledFormationIds = new Set(
+  const enrolledAccompagnementIds = new Set(
     (enrollments ?? []).map(
-      (e) => (e.formations as unknown as FormationShape | null)?.id
+      (e) => (e.formations as unknown as AccompagnementShape | null)?.id
     )
   );
   const awaitingPurchase =
-    purchased && !enrolledFormationIds.has(purchased) ? purchased : null;
+    purchased && !enrolledAccompagnementIds.has(purchased) ? purchased : null;
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
@@ -103,16 +103,16 @@ const ClientFormationsPage = async ({
         </div>
       </header>
 
-      {awaitingPurchase && <PurchaseReconciler formationId={awaitingPurchase} />}
+      {awaitingPurchase && <PurchaseReconciler accompagnementId={awaitingPurchase} />}
 
       {enrollments && enrollments.length > 0 ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {enrollments.map((enrollment) => {
-            const formation = enrollment.formations as unknown as FormationShape | null;
+            const accompagnement = enrollment.formations as unknown as AccompagnementShape | null;
 
-            if (!formation) return null;
+            if (!accompagnement) return null;
 
-            const totalBlocks = formation.formation_sections.reduce(
+            const totalBlocks = accompagnement.formation_sections.reduce(
               (acc, s) => acc + s.formation_blocks.length,
               0
             );
@@ -131,10 +131,10 @@ const ClientFormationsPage = async ({
                 className="group overflow-hidden rounded-3xl border-border/50 pt-0 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg p-0"
               >
                 <div className="relative aspect-video overflow-hidden bg-linear-to-br from-accent-peach-soft to-background-beige-dark">
-                  {formation.thumbnail_url ? (
+                  {accompagnement.thumbnail_url ? (
                     <Image
-                      src={formation.thumbnail_url}
-                      alt={formation.title}
+                      src={accompagnement.thumbnail_url}
+                      alt={accompagnement.title}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -177,11 +177,11 @@ const ClientFormationsPage = async ({
                 <CardContent className="space-y-3 p-5">
                   <div>
                     <h3 className="font-serif text-lg font-semibold leading-snug text-primary-green">
-                      {formation.title}
+                      {accompagnement.title}
                     </h3>
-                    {formation.short_description && (
+                    {accompagnement.short_description && (
                       <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                        {formation.short_description}
+                        {accompagnement.short_description}
                       </p>
                     )}
                   </div>
@@ -202,7 +202,7 @@ const ClientFormationsPage = async ({
                     className="w-full rounded-xl bg-primary-red hover:bg-primary-red-dark"
                   >
                     <Link
-                      href={`/espace-client/accompagnements/${formation.id}`}
+                      href={`/espace-client/accompagnements/${accompagnement.id}`}
                       tabIndex={0}
                     >
                       <Play className="h-4 w-4 fill-current" aria-hidden />
@@ -242,4 +242,4 @@ const ClientFormationsPage = async ({
   );
 };
 
-export default ClientFormationsPage;
+export default ClientAccompagnementsPage;

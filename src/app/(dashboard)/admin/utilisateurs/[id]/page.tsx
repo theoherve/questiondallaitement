@@ -16,7 +16,7 @@ import {
 import { UserProfileHeader } from "./_components/user-profile-header";
 import { TabInfos } from "./_components/tab-infos";
 import { TabReservations } from "./_components/tab-reservations";
-import { TabFormations } from "./_components/tab-formations";
+import { TabAccompagnements } from "./_components/tab-accompagnements";
 import { TabPaiements } from "./_components/tab-paiements";
 import { TabEvenements } from "./_components/tab-evenements";
 import { TabCrm } from "./_components/tab-crm";
@@ -470,7 +470,7 @@ const UserDetailPage = async ({ params }: Props) => {
         </TabsContent>
 
         <TabsContent value="formations">
-          <TabFormations enrollments={enrollmentsWithProgress} userId={id} />
+          <TabAccompagnements enrollments={enrollmentsWithProgress} userId={id} />
         </TabsContent>
 
         <TabsContent value="paiements">

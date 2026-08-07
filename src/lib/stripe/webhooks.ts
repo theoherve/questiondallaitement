@@ -3,11 +3,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createTransfer, createRefund } from "@/lib/stripe/connect";
 import { stripe as stripeClient } from "@/lib/stripe/client";
 import {
-  splitFormationRevenue,
+  splitAccompagnementRevenue,
   type Collaborator,
 } from "@/lib/stripe/revenue-split";
 import {
-  sendFormationAccess,
+  sendAccompagnementAccess,
   sendBookingConfirmation,
   sendBookingConfirmedToConsultant,
   sendBookingSlotConflict,
@@ -392,7 +392,7 @@ const distributeFormationRevenue = async (
 
   let parts;
   try {
-    parts = splitFormationRevenue({
+    parts = splitAccompagnementRevenue({
       amountCents: payment.amount_cents,
       platformFeeCents: payment.platform_fee_cents,
       ownerId: formation.consultant_id,
@@ -705,7 +705,7 @@ const sendCheckoutEmails = async (
         .single();
 
       if (formation) {
-        await sendFormationAccess(clientProfile.email, {
+        await sendAccompagnementAccess(clientProfile.email, {
           client_name: clientName,
           formation_title: formation.title,
         });

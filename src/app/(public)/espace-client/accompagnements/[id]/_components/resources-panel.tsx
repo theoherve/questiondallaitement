@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-export type FormationResource = {
+export type AccompagnementResource = {
   blockId: string;
   sectionId: string;
   sectionTitle: string;
@@ -25,8 +25,8 @@ export type FormationResource = {
 };
 
 type ResourcesPanelProps = {
-  resources: FormationResource[];
-  formationId: string;
+  resources: AccompagnementResource[];
+  accompagnementId: string;
 };
 
 const formatSize = (bytes: number) => {
@@ -38,7 +38,7 @@ const formatSize = (bytes: number) => {
 
 export const ResourcesPanel = ({
   resources,
-  formationId,
+  accompagnementId,
 }: ResourcesPanelProps) => {
   const [open, setOpen] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -47,10 +47,10 @@ export const ResourcesPanel = ({
    * Le bucket des pièces jointes est privé : on demande au serveur un lien
    * signé au moment du clic plutôt que d'exposer une URL permanente.
    */
-  const handleDownload = async (resource: FormationResource) => {
+  const handleDownload = async (resource: AccompagnementResource) => {
     setPendingId(resource.blockId);
     try {
-      const result = await getAttachmentUrl(formationId, resource.blockId);
+      const result = await getAttachmentUrl(accompagnementId, resource.blockId);
       if (!result.success || !result.data) {
         toast.error(result.error ?? "Téléchargement indisponible");
         return;
@@ -64,7 +64,7 @@ export const ResourcesPanel = ({
   if (resources.length === 0) return null;
 
   // Group by section, preserving section order.
-  const bySection = new Map<string, FormationResource[]>();
+  const bySection = new Map<string, AccompagnementResource[]>();
   for (const r of resources) {
     const arr = bySection.get(r.sectionId) ?? [];
     arr.push(r);

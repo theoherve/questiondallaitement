@@ -89,7 +89,7 @@ vi.mock("@/lib/stripe/client", () => ({
 const mockSendSlotConflict = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/lib/emails/send", () => ({
-  sendFormationAccess: vi.fn().mockResolvedValue(undefined),
+  sendAccompagnementAccess: vi.fn().mockResolvedValue(undefined),
   sendBookingConfirmation: vi.fn().mockResolvedValue(undefined),
   sendBookingConfirmedToConsultant: vi.fn().mockResolvedValue(undefined),
   sendBookingSlotConflict: (...args: unknown[]) => mockSendSlotConflict(...args),

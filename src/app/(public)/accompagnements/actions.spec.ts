@@ -36,7 +36,7 @@ vi.mock("@/lib/stripe/sale-routing", () => ({
   isPlatformOwnerConsultant: async () => false,
 }));
 
-import { purchaseFormation } from "./actions";
+import { purchaseAccompagnement } from "./actions";
 
 const createChain = (result: { data?: unknown; count?: number }) => {
   const chain: Record<string, unknown> = {};
@@ -49,8 +49,8 @@ const createChain = (result: { data?: unknown; count?: number }) => {
   return chain;
 };
 
-const formationRow = {
-  id: "formation-1",
+const accompagnementRow = {
+  id: "accompagnement-1",
   title: "Pack",
   short_description: "desc",
   price_cents: 10_000,
@@ -71,14 +71,14 @@ beforeEach(() => {
 
   mockFrom
     .mockReturnValueOnce(createChain({ data: null })) // inscription existante
-    .mockReturnValueOnce(createChain({ data: formationRow })) // formation
+    .mockReturnValueOnce(createChain({ data: accompagnementRow })) // accompagnement
     .mockReturnValueOnce(
       createChain({ data: { stripe_account_id: "acct_1", commission_rate: 20 } }),
     ) // consultante
     .mockReturnValueOnce(createChain({ count: 0 })); // collaboratrices
 });
 
-describe("purchaseFormation avec code promo", () => {
+describe("purchaseAccompagnement avec code promo", () => {
   it("envoie a Stripe le montant remise et la commission recalculee", async () => {
     mockResolvePromo.mockResolvedValue({
       ok: true,
@@ -89,7 +89,7 @@ describe("purchaseFormation avec code promo", () => {
       redemptionId: "redemption-1",
     });
 
-    const result = await purchaseFormation("formation-1", "supermaman");
+    const result = await purchaseAccompagnement("accompagnement-1", "supermaman");
 
     expect(result.success).toBe(true);
     const args = mockCreateCheckoutSession.mock.calls[0][0];
@@ -109,7 +109,7 @@ describe("purchaseFormation avec code promo", () => {
       error: "Ce code n'est pas valable pour cet achat.",
     });
 
-    const result = await purchaseFormation("formation-1", "INCONNU");
+    const result = await purchaseAccompagnement("accompagnement-1", "INCONNU");
 
     expect(result).toEqual({
       success: false,
@@ -119,7 +119,7 @@ describe("purchaseFormation avec code promo", () => {
   });
 
   it("garde le prix plein sans code", async () => {
-    const result = await purchaseFormation("formation-1");
+    const result = await purchaseAccompagnement("accompagnement-1");
 
     expect(result.success).toBe(true);
     const args = mockCreateCheckoutSession.mock.calls[0][0];

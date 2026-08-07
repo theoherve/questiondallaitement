@@ -150,7 +150,7 @@ const describeSale = async (
       .select("title")
       .eq("id", referenceId)
       .maybeSingle();
-    return data?.title ?? "Formation";
+    return data?.title ?? "Accompagnement";
   }
 
   if (type === "event") {

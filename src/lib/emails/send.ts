@@ -155,7 +155,7 @@ export const sendBookingCancelled = async (
   await sendTransactionalEmail({ to: clientEmail, subject, html });
 };
 
-export const sendFormationAccess = async (
+export const sendAccompagnementAccess = async (
   clientEmail: string,
   variables: {
     client_name: string;

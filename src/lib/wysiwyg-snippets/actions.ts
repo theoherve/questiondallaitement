@@ -71,7 +71,7 @@ export const createSnippet = async (input: {
     return { success: false, error: error.message };
   }
 
-  revalidatePath("/admin/formations", "layout");
+  revalidatePath("/admin/accompagnements", "layout");
   revalidatePath("/admin/blog", "layout");
   return { success: true, data: { id: data.id } };
 };
@@ -88,7 +88,7 @@ export const deleteSnippet = async (id: string): Promise<ActionResult> => {
     return { success: false, error: error.message };
   }
 
-  revalidatePath("/admin/formations", "layout");
+  revalidatePath("/admin/accompagnements", "layout");
   revalidatePath("/admin/blog", "layout");
   return { success: true };
 };

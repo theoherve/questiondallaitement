@@ -13,7 +13,7 @@ export type BookingStatus =
   | "completed"
   | "no_show";
 
-export type FormationStatus = "draft" | "published" | "archived";
+export type AccompagnementStatus = "draft" | "published" | "archived";
 
 export type BlockType = "text" | "video" | "image" | "quiz" | "download";
 
@@ -188,7 +188,7 @@ export type ConsultantLocation = {
   created_at: string;
 };
 
-export type Formation = {
+export type Accompagnement = {
   id: string;
   consultant_id: string;
   title: string;
@@ -198,19 +198,19 @@ export type Formation = {
   thumbnail_url: string | null;
   price_cents: number;
   currency: string;
-  status: FormationStatus;
+  status: AccompagnementStatus;
   published_at: string | null;
   created_at: string;
   updated_at: string;
 };
 
-export type FormationCollaborator = {
+export type AccompagnementCollaborator = {
   formation_id: string;
   consultant_id: string;
   revenue_share: number;
 };
 
-export type FormationSection = {
+export type AccompagnementSection = {
   id: string;
   formation_id: string;
   title: string;
@@ -218,7 +218,7 @@ export type FormationSection = {
   created_at: string;
 };
 
-export type FormationBlock = {
+export type AccompagnementBlock = {
   id: string;
   section_id: string;
   type: BlockType;
@@ -227,7 +227,7 @@ export type FormationBlock = {
   created_at: string;
 };
 
-export type FormationEnrollment = {
+export type AccompagnementEnrollment = {
   id: string;
   client_id: string;
   formation_id: string;
@@ -235,7 +235,7 @@ export type FormationEnrollment = {
   enrolled_at: string;
 };
 
-export type FormationProgress = {
+export type AccompagnementProgress = {
   id: string;
   enrollment_id: string;
   block_id: string;

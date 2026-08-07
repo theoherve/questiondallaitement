@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { hasFormationEnrollment } from "../actions";
+import { hasAccompagnementEnrollment } from "../actions";
 
 /**
  * Comble la course entre le retour du paiement et le webhook Stripe qui ouvre
@@ -13,9 +13,9 @@ import { hasFormationEnrollment } from "../actions";
  * le nouvel accompagnement. Sans lui, la cliente devait rafraichir a la main.
  */
 export const PurchaseReconciler = ({
-  formationId,
+  accompagnementId,
 }: {
-  formationId: string;
+  accompagnementId: string;
 }) => {
   const router = useRouter();
   const [timedOut, setTimedOut] = useState(false);
@@ -33,7 +33,7 @@ export const PurchaseReconciler = ({
     const poll = async () => {
       if (cancelled) return;
 
-      const ready = await hasFormationEnrollment(formationId).catch(() => false);
+      const ready = await hasAccompagnementEnrollment(accompagnementId).catch(() => false);
       if (cancelled) return;
 
       if (ready) {
@@ -56,7 +56,7 @@ export const PurchaseReconciler = ({
     return () => {
       cancelled = true;
     };
-  }, [formationId, router]);
+  }, [accompagnementId, router]);
 
   return (
     <div

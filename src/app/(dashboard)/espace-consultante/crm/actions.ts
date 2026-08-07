@@ -349,7 +349,7 @@ export const getContactDetail = async (
     interactions.push({
       id: e.formation_id,
       type: "enrollment",
-      title: e.formations?.title ?? "Formation",
+      title: e.formations?.title ?? "Accompagnement",
       date: e.enrolled_at,
     });
   }

@@ -5,7 +5,7 @@ import { WorkflowForm } from "../_components/workflow-form";
 import {
   getLabels,
   getRecurringDefinitions,
-  getFormations,
+  getAccompagnements,
   getEmailTemplates,
 } from "../actions";
 
@@ -21,7 +21,7 @@ const NewWorkflowPage = async () => {
     await Promise.all([
       getLabels(),
       getRecurringDefinitions(),
-      getFormations(),
+      getAccompagnements(),
       getEmailTemplates(),
     ]);
 

@@ -394,7 +394,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/admin/formations/${f.id}/edit`}>
+                        <Link href={`/admin/accompagnements/${f.id}/edit`}>
                           Éditer
                         </Link>
                       </Button>

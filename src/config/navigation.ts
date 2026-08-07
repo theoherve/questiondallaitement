@@ -118,7 +118,7 @@ export const adminNav: NavItem[] = [
   { title: "Tableau de bord", href: "/admin", iconKey: "LayoutDashboard" },
   { title: "Utilisateurs", href: "/admin/utilisateurs", iconKey: "Users" },
   { title: "Consultantes", href: "/admin/consultantes", iconKey: "Users" },
-  { title: "Accompagnements", href: "/admin/formations", iconKey: "BookOpen" },
+  { title: "Accompagnements", href: "/admin/accompagnements", iconKey: "BookOpen" },
   { title: "Blog", href: "/admin/blog", iconKey: "FileText" },
   { title: "Sondages", href: "/admin/sondages", iconKey: "BarChart3" },
   { title: "Événements", href: "/admin/evenements", iconKey: "CalendarClock" },

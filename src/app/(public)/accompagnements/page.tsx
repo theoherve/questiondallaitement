@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-type FormationRow = {
+type AccompagnementRow = {
   id: string;
   title: string;
   slug: string;
@@ -55,7 +55,7 @@ const BENEFITS = [
 const AccompagnementsPage = async () => {
   const supabase = await createClient();
 
-  const { data: formations, error } = await supabase
+  const { data: accompagnements, error } = await supabase
     .from("formations")
     .select(
       `
@@ -71,7 +71,7 @@ const AccompagnementsPage = async () => {
         id,
         formation_blocks ( id )
       ),
-      consultants!formations_consultant_id_fkey (
+      consultants!accompagnements_consultant_id_fkey (
         slug,
         profiles!consultants_id_fkey (
           first_name,
@@ -99,7 +99,7 @@ const AccompagnementsPage = async () => {
     );
   }
 
-  const rows = (formations ?? []) as unknown as FormationRow[];
+  const rows = (accompagnements ?? []) as unknown as AccompagnementRow[];
   const pack = rows.find((f) => f.slug === PACK_SLUG);
   const modules = sortByModuleOrder(rows.filter((f) => f.slug !== PACK_SLUG));
 
@@ -365,22 +365,22 @@ const AccompagnementsPage = async () => {
             Accédez à un module précis selon votre besoin du moment.
           </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {modules.map((formation) => {
-              const sectionCount = formation.formation_sections.length;
-              const blockCount = formation.formation_sections.reduce(
+            {modules.map((accompagnement) => {
+              const sectionCount = accompagnement.formation_sections.length;
+              const blockCount = accompagnement.formation_sections.reduce(
                 (acc, s) => acc + (s.formation_blocks?.length ?? 0),
                 0
               );
               return (
                 <Card
-                  key={formation.id}
+                  key={accompagnement.id}
                   className="group flex h-full flex-col overflow-hidden transition-shadow duration-200 hover:shadow-md"
                 >
                   <div className="relative aspect-video overflow-hidden bg-background-beige-dark">
-                    {formation.thumbnail_url ? (
+                    {accompagnement.thumbnail_url ? (
                       <Image
-                        src={formation.thumbnail_url}
-                        alt={formation.title}
+                        src={accompagnement.thumbnail_url}
+                        alt={accompagnement.title}
                         fill
                         className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                         sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
@@ -400,15 +400,15 @@ const AccompagnementsPage = async () => {
                         Module
                       </Badge>
                       <span className="font-semibold text-primary-green">
-                        {formatPrice(formation.price_cents, formation.currency)}
+                        {formatPrice(accompagnement.price_cents, accompagnement.currency)}
                       </span>
                     </div>
                     <h3 className="mt-3 line-clamp-2 font-serif text-base font-semibold text-primary-green">
-                      {formation.title}
+                      {accompagnement.title}
                     </h3>
-                    {formation.short_description && (
+                    {accompagnement.short_description && (
                       <p className="mt-2 line-clamp-2 text-sm text-primary-green/70">
-                        {formation.short_description}
+                        {accompagnement.short_description}
                       </p>
                     )}
                     <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-primary-green/50">
@@ -429,7 +429,7 @@ const AccompagnementsPage = async () => {
                       asChild
                       className="w-full bg-primary-red hover:bg-primary-red-dark"
                     >
-                      <Link href={`/accompagnements/${formation.slug}`}>
+                      <Link href={`/accompagnements/${accompagnement.slug}`}>
                         Découvrir
                       </Link>
                     </Button>

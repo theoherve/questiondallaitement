@@ -15,7 +15,7 @@ export type RecurringEventTriggerConfig = {
   recurring_definition_id: string;
 };
 
-export type FormationEnrolledTriggerConfig = {
+export type AccompagnementEnrolledTriggerConfig = {
   formation_ids?: string[];
 };
 
@@ -23,7 +23,7 @@ export type ManualTriggerConfig = Record<string, never>;
 
 export type AdminWorkflowTriggerConfig =
   | RecurringEventTriggerConfig
-  | FormationEnrolledTriggerConfig
+  | AccompagnementEnrolledTriggerConfig
   | ManualTriggerConfig;
 
 // ─── Audience Config ────────────────────────────────────────

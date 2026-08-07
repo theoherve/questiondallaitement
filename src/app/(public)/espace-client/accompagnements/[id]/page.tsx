@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
-import { FormationReader } from "./_components/formation-reader";
+import { AccompagnementReader } from "./_components/accompagnement-reader";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -21,7 +21,7 @@ export const generateMetadata = async ({
   return { title: data?.title ?? "Accompagnement" };
 };
 
-const FormationReaderPage = async ({ params }: Props) => {
+const AccompagnementReaderPage = async ({ params }: Props) => {
   const { id } = await params;
   const { supabase, user } = await getSupabaseAndUser();
 
@@ -34,7 +34,7 @@ const FormationReaderPage = async ({ params }: Props) => {
 
   if (!enrollment) redirect("/espace-client/accompagnements");
 
-  const { data: formation } = await supabase
+  const { data: accompagnement } = await supabase
     .from("formations")
     .select(
       `
@@ -58,7 +58,7 @@ const FormationReaderPage = async ({ params }: Props) => {
     .is("deleted_at", null)
     .single();
 
-  if (!formation) notFound();
+  if (!accompagnement) notFound();
 
   const [progressResult, bookmarksResult] = await Promise.all([
     supabase
@@ -80,7 +80,7 @@ const FormationReaderPage = async ({ params }: Props) => {
     (b) => b.block_id
   );
 
-  const sections = (formation.formation_sections ?? [])
+  const sections = (accompagnement.formation_sections ?? [])
     .sort(
       (a: { position: number }, b: { position: number }) =>
         a.position - b.position
@@ -129,11 +129,11 @@ const FormationReaderPage = async ({ params }: Props) => {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <FormationReader
-        formation={{
-          id: formation.id,
-          title: formation.title,
-          description: formation.description,
+      <AccompagnementReader
+        accompagnement={{
+          id: accompagnement.id,
+          title: accompagnement.title,
+          description: accompagnement.description,
         }}
         sections={sections}
         enrollmentId={enrollment.id}
@@ -147,4 +147,4 @@ const FormationReaderPage = async ({ params }: Props) => {
   );
 };
 
-export default FormationReaderPage;
+export default AccompagnementReaderPage;

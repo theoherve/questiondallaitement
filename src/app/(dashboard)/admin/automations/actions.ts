@@ -533,7 +533,7 @@ export const getConsultants = async (): Promise<
   });
 };
 
-export const getFormations = async (): Promise<
+export const getAccompagnements = async (): Promise<
   { id: string; title: string }[]
 > => {
   await requireAdmin();

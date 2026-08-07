@@ -116,7 +116,7 @@ export const markBlockIncomplete = async (
  * l'accompagnement, puis on signe une URL temporaire pour ce fichier.
  */
 export const getAttachmentUrl = async (
-  formationId: string,
+  accompagnementId: string,
   blockId: string
 ): Promise<ActionResult<{ url: string }>> => {
   const { supabase, user } = await getSupabaseAndUser();
@@ -124,7 +124,7 @@ export const getAttachmentUrl = async (
   const { data: enrollment } = await supabase
     .from("formation_enrollments")
     .select("id")
-    .eq("formation_id", formationId)
+    .eq("formation_id", accompagnementId)
     .eq("client_id", user.id)
     .maybeSingle();
 
@@ -137,7 +137,7 @@ export const getAttachmentUrl = async (
     .from("formation_blocks")
     .select("content, formation_sections!inner(formation_id)")
     .eq("id", blockId)
-    .eq("formation_sections.formation_id", formationId)
+    .eq("formation_sections.formation_id", accompagnementId)
     .maybeSingle();
 
   const url = (block?.content as { url?: string } | null)?.url;

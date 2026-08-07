@@ -406,7 +406,7 @@ export function PackTestimonials() {
 export function PackPricing({
   priceLabel,
   anchorLabel,
-  formationId,
+  accompagnementId,
   isLoggedIn,
   isEnrolled,
   priceCents,
@@ -415,7 +415,7 @@ export function PackPricing({
   priceLabel: string;
   /** Ancrage de valeur dérivé de la DB (« X € d'économie… ») ; masqué si absent. */
   anchorLabel: string | null;
-  formationId: string;
+  accompagnementId: string;
   isLoggedIn: boolean;
   isEnrolled: boolean;
   priceCents: number;
@@ -452,7 +452,7 @@ export function PackPricing({
         </ul>
         <div className="mt-6">
           <PurchaseButton
-            formationId={formationId}
+            accompagnementId={accompagnementId}
             isLoggedIn={isLoggedIn}
             isEnrolled={isEnrolled}
             priceCents={priceCents}

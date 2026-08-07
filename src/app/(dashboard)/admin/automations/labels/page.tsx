@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ArrowLeft } from "lucide-react";
-import { getLabelsWithCounts, getFormations } from "../actions";
+import { getLabelsWithCounts, getAccompagnements } from "../actions";
 import { LabelFormDialog } from "./_components/label-form-dialog";
 import { DeleteLabelButton } from "./_components/delete-label-button";
 
@@ -28,7 +28,7 @@ const AdminLabelsPage = async () => {
 
   const [labels, formations] = await Promise.all([
     getLabelsWithCounts(),
-    getFormations(),
+    getAccompagnements(),
   ]);
 
   return (

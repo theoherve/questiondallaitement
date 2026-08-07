@@ -37,7 +37,7 @@ export type AutomationAction =
   | AddCrmTagAction
   | WebhookAction;
 
-export type FormationPurchasedConfig = {
+export type AccompagnementPurchasedConfig = {
   formation_ids?: string[];
 };
 
@@ -55,7 +55,7 @@ export type DelayAfterEventConfig = {
 };
 
 export type AutomationTriggerConfig =
-  | FormationPurchasedConfig
+  | AccompagnementPurchasedConfig
   | BookingConfirmedConfig
   | EventRegisteredConfig
   | DelayAfterEventConfig;

@@ -8,10 +8,10 @@ import {
   PromoCodeField,
   type AppliedPromo,
 } from "@/components/promo/promo-code-field";
-import { purchaseFormation } from "../actions";
+import { purchaseAccompagnement } from "../actions";
 
 type PurchaseButtonProps = {
-  formationId: string;
+  accompagnementId: string;
   isLoggedIn: boolean;
   isEnrolled: boolean;
   priceCents: number;
@@ -24,7 +24,7 @@ type PurchaseButtonProps = {
 };
 
 export const PurchaseButton = ({
-  formationId,
+  accompagnementId,
   isLoggedIn,
   isEnrolled,
   priceCents,
@@ -39,7 +39,7 @@ export const PurchaseButton = ({
     return (
       <Button asChild className="w-full bg-green-600 hover:bg-green-700">
         <a
-          href={`/espace-client/accompagnements/${formationId}`}
+          href={`/espace-client/accompagnements/${accompagnementId}`}
           data-testid="purchase-access-cta"
           tabIndex={0}
         >
@@ -54,7 +54,7 @@ export const PurchaseButton = ({
       <div className="space-y-2">
         <Button asChild className="w-full bg-primary-red hover:bg-primary-red-dark">
           <a
-            href={`/connexion?redirect=/accompagnements/${formationId}`}
+            href={`/connexion?redirect=/accompagnements/${accompagnementId}`}
             data-testid="purchase-login-cta"
             tabIndex={0}
           >
@@ -72,14 +72,14 @@ export const PurchaseButton = ({
   const handlePurchase = () => {
     setError(null);
     startTransition(async () => {
-      const result = await purchaseFormation(formationId, promo?.code);
+      const result = await purchaseAccompagnement(accompagnementId, promo?.code);
 
       if (result.success && result.data?.redirect_url) {
         window.location.href = result.data.redirect_url;
         return;
       }
 
-      // `purchaseFormation` echoue sur six chemins distincts (deja inscrite,
+      // `purchaseAccompagnement` echoue sur six chemins distincts (deja inscrite,
       // accompagnement depublie, consultante sans compte Connect, erreur
       // Stripe…). Sans affichage, le bouton cesse simplement de tourner et la
       // cliente reclique indefiniment sans jamais savoir pourquoi.
@@ -91,7 +91,7 @@ export const PurchaseButton = ({
     <div className="space-y-3">
       <PromoCodeField
         serviceKind="formation"
-        itemId={formationId}
+        itemId={accompagnementId}
         amountCents={priceCents}
         currency={currency}
         onApplied={setPromo}

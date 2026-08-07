@@ -15,7 +15,7 @@ export type ConsultantWithProfile = {
   };
 };
 
-export type FormationWithSections = {
+export type AccompagnementWithSections = {
   id: string;
   consultant_id: string;
   title: string;

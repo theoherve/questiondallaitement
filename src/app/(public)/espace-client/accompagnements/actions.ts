@@ -8,8 +8,8 @@ import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
  * ligne `formation_enrollments` peut ne pas encore exister : cette action
  * permet a l'ilot client de sonder son apparition sans recharger toute la page.
  */
-export const hasFormationEnrollment = async (
-  formationId: string,
+export const hasAccompagnementEnrollment = async (
+  accompagnementId: string,
 ): Promise<boolean> => {
   const { supabase, user } = await getSupabaseAndUser();
 
@@ -17,7 +17,7 @@ export const hasFormationEnrollment = async (
     .from("formation_enrollments")
     .select("id")
     .eq("client_id", user.id)
-    .eq("formation_id", formationId)
+    .eq("formation_id", accompagnementId)
     .maybeSingle();
 
   return Boolean(data);

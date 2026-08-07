@@ -62,9 +62,9 @@ export const crmSegmentSchema = z.object({
 
 export type CrmSegmentInput = z.infer<typeof crmSegmentSchema>;
 
-// ─── Formation Collaborators ────────────────────────────────
+// ─── Accompagnement Collaborators ────────────────────────────────
 
-export const formationCollaboratorSchema = z.object({
+export const accompagnementCollaboratorSchema = z.object({
   consultant_id: z.string().uuid("Consultante requise"),
   revenue_share: z
     .number()
@@ -72,6 +72,6 @@ export const formationCollaboratorSchema = z.object({
     .max(100, "Le pourcentage ne peut pas dépasser 100%"),
 });
 
-export type FormationCollaboratorInput = z.infer<
-  typeof formationCollaboratorSchema
+export type AccompagnementCollaboratorInput = z.infer<
+  typeof accompagnementCollaboratorSchema
 >;

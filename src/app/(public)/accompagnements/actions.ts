@@ -15,8 +15,8 @@ import {
 import { siteConfig } from "@/config/site";
 import type { ActionResult } from "@/types";
 
-export const purchaseFormation = async (
-  formationId: string,
+export const purchaseAccompagnement = async (
+  accompagnementId: string,
   promoCode?: string,
 ): Promise<ActionResult<{ redirect_url: string }>> => {
   const user = await getSessionUser();
@@ -30,7 +30,7 @@ export const purchaseFormation = async (
     .from("formation_enrollments")
     .select("id")
     .eq("client_id", user.id)
-    .eq("formation_id", formationId)
+    .eq("formation_id", accompagnementId)
     .single();
 
   if (existing) {
@@ -40,24 +40,24 @@ export const purchaseFormation = async (
     };
   }
 
-  const { data: formation } = await supabase
+  const { data: accompagnement } = await supabase
     .from("formations")
     .select(
       "id, title, short_description, price_cents, currency, consultant_id, status",
     )
-    .eq("id", formationId)
+    .eq("id", accompagnementId)
     .eq("status", "published")
     .is("deleted_at", null)
     .single();
 
-  if (!formation) {
+  if (!accompagnement) {
     return { success: false, error: "Accompagnement introuvable" };
   }
 
   const { data: consultant } = await supabase
     .from("consultants")
     .select("stripe_account_id, commission_rate")
-    .eq("id", formation.consultant_id)
+    .eq("id", accompagnement.consultant_id)
     .single();
 
 
@@ -65,11 +65,11 @@ export const purchaseFormation = async (
   // proprietaire : la plateforme n'aurait plus les fonds pour payer les
   // collaboratrices, et le virement echouerait en `balance_insufficient`.
   // Elle est donc encaissee par la plateforme, qui repartit ensuite chaque
-  // part en citant la charge source (voir distributeFormationRevenue).
+  // part en citant la charge source (voir distributeAccompagnementRevenue).
   const { count: collaboratorCount } = await supabase
     .from("formation_collaborators")
     .select("consultant_id", { count: "exact", head: true })
-    .eq("formation_id", formation.id);
+    .eq("formation_id", accompagnement.id);
 
   const hasCollaborators = (collaboratorCount ?? 0) > 0;
 
@@ -78,7 +78,7 @@ export const purchaseFormation = async (
   // qui vend (voir sale-routing.ts).
   const isPlatformOwner = await isPlatformOwnerConsultant(
     supabase,
-    formation.consultant_id,
+    accompagnement.consultant_id,
   );
 
   const routing = consultant
@@ -98,7 +98,7 @@ export const purchaseFormation = async (
   }
 
   // Pas de vente en ligne sans pouvoir facturer (voir consultant-billing).
-  if (!(await consultantCanSell(supabase, formation.consultant_id))) {
+  if (!(await consultantCanSell(supabase, accompagnement.consultant_id))) {
     return {
       success: false,
       error:
@@ -113,12 +113,12 @@ export const purchaseFormation = async (
     ? await resolvePromoForPurchase({
         code: promoCode,
         serviceKind: "formation",
-        itemId: formation.id,
-        amountCents: formation.price_cents,
+        itemId: accompagnement.id,
+        amountCents: accompagnement.price_cents,
         profileId: user.id,
         reserve: true,
         orderKind: "formation",
-        referenceId: formation.id,
+        referenceId: accompagnement.id,
       })
     : null;
 
@@ -126,7 +126,7 @@ export const purchaseFormation = async (
     return { success: false, error: promo.error };
   }
 
-  const chargedCents = promo?.ok ? promo.finalCents : formation.price_cents;
+  const chargedCents = promo?.ok ? promo.finalCents : accompagnement.price_cents;
 
   try {
     const session = await createCheckoutSession({
@@ -134,15 +134,15 @@ export const purchaseFormation = async (
       consultantStripeAccountId: routing.destinationAccountId ?? undefined,
       commissionRate: routing.commissionRate,
       priceInCents: chargedCents,
-      currency: formation.currency,
-      productName: formation.title,
-      productDescription: formation.short_description ?? undefined,
+      currency: accompagnement.currency,
+      productName: accompagnement.title,
+      productDescription: accompagnement.short_description ?? undefined,
       customerEmail: user.email,
       metadata: {
         type: "formation",
-        reference_id: formation.id,
+        reference_id: accompagnement.id,
         client_id: user.id,
-        consultant_id: formation.consultant_id,
+        consultant_id: accompagnement.consultant_id,
         platform_fee_cents: Math.round(
           chargedCents * (routing.commissionRate / 100),
         ).toString(),
@@ -152,12 +152,12 @@ export const purchaseFormation = async (
               promo_code_id: promo.promoCodeId,
               promo_redemption_id: promo.redemptionId as string,
               discount_cents: promo.discountCents.toString(),
-              original_price_cents: formation.price_cents.toString(),
+              original_price_cents: accompagnement.price_cents.toString(),
             }
           : {}),
       },
-      successUrl: `${siteConfig.url}/espace-client/accompagnements?purchased=${formation.id}`,
-      cancelUrl: `${siteConfig.url}/accompagnements/${formationId}?cancelled=true`,
+      successUrl: `${siteConfig.url}/espace-client/accompagnements?purchased=${accompagnement.id}`,
+      cancelUrl: `${siteConfig.url}/accompagnements/${accompagnementId}?cancelled=true`,
     });
 
     // Rattache la reservation a la session : c'est le lien qui permet de
