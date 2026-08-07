@@ -430,9 +430,9 @@ const UserDetailPage = async ({ params }: Props) => {
             <CreditCard className="mr-1.5 h-4 w-4" />
             Paiements
           </TabsTrigger>
-          <TabsTrigger value="accompagnements">
+          <TabsTrigger value="formations">
             <Calendar className="mr-1.5 h-4 w-4" />
-            Événements
+            Formations
           </TabsTrigger>
           <TabsTrigger value="crm">
             <Tag className="mr-1.5 h-4 w-4" />
@@ -477,7 +477,7 @@ const UserDetailPage = async ({ params }: Props) => {
           <TabPaiements payments={payments} />
         </TabsContent>
 
-        <TabsContent value="accompagnements">
+        <TabsContent value="formations">
           <TabFormations registrations={registrations} />
         </TabsContent>
 

@@ -11,7 +11,7 @@ Plateforme SaaS multi-consultantes dans le domaine de la sante (lactation, somme
 
 - Vente d'accompagnements en ligne (LMS) avec contenu WYSIWYG
 - Reservation de consultations
-- Evenements (visio / presentiel)
+- Formations (visio / presentiel)
 - Blog avec programmation de publication
 - Paiement Stripe Connect avec commission plateforme variable
 - CRM interne

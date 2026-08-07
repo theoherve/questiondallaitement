@@ -200,7 +200,7 @@ export const seed = async () => {
         consultant_id: IDS.consultantProfile,
         title: "Atelier E2E",
         slug: "atelier-e2e",
-        description: "Evenement de test.",
+        description: "Formation de test.",
         type: "online",
         starts_at: eventStart.toISOString(),
         ends_at: eventEnd.toISOString(),

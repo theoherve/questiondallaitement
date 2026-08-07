@@ -450,7 +450,7 @@ const main = async () => {
   console.log("Scenarios :");
   await test("achat accompagnement → enrollment + payment", scenarioFormation);
   await test("reservation → booking confirme + payment", scenarioBooking);
-  await test("inscription evenement → registration", scenarioEvent);
+  await test("inscription formation → registration", scenarioEvent);
   await test("payment_intent.succeeded → payment succeeded", scenarioPaymentIntentSucceeded);
   await test("refund total → payment refunded + booking annule", scenarioRefundFull);
   await test("refund partiel → montant enregistre, booking maintenu", scenarioRefundPartial);

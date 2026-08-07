@@ -14,8 +14,8 @@ export const metadata: Metadata = {
 
 const TYPE_LABELS: Record<string, string> = {
   booking: "Consultation",
-  formation: "Accompagnement",
-  event: "Formation",
+  accompagnement: "Accompagnement",
+  formation: "Formation",
 };
 
 const ClientInvoicesPage = async () => {

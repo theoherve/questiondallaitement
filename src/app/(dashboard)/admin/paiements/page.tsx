@@ -58,9 +58,9 @@ const STATUS_CONFIG: Record<
 };
 
 const TYPE_CONFIG: Record<string, { label: string }> = {
-  formation: { label: "Accompagnement" },
+  accompagnement: { label: "Accompagnement" },
   booking: { label: "Consultation" },
-  event: { label: "Formation" },
+  formation: { label: "Formation" },
 };
 
 const PaiementsPage = async ({

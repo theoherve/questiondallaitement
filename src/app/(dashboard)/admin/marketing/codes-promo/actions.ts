@@ -6,7 +6,11 @@ import { promoCodeSchema } from "@/validations/promo-codes";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/types";
-import type { PromoCode } from "@/types/database";
+import type {
+  PromoCode,
+  PromoTargetType,
+  PromoTriggerType,
+} from "@/types/database";
 
 const ROUTE = "/admin/marketing/codes-promo";
 
@@ -213,8 +217,8 @@ export const listPromoCodes = async (): Promise<PromoCodeListRow[]> => {
 };
 
 export type PromoCodeDetail = PromoCode & {
-  targets: { target_type: string; target_id: string | null }[];
-  triggers: { trigger_type: string; target_id: string | null }[];
+  targets: { target_type: PromoTargetType; target_id: string | null }[];
+  triggers: { trigger_type: PromoTriggerType; target_id: string | null }[];
 };
 
 export const getPromoCode = async (

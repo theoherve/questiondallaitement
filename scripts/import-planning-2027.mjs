@@ -6,7 +6,7 @@
  * fourni par Carole, dates ISO resolues via la colonne Jour, lignes OFF /
  * feries / mercredis preserves / formations suivies par Carole exclues).
  *
- * Les evenements sont crees NON PUBLIES, sans tarif affiche : Carole repasse
+ * Les formations sont creees NON PUBLIEES, sans tarif affiche : Carole repasse
  * ensuite pour completer description, prix, lieu, lien externe et publier.
  *
  * Usage :
@@ -230,7 +230,7 @@ const main = async () => {
     console.error("Insertion echouee :", error.message);
     process.exit(1);
   }
-  console.log(`\n${toInsert.length} evenements crees (non publies).`);
+  console.log(`\n formations creees (non publiees).`);
 };
 
 main();

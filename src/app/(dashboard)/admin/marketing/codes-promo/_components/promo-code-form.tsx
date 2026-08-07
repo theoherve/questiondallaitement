@@ -17,12 +17,16 @@ import {
 import { Loader2, Plus, X } from "lucide-react";
 import { createPromoCode, updatePromoCode } from "../actions";
 import { TARGET_TYPE_LABELS, TRIGGER_TYPE_LABELS } from "./format";
-import type { PromoDiscountType } from "@/types/database";
+import type {
+  PromoDiscountType,
+  PromoTargetType,
+  PromoTriggerType,
+} from "@/types/database";
 
 type Option = { id: string; title: string };
 
-type TargetDraft = { target_type: string; target_id: string | null };
-type TriggerDraft = { trigger_type: string; target_id: string | null };
+type TargetDraft = { target_type: PromoTargetType; target_id: string | null };
+type TriggerDraft = { trigger_type: PromoTriggerType; target_id: string | null };
 
 type PromoCodeFormProps = {
   initial?: {
@@ -105,12 +109,12 @@ export const PromoCodeForm = ({
   );
   const [isActive, setIsActive] = useState(initial?.is_active ?? true);
 
-  const [draftTargetType, setDraftTargetType] = useState("accompagnements_all");
+  const [draftTargetType, setDraftTargetType] = useState<PromoTargetType>("accompagnements_all");
   const [draftTargetId, setDraftTargetId] = useState("");
-  const [draftTriggerType, setDraftTriggerType] = useState("formation_purchase");
+  const [draftTriggerType, setDraftTriggerType] = useState<PromoTriggerType>("formation_purchase");
   const [draftTriggerId, setDraftTriggerId] = useState("");
 
-  const optionsFor = (targetType: string): Option[] => {
+  const optionsFor = (targetType: PromoTargetType): Option[] => {
     if (targetType === "accompagnement") return accompagnements;
     if (targetType === "formation") return formations;
     if (targetType === "booking_service") return consultationTypes;
@@ -288,7 +292,7 @@ export const PromoCodeForm = ({
                   <Select
                     value={draftTargetType}
                     onValueChange={(v) => {
-                      setDraftTargetType(v);
+                      setDraftTargetType(v as PromoTargetType);
                       setDraftTargetId("");
                     }}
                   >
@@ -426,7 +430,7 @@ export const PromoCodeForm = ({
               <Select
                 value={draftTriggerType}
                 onValueChange={(v) => {
-                  setDraftTriggerType(v);
+                  setDraftTriggerType(v as PromoTriggerType);
                   setDraftTriggerId("");
                 }}
               >
