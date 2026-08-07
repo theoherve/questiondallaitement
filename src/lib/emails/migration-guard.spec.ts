@@ -43,7 +43,10 @@ const GRANDFATHERED = [
  * N'ajouter une entree ici que pour un renommage mecanique de marqueur, jamais
  * pour une correction de contenu — celle-la passe toujours par l'admin.
  */
-const MARKER_RENAMES = ["00070_renommage_vocabulaire.sql"];
+const MARKER_RENAMES = [
+  "00071_renommage_vocabulaire.sql",
+  "00072_renommage_vocabulaire_body_design.sql",
+];
 
 const migrationNumber = (filename: string): number =>
   Number.parseInt(filename.slice(0, 5), 10);

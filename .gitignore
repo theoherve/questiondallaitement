@@ -53,3 +53,8 @@ next-env.d.ts
 # Claude Code skills (regénérés depuis skills-lock.json)
 /.agents/
 /.claude/skills/
+
+# Dumps de base : donnees personnelles (paiements, renonciations, contacts).
+# Ne doivent jamais etre versionnes. Les .json deja suivis sont des sauvegardes
+# de contenu editorial, sans donnees clientes.
+/backups/*.sql

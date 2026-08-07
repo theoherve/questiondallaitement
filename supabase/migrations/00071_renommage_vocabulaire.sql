@@ -23,8 +23,14 @@
 --     -t promo_code_triggers \
 --     > backups/pre-00070.sql
 -- ─────────────────────────────────────────────────────────────────────
-
-BEGIN;
+--
+-- PAS DE BEGIN/COMMIT ICI. `supabase db push` enveloppe deja chaque fichier
+-- dans une transaction, et y ajoute l'ecriture de la ligne de suivi dans
+-- supabase_migrations.schema_migrations. Un COMMIT explicite refermerait
+-- cette transaction avant cette ecriture : la migration s'applique, le CLI
+-- echoue ensuite sur un doublon de cle, et le message laisse croire que rien
+-- n'est passe. Constate en production le 2026-08-07.
+-- ─────────────────────────────────────────────────────────────────────
 
 -- ═══ Bloc 1a : liberer le nom « formation » ══════════════════════════
 
@@ -435,5 +441,3 @@ WHERE entity_type = 'formation_enrollments';
 -- Les noms de buckets Storage ('formations', 'accompagnements') ne sont
 -- volontairement PAS renommes : ils sont incrustes dans chaque URL publique
 -- deja stockee en base. Les changer invaliderait tous les fichiers en ligne.
-
-COMMIT;
