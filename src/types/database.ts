@@ -266,9 +266,13 @@ export type Formation = {
   audience_html: string | null;
   // Cles du catalogue src/config/formation-highlights.ts. Jamais null cote base.
   highlights: string[];
+  thumbnail_url: string | null;
   type: FormationType;
   starts_at: string;
   ends_at: string;
+  // false = aucune heure saisie : starts_at/ends_at couvrent la journee
+  // entiere et l'horaire ne doit pas etre affiche.
+  show_time: boolean;
   location: string | null;
   zoom_meeting_id: string | null;
   zoom_join_url: string | null;

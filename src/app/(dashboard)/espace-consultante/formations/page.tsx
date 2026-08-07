@@ -71,7 +71,7 @@ const ConsultanteFormationsPage = async () => {
 
   const { data: formations } = await supabase
     .from("formations")
-    .select("id, title, slug, type, starts_at, ends_at, location, max_participants, price_cents, currency, is_published, created_at")
+    .select("id, title, slug, type, starts_at, ends_at, show_time, location, max_participants, price_cents, currency, is_published, created_at")
     .eq("consultant_id", consultant.id)
     .order("starts_at", { ascending: false });
 
@@ -97,6 +97,7 @@ const ConsultanteFormationsPage = async () => {
     type: string;
     starts_at: string;
     ends_at: string;
+    show_time: boolean;
     location: string | null;
     max_participants: number | null;
     price_cents: number;
@@ -173,15 +174,17 @@ const ConsultanteFormationsPage = async () => {
                             locale: fr,
                           })}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {format(new Date(formation.starts_at), "HH'h'mm", {
-                            locale: fr,
-                          })}{" "}
-                          –{" "}
-                          {format(new Date(formation.ends_at), "HH'h'mm", {
-                            locale: fr,
-                          })}
-                        </div>
+                        {formation.show_time && (
+                          <div className="text-xs text-muted-foreground">
+                            {format(new Date(formation.starts_at), "HH'h'mm", {
+                              locale: fr,
+                            })}{" "}
+                            –{" "}
+                            {format(new Date(formation.ends_at), "HH'h'mm", {
+                              locale: fr,
+                            })}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="text-sm">
                         {formatPrice(formation.price_cents, formation.currency)}

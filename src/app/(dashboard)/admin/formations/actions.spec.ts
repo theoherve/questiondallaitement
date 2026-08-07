@@ -97,6 +97,52 @@ describe("createFormation", () => {
     );
   });
 
+  it("persiste l'image de couverture", async () => {
+    const chain = createChain({ data: { id: "formation-1", slug: validInput.slug } });
+    mockFrom.mockReturnValue(chain);
+
+    await createFormation({
+      ...validInput,
+      thumbnail_url: "https://exemple.fr/couverture.jpg",
+    });
+
+    expect(chain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        thumbnail_url: "https://exemple.fr/couverture.jpg",
+      }),
+    );
+  });
+
+  it("accepte une formation d'une seule journee sans horaire", async () => {
+    const chain = createChain({ data: { id: "formation-1", slug: validInput.slug } });
+    mockFrom.mockReturnValue(chain);
+
+    // Sans heure, les deux bornes tombent le meme jour : la contrainte
+    // « fin apres debut » ne doit pas rejeter ce cas.
+    const result = await createFormation({
+      ...validInput,
+      starts_at: "2026-09-01T00:00:00.000Z",
+      ends_at: "2026-09-01T21:59:00.000Z",
+      show_time: false,
+    });
+
+    expect(result.success).toBe(true);
+    expect(chain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ show_time: false }),
+    );
+  });
+
+  it("marque l'horaire comme affichable par defaut", async () => {
+    const chain = createChain({ data: { id: "formation-1", slug: validInput.slug } });
+    mockFrom.mockReturnValue(chain);
+
+    await createFormation(validInput);
+
+    expect(chain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ show_time: true }),
+    );
+  });
+
   it("accepte une formation sans aucune section", async () => {
     const chain = createChain({ data: { id: "formation-1", slug: validInput.slug } });
     mockFrom.mockReturnValue(chain);

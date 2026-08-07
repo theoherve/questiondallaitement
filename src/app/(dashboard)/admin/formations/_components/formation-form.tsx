@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FileUpload } from "@/components/ui/file-upload";
 import { FormationContentFields } from "./formation-content-fields";
 import { FormationHighlightsField } from "./formation-highlights-field";
 import { FORMATION_HIGHLIGHT_KEYS } from "@/config/formation-highlights";
@@ -56,6 +57,8 @@ export const FormationForm = ({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  // Date et heure sont saisies separement : l'heure est facultative, et un
+  // `datetime-local` ne sait pas exprimer « date connue, heure inconnue ».
   const toLocalDatetime = (iso: string | undefined | null): string => {
     if (!iso) return "";
     const d = new Date(iso);
@@ -63,6 +66,14 @@ export const FormationForm = ({
     const local = new Date(d.getTime() - offset * 60000);
     return local.toISOString().slice(0, 16);
   };
+
+  const toLocalDate = (iso: string | undefined | null): string =>
+    toLocalDatetime(iso).slice(0, 10);
+
+  // Vide quand la formation n'a pas d'horaire : les bornes stockees couvrent
+  // alors la journee entiere, les reafficher serait inventer une saisie.
+  const toLocalTime = (iso: string | undefined | null): string =>
+    formation?.show_time === false ? "" : toLocalDatetime(iso).slice(11, 16);
 
   const [formData, setFormData] = useState({
     title: formation?.title ?? "",
@@ -75,9 +86,12 @@ export const FormationForm = ({
     // A la creation, le jeu complet est propose : c'est ce qu'affichaient
     // toutes les fiches jusqu'ici, et retirer est plus rapide qu'ajouter.
     highlights: formation?.highlights ?? FORMATION_HIGHLIGHT_KEYS,
+    thumbnail_url: formation?.thumbnail_url ?? "",
     type: formation?.type ?? ("online" as "online" | "in_person" | "hybrid"),
-    starts_at: toLocalDatetime(formation?.starts_at) || "",
-    ends_at: toLocalDatetime(formation?.ends_at) || "",
+    start_date: toLocalDate(formation?.starts_at),
+    start_time: toLocalTime(formation?.starts_at),
+    end_date: toLocalDate(formation?.ends_at),
+    end_time: toLocalTime(formation?.ends_at),
     location: formation?.location ?? "",
     max_participants: formation?.max_participants ?? ("" as number | ""),
     price_cents: formation?.price_cents ?? 0,
@@ -110,9 +124,29 @@ export const FormationForm = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Les deux heures vont ensemble : une seule renseignee laisserait une
+    // borne inventee, on prefere le dire plutot que de la deviner.
+    if (!formData.start_time !== !formData.end_time) {
+      toast.error(
+        "Renseignez l'heure de début et l'heure de fin, ou aucune des deux",
+      );
+      return;
+    }
+
+    const showTime = !!formData.start_time && !!formData.end_time;
+    // Sans heure, la formation occupe les journees indiquees en entier : c'est
+    // ce que les bornes encodent, `show_time` dit qu'il ne faut pas l'afficher.
+    const startsAt = formData.start_date
+      ? new Date(`${formData.start_date}T${showTime ? formData.start_time : "00:00"}`)
+      : null;
+    const endsAt = formData.end_date
+      ? new Date(`${formData.end_date}T${showTime ? formData.end_time : "23:59"}`)
+      : null;
+
     const payload = {
       ...formData,
       description: formData.description || null,
+      thumbnail_url: formData.thumbnail_url || null,
       summary_html: formData.summary_html || null,
       objectives_html: formData.objectives_html || null,
       program_html: formData.program_html || null,
@@ -127,12 +161,9 @@ export const FormationForm = ({
           : Number(formData.discounted_price_cents),
       provider_id: formData.provider_id || null,
       external_url: formData.external_url.trim() || null,
-      starts_at: formData.starts_at
-        ? new Date(formData.starts_at).toISOString()
-        : "",
-      ends_at: formData.ends_at
-        ? new Date(formData.ends_at).toISOString()
-        : "",
+      starts_at: startsAt ? startsAt.toISOString() : "",
+      ends_at: endsAt ? endsAt.toISOString() : "",
+      show_time: showTime,
     };
 
     startTransition(async () => {
@@ -355,30 +386,59 @@ export const FormationForm = ({
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="starts_at">Début</Label>
+                  <Label htmlFor="start_date">Date de début</Label>
                   <Input
-                    id="starts_at"
-                    type="datetime-local"
-                    value={formData.starts_at}
+                    id="start_date"
+                    type="date"
+                    value={formData.start_date}
                     onChange={(e) =>
-                      setFormData((p) => ({ ...p, starts_at: e.target.value }))
+                      setFormData((p) => ({ ...p, start_date: e.target.value }))
                     }
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="ends_at">Fin</Label>
+                  <Label htmlFor="end_date">Date de fin</Label>
                   <Input
-                    id="ends_at"
-                    type="datetime-local"
-                    value={formData.ends_at}
+                    id="end_date"
+                    type="date"
+                    value={formData.end_date}
                     onChange={(e) =>
-                      setFormData((p) => ({ ...p, ends_at: e.target.value }))
+                      setFormData((p) => ({ ...p, end_date: e.target.value }))
                     }
                     required
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="start_time">
+                    Heure de début (optionnel)
+                  </Label>
+                  <Input
+                    id="start_time"
+                    type="time"
+                    value={formData.start_time}
+                    onChange={(e) =>
+                      setFormData((p) => ({ ...p, start_time: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="end_time">Heure de fin (optionnel)</Label>
+                  <Input
+                    id="end_time"
+                    type="time"
+                    value={formData.end_time}
+                    onChange={(e) =>
+                      setFormData((p) => ({ ...p, end_time: e.target.value }))
+                    }
+                  />
+                </div>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Laisser les deux heures vides pour les formats sans horaire
+                (webinaire, e-learning) : aucun horaire ni durée n&apos;apparaît
+                alors sur le site.
+              </p>
 
               <div className="space-y-2">
                 <Label htmlFor="type">Type</Label>
@@ -466,6 +526,35 @@ export const FormationForm = ({
 
         {/* Sidebar */}
         <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Image de couverture</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Le bucket `formations` garde son nom d'avant le renommage du
+                  vocabulaire : il est incruste dans les URLs deja publiees. */}
+              <FileUpload
+                bucket="formations"
+                folder="couvertures-formations"
+                accept="image/*"
+                maxSizeMb={5}
+                value={formData.thumbnail_url}
+                onUpload={(url) =>
+                  setFormData((p) => ({ ...p, thumbnail_url: url }))
+                }
+                onRemove={() =>
+                  setFormData((p) => ({ ...p, thumbnail_url: "" }))
+                }
+                label="Ajouter une image de couverture"
+                cropAspect="16:9"
+              />
+              <p className="mt-2 text-xs text-muted-foreground">
+                Affichée sur la carte du catalogue et en haut de la fiche. Sans
+                image, la carte retombe sur un aplat vert avec la date.
+              </p>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Consultante</CardTitle>

@@ -38,6 +38,8 @@ export type FormationData = {
   type: string;
   starts_at: string;
   ends_at: string;
+  // false = aucune heure saisie : ni horaire ni duree ne sont affiches.
+  show_time: boolean;
   location: string | null;
   max_participants: number | null;
   price_cents: number;
@@ -459,7 +461,11 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
   const typeInfo = FORMATION_TYPE_LABELS[formation.type] ?? FORMATION_TYPE_LABELS.online;
   const TypeIcon = typeInfo.icon;
   const { label: categoryLabel, color: categoryColor } = categorizeFormation(formation.title);
-  const duration = formatDuration(formation.starts_at, formation.ends_at);
+  // Sans heure saisie, les bornes couvrent la journee entiere : en tirer une
+  // duree afficherait un chiffre que personne n'a renseigne.
+  const duration = formation.show_time
+    ? formatDuration(formation.starts_at, formation.ends_at)
+    : null;
   const consultant = formation.consultants as {
     slug: string;
     profiles: { first_name: string | null; last_name: string | null } | null;
@@ -503,10 +509,12 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
               <p className="text-2xl font-bold font-serif">
                 {format(new Date(formation.starts_at), "d MMM", { locale: fr })}
               </p>
-              <div className="flex items-center gap-1.5 text-sm text-white/80">
-                <Clock className="h-3.5 w-3.5" />
-                <span>{duration}</span>
-              </div>
+              {duration && (
+                <div className="flex items-center gap-1.5 text-sm text-white/80">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>{duration}</span>
+                </div>
+              )}
             </div>
           </>
         ) : (
@@ -533,10 +541,12 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
                   {format(new Date(formation.starts_at), "yyyy", { locale: fr })}
                 </p>
               </div>
-              <div className="flex items-center gap-1.5 text-sm text-white/70">
-                <Clock className="h-3.5 w-3.5" />
-                <span>{duration}</span>
-              </div>
+              {duration && (
+                <div className="flex items-center gap-1.5 text-sm text-white/70">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>{duration}</span>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -556,7 +566,11 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
             <div className="flex items-center gap-1.5">
               <CalendarDays className="h-3.5 w-3.5" />
               <span>
-                {format(new Date(formation.starts_at), "EEEE d MMMM 'à' HH'h'mm", { locale: fr })}
+                {format(
+                  new Date(formation.starts_at),
+                  formation.show_time ? "EEEE d MMMM 'à' HH'h'mm" : "EEEE d MMMM",
+                  { locale: fr },
+                )}
               </span>
             </div>
             {formation.location && (
@@ -645,7 +659,9 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
 
 const PastFormationCard = ({ formation }: { formation: FormationData }) => {
   const { label: categoryLabel } = categorizeFormation(formation.title);
-  const duration = formatDuration(formation.starts_at, formation.ends_at);
+  const duration = formation.show_time
+    ? formatDuration(formation.starts_at, formation.ends_at)
+    : null;
 
   return (
     <Card className="group flex flex-row overflow-hidden opacity-75 transition-opacity duration-200 hover:opacity-100">
@@ -673,8 +689,12 @@ const PastFormationCard = ({ formation }: { formation: FormationData }) => {
       <CardContent className="flex flex-1 flex-col justify-center py-3 px-4">
         <div className="flex items-center gap-2 text-xs text-primary-green/40">
           <span>{format(new Date(formation.starts_at), "d MMM yyyy", { locale: fr })}</span>
-          <span>·</span>
-          <span>{duration}</span>
+          {duration && (
+            <>
+              <span>·</span>
+              <span>{duration}</span>
+            </>
+          )}
           <span>·</span>
           <span>{categoryLabel}</span>
         </div>

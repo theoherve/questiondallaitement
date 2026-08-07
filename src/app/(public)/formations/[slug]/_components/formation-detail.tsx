@@ -122,6 +122,8 @@ export type FormationDetailProps = {
     type: "online" | "in_person" | "hybrid";
     starts_at: string;
     ends_at: string;
+    // false = aucune heure saisie : ni horaire ni duree ne sont affiches.
+    show_time: boolean;
     location: string | null;
     max_participants: number | null;
     price_cents: number;
@@ -176,7 +178,11 @@ export const FormationDetail = ({
     formation.title,
   );
   const highlights = resolveFormationHighlights(formation.highlights);
-  const duration = formatDuration(formation.starts_at, formation.ends_at);
+  // Sans heure saisie, les bornes couvrent la journee entiere : en tirer une
+  // duree afficherait un chiffre que personne n'a renseigne.
+  const duration = formation.show_time
+    ? formatDuration(formation.starts_at, formation.ends_at)
+    : null;
   const isFree = formation.price_cents === 0;
   const isPast = new Date(formation.ends_at) < new Date();
   const isMultiDay = new Date(formation.ends_at).getDate() !== new Date(formation.starts_at).getDate();
@@ -268,10 +274,12 @@ export const FormationDetail = ({
                       {format(new Date(formation.starts_at), "d MMMM yyyy", { locale: fr })}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="h-4 w-4" />
-                    <span>{duration}</span>
-                  </div>
+                  {duration && (
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="h-4 w-4" />
+                      <span>{duration}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1.5">
                     <GraduationCap className="h-4 w-4" />
                     <span>{consultantName}</span>
@@ -463,20 +471,23 @@ export const FormationDetail = ({
                       </div>
                     </div>
 
-                    {/* Time */}
-                    <div className="flex items-start gap-3">
-                      <Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary-red" />
-                      <div>
-                        <p className="font-medium text-primary-green">
-                          {format(new Date(formation.starts_at), "HH'h'mm", { locale: fr })}
-                          {" — "}
-                          {format(new Date(formation.ends_at), "HH'h'mm", { locale: fr })}
-                        </p>
-                        <p className="text-xs text-primary-green/50">
-                          Durée : {duration}
-                        </p>
+                    {/* Horaire — absent des formats sans heure (webinaire,
+                        e-learning), ou seule la date fait sens. */}
+                    {formation.show_time && (
+                      <div className="flex items-start gap-3">
+                        <Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary-red" />
+                        <div>
+                          <p className="font-medium text-primary-green">
+                            {format(new Date(formation.starts_at), "HH'h'mm", { locale: fr })}
+                            {" — "}
+                            {format(new Date(formation.ends_at), "HH'h'mm", { locale: fr })}
+                          </p>
+                          <p className="text-xs text-primary-green/50">
+                            Durée : {duration}
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Location */}
                     {formation.location && (

@@ -73,6 +73,7 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
       type,
       starts_at,
       ends_at,
+      show_time,
       location,
       max_participants,
       price_cents,
@@ -129,6 +130,7 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
     type: string;
     starts_at: string;
     ends_at: string;
+    show_time: boolean;
     location: string | null;
     max_participants: number | null;
     price_cents: number;
@@ -319,15 +321,17 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
                             locale: fr,
                           })}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {format(new Date(formation.starts_at), "HH'h'mm", {
-                            locale: fr,
-                          })}{" "}
-                          –{" "}
-                          {format(new Date(formation.ends_at), "HH'h'mm", {
-                            locale: fr,
-                          })}
-                        </div>
+                        {formation.show_time && (
+                          <div className="text-xs text-muted-foreground">
+                            {format(new Date(formation.starts_at), "HH'h'mm", {
+                              locale: fr,
+                            })}{" "}
+                            –{" "}
+                            {format(new Date(formation.ends_at), "HH'h'mm", {
+                              locale: fr,
+                            })}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="text-sm">
                         <span className="block truncate" title={consultantName}>

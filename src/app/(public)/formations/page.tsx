@@ -27,6 +27,7 @@ const FormationsProPage = async () => {
       type,
       starts_at,
       ends_at,
+      show_time,
       location,
       max_participants,
       price_cents,
