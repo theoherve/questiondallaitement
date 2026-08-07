@@ -29,7 +29,7 @@ export const createAccompagnement = async (
   const { supabase, user } = await getSupabaseAndUser();
 
   const { data: accompagnement, error } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .insert({
       consultant_id: user.id,
       ...parsed.data,
@@ -60,7 +60,7 @@ export const updateAccompagnement = async (
 
   const { supabase, user } = await getSupabaseAndUser();
   const { error } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .update({
       ...parsed.data,
       thumbnail_url: parsed.data.thumbnail_url || null,
@@ -83,7 +83,7 @@ export const deleteAccompagnement = async (id: string): Promise<ActionResult> =>
   const { supabase, user } = await getSupabaseAndUser();
 
   const { error } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .update({ deleted_at: new Date().toISOString(), status: "archived" })
     .eq("id", id)
     .eq("consultant_id", user.id);
@@ -114,9 +114,9 @@ export const createSection = async (
   }
 
   const { data: section, error } = await supabase
-    .from("formation_sections")
+    .from("accompagnement_sections")
     .insert({
-      formation_id: accompagnementId,
+      accompagnement_id: accompagnementId,
       ...parsed.data,
     })
     .select("id")
@@ -146,7 +146,7 @@ export const updateSection = async (
   }
 
   const { error } = await supabase
-    .from("formation_sections")
+    .from("accompagnement_sections")
     .update(parsed.data)
     .eq("id", id);
 
@@ -165,7 +165,7 @@ export const deleteSection = async (id: string): Promise<ActionResult> => {
   }
 
   const { error } = await supabase
-    .from("formation_sections")
+    .from("accompagnement_sections")
     .delete()
     .eq("id", id);
 
@@ -189,7 +189,7 @@ export const createBlock = async (
   }
 
   const { data: block, error } = await supabase
-    .from("formation_blocks")
+    .from("accompagnement_blocks")
     .insert({
       section_id: sectionId,
       type,
@@ -217,7 +217,7 @@ export const updateBlock = async (
   }
 
   const { error } = await supabase
-    .from("formation_blocks")
+    .from("accompagnement_blocks")
     .update({ content: content as Record<string, unknown> })
     .eq("id", id);
 
@@ -236,7 +236,7 @@ export const deleteBlock = async (id: string): Promise<ActionResult> => {
   }
 
   const { error } = await supabase
-    .from("formation_blocks")
+    .from("accompagnement_blocks")
     .delete()
     .eq("id", id);
 
@@ -254,7 +254,7 @@ export const updateProgress = async (
 ): Promise<ActionResult> => {
   const { supabase } = await getSupabaseAndUser();
 
-  const { error } = await supabase.from("formation_progress").upsert(
+  const { error } = await supabase.from("accompagnement_progress").upsert(
     {
       enrollment_id: enrollmentId,
       block_id: blockId,

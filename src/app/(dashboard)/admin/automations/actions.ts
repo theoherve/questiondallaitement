@@ -125,7 +125,7 @@ export const getRecurringDefinitions = async (): Promise<
   await requireAdmin();
   const supabase = createAdminClient();
   const { data } = await supabase
-    .from("recurring_event_definitions")
+    .from("recurring_formation_definitions")
     .select("*")
     .order("created_at", { ascending: false });
   return (data ?? []) as RecurringFormationDefinition[];
@@ -137,7 +137,7 @@ export const getRecurringDefinition = async (
   await requireAdmin();
   const supabase = createAdminClient();
   const { data } = await supabase
-    .from("recurring_event_definitions")
+    .from("recurring_formation_definitions")
     .select("*")
     .eq("id", id)
     .single();
@@ -154,7 +154,7 @@ export const createRecurringDefinition = async (
 
   const supabase = createAdminClient();
   const { data: def, error } = await supabase
-    .from("recurring_event_definitions")
+    .from("recurring_formation_definitions")
     .insert(parsed.data)
     .select("id")
     .single();
@@ -175,7 +175,7 @@ export const updateRecurringDefinition = async (
 
   const supabase = createAdminClient();
   const { error } = await supabase
-    .from("recurring_event_definitions")
+    .from("recurring_formation_definitions")
     .update(parsed.data)
     .eq("id", id);
 
@@ -190,7 +190,7 @@ export const deleteRecurringDefinition = async (
   await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase
-    .from("recurring_event_definitions")
+    .from("recurring_formation_definitions")
     .delete()
     .eq("id", id);
   if (error) return { success: false, error: error.message };
@@ -539,7 +539,7 @@ export const getAccompagnements = async (): Promise<
   await requireAdmin();
   const supabase = createAdminClient();
   const { data } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("id, title")
     .eq("status", "published")
     .order("title");

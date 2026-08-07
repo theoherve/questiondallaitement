@@ -1,8 +1,8 @@
 // ─── Trigger Types ──────────────────────────────────────────
 
 export const ADMIN_WORKFLOW_TRIGGER_TYPES = [
-  "recurring_event",
-  "formation_enrolled",
+  "recurring_formation",
+  "accompagnement_enrolled",
   "manual",
 ] as const;
 
@@ -16,7 +16,7 @@ export type RecurringFormationTriggerConfig = {
 };
 
 export type AccompagnementEnrolledTriggerConfig = {
-  formation_ids?: string[];
+  accompagnement_ids?: string[];
 };
 
 export type ManualTriggerConfig = Record<string, never>;
@@ -80,8 +80,8 @@ export type RecurrenceRule = {
 // ─── Auto-Assign Rule (labels) ──────────────────────────────
 
 export type AutoAssignRule = {
-  trigger: "formation_enrolled";
-  formation_ids?: string[];
+  trigger: "accompagnement_enrolled";
+  accompagnement_ids?: string[];
 };
 
 // ─── Domain Objects ─────────────────────────────────────────
@@ -114,7 +114,7 @@ export type ScheduledWorkflowAction = {
   workflow_id: string;
   step_id: string;
   profile_id: string;
-  anchor_event_id: string | null;
+  anchor_formation_id: string | null;
   scheduled_for: string;
   status: "pending" | "executed" | "failed" | "skipped";
   result: Record<string, unknown> | null;
@@ -172,15 +172,15 @@ export const WORKFLOW_EMAIL_VARIABLES = [
   "first_name",
   "last_name",
   "email",
-  "event_title",
-  "event_date",
-  "event_time",
-  "event_location",
+  "formation_title",
+  "formation_date",
+  "formation_time",
+  "formation_location",
   "zoom_join_url",
   "replay_url",
   // Injected by the transactional senders (send.ts) when the matching
   // template is used — exposed here so the block editor's @ menu suggests
   // them in workflow steps too.
-  "formation_url",
+  "accompagnement_url",
   "dashboard_url",
 ] as const;

@@ -55,9 +55,9 @@ export const searchClientsForEnroll = async (
   const supabase = createAdminClient();
 
   const { data: alreadyEnrolled } = await supabase
-    .from("formation_enrollments")
+    .from("accompagnement_enrollments")
     .select("client_id")
-    .eq("formation_id", parsedAccompagnementId.data);
+    .eq("accompagnement_id", parsedAccompagnementId.data);
 
   const excludeIds = (alreadyEnrolled ?? []).map((e) => e.client_id);
 
@@ -111,10 +111,10 @@ const insertEnrollmentAndNotify = async (args: {
   const supabase = createAdminClient();
 
   const { data: existing } = await supabase
-    .from("formation_enrollments")
+    .from("accompagnement_enrollments")
     .select("id")
     .eq("client_id", args.clientId)
-    .eq("formation_id", args.accompagnementId)
+    .eq("accompagnement_id", args.accompagnementId)
     .maybeSingle();
 
   if (existing) {
@@ -125,10 +125,10 @@ const insertEnrollmentAndNotify = async (args: {
   }
 
   const { data: enrollment, error } = await supabase
-    .from("formation_enrollments")
+    .from("accompagnement_enrollments")
     .insert({
       client_id: args.clientId,
-      formation_id: args.accompagnementId,
+      accompagnement_id: args.accompagnementId,
       source: "manual",
       enrolled_by: args.adminId,
     })
@@ -165,10 +165,7 @@ const insertEnrollmentAndNotify = async (args: {
   try {
     await sendAccompagnementAccess(args.clientEmail, {
       client_name: args.clientFirstName ?? "",
-      // Variable de fusion des modeles d'email, stockee telle quelle dans le
-      // HTML saisi en back-office. La renommer laisserait « {{formation_title}} »
-      // non substitue dans les emails deja rediges.
-      formation_title: args.accompagnementTitle,
+      accompagnement_title: args.accompagnementTitle,
       access_url: accessUrl,
       is_new_account: args.isNewAccount,
     });
@@ -181,10 +178,10 @@ const insertEnrollmentAndNotify = async (args: {
   await supabase.from("audit_logs").insert({
     user_id: args.adminId,
     action: "admin_manual_accompagnement_enrollment",
-    entity_type: "formation_enrollments",
+    entity_type: "accompagnement_enrollments",
     entity_id: enrollment.id,
     metadata: {
-      formation_id: args.accompagnementId,
+      accompagnement_id: args.accompagnementId,
       client_id: args.clientId,
       is_new_account: args.isNewAccount,
     },
@@ -204,7 +201,7 @@ const loadAccompagnementTitle = async (
 ): Promise<{ title: string } | null> => {
   const supabase = createAdminClient();
   const { data } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("title")
     .eq("id", accompagnementId)
     .is("deleted_at", null)
@@ -338,14 +335,14 @@ export const listAvailableAccompagnementsForClient = async (
   const supabase = createAdminClient();
 
   const { data: enrolled } = await supabase
-    .from("formation_enrollments")
-    .select("formation_id")
+    .from("accompagnement_enrollments")
+    .select("accompagnement_id")
     .eq("client_id", parsed.data);
 
-  const excludeIds = (enrolled ?? []).map((e) => e.formation_id);
+  const excludeIds = (enrolled ?? []).map((e) => e.accompagnement_id);
 
   let builder = supabase
-    .from("formations")
+    .from("accompagnements")
     .select("id, title, status")
     .is("deleted_at", null)
     .in("status", ["published", "draft"])
@@ -372,8 +369,8 @@ export const unenrollFromAccompagnement = async (
 
   const supabase = createAdminClient();
   const { data: enrollment } = await supabase
-    .from("formation_enrollments")
-    .select("id, source, formation_id, client_id")
+    .from("accompagnement_enrollments")
+    .select("id, source, accompagnement_id, client_id")
     .eq("id", parsed.data)
     .maybeSingle();
 
@@ -390,7 +387,7 @@ export const unenrollFromAccompagnement = async (
   }
 
   const { error } = await supabase
-    .from("formation_enrollments")
+    .from("accompagnement_enrollments")
     .delete()
     .eq("id", parsed.data);
 
@@ -401,15 +398,15 @@ export const unenrollFromAccompagnement = async (
   await supabase.from("audit_logs").insert({
     user_id: admin.id,
     action: "admin_manual_accompagnement_unenrollment",
-    entity_type: "formation_enrollments",
+    entity_type: "accompagnement_enrollments",
     entity_id: parsed.data,
     metadata: {
-      formation_id: enrollment.formation_id,
+      accompagnement_id: enrollment.accompagnement_id,
       client_id: enrollment.client_id,
     },
   });
 
-  revalidatePath(`/admin/accompagnements/${enrollment.formation_id}/edit`);
+  revalidatePath(`/admin/accompagnements/${enrollment.accompagnement_id}/edit`);
   revalidatePath(`/admin/utilisateurs/${enrollment.client_id}`);
 
   return { success: true };

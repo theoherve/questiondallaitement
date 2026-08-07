@@ -20,7 +20,7 @@ export const generateMetadata = async ({
   const { id } = await params;
   const supabase = createAdminClient();
   const { data } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("title")
     .eq("id", id)
     .single();
@@ -51,7 +51,7 @@ const AccompagnementPreviewPage = async ({ params }: Props) => {
   const supabase = createAdminClient();
 
   const { data: accompagnement } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select(
       `
       *,
@@ -64,11 +64,11 @@ const AccompagnementPreviewPage = async ({ params }: Props) => {
           avatar_url
         )
       ),
-      formation_sections (
+      accompagnement_sections (
         id,
         title,
         position,
-        formation_blocks (
+        accompagnement_blocks (
           id,
           type,
           content,
@@ -83,7 +83,7 @@ const AccompagnementPreviewPage = async ({ params }: Props) => {
 
   if (!accompagnement) notFound();
 
-  const sections = (accompagnement.formation_sections ?? [])
+  const sections = (accompagnement.accompagnement_sections ?? [])
     .sort(
       (a: { position: number }, b: { position: number }) =>
         a.position - b.position
@@ -93,7 +93,7 @@ const AccompagnementPreviewPage = async ({ params }: Props) => {
         id: string;
         title: string;
         position: number;
-        formation_blocks?: {
+        accompagnement_blocks?: {
           id: string;
           type: string;
           content: unknown;
@@ -101,7 +101,7 @@ const AccompagnementPreviewPage = async ({ params }: Props) => {
         }[];
       }) => ({
         ...section,
-        formation_blocks: (section.formation_blocks ?? []).sort(
+        accompagnement_blocks: (section.accompagnement_blocks ?? []).sort(
           (a: { position: number }, b: { position: number }) =>
             a.position - b.position
         ),
@@ -109,8 +109,8 @@ const AccompagnementPreviewPage = async ({ params }: Props) => {
     );
 
   const totalBlocks = sections.reduce(
-    (acc: number, s: { formation_blocks?: unknown[] }) =>
-      acc + (s.formation_blocks?.length ?? 0),
+    (acc: number, s: { accompagnement_blocks?: unknown[] }) =>
+      acc + (s.accompagnement_blocks?.length ?? 0),
     0
   );
 
@@ -243,7 +243,7 @@ const AccompagnementPreviewPage = async ({ params }: Props) => {
                       (section: {
                         id: string;
                         title: string;
-                        formation_blocks?: { id: string; type: string }[];
+                        accompagnement_blocks?: { id: string; type: string }[];
                       }) => (
                         <Card key={section.id}>
                           <CardContent className="flex items-center justify-between py-4">
@@ -251,8 +251,8 @@ const AccompagnementPreviewPage = async ({ params }: Props) => {
                               {section.title}
                             </span>
                             <span className="text-sm text-primary-green/50">
-                              {section.formation_blocks?.length ?? 0} leçon
-                              {(section.formation_blocks?.length ?? 0) > 1
+                              {section.accompagnement_blocks?.length ?? 0} leçon
+                              {(section.accompagnement_blocks?.length ?? 0) > 1
                                 ? "s"
                                 : ""}
                             </span>

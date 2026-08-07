@@ -70,13 +70,13 @@ export const getContacts = async (params?: {
       .eq("consultant_id", user.id)
       .not("status", "eq", "cancelled"),
     supabase
-      .from("formation_enrollments")
-      .select("client_id, formation_id")
+      .from("accompagnement_enrollments")
+      .select("client_id, accompagnement_id")
       .in(
-        "formation_id",
+        "accompagnement_id",
         (
           await supabase
-            .from("formations")
+            .from("accompagnements")
             .select("id")
             .eq("consultant_id", user.id)
         ).data?.map((f) => f.id) ?? [],
@@ -174,7 +174,7 @@ export const getContacts = async (params?: {
       .eq("status", "succeeded")
       .in("client_id", profileIds),
     supabase
-      .from("event_registrations")
+      .from("formation_registrations")
       .select("client_id")
       .eq("status", "confirmed")
       .in("client_id", profileIds),
@@ -220,7 +220,7 @@ export const getContacts = async (params?: {
 
 // ─── Contact Detail ─────────────────────────────────────────
 
-export type InteractionType = "booking" | "enrollment" | "event" | "note";
+export type InteractionType = "booking" | "enrollment" | "formation" | "note";
 
 export type Interaction = {
   id: string;
@@ -269,7 +269,7 @@ export const getContactDetail = async (
   const consultantFormationIds =
     (
       await supabase
-        .from("formations")
+        .from("accompagnements")
         .select("id")
         .eq("consultant_id", user.id)
     ).data?.map((f) => f.id) ?? [];
@@ -284,15 +284,15 @@ export const getContactDetail = async (
         .order("starts_at", { ascending: false }),
       consultantFormationIds.length > 0
         ? supabase
-            .from("formation_enrollments")
-            .select("formation_id, enrolled_at, formations(title)")
+            .from("accompagnement_enrollments")
+            .select("accompagnement_id, enrolled_at, accompagnements(title)")
             .eq("client_id", clientId)
-            .in("formation_id", consultantFormationIds)
+            .in("accompagnement_id", consultantFormationIds)
             .order("enrolled_at", { ascending: false })
         : Promise.resolve({ data: [] }),
       supabase
-        .from("event_registrations")
-        .select("id, registered_at, status, events(title)")
+        .from("formation_registrations")
+        .select("id, registered_at, status, formations(title)")
         .eq("client_id", clientId)
         .order("registered_at", { ascending: false }),
       supabase
@@ -342,14 +342,14 @@ export const getContactDetail = async (
   }
 
   for (const e of (enrollmentsRes.data ?? []) as unknown as {
-    formation_id: string;
+    accompagnement_id: string;
     enrolled_at: string;
-    formations: { title: string } | null;
+    accompagnements: { title: string } | null;
   }[]) {
     interactions.push({
-      id: e.formation_id,
+      id: e.accompagnement_id,
       type: "enrollment",
-      title: e.formations?.title ?? "Accompagnement",
+      title: e.accompagnements?.title ?? "Accompagnement",
       date: e.enrolled_at,
     });
   }
@@ -358,12 +358,12 @@ export const getContactDetail = async (
     id: string;
     registered_at: string;
     status: string;
-    events: { title: string } | null;
+    formations: { title: string } | null;
   }[]) {
     interactions.push({
       id: ev.id,
-      type: "event",
-      title: ev.events?.title ?? "Formation",
+      type: "formation",
+      title: ev.formations?.title ?? "Formation",
       date: ev.registered_at,
       status: ev.status,
     });

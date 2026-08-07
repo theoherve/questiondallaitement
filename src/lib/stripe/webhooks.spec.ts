@@ -135,7 +135,7 @@ const makeFormationSession = (): Stripe.Checkout.Session =>
     currency: "eur",
     payment_intent: PAYMENT_INTENT_ID,
     metadata: {
-      type: "formation",
+      type: "accompagnement",
       reference_id: FORMATION_ID,
       client_id: CLIENT_ID,
       consultant_id: CONSULTANT_ID,
@@ -174,12 +174,12 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
     state.updateCalls = [];
 
     // Pas de collaborateurs par défaut
-    db["formation_collaborators"] = { list: [] };
-    db["formation_enrollments"] = {};
+    db["accompagnement_collaborators"] = { list: [] };
+    db["accompagnement_enrollments"] = {};
     db["payments"] = {};
     db["audit_logs"] = {};
     db["profiles"] = { single: { email: "client@test.fr", first_name: "Marie" } };
-    db["formations"] = {
+    db["accompagnements"] = {
       single: { title: "Formation allaitement", consultant_id: CONSULTANT_ID },
     };
     db["consultants"] = { list: [] };
@@ -188,14 +188,14 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
     mockChargeRetrieve.mockResolvedValue({ id: "ch_test_001", transfer: null });
   });
 
-  it("crée un enrollment (upsert formation_enrollments)", async () => {
+  it("crée un enrollment (upsert accompagnement_enrollments)", async () => {
     await handleCheckoutCompleted(makeFormationSession());
 
-    const enrollment = state.upsertCalls.find((c) => c.table === "formation_enrollments");
+    const enrollment = state.upsertCalls.find((c) => c.table === "accompagnement_enrollments");
     expect(enrollment).toBeDefined();
     expect(enrollment!.data).toMatchObject({
       client_id: CLIENT_ID,
-      formation_id: FORMATION_ID,
+      accompagnement_id: FORMATION_ID,
       stripe_payment_intent_id: PAYMENT_INTENT_ID,
     });
   });
@@ -209,7 +209,7 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
       client_id: CLIENT_ID,
       consultant_id: CONSULTANT_ID,
       amount_cents: 5000,
-      type: "formation",
+      type: "accompagnement",
       status: "succeeded",
     });
   });
@@ -224,7 +224,7 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
     // plateforme et chaque part est virée en citant la charge source. Avant,
     // la proprietaire recevait tout par charge destination et la plateforme
     // payait la collaboratrice de son propre solde — quand elle le pouvait.
-    db["formation_collaborators"] = {
+    db["accompagnement_collaborators"] = {
       list: [
         {
           consultant_id: "collab-uuid-001",
@@ -250,7 +250,7 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
     expect(mockCreateTransfer).toHaveBeenCalledWith(
       1350,
       "acct_collab001",
-      expect.objectContaining({ formation_id: FORMATION_ID }),
+      expect.objectContaining({ accompagnement_id: FORMATION_ID }),
       expect.objectContaining({ sourceTransaction: "ch_test_001" }),
     );
     expect(mockCreateTransfer).toHaveBeenCalledWith(
@@ -264,7 +264,7 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
   it("rend chaque virement rejouable sans doubler la mise", async () => {
     // Stripe redelivre volontiers un evenement. Sans cle d'idempotence, la
     // repartition entiere serait versee une seconde fois.
-    db["formation_collaborators"] = {
+    db["accompagnement_collaborators"] = {
       list: [
         {
           consultant_id: "collab-uuid-001",
@@ -299,7 +299,7 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
     // Vente creee avant la bascule de modele : la charge porte un transfert,
     // la plateforme n'a plus les fonds. Tenter un virement echouerait en
     // `balance_insufficient` ; on trace au lieu de bruler l'argent.
-    db["formation_collaborators"] = {
+    db["accompagnement_collaborators"] = {
       list: [
         {
           consultant_id: "collab-uuid-001",
@@ -329,7 +329,7 @@ describe("handleCheckoutCompleted — type formation (14-05)", () => {
   });
 
   it("skip le transfer si le collaborateur n'a pas de Stripe actif", async () => {
-    db["formation_collaborators"] = {
+    db["accompagnement_collaborators"] = {
       list: [
         {
           consultant_id: "collab-uuid-002",
@@ -591,7 +591,7 @@ describe("handleChargeRefunded", () => {
   });
 
   it("ne touche a aucune reservation pour un achat d'accompagnement", async () => {
-    db["payments"] = { single: { type: "formation", reference_id: FORMATION_ID } };
+    db["payments"] = { single: { type: "accompagnement", reference_id: FORMATION_ID } };
 
     await handleChargeRefunded(makeCharge(5000, 5000));
 
@@ -714,7 +714,7 @@ describe("codes promo", () => {
       currency: "eur",
       payment_intent: PAYMENT_INTENT_ID,
       metadata: {
-        type: "formation",
+        type: "accompagnement",
         reference_id: FORMATION_ID,
         client_id: CLIENT_ID,
         consultant_id: CONSULTANT_ID,

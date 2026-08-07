@@ -117,8 +117,8 @@ export type SegmentClientStats = {
   email: string;
   booking_count: number;
   total_spent_cents: number;
+  accompagnement_count: number;
   formation_count: number;
-  event_count: number;
   inactive_days: number;
   days_since_registration: number;
   score: number;
@@ -203,7 +203,7 @@ const getConsultantClientStats = async (
       .eq("consultant_id", consultantId)
       .not("status", "eq", "cancelled"),
     supabase
-      .from("formations")
+      .from("accompagnements")
       .select("id")
       .eq("consultant_id", consultantId),
   ]);
@@ -214,9 +214,9 @@ const getConsultantClientStats = async (
   const enrollmentsRes =
     consultantFormationIds.length > 0
       ? await supabase
-          .from("formation_enrollments")
+          .from("accompagnement_enrollments")
           .select("client_id, enrolled_at")
-          .in("formation_id", consultantFormationIds)
+          .in("accompagnement_id", consultantFormationIds)
       : { data: [] };
 
   const allClientIds = [
@@ -240,7 +240,7 @@ const getConsultantClientStats = async (
       .eq("status", "succeeded")
       .in("client_id", allClientIds),
     supabase
-      .from("event_registrations")
+      .from("formation_registrations")
       .select("client_id")
       .eq("status", "confirmed")
       .in("client_id", allClientIds),
@@ -306,8 +306,8 @@ const getConsultantClientStats = async (
       email: p.email,
       booking_count: bookingCountMap.get(p.id) ?? 0,
       total_spent_cents: totalSpentMap.get(p.id) ?? 0,
-      formation_count: formationCountMap.get(p.id) ?? 0,
-      event_count: eventCountMap.get(p.id) ?? 0,
+      accompagnement_count: formationCountMap.get(p.id) ?? 0,
+      formation_count: eventCountMap.get(p.id) ?? 0,
       inactive_days: inactiveDays,
       days_since_registration: daysSinceReg,
       score: scoreMap.get(p.id) ?? 0,

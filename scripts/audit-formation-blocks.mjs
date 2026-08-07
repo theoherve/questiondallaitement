@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Audit formation_blocks content — no writes.
+ * Audit accompagnement_blocks content — no writes.
  *
  * Goal: understand the variety of block types currently in DB, detect Ricos
  * markers inside `text` blocks that should become `video`/`image`/`download`,
@@ -79,19 +79,19 @@ const main = async () => {
   console.log("→ Fetching formations + sections + blocks…");
 
   const { data: formations, error: fErr } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("id, title, slug")
     .is("deleted_at", null);
   if (fErr) throw fErr;
 
   const { data: blocks, error: bErr } = await supabase
-    .from("formation_blocks")
+    .from("accompagnement_blocks")
     .select("id, section_id, type, content, position");
   if (bErr) throw bErr;
 
   const { data: sections, error: sErr } = await supabase
-    .from("formation_sections")
-    .select("id, formation_id, title, position");
+    .from("accompagnement_sections")
+    .select("id, accompagnement_id, title, position");
   if (sErr) throw sErr;
 
   console.log(
@@ -176,7 +176,7 @@ const main = async () => {
 
   const report = {
     counts: {
-      formations: formations.length,
+      accompagnements: formations.length,
       sections: sections.length,
       blocks: blocks.length,
       byType,

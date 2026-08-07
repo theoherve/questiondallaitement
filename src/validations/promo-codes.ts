@@ -2,18 +2,18 @@ import { z } from "zod/v4";
 
 const targetSchema = z.object({
   target_type: z.enum([
+    "accompagnements_all",
     "formations_all",
-    "events_all",
     "bookings_all",
+    "accompagnement",
     "formation",
-    "event",
     "booking_service",
   ]),
   target_id: z.string().uuid().nullable(),
 });
 
 const triggerSchema = z.object({
-  trigger_type: z.enum(["event_purchase", "formation_purchase"]),
+  trigger_type: z.enum(["formation_purchase", "accompagnement_purchase"]),
   target_id: z.string().uuid().nullable(),
 });
 

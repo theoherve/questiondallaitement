@@ -17,7 +17,7 @@ const FormationsProPage = async () => {
   const supabase = await createClient();
 
   const { data: formations, error } = await supabase
-    .from("events")
+    .from("formations")
     .select(
       `
       id,

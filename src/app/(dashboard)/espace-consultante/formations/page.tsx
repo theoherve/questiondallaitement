@@ -70,7 +70,7 @@ const ConsultanteFormationsPage = async () => {
   }
 
   const { data: formations } = await supabase
-    .from("events")
+    .from("formations")
     .select("id, title, slug, type, starts_at, ends_at, location, max_participants, price_cents, currency, is_published, created_at")
     .eq("consultant_id", consultant.id)
     .order("starts_at", { ascending: false });
@@ -79,15 +79,15 @@ const ConsultanteFormationsPage = async () => {
   const formationIds = (formations ?? []).map((e) => e.id);
   const { data: registrations } = formationIds.length
     ? await supabase
-        .from("event_registrations")
-        .select("event_id")
-        .in("event_id", formationIds)
+        .from("formation_registrations")
+        .select("formation_id")
+        .in("formation_id", formationIds)
         .eq("status", "registered")
     : { data: [] };
 
   const regCounts = new Map<string, number>();
   for (const reg of registrations ?? []) {
-    regCounts.set(reg.event_id, (regCounts.get(reg.event_id) ?? 0) + 1);
+    regCounts.set(reg.formation_id, (regCounts.get(reg.formation_id) ?? 0) + 1);
   }
 
   type FormationRow = {

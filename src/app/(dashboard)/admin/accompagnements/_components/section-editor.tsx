@@ -69,7 +69,7 @@ type SectionData = {
   id: string;
   title: string;
   position: number;
-  formation_blocks: BlockData[];
+  accompagnement_blocks: BlockData[];
 };
 
 type SectionEditorProps = {
@@ -113,16 +113,16 @@ export const SectionEditor = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(section.title);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [blocks, setBlocks] = useState(section.formation_blocks);
+  const [blocks, setBlocks] = useState(section.accompagnement_blocks);
   const [prevServerBlocks, setPrevServerBlocks] = useState(
-    section.formation_blocks
+    section.accompagnement_blocks
   );
   const [isExpanded, setIsExpanded] = useState(true);
 
   // Sync local state when server data changes (after router.refresh()).
-  if (prevServerBlocks !== section.formation_blocks) {
-    setPrevServerBlocks(section.formation_blocks);
-    setBlocks(section.formation_blocks);
+  if (prevServerBlocks !== section.accompagnement_blocks) {
+    setPrevServerBlocks(section.accompagnement_blocks);
+    setBlocks(section.accompagnement_blocks);
   }
 
   const sensors = useSensors(
@@ -199,7 +199,7 @@ export const SectionEditor = ({
     const result = await reorderBlocks(section.id, accompagnementId, orderedIds);
 
     if (!result.success) {
-      setBlocks(section.formation_blocks);
+      setBlocks(section.accompagnement_blocks);
       toast.error("Erreur lors du réordonnancement");
     }
   };

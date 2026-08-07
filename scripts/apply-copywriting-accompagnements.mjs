@@ -24,7 +24,7 @@ ${a.problems.map((p) => `  <li>${esc(p)}</li>`).join("\n")}
 <p>${esc(a.why)}</p>
 <p><em>${esc(a.bridge)}</em></p>`;
 
-const { data: rows, error } = await db.from("formations").select("id, slug, title, short_description");
+const { data: rows, error } = await db.from("accompagnements").select("id, slug, title, short_description");
 if (error) {
   console.error("❌", error.message);
   process.exit(1);
@@ -46,7 +46,7 @@ for (const a of ACCOMPAGNEMENTS) {
 
   if (APPLY) {
     const { error: e } = await db
-      .from("formations")
+      .from("accompagnements")
       .update({ short_description: a.subtitle, long_description_html: html })
       .eq("id", row.id);
     if (e) {

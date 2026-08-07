@@ -28,15 +28,15 @@ const AdminEditAccompagnementPage = async ({ params }: Props) => {
   const supabase = createAdminClient();
 
   const { data: accompagnement } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select(
       `
       *,
-      formation_sections (
+      accompagnement_sections (
         id,
         title,
         position,
-        formation_blocks (
+        accompagnement_blocks (
           id,
           type,
           content,
@@ -82,7 +82,7 @@ const AdminEditAccompagnementPage = async ({ params }: Props) => {
     id: string;
     title: string;
     position: number;
-    formation_blocks: {
+    accompagnement_blocks: {
       id: string;
       type: string;
       content: Record<string, unknown>;
@@ -91,12 +91,12 @@ const AdminEditAccompagnementPage = async ({ params }: Props) => {
   };
 
   const sections = (
-    (accompagnement.formation_sections ?? []) as unknown as SectionData[]
+    (accompagnement.accompagnement_sections ?? []) as unknown as SectionData[]
   )
     .sort((a, b) => a.position - b.position)
     .map((s) => ({
       ...s,
-      formation_blocks: s.formation_blocks.sort(
+      accompagnement_blocks: s.accompagnement_blocks.sort(
         (a, b) => a.position - b.position
       ),
     }));
@@ -105,11 +105,11 @@ const AdminEditAccompagnementPage = async ({ params }: Props) => {
   const snippets = await listSnippets();
 
   const { data: enrollmentsRaw } = await supabase
-    .from("formation_enrollments")
+    .from("accompagnement_enrollments")
     .select(
-      `id, enrolled_at, source, client:profiles!formation_enrollments_client_id_fkey (id, email, first_name, last_name)`,
+      `id, enrolled_at, source, client:profiles!accompagnement_enrollments_client_id_fkey (id, email, first_name, last_name)`,
     )
-    .eq("formation_id", id)
+    .eq("accompagnement_id", id)
     .order("enrolled_at", { ascending: false });
 
   const enrollments: EnrollmentRow[] = (

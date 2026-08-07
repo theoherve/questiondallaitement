@@ -30,7 +30,7 @@ const ConsultantAccompagnementsPage = async () => {
 
   // Get accompagnements owned by this consultant
   const { data: ownedAccompagnements } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("id, title, slug, status, price_cents, created_at, published_at")
     .eq("consultant_id", user.id)
     .is("deleted_at", null)
@@ -38,21 +38,21 @@ const ConsultantAccompagnementsPage = async () => {
 
   // Get accompagnements where this consultant is a collaborator
   const { data: collaborations } = await supabase
-    .from("formation_collaborators")
-    .select("formation_id, revenue_share")
+    .from("accompagnement_collaborators")
+    .select("accompagnement_id, revenue_share")
     .eq("consultant_id", user.id);
 
   const collabAccompagnementIds = (collaborations ?? []).map(
-    (c) => c.formation_id,
+    (c) => c.accompagnement_id,
   );
   const collabShareMap = new Map(
-    (collaborations ?? []).map((c) => [c.formation_id, Number(c.revenue_share)]),
+    (collaborations ?? []).map((c) => [c.accompagnement_id, Number(c.revenue_share)]),
   );
 
   let collabAccompagnements: typeof ownedAccompagnements = [];
   if (collabAccompagnementIds.length > 0) {
     const { data } = await supabase
-      .from("formations")
+      .from("accompagnements")
       .select(
         "id, title, slug, status, price_cents, created_at, published_at",
       )
@@ -70,15 +70,15 @@ const ConsultantAccompagnementsPage = async () => {
   const [enrollmentsRes, paymentsRes] = await Promise.all([
     allAccompagnementIds.length > 0
       ? supabase
-          .from("formation_enrollments")
-          .select("formation_id")
-          .in("formation_id", allAccompagnementIds)
+          .from("accompagnement_enrollments")
+          .select("accompagnement_id")
+          .in("accompagnement_id", allAccompagnementIds)
       : Promise.resolve({ data: [] }),
     supabase
       .from("payments")
       .select("reference_id, amount_cents, platform_fee_cents")
       .eq("consultant_id", user.id)
-      .eq("type", "formation")
+      .eq("type", "accompagnement")
       .eq("status", "succeeded"),
   ]);
 
@@ -86,7 +86,7 @@ const ConsultantAccompagnementsPage = async () => {
   const payments = paymentsRes.data ?? [];
 
   const getEnrollmentCount = (accompagnementId: string) =>
-    enrollments.filter((e) => e.formation_id === accompagnementId).length;
+    enrollments.filter((e) => e.accompagnement_id === accompagnementId).length;
 
   const getRevenue = (accompagnementId: string) =>
     payments

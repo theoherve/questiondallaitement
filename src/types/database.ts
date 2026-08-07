@@ -26,7 +26,7 @@ export type PaymentStatus =
   | "refunded"
   | "partially_refunded";
 
-export type PaymentType = "formation" | "booking" | "event";
+export type PaymentType = "accompagnement" | "booking" | "formation";
 
 export type ConsultationLocation = "cabinet" | "teleconsultation" | "domicile";
 
@@ -205,14 +205,14 @@ export type Accompagnement = {
 };
 
 export type AccompagnementCollaborator = {
-  formation_id: string;
+  accompagnement_id: string;
   consultant_id: string;
   revenue_share: number;
 };
 
 export type AccompagnementSection = {
   id: string;
-  formation_id: string;
+  accompagnement_id: string;
   title: string;
   position: number;
   created_at: string;
@@ -230,7 +230,7 @@ export type AccompagnementBlock = {
 export type AccompagnementEnrollment = {
   id: string;
   client_id: string;
-  formation_id: string;
+  accompagnement_id: string;
   stripe_payment_intent_id: string | null;
   enrolled_at: string;
 };
@@ -288,7 +288,7 @@ export type Formation = {
 
 export type FormationRegistration = {
   id: string;
-  event_id: string;
+  formation_id: string;
   client_id: string;
   stripe_payment_intent_id: string | null;
   status: string;
@@ -321,14 +321,14 @@ export type Payment = {
 export type PromoDiscountType = "percent" | "fixed_cents";
 
 export type PromoTargetType =
+  | "accompagnements_all"
   | "formations_all"
-  | "events_all"
   | "bookings_all"
+  | "accompagnement"
   | "formation"
-  | "event"
   | "booking_service";
 
-export type PromoTriggerType = "event_purchase" | "formation_purchase";
+export type PromoTriggerType = "formation_purchase" | "accompagnement_purchase";
 
 export type PromoRedemptionStatus = "pending" | "confirmed" | "cancelled";
 
@@ -407,8 +407,8 @@ export type CrmContactTag = {
 export type SegmentConditionField =
   | "booking_count"
   | "total_spent_cents"
+  | "accompagnement_count"
   | "formation_count"
-  | "event_count"
   | "inactive_days"
   | "days_since_registration";
 

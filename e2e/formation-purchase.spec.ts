@@ -20,7 +20,7 @@ const COMMISSION_RATE = 15;
  *
  * Comme 3-2, on s'arrete a la redirection Stripe et on verifie la session cote
  * API : le DOM de Checkout est hebergee par Stripe et embarque hCaptcha. Le
- * fulfillment (creation de `formation_enrollments`) est couvert par N1, qui
+ * fulfillment (creation de `accompagnement_enrollments`) est couvert par N1, qui
  * rejoue le webhook signe.
  */
 test.describe("N2 — achat d'accompagnement", () => {

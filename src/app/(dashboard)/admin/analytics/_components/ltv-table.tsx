@@ -91,7 +91,7 @@ export function LtvTable({ data }: Props) {
                         {client.booking_count}
                       </td>
                       <td className="py-2 pr-4 text-center">
-                        {client.formation_count}
+                        {client.accompagnement_count}
                       </td>
                       <td className="py-2 text-muted-foreground">
                         {client.last_activity

@@ -99,7 +99,7 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
 
   // Accompagnements
   const { data: accompagnements } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("slug, updated_at")
     .eq("status", "published")
     .is("deleted_at", null);
@@ -128,7 +128,7 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
 
   // Formations
   const { data: formations } = await supabase
-    .from("events")
+    .from("formations")
     .select("slug, updated_at")
     .eq("is_published", true);
 

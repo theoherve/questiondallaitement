@@ -65,7 +65,7 @@ export const CTA_TARGETS = {
     text: "Toutes les étapes de votre allaitement, de la préparation au sevrage : le pack « Mon allaitement sur mesure ».",
     label: "Je découvre le pack",
   },
-  formations: {
+  accompagnements: {
     href: "/formations",
     formation: null,
     text: "Vous êtes professionnel·le de santé ? Formations certifiantes en allaitement, fondées sur l'observation clinique.",
@@ -130,7 +130,7 @@ export const ARTICLES = [
     hook: "Vous avez aidé plusieurs mamans de votre entourage à traverser leurs difficultés d'allaitement, et une évidence s'impose : c'est ce métier que vous voulez faire. Reste à comprendre comment y arriver, sans se perdre dans des sites contradictoires.",
     intro:
       "« Je serais intéressée pour devenir conseillère en lactation IBCLC, seulement je ne comprends pas vraiment comment y parvenir » — c'est le message que je reçois presque chaque semaine. Et c'est normal : le chemin vers la certification IBCLC (International Board Certified Lactation Consultant), reconnue depuis 1985 comme le gold standard international, comporte des étapes précises, des prérequis cliniques exigeants, et plusieurs voies d'accès possibles. Avant de vous lancer, il faut aussi comprendre ce que recouvre réellement ce métier : bien plus qu'un accompagnement bienveillant, une véritable prise en charge clinique. Voici les grandes étapes pour y voir clair, et les ressources pour avancer avec la bonne personne à vos côtés.",
-    cta: "formations",
+    cta: "accompagnements",
   },
   {
     slug: "confusion-sein-tetine-vrai-ou-faux-risque-pour-votre-allaitement",
@@ -305,7 +305,7 @@ export const ARTICLES = [
     hook: "Vous pensiez apprendre à repérer une bonne prise du sein. Vous allez surtout réapprendre à écouter.",
     intro:
       "Sage-femme, doula, ostéopathe, puéricultrice ou tout simplement future consultante : vous arrivez en formation avec vos certitudes, votre propre histoire d'allaitement (réussi, douloureux, écourté, ou jamais vécu), et souvent, sans le savoir, avec quelques mythes solidement installés. C'est normal : la plupart d'entre nous n'avons jamais été vraiment formées sur ce sujet, ni pendant nos études, ni ailleurs. Se former sérieusement à l'allaitement, ce n'est donc pas seulement cocher des compétences techniques : c'est accepter de regarder en face ce qu'on croyait savoir, pour mieux accompagner les mères sans y projeter ses propres peurs. Voici pourquoi cette démarche transforme autant la pratique professionnelle que le regard qu'on porte sur soi-même.",
-    cta: "formations",
+    cta: "accompagnements",
   },
   {
     slug: "on-m-a-dit-de-tirer-mon-lait-au-pire-on-le-jettera-l-allaitement-d-elodie",
@@ -455,7 +455,7 @@ export const ARTICLES = [
     hook: "Un stylo offert en congrès, un café-croissant sponsorisé, une formation « gratuite »... Vous pensez conseiller librement les familles. L'industrie du lait infantile, elle, sait exactement ce qu'elle fait.",
     intro:
       "Vous n'avez jamais signé de contrat avec un laboratoire. Vous n'avez jamais accepté de « vendre » une marque à vos patientes. Et pourtant, si vous avez reçu un mètre-ruban floqué, assisté à un congrès sponsorisé ou utilisé un outil « pédagogique » fourni gracieusement, vous avez déjà été touché·e par une stratégie d'influence documentée depuis des décennies. Ce n'est pas un procès en intention : c'est ce que montrent les rapports de l'OMS, de l'UNICEF et d'IBFAN sur les pratiques de l'industrie envers les professionnels de santé. Ici, on déplie les mécanismes — pour que votre parole reste, justement, la vôtre.",
-    cta: "formations",
+    cta: "accompagnements",
   },
   {
     slug: "allaitement-douleur-la-piste-du-clitoris",

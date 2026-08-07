@@ -235,7 +235,7 @@ export const getConsultantStats = async (
 
   const [formations, bookings, payments] = await Promise.all([
     supabase
-      .from("formations")
+      .from("accompagnements")
       .select("id", { count: "exact", head: true })
       .eq("consultant_id", id)
       .is("deleted_at", null),

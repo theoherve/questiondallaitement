@@ -17,7 +17,7 @@ import {
   type BillingProfile,
 } from "./billing-profile";
 
-type PaymentType = "formation" | "booking" | "event";
+type PaymentType = "accompagnement" | "booking" | "formation";
 
 export type BuildInvoiceInput = {
   paymentId: string;

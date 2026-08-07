@@ -284,8 +284,8 @@ export const getPromoCodeStats = async (
 
 /** Catalogue propose comme cibles dans le formulaire. */
 export const listPromoTargetOptions = async (): Promise<{
+  accompagnements: { id: string; title: string }[];
   formations: { id: string; title: string }[];
-  events: { id: string; title: string }[];
   consultationTypes: { id: string; title: string }[];
 }> => {
   await requireAdmin();
@@ -293,13 +293,13 @@ export const listPromoTargetOptions = async (): Promise<{
 
   const [accompagnements, formations, consultationTypes] = await Promise.all([
     supabase
-      .from("formations")
+      .from("accompagnements")
       .select("id, title")
       .eq("status", "published")
       .is("deleted_at", null)
       .order("title"),
     supabase
-      .from("events")
+      .from("formations")
       .select("id, title")
       .eq("is_published", true)
       .order("starts_at", { ascending: false }),
@@ -307,8 +307,8 @@ export const listPromoTargetOptions = async (): Promise<{
   ]);
 
   return {
-    formations: (accompagnements.data ?? []) as { id: string; title: string }[],
-    events: (formations.data ?? []) as { id: string; title: string }[],
+    accompagnements: (accompagnements.data ?? []) as { id: string; title: string }[],
+    formations: (formations.data ?? []) as { id: string; title: string }[],
     consultationTypes: (consultationTypes.data ?? []) as {
       id: string;
       title: string;

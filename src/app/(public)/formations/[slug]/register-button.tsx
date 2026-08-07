@@ -134,7 +134,7 @@ export const RegisterButton = ({
       {/* Rien a remiser sur une formation gratuite. */}
       {!isFree && (
         <PromoCodeField
-          serviceKind="event"
+          serviceKind="formation"
           itemId={formationId}
           amountCents={priceCents}
           currency={currency}

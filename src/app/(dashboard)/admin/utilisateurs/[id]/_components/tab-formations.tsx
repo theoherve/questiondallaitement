@@ -13,7 +13,7 @@ type FormationRegistration = {
   id: string;
   registered_at: string;
   status: string;
-  events: {
+  formations: {
     title: string;
     starts_at: string;
     type: string;
@@ -72,11 +72,11 @@ export const TabFormations = ({
                 return (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">
-                      {r.events?.title ?? "—"}
+                      {r.formations?.title ?? "—"}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
-                      {r.events?.starts_at
-                        ? new Date(r.events.starts_at).toLocaleDateString(
+                      {r.formations?.starts_at
+                        ? new Date(r.formations.starts_at).toLocaleDateString(
                             "fr-FR",
                             {
                               day: "numeric",
@@ -87,8 +87,8 @@ export const TabFormations = ({
                         : "—"}
                     </TableCell>
                     <TableCell>
-                      {r.events?.type
-                        ? (TYPE_MAP[r.events.type] ?? r.events.type)
+                      {r.formations?.type
+                        ? (TYPE_MAP[r.formations.type] ?? r.formations.type)
                         : "—"}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">

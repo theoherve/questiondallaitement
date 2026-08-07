@@ -27,7 +27,7 @@ export const createAccompagnement = async (
 
   const supabase = createAdminClient();
   const { data: accompagnement, error } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .insert({
       ...parsed.data,
       thumbnail_url: parsed.data.thumbnail_url || null,
@@ -67,7 +67,7 @@ export const updateAccompagnement = async (
   }
 
   const { error } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .update(updateData)
     .eq("id", id);
 
@@ -93,7 +93,7 @@ const slugify = (text: string): string =>
 const findAvailableSlug = async (base: string): Promise<string> => {
   const supabase = createAdminClient();
   const { data } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("slug")
     .like("slug", `${base}%`);
 
@@ -122,7 +122,7 @@ export const duplicateAccompagnement = async (
   const supabase = createAdminClient();
 
   const { data: source, error: sourceError } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select(
       "title, description, short_description, long_description_html, thumbnail_url, consultant_id",
     )
@@ -137,7 +137,7 @@ export const duplicateAccompagnement = async (
   const slug = await findAvailableSlug(slugify(title));
 
   const { data: copy, error: insertError } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .insert({
       title,
       slug,
@@ -157,16 +157,16 @@ export const duplicateAccompagnement = async (
   }
 
   const { data: sections } = await supabase
-    .from("formation_sections")
-    .select("id, title, position, formation_blocks(type, content, position)")
-    .eq("formation_id", id)
+    .from("accompagnement_sections")
+    .select("id, title, position, accompagnement_blocks(type, content, position)")
+    .eq("accompagnement_id", id)
     .order("position", { ascending: true });
 
   for (const section of sections ?? []) {
     const { data: newSection, error: sectionError } = await supabase
-      .from("formation_sections")
+      .from("accompagnement_sections")
       .insert({
-        formation_id: copy.id,
+        accompagnement_id: copy.id,
         title: section.title,
         position: section.position,
       })
@@ -175,7 +175,7 @@ export const duplicateAccompagnement = async (
 
     if (sectionError || !newSection) continue;
 
-    const blocks = (section.formation_blocks ?? []) as {
+    const blocks = (section.accompagnement_blocks ?? []) as {
       type: string;
       content: Record<string, unknown>;
       position: number;
@@ -183,7 +183,7 @@ export const duplicateAccompagnement = async (
 
     if (blocks.length === 0) continue;
 
-    await supabase.from("formation_blocks").insert(
+    await supabase.from("accompagnement_blocks").insert(
       blocks.map((block) => ({
         section_id: newSection.id,
         type: block.type,
@@ -202,7 +202,7 @@ export const deleteAccompagnement = async (id: string): Promise<ActionResult> =>
   const supabase = createAdminClient();
 
   const { error } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .update({ deleted_at: new Date().toISOString(), status: "archived" })
     .eq("id", id);
 
@@ -227,7 +227,7 @@ export const updateAccompagnementStatus = async (
   }
 
   const { error } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .update(updateData)
     .eq("id", id);
 
@@ -254,8 +254,8 @@ export const createSection = async (
 
   const supabase = createAdminClient();
   const { data: section, error } = await supabase
-    .from("formation_sections")
-    .insert({ formation_id: accompagnementId, ...parsed.data })
+    .from("accompagnement_sections")
+    .insert({ accompagnement_id: accompagnementId, ...parsed.data })
     .select("id")
     .single();
 
@@ -283,7 +283,7 @@ export const updateSection = async (
 
   const supabase = createAdminClient();
   const { error } = await supabase
-    .from("formation_sections")
+    .from("accompagnement_sections")
     .update(parsed.data)
     .eq("id", id);
 
@@ -302,7 +302,7 @@ export const deleteSection = async (
   await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase
-    .from("formation_sections")
+    .from("accompagnement_sections")
     .delete()
     .eq("id", id);
 
@@ -323,7 +323,7 @@ export const reorderSections = async (
 
   const updates = orderedIds.map((id, index) =>
     supabase
-      .from("formation_sections")
+      .from("accompagnement_sections")
       .update({ position: index })
       .eq("id", id),
   );
@@ -351,7 +351,7 @@ export const createBlock = async (
   const supabase = createAdminClient();
 
   const { data: block, error } = await supabase
-    .from("formation_blocks")
+    .from("accompagnement_blocks")
     .insert({
       section_id: sectionId,
       type,
@@ -378,7 +378,7 @@ export const updateBlock = async (
   const supabase = createAdminClient();
 
   const { error } = await supabase
-    .from("formation_blocks")
+    .from("accompagnement_blocks")
     .update({ content: content as Record<string, unknown> })
     .eq("id", id);
 
@@ -397,7 +397,7 @@ export const deleteBlock = async (
   await requireAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase
-    .from("formation_blocks")
+    .from("accompagnement_blocks")
     .delete()
     .eq("id", id);
 
@@ -418,7 +418,7 @@ export const reorderBlocks = async (
   const supabase = createAdminClient();
 
   const updates = orderedIds.map((id, index) =>
-    supabase.from("formation_blocks").update({ position: index }).eq("id", id),
+    supabase.from("accompagnement_blocks").update({ position: index }).eq("id", id),
   );
 
   const results = await Promise.all(updates);
@@ -450,11 +450,11 @@ export const getAccompagnementCollaborators = async (
   const supabase = createAdminClient();
 
   const { data } = await supabase
-    .from("formation_collaborators")
+    .from("accompagnement_collaborators")
     .select(
-      "consultant_id, revenue_share, profiles!formation_collaborators_consultant_id_fkey(first_name, last_name, email)",
+      "consultant_id, revenue_share, profiles!accompagnement_collaborators_consultant_id_fkey(first_name, last_name, email)",
     )
-    .eq("formation_id", accompagnementId);
+    .eq("accompagnement_id", accompagnementId);
 
   return (data ?? []).map((row) => ({
     consultant_id: row.consultant_id,
@@ -487,8 +487,8 @@ export const addCollaborator = async (
     return { success: false, error: "Ce profil n'est pas une consultante" };
   }
 
-  const { error } = await supabase.from("formation_collaborators").insert({
-    formation_id: accompagnementId,
+  const { error } = await supabase.from("accompagnement_collaborators").insert({
+    accompagnement_id: accompagnementId,
     consultant_id: parsed.data.consultant_id,
     revenue_share: parsed.data.revenue_share,
   });
@@ -523,9 +523,9 @@ export const updateCollaboratorShare = async (
 
   const supabase = createAdminClient();
   const { error } = await supabase
-    .from("formation_collaborators")
+    .from("accompagnement_collaborators")
     .update({ revenue_share: revenueShare })
-    .eq("formation_id", accompagnementId)
+    .eq("accompagnement_id", accompagnementId)
     .eq("consultant_id", consultantId);
 
   if (error) {
@@ -544,9 +544,9 @@ export const removeCollaborator = async (
   const supabase = createAdminClient();
 
   const { error } = await supabase
-    .from("formation_collaborators")
+    .from("accompagnement_collaborators")
     .delete()
-    .eq("formation_id", accompagnementId)
+    .eq("accompagnement_id", accompagnementId)
     .eq("consultant_id", consultantId);
 
   if (error) {

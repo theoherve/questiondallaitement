@@ -4,7 +4,7 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.SUPABASE_SER
 if (!url || !key) { console.error("missing env"); process.exit(1); }
 const db = createClient(url, key, { auth: { persistSession: false } });
 const dir = "backups/copywriting-2026-08-05";
-for (const t of ["blog_posts", "blog_categories", "formations"]) {
+for (const t of ["blog_posts", "blog_categories", "accompagnements"]) {
   const { data, error } = await db.from(t).select("*");
   if (error) { console.error(t, error.message); process.exit(1); }
   fs.writeFileSync(`${dir}/${t}.json`, JSON.stringify(data, null, 2));

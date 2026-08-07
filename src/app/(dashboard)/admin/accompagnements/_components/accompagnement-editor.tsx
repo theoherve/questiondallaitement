@@ -77,7 +77,7 @@ type SectionData = {
   id: string;
   title: string;
   position: number;
-  formation_blocks: {
+  accompagnement_blocks: {
     id: string;
     type: string;
     content: Record<string, unknown>;

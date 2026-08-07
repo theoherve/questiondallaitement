@@ -44,12 +44,12 @@ const makeSupabase = (
 
 const supabase = () =>
   makeSupabase({
-    formations: [{ id: FORMATION, consultant_id: OWNER }],
-    formation_collaborators: [
-      { formation_id: FORMATION, consultant_id: COLLABORATOR },
+    accompagnements: [{ id: FORMATION, consultant_id: OWNER }],
+    accompagnement_collaborators: [
+      { accompagnement_id: FORMATION, consultant_id: COLLABORATOR },
     ],
-    formation_sections: [{ id: SECTION, formation_id: FORMATION }],
-    formation_blocks: [{ id: BLOCK, section_id: SECTION }],
+    accompagnement_sections: [{ id: SECTION, accompagnement_id: FORMATION }],
+    accompagnement_blocks: [{ id: BLOCK, section_id: SECTION }],
   }) as unknown as Parameters<typeof canEditAccompagnement>[0];
 
 describe("canEditAccompagnement", () => {

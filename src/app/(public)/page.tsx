@@ -32,10 +32,10 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
 
   const [formationsRes, blogRes, consultantsRes, consultationTypesRes] = await Promise.all([
     supabase
-      .from("formations")
+      .from("accompagnements")
       .select(
         `id, title, slug, short_description, thumbnail_url, price_cents, currency, consultant_id,
-        consultants!formations_consultant_id_fkey (slug, profiles!consultants_id_fkey (first_name, last_name))`
+        consultants!accompagnements_consultant_id_fkey (slug, profiles!consultants_id_fkey (first_name, last_name))`
       )
       .eq("status", "published")
       .is("deleted_at", null)

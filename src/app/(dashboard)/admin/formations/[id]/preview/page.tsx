@@ -21,7 +21,7 @@ export const generateMetadata = async ({
   const { id } = await params;
   const supabase = createAdminClient();
   const { data } = await supabase
-    .from("events")
+    .from("formations")
     .select("title")
     .eq("id", id)
     .single();
@@ -42,7 +42,7 @@ const FormationPreviewPage = async ({ params }: Props) => {
   // justement de voir un brouillon tel qu'il sera publie.
   const supabase = createAdminClient();
   const { data: formation } = await supabase
-    .from("events")
+    .from("formations")
     .select(
       `
       *,
@@ -62,9 +62,9 @@ const FormationPreviewPage = async ({ params }: Props) => {
   if (!formation) notFound();
 
   const { count } = await supabase
-    .from("event_registrations")
+    .from("formation_registrations")
     .select("*", { count: "exact", head: true })
-    .eq("event_id", formation.id)
+    .eq("formation_id", formation.id)
     .eq("status", "registered");
 
   const registrationsCount = count ?? 0;

@@ -44,7 +44,7 @@ type PackSalesPageProps = {
 export async function fetchPackModuleRows(): Promise<ModuleRow[]> {
   const supabase = await createClient();
   const { data } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select(
       "id, title, slug, short_description, thumbnail_url, price_cents, currency"
     )

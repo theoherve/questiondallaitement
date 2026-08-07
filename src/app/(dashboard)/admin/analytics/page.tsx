@@ -107,7 +107,7 @@ const AdminAnalyticsPage = async ({
       .eq("is_active", true),
     // Published formations
     supabase
-      .from("formations")
+      .from("accompagnements")
       .select("id", { count: "exact", head: true })
       .eq("status", "published")
       .is("deleted_at", null),
@@ -127,7 +127,7 @@ const AdminAnalyticsPage = async ({
     supabase
       .from("payments")
       .select("reference_id, amount_cents, platform_fee_cents")
-      .eq("type", "formation")
+      .eq("type", "accompagnement")
       .eq("status", "succeeded"),
     // Top consultants by revenue (all time)
     supabase
@@ -205,7 +205,7 @@ const AdminAnalyticsPage = async ({
   let topFormationsData: { name: string; value: number }[] = [];
   if (topFormationIds.length > 0) {
     const { data: formations } = await supabase
-      .from("formations")
+      .from("accompagnements")
       .select("id, title")
       .in(
         "id",

@@ -90,7 +90,7 @@ export const PurchaseButton = ({
   return (
     <div className="space-y-3">
       <PromoCodeField
-        serviceKind="formation"
+        serviceKind="accompagnement"
         itemId={accompagnementId}
         amountCents={priceCents}
         currency={currency}

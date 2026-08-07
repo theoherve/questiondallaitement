@@ -13,7 +13,7 @@ import { EnrollToAccompagnementModal } from "@/app/(dashboard)/admin/utilisateur
 type Enrollment = {
   id: string;
   enrolled_at: string;
-  formations: { title: string; status: string } | null;
+  accompagnements: { title: string; status: string } | null;
   progress_pct: number;
 };
 
@@ -50,7 +50,7 @@ export const TabAccompagnements = ({
               {enrollments.map((e) => (
                 <TableRow key={e.id}>
                   <TableCell className="font-medium">
-                    {e.formations?.title ?? "—"}
+                    {e.accompagnements?.title ?? "—"}
                   </TableCell>
                   <TableCell>
                     {new Date(e.enrolled_at).toLocaleDateString("fr-FR", {

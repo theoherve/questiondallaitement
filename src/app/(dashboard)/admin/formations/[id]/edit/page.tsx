@@ -23,7 +23,7 @@ const EditFormationPage = async ({ params }: Props) => {
 
   const [formationResult, consultantsResult, providersResult, registrationsCount] =
     await Promise.all([
-      supabase.from("events").select("*").eq("id", id).single(),
+      supabase.from("formations").select("*").eq("id", id).single(),
       supabase
         .from("consultants")
         .select("id, profiles!consultants_id_fkey(first_name, last_name)")

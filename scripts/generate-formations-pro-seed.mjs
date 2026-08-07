@@ -54,7 +54,7 @@ for (const f of formations) {
 
   const thumbnailUrl = escapeSQL(mainImageUrl);
 
-  lines.push(`INSERT INTO events (consultant_id, title, slug, description, type, starts_at, ends_at, location, price_cents, currency, max_participants, thumbnail_url, is_published)`);
+  lines.push(`INSERT INTO formations (consultant_id, title, slug, description, type, starts_at, ends_at, location, price_cents, currency, max_participants, thumbnail_url, is_published)`);
   lines.push(`SELECT c.id, '${title}', '${slug}', '${description}', '${eventType}', '${startsAt}'::timestamptz, '${endsAt}'::timestamptz, '${location}', ${priceCents}, 'eur', ${maxParticipants}, ${thumbnailUrl ? `'${thumbnailUrl}'` : 'NULL'}, true`);
   lines.push(`FROM consultants c WHERE c.slug = 'carole-herve'`);
   lines.push(`ON CONFLICT (slug) DO UPDATE SET title = EXCLUDED.title, description = EXCLUDED.description, starts_at = EXCLUDED.starts_at, ends_at = EXCLUDED.ends_at, location = EXCLUDED.location, price_cents = EXCLUDED.price_cents, thumbnail_url = EXCLUDED.thumbnail_url, updated_at = now();`);

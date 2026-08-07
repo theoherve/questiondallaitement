@@ -13,7 +13,7 @@ export const generateMetadata = async ({
   const { id } = await params;
   const { supabase } = await getSupabaseAndUser();
   const { data } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("title")
     .eq("id", id)
     .single();
@@ -26,26 +26,26 @@ const AccompagnementReaderPage = async ({ params }: Props) => {
   const { supabase, user } = await getSupabaseAndUser();
 
   const { data: enrollment } = await supabase
-    .from("formation_enrollments")
+    .from("accompagnement_enrollments")
     .select("id")
     .eq("client_id", user.id)
-    .eq("formation_id", id)
+    .eq("accompagnement_id", id)
     .single();
 
   if (!enrollment) redirect("/espace-client/accompagnements");
 
   const { data: accompagnement } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select(
       `
       id,
       title,
       description,
-      formation_sections (
+      accompagnement_sections (
         id,
         title,
         position,
-        formation_blocks (
+        accompagnement_blocks (
           id,
           type,
           content,
@@ -62,11 +62,11 @@ const AccompagnementReaderPage = async ({ params }: Props) => {
 
   const [progressResult, bookmarksResult] = await Promise.all([
     supabase
-      .from("formation_progress")
+      .from("accompagnement_progress")
       .select("block_id, completed")
       .eq("enrollment_id", enrollment.id),
     supabase
-      .from("formation_bookmarks")
+      .from("accompagnement_bookmarks")
       .select("block_id")
       .eq("enrollment_id", enrollment.id),
   ]);
@@ -80,22 +80,22 @@ const AccompagnementReaderPage = async ({ params }: Props) => {
     (b) => b.block_id
   );
 
-  const sections = (accompagnement.formation_sections ?? [])
+  const sections = (accompagnement.accompagnement_sections ?? [])
     .sort(
       (a: { position: number }, b: { position: number }) =>
         a.position - b.position
     )
-    .map((section: { id: string; title: string; position: number; formation_blocks?: { id: string; type: string; content: unknown; position: number }[] }) => ({
+    .map((section: { id: string; title: string; position: number; accompagnement_blocks?: { id: string; type: string; content: unknown; position: number }[] }) => ({
       ...section,
-      formation_blocks: (section.formation_blocks ?? []).sort(
+      accompagnement_blocks: (section.accompagnement_blocks ?? []).sort(
         (a: { position: number }, b: { position: number }) =>
           a.position - b.position
       ),
     }));
 
   const totalBlocks = sections.reduce(
-    (acc: number, s: { formation_blocks?: unknown[] }) =>
-      acc + (s.formation_blocks?.length ?? 0),
+    (acc: number, s: { accompagnement_blocks?: unknown[] }) =>
+      acc + (s.accompagnement_blocks?.length ?? 0),
     0
   );
   const completedCount = completedBlockIds.size;
@@ -109,9 +109,9 @@ const AccompagnementReaderPage = async ({ params }: Props) => {
     (section: {
       id: string;
       title: string;
-      formation_blocks: { id: string; type: string; content: unknown }[];
+      accompagnement_blocks: { id: string; type: string; content: unknown }[];
     }) =>
-      section.formation_blocks
+      section.accompagnement_blocks
         .filter((b) => b.type === "download")
         .map((b) => {
           const c = (b.content ?? {}) as DownloadContent;

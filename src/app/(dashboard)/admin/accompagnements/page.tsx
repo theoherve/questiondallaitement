@@ -46,7 +46,7 @@ const AdminAccompagnementsPage = async ({ searchParams }: Props) => {
   const supabase = createAdminClient();
 
   let query = supabase
-    .from("formations")
+    .from("accompagnements")
     .select(
       `
       id,
@@ -64,9 +64,9 @@ const AdminAccompagnementsPage = async ({ searchParams }: Props) => {
           last_name
         )
       ),
-      formation_sections (
+      accompagnement_sections (
         id,
-        formation_blocks ( id )
+        accompagnement_blocks ( id )
       )
     `
     )
@@ -105,7 +105,7 @@ const AdminAccompagnementsPage = async ({ searchParams }: Props) => {
       id: string;
       profiles: { first_name: string | null; last_name: string | null } | null;
     } | null;
-    formation_sections: { id: string; formation_blocks: { id: string }[] }[];
+    accompagnement_sections: { id: string; accompagnement_blocks: { id: string }[] }[];
   };
 
   type ConsultantOption = {
@@ -235,10 +235,10 @@ const AdminAccompagnementsPage = async ({ searchParams }: Props) => {
                     ? `${accompagnement.consultants.profiles.first_name ?? ""} ${accompagnement.consultants.profiles.last_name ?? ""}`.trim()
                     : "—";
 
-                  const sectionCount = accompagnement.formation_sections?.length ?? 0;
+                  const sectionCount = accompagnement.accompagnement_sections?.length ?? 0;
                   const blockCount =
-                    accompagnement.formation_sections?.reduce(
-                      (acc, s) => acc + (s.formation_blocks?.length ?? 0),
+                    accompagnement.accompagnement_sections?.reduce(
+                      (acc, s) => acc + (s.accompagnement_blocks?.length ?? 0),
                       0
                     ) ?? 0;
 

@@ -47,7 +47,7 @@ export const getAccompagnementsNavPreview =
     const supabase = await createClient();
 
     const { data, error } = await supabase
-      .from("formations")
+      .from("accompagnements")
       .select(
         "title, slug, short_description, thumbnail_url, price_cents, currency"
       )

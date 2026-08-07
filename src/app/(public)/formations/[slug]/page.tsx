@@ -21,7 +21,7 @@ export const generateMetadata = async ({
   const { slug } = await params;
   const supabase = await createClient();
   const { data } = await supabase
-    .from("events")
+    .from("formations")
     .select("title, description, summary_html, thumbnail_url")
     .eq("slug", slug)
     .eq("is_published", true)
@@ -52,7 +52,7 @@ const FormationDetailPage = async ({ params, searchParams }: Props) => {
   const supabase = await createClient();
 
   const { data: formation } = await supabase
-    .from("events")
+    .from("formations")
     .select(
       `
       *,
@@ -77,15 +77,15 @@ const FormationDetailPage = async ({ params, searchParams }: Props) => {
 
   const [regCountResult, userRegResult] = await Promise.all([
     adminSupabase
-      .from("event_registrations")
+      .from("formation_registrations")
       .select("*", { count: "exact", head: true })
-      .eq("event_id", formation.id)
+      .eq("formation_id", formation.id)
       .eq("status", "registered"),
     user
       ? adminSupabase
-          .from("event_registrations")
+          .from("formation_registrations")
           .select("id")
-          .eq("event_id", formation.id)
+          .eq("formation_id", formation.id)
           .eq("client_id", user.id)
           .eq("status", "registered")
           .single()

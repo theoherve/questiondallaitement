@@ -46,11 +46,11 @@ const formatDuration = (startsAt: string, endsAt: string): string => {
   return `${diffDays} jours`;
 };
 
-type FormationCategory = "formation" | "masterclass" | "atelier" | "conference" | "live" | "autre";
+type FormationCategory = "accompagnement" | "masterclass" | "atelier" | "conference" | "live" | "autre";
 
 const categorizeFormation = (title: string): { category: FormationCategory; label: string; color: string } => {
   const t = title.toLowerCase();
-  if (t.startsWith("formation")) return { category: "formation", label: "Formation", color: "bg-primary-red text-white" };
+  if (t.startsWith("accompagnement")) return { category: "accompagnement", label: "Formation", color: "bg-primary-red text-white" };
   if (t.startsWith("masterclass")) return { category: "masterclass", label: "Masterclass", color: "bg-amber-600 text-white" };
   if (t.startsWith("atelier")) return { category: "atelier", label: "Atelier", color: "bg-primary-green text-white" };
   if (t.includes("conférence") || t.includes("conference")) return { category: "conference", label: "Conférence", color: "bg-blue-700 text-white" };

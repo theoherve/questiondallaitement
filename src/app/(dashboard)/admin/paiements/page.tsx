@@ -231,9 +231,9 @@ const PaiementsPage = async ({
                 aria-label="Filtrer par type"
               >
                 <option value="all">Tous</option>
-                <option value="formation">Accompagnement</option>
+                <option value="accompagnement">Accompagnement</option>
                 <option value="booking">Consultation</option>
-                <option value="event">Formation</option>
+                <option value="formation">Formation</option>
               </select>
             </div>
             <div className="flex flex-col gap-2">

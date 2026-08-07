@@ -38,7 +38,7 @@ type AccompagnementRow = {
   price_cents: number;
   currency: string;
   consultant_id: string;
-  formation_sections: { id: string; formation_blocks: { id: string }[] }[];
+  accompagnement_sections: { id: string; accompagnement_blocks: { id: string }[] }[];
   consultants: {
     slug: string;
     profiles: { first_name: string | null; last_name: string | null } | null;
@@ -56,7 +56,7 @@ const AccompagnementsPage = async () => {
   const supabase = await createClient();
 
   const { data: accompagnements, error } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select(
       `
       id,
@@ -67,9 +67,9 @@ const AccompagnementsPage = async () => {
       price_cents,
       currency,
       consultant_id,
-      formation_sections (
+      accompagnement_sections (
         id,
-        formation_blocks ( id )
+        accompagnement_blocks ( id )
       ),
       consultants!accompagnements_consultant_id_fkey (
         slug,
@@ -103,10 +103,10 @@ const AccompagnementsPage = async () => {
   const pack = rows.find((f) => f.slug === PACK_SLUG);
   const modules = sortByModuleOrder(rows.filter((f) => f.slug !== PACK_SLUG));
 
-  const packSectionsCount = pack?.formation_sections.length ?? 0;
+  const packSectionsCount = pack?.accompagnement_sections.length ?? 0;
   const packBlocksCount =
-    pack?.formation_sections.reduce(
-      (acc, s) => acc + (s.formation_blocks?.length ?? 0),
+    pack?.accompagnement_sections.reduce(
+      (acc, s) => acc + (s.accompagnement_blocks?.length ?? 0),
       0
     ) ?? 0;
 
@@ -366,9 +366,9 @@ const AccompagnementsPage = async () => {
           </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {modules.map((accompagnement) => {
-              const sectionCount = accompagnement.formation_sections.length;
-              const blockCount = accompagnement.formation_sections.reduce(
-                (acc, s) => acc + (s.formation_blocks?.length ?? 0),
+              const sectionCount = accompagnement.accompagnement_sections.length;
+              const blockCount = accompagnement.accompagnement_sections.reduce(
+                (acc, s) => acc + (s.accompagnement_blocks?.length ?? 0),
                 0
               );
               return (

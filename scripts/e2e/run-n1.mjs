@@ -74,12 +74,12 @@ const scenarioFormation = async () => {
   assertEqual(status, 200, "status webhook");
 
   const enrollment = await one(
-    "formation_enrollments",
+    "accompagnement_enrollments",
     "stripe_payment_intent_id",
     PI.formation,
   );
-  assert(enrollment, "aucun formation_enrollments cree");
-  assertEqual(enrollment.formation_id, IDS.formation, "formation_id");
+  assert(enrollment, "aucun accompagnement_enrollments cree");
+  assertEqual(enrollment.accompagnement_id, IDS.formation, "accompagnement_id");
   assertEqual(enrollment.client_id, IDS.clientProfile, "client_id");
 
   const payment = await one("payments", "stripe_payment_intent_id", PI.formation);
@@ -162,12 +162,12 @@ const scenarioEvent = async () => {
   assertEqual(status, 200, "status webhook");
 
   const registration = await one(
-    "event_registrations",
+    "formation_registrations",
     "stripe_payment_intent_id",
     PI.event,
   );
-  assert(registration, "aucune event_registrations creee");
-  assertEqual(registration.status, "registered", "event_registrations.status");
+  assert(registration, "aucune formation_registrations creee");
+  assertEqual(registration.status, "registered", "formation_registrations.status");
 };
 
 const scenarioPaymentIntentSucceeded = async () => {

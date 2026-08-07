@@ -15,7 +15,7 @@ import {
 
 export type TimelineEntry = {
   id: string;
-  type: "booking" | "enrollment" | "payment" | "event" | "audit";
+  type: "booking" | "enrollment" | "payment" | "formation" | "audit";
   title: string;
   subtitle?: string;
   date: string;
@@ -26,7 +26,7 @@ const ICON_MAP = {
   booking: CalendarDays,
   enrollment: BookOpen,
   payment: CreditCard,
-  event: Calendar,
+  formation: Calendar,
   audit: Shield,
 };
 
@@ -34,7 +34,7 @@ const TYPE_LABEL: Record<string, string> = {
   booking: "Réservation",
   enrollment: "Accompagnement",
   payment: "Paiement",
-  event: "Formation",
+  formation: "Formation",
   audit: "Action",
 };
 
@@ -42,7 +42,7 @@ const TYPE_COLOR: Record<string, string> = {
   booking: "bg-blue-100 text-blue-700",
   enrollment: "bg-purple-100 text-purple-700",
   payment: "bg-green-100 text-green-700",
-  event: "bg-orange-100 text-orange-700",
+  formation: "bg-orange-100 text-orange-700",
   audit: "bg-gray-100 text-gray-700",
 };
 

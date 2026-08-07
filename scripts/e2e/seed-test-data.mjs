@@ -154,8 +154,8 @@ export const seed = async () => {
   );
 
   check(
-    "formations (accompagnement en ligne)",
-    await supabase.from("formations").upsert(
+    "accompagnements (accompagnement en ligne)",
+    await supabase.from("accompagnements").upsert(
       {
         id: IDS.formation,
         consultant_id: IDS.consultantProfile,
@@ -193,8 +193,8 @@ export const seed = async () => {
   const eventEnd = new Date(eventStart.getTime() + 90 * 60 * 1000);
 
   check(
-    "events",
-    await supabase.from("events").upsert(
+    "formations",
+    await supabase.from("formations").upsert(
       {
         id: IDS.event,
         consultant_id: IDS.consultantProfile,

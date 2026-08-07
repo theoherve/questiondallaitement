@@ -101,7 +101,7 @@ async function uploadImages(events) {
 
     const fileBuffer = readFileSync(fullPath);
     const { error } = await supabase.storage
-      .from("formations")
+      .from("accompagnements")
       .upload(storagePath, fileBuffer, { contentType, upsert: true });
 
     if (error) {
@@ -204,7 +204,7 @@ async function importEvents(events, imageMap) {
     }
 
     const { error } = await supabase
-      .from("events")
+      .from("formations")
       .upsert(eventData, { onConflict: "slug" });
 
     if (error) {

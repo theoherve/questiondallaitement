@@ -54,7 +54,7 @@ export const generateRecurringFormations = async (): Promise<{
 
       // Check if already generated (idempotent)
       const { data: existing } = await supabase
-        .from("events")
+        .from("formations")
         .select("id")
         .eq("recurring_definition_id", def.id)
         .eq("occurrence_date", occDateStr)
@@ -77,7 +77,7 @@ export const generateRecurringFormations = async (): Promise<{
 
       const slug = `${def.slug_prefix}-${occDateStr}`;
 
-      const { error } = await supabase.from("events").insert({
+      const { error } = await supabase.from("formations").insert({
         consultant_id: def.consultant_id,
         title: def.title,
         slug,

@@ -21,7 +21,7 @@ type AccompagnementShape = {
   slug: string;
   short_description: string | null;
   thumbnail_url: string | null;
-  formation_sections: { formation_blocks: { id: string }[] }[];
+  accompagnement_sections: { accompagnement_blocks: { id: string }[] }[];
 };
 
 const ClientAccompagnementsPage = async ({
@@ -32,19 +32,19 @@ const ClientAccompagnementsPage = async ({
   const { supabase, user } = await getSupabaseAndUser();
 
   const { data: enrollments } = await supabase
-    .from("formation_enrollments")
+    .from("accompagnement_enrollments")
     .select(
       `
       id,
       enrolled_at,
-      formations (
+      accompagnements (
         id,
         title,
         slug,
         short_description,
         thumbnail_url,
-        formation_sections (
-          formation_blocks (
+        accompagnement_sections (
+          accompagnement_blocks (
             id
           )
         )
@@ -59,7 +59,7 @@ const ClientAccompagnementsPage = async ({
   const { data: progressData } =
     enrollmentIds.length > 0
       ? await supabase
-          .from("formation_progress")
+          .from("accompagnement_progress")
           .select("enrollment_id, block_id, completed")
           .in("enrollment_id", enrollmentIds)
       : { data: [] };
@@ -77,7 +77,7 @@ const ClientAccompagnementsPage = async ({
   const { purchased } = await searchParams;
   const enrolledAccompagnementIds = new Set(
     (enrollments ?? []).map(
-      (e) => (e.formations as unknown as AccompagnementShape | null)?.id
+      (e) => (e.accompagnements as unknown as AccompagnementShape | null)?.id
     )
   );
   const awaitingPurchase =
@@ -108,12 +108,12 @@ const ClientAccompagnementsPage = async ({
       {enrollments && enrollments.length > 0 ? (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {enrollments.map((enrollment) => {
-            const accompagnement = enrollment.formations as unknown as AccompagnementShape | null;
+            const accompagnement = enrollment.accompagnements as unknown as AccompagnementShape | null;
 
             if (!accompagnement) return null;
 
-            const totalBlocks = accompagnement.formation_sections.reduce(
-              (acc, s) => acc + s.formation_blocks.length,
+            const totalBlocks = accompagnement.accompagnement_sections.reduce(
+              (acc, s) => acc + s.accompagnement_blocks.length,
               0
             );
             const completedBlocks =

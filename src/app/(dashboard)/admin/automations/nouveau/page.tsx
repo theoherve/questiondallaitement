@@ -29,7 +29,7 @@ const NewWorkflowPage = async () => {
     <WorkflowForm
       labels={labels}
       recurringDefinitions={recurringDefs}
-      formations={formations}
+      accompagnements={formations}
       emailTemplates={emailTemplates}
     />
   );

@@ -82,7 +82,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
         is_online,
         is_active
       ),
-      formations (
+      accompagnements (
         id,
         title,
         slug,
@@ -127,7 +127,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
   ).filter((ct) => ct.is_active);
 
   const formations = (
-    consultant.formations as unknown as {
+    consultant.accompagnements as unknown as {
       id: string;
       title: string;
       slug: string;

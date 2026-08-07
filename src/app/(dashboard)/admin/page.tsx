@@ -84,7 +84,7 @@ const AdminDashboardPage = async () => {
     // Payment alerts
     pendingPaymentsRes,
     failedPaymentsRes,
-    // Top formations (30d)
+    // Top accompagnements (30d)
     topFormationsPaymentsRes,
   ] = await Promise.all([
     // Current 30d clients
@@ -108,7 +108,7 @@ const AdminDashboardPage = async () => {
       .gte("created_at", thirtyDaysAgo.toISOString()),
     // Current 30d enrollments
     supabase
-      .from("formation_enrollments")
+      .from("accompagnement_enrollments")
       .select("id", { count: "exact", head: true })
       .gte("created_at", thirtyDaysAgo.toISOString()),
     // Prev 30d clients
@@ -141,7 +141,7 @@ const AdminDashboardPage = async () => {
       .is("deleted_at", null),
     // Published formations
     supabase
-      .from("formations")
+      .from("accompagnements")
       .select("id", { count: "exact", head: true })
       .eq("status", "published")
       .is("deleted_at", null),
@@ -198,7 +198,7 @@ const AdminDashboardPage = async () => {
     supabase
       .from("payments")
       .select("reference_id, amount_cents")
-      .eq("type", "formation")
+      .eq("type", "accompagnement")
       .eq("status", "succeeded")
       .gte("created_at", thirtyDaysAgo.toISOString()),
   ]);
@@ -363,7 +363,7 @@ const AdminDashboardPage = async () => {
     withAvailabilities: uniqueWithAvail.size,
   };
 
-  // ── Top formations (30d) ──────────────────────────────────
+  // ── Top accompagnements (30d) ──────────────────────────────────
   const formationRevenueMap = new Map<string, number>();
   for (const p of topFormationsPaymentsRes.data ?? []) {
     if (!p.reference_id) continue;
@@ -379,7 +379,7 @@ const AdminDashboardPage = async () => {
   let topFormationsData: { name: string; value: number }[] = [];
   if (topFormationIds.length > 0) {
     const { data: formations } = await supabase
-      .from("formations")
+      .from("accompagnements")
       .select("id, title")
       .in(
         "id",

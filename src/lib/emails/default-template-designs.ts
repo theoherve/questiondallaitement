@@ -358,7 +358,7 @@ export const DESIGN_FORMATION_ACCESS = doc([
         {
           label: "Votre accompagnement :",
           value: [
-            { ...variable("formation_title"), marks: [{ type: "bold" }] },
+            { ...variable("accompagnement_title"), marks: [{ type: "bold" }] },
           ],
         },
       ]),
@@ -375,7 +375,7 @@ export const DESIGN_FORMATION_ACCESS = doc([
         text("• Le soutien bienveillant de consultantes IBCLC"),
       ]),
       spacer(24),
-      button("J'accède à mon accompagnement", "{{formation_url}}"),
+      button("J'accède à mon accompagnement", "{{accompagnement_url}}"),
       spacer(12),
       paragraph(
         [
@@ -383,12 +383,12 @@ export const DESIGN_FORMATION_ACCESS = doc([
             "Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur : ",
             [{ type: "italic" }],
           ),
-          text("{{formation_url}}", [
+          text("{{accompagnement_url}}", [
             { type: "italic" },
             {
               type: "link",
               attrs: {
-                href: "{{formation_url}}",
+                href: "{{accompagnement_url}}",
                 target: "_blank",
                 rel: "noopener noreferrer",
               },
@@ -664,7 +664,7 @@ export const DEFAULT_TEMPLATE_DESIGNS: Record<string, Node> = {
   booking_confirmation: DESIGN_BOOKING_CONFIRMATION,
   booking_reminder: DESIGN_BOOKING_REMINDER,
   booking_cancelled: DESIGN_BOOKING_CANCELLED,
-  formation_access: DESIGN_FORMATION_ACCESS,
+  accompagnement_access: DESIGN_FORMATION_ACCESS,
   welcome: DESIGN_WELCOME,
   password_reset: DESIGN_PASSWORD_RESET,
   migration_welcome: DESIGN_MIGRATION_WELCOME,
@@ -684,8 +684,8 @@ export const TEMPLATE_DEFAULT_SUBJECTS: Record<string, string> = {
   booking_confirmation: "Votre réservation est confirmée — {{date}}",
   booking_reminder: "Rappel : votre consultation demain à {{time}}",
   booking_cancelled: "Votre réservation du {{date}} a été annulée",
-  formation_access:
-    "Votre accompagnement « {{formation_title}} » est disponible",
+  accompagnement_access:
+    "Votre accompagnement « {{accompagnement_title}} » est disponible",
   welcome: "Bienvenue sur Question d'Allaitement",
   newsletter_welcome: "Bienvenue — votre mémo est à l'intérieur",
   password_reset: "Réinitialisation de votre mot de passe",
@@ -706,7 +706,7 @@ export const TEMPLATE_DEFAULT_VARIABLES: Record<string, string[]> = {
   ],
   booking_reminder: ["client_name", "consultant_name", "time"],
   booking_cancelled: ["client_name", "date", "refund_info"],
-  formation_access: ["client_name", "formation_title", "formation_url"],
+  accompagnement_access: ["client_name", "accompagnement_title", "accompagnement_url"],
   welcome: ["client_name", "dashboard_url"],
   // memo_block et unsubscribe_link portent du HTML construit par le code : les
   // omettre ici les retirerait de la liste proposee dans l'editeur, et Carole

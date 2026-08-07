@@ -78,7 +78,7 @@ export const loadTriggeringPurchases = async (
     .select("type, reference_id, created_at")
     .eq("client_id", profileId)
     .eq("status", "succeeded")
-    .in("type", ["event", "formation"])
+    .in("type", ["formation", "accompagnement"])
     .gte("created_at", new Date(sinceMs).toISOString());
 
   return (data ?? []).map((row) => ({

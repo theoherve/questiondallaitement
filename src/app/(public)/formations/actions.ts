@@ -15,7 +15,7 @@ import type { ActionResult } from "@/types";
 /**
  * L'inscription a une formation payante est ecrite par le webhook Stripe
  * `checkout.session.completed`, livre en asynchrone. Au retour du paiement, la
- * ligne `event_registrations` peut ne pas encore exister : cette action permet
+ * ligne `formation_registrations` peut ne pas encore exister : cette action permet
  * a l'ilot client de sonder son apparition sans recharger toute la page.
  */
 export const hasFormationRegistration = async (
@@ -26,9 +26,9 @@ export const hasFormationRegistration = async (
 
   const supabase = createAdminClient();
   const { data } = await supabase
-    .from("event_registrations")
+    .from("formation_registrations")
     .select("id")
-    .eq("event_id", formationId)
+    .eq("formation_id", formationId)
     .eq("client_id", user.id)
     .eq("status", "registered")
     .maybeSingle();
@@ -52,10 +52,10 @@ export const registerForFormation = async (
 
   // Check if already registered
   const { data: existing } = await supabase
-    .from("event_registrations")
+    .from("formation_registrations")
     .select("id")
     .eq("client_id", user.id)
-    .eq("event_id", formationId)
+    .eq("formation_id", formationId)
     .eq("status", "registered")
     .single();
 
@@ -68,7 +68,7 @@ export const registerForFormation = async (
 
   // Load formation
   const { data: formation } = await supabase
-    .from("events")
+    .from("formations")
     .select(
       "id, title, description, price_cents, currency, consultant_id, is_published, max_participants, slug",
     )
@@ -83,9 +83,9 @@ export const registerForFormation = async (
   // Check available spots (16-06)
   if (formation.max_participants) {
     const { count } = await supabase
-      .from("event_registrations")
+      .from("formation_registrations")
       .select("*", { count: "exact", head: true })
-      .eq("event_id", formationId)
+      .eq("formation_id", formationId)
       .eq("status", "registered");
 
     if ((count ?? 0) >= formation.max_participants) {
@@ -95,14 +95,14 @@ export const registerForFormation = async (
 
   // Free formation → direct registration
   if (formation.price_cents === 0) {
-    const { error } = await supabase.from("event_registrations").upsert(
+    const { error } = await supabase.from("formation_registrations").upsert(
       {
         client_id: user.id,
-        event_id: formationId,
+        formation_id: formationId,
         stripe_payment_intent_id: null,
         status: "registered",
       },
-      { onConflict: "event_id,client_id" },
+      { onConflict: "formation_id,client_id" },
     );
 
     if (error) {
@@ -140,12 +140,12 @@ export const registerForFormation = async (
   const promo = promoCode?.trim()
     ? await resolvePromoForPurchase({
         code: promoCode,
-        serviceKind: "event",
+        serviceKind: "formation",
         itemId: formation.id,
         amountCents: formation.price_cents,
         profileId: user.id,
         reserve: true,
-        orderKind: "event",
+        orderKind: "formation",
         referenceId: formation.id,
       })
     : null;
@@ -159,14 +159,14 @@ export const registerForFormation = async (
   // Remise totale : Stripe refuse une session a zero, et il n'y a rien a
   // encaisser. Meme traitement que la formation gratuite, plus haut.
   if (chargedCents === 0) {
-    const { error } = await supabase.from("event_registrations").upsert(
+    const { error } = await supabase.from("formation_registrations").upsert(
       {
         client_id: user.id,
-        event_id: formationId,
+        formation_id: formationId,
         stripe_payment_intent_id: null,
         status: "registered",
       },
-      { onConflict: "event_id,client_id" },
+      { onConflict: "formation_id,client_id" },
     );
 
     if (error) {
@@ -191,7 +191,7 @@ export const registerForFormation = async (
       productDescription: formation.description ?? undefined,
       customerEmail: user.email,
       metadata: {
-        type: "event",
+        type: "formation",
         reference_id: formation.id,
         client_id: user.id,
         consultant_id: formation.consultant_id,

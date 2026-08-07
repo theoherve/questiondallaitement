@@ -168,7 +168,7 @@ const [{ data: posts, error: e1 }, { data: cats, error: e2 }, { data: formations
   await Promise.all([
     db.from("blog_posts").select("id, slug, title, excerpt, body_html, meta_description, category_id"),
     db.from("blog_categories").select("id, slug, name"),
-    db.from("formations").select("slug, thumbnail_url"),
+    db.from("accompagnements").select("slug, thumbnail_url"),
   ]);
 for (const e of [e1, e2, e3]) if (e) { console.error("❌", e.message); process.exit(1); }
 

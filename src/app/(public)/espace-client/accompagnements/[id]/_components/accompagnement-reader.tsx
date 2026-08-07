@@ -34,7 +34,7 @@ type Section = {
   id: string;
   title: string;
   position: number;
-  formation_blocks: Block[];
+  accompagnement_blocks: Block[];
 };
 
 type AccompagnementReaderProps = {
@@ -89,8 +89,8 @@ export const AccompagnementReader = ({
       sections.map((section) => ({
         id: section.id,
         title: section.title,
-        total: section.formation_blocks.length,
-        done: section.formation_blocks.filter((b) => completedIds.has(b.id))
+        total: section.accompagnement_blocks.length,
+        done: section.accompagnement_blocks.filter((b) => completedIds.has(b.id))
           .length,
       })),
     [sections, completedIds]
@@ -117,16 +117,16 @@ export const AccompagnementReader = ({
     }
 
     const section = sections.find((s) =>
-      s.formation_blocks.some((b) => b.id === blockId)
+      s.accompagnement_blocks.some((b) => b.id === blockId)
     );
     if (section) {
       const sectionDoneNow =
-        section.formation_blocks.filter(
+        section.accompagnement_blocks.filter(
           (b) => b.id === blockId || completedIds.has(b.id)
         ).length;
       if (
-        section.formation_blocks.length > 0 &&
-        sectionDoneNow === section.formation_blocks.length
+        section.accompagnement_blocks.length > 0 &&
+        sectionDoneNow === section.accompagnement_blocks.length
       ) {
         toast.success(`Section « ${section.title} » terminée`, {
           description: "Une étape de plus derrière vous.",
@@ -296,15 +296,15 @@ export const AccompagnementReader = ({
                   </span>
                 </div>
 
-                {currentSection.formation_blocks.length > 0 ? (
+                {currentSection.accompagnement_blocks.length > 0 ? (
                   <div>
-                    {currentSection.formation_blocks.map((block, idx) => (
+                    {currentSection.accompagnement_blocks.map((block, idx) => (
                       <BlockStep
                         key={block.id}
                         blockId={block.id}
                         accompagnementId={accompagnement.id}
                         index={idx}
-                        total={currentSection.formation_blocks.length}
+                        total={currentSection.accompagnement_blocks.length}
                         isCompleted={completedIds.has(block.id)}
                       >
                         <div className="rounded-2xl border border-border/50 bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
@@ -333,7 +333,7 @@ export const AccompagnementReader = ({
                             </div>
                             <span className="text-xs text-muted-foreground">
                               Étape {idx + 1} sur{" "}
-                              {currentSection.formation_blocks.length}
+                              {currentSection.accompagnement_blocks.length}
                             </span>
                           </div>
                         </div>

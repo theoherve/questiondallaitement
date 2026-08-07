@@ -50,7 +50,7 @@ export type FormationData = {
   provider: { name: string; logo_url: string | null } | null;
 };
 
-type FormationCategory = "all" | "formation" | "masterclass" | "atelier" | "conference" | "live" | "autre";
+type FormationCategory = "all" | "accompagnement" | "masterclass" | "atelier" | "conference" | "live" | "autre";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -69,7 +69,7 @@ const formatPrice = (cents: number, currency: string): string => {
 
 const categorizeFormation = (title: string): { category: Exclude<FormationCategory, "all">; label: string; color: string } => {
   const t = title.toLowerCase();
-  if (t.startsWith("formation")) return { category: "formation", label: "Formation", color: "bg-primary-red text-white" };
+  if (t.startsWith("accompagnement")) return { category: "accompagnement", label: "Formation", color: "bg-primary-red text-white" };
   if (t.startsWith("masterclass")) return { category: "masterclass", label: "Masterclass", color: "bg-amber-600 text-white" };
   if (t.startsWith("atelier")) return { category: "atelier", label: "Atelier", color: "bg-primary-green text-white" };
   if (t.includes("conférence") || t.includes("conference")) return { category: "conference", label: "Conférence", color: "bg-blue-700 text-white" };
@@ -98,7 +98,7 @@ const PAST_INITIAL_VISIBLE = 3;
 
 const CATEGORY_FILTERS: { value: FormationCategory; label: string }[] = [
   { value: "all", label: "Tout" },
-  { value: "formation", label: "Formations" },
+  { value: "accompagnement", label: "Formations" },
   { value: "masterclass", label: "Masterclass" },
   { value: "atelier", label: "Ateliers" },
   { value: "conference", label: "Conférences" },
@@ -122,7 +122,7 @@ export const FormationsList = ({
   const [showPast, setShowPast] = useState(false);
   const [showAllPast, setShowAllPast] = useState(false);
 
-  // Build a set of dates that have events (for calendar highlighting)
+  // Build a set of dates that have formations (for calendar highlighting)
   const formationDates = useMemo(() => {
     return upcomingFormations.map((e) => startOfDay(new Date(e.starts_at)));
   }, [upcomingFormations]);

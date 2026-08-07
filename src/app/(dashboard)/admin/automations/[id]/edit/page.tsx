@@ -46,7 +46,7 @@ const EditWorkflowPage = async ({ params }: Props) => {
         workflow={workflow}
         labels={labels}
         recurringDefinitions={recurringDefs}
-        formations={formations}
+        accompagnements={formations}
         emailTemplates={emailTemplates}
       />
       <WorkflowLogs logs={logs} scheduledActions={scheduledActions} />

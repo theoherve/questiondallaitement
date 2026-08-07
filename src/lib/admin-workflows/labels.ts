@@ -23,10 +23,10 @@ export const autoAssignLabelsOnEnrollment = async (
 
   for (const label of labels) {
     const rule = label.auto_assign_rule as AutoAssignRule | null;
-    if (!rule || rule.trigger !== "formation_enrolled") continue;
+    if (!rule || rule.trigger !== "accompagnement_enrolled") continue;
 
-    // No formation_ids = any formation triggers this label
-    if (!rule.formation_ids?.length || rule.formation_ids.includes(formationId)) {
+    // No accompagnement_ids = any formation triggers this label
+    if (!rule.accompagnement_ids?.length || rule.accompagnement_ids.includes(formationId)) {
       labelsToAssign.push(label.id);
     }
   }
@@ -64,7 +64,7 @@ const scheduleCatchUpActions = async (
     .from("admin_workflows")
     .select("id, trigger_type, trigger_config, audience_config")
     .eq("is_active", true)
-    .eq("trigger_type", "recurring_event");
+    .eq("trigger_type", "recurring_formation");
 
   if (!workflows?.length) return;
 
@@ -85,7 +85,7 @@ const scheduleCatchUpActions = async (
 
     // Find future formations for this recurring definition
     const { data: futureFormations } = await supabase
-      .from("events")
+      .from("formations")
       .select("id, occurrence_date")
       .eq("recurring_definition_id", triggerConfig.recurring_definition_id)
       .gte("starts_at", now.toISOString());
@@ -123,7 +123,7 @@ const scheduleCatchUpActions = async (
             workflow_id: workflow.id,
             step_id: step.id,
             profile_id: profileId,
-            anchor_event_id: formation.id,
+            anchor_formation_id: formation.id,
             scheduled_for: scheduledFor,
             status: "pending",
           });

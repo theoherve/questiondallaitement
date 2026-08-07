@@ -76,7 +76,7 @@ export const EmailStepEditor = ({
         <Input
           value={subject}
           onChange={(e) => onSubjectChange(e.target.value)}
-          placeholder="Rappel - {{event_title}}"
+          placeholder="Rappel - {{formation_title}}"
         />
       </div>
 

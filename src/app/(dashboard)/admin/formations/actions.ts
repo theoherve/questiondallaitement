@@ -28,7 +28,7 @@ export const createFormation = async (
 
   const supabase = createAdminClient();
   const { data: formation, error } = await supabase
-    .from("events")
+    .from("formations")
     .insert({
       title: parsed.data.title,
       slug: parsed.data.slug,
@@ -83,13 +83,13 @@ export const updateFormation = async (
   const supabase = createAdminClient();
 
   const { data: currentFormation } = await supabase
-    .from("events")
+    .from("formations")
     .select("slug")
     .eq("id", id)
     .single();
 
   const { error } = await supabase
-    .from("events")
+    .from("formations")
     .update({
       title: parsed.data.title,
       slug: parsed.data.slug,
@@ -143,7 +143,7 @@ export const toggleFormationPublish = async (
   const supabase = createAdminClient();
 
   const { error } = await supabase
-    .from("events")
+    .from("formations")
     .update({ is_published: isPublished, updated_at: new Date().toISOString() })
     .eq("id", id);
 
@@ -165,9 +165,9 @@ export const deleteFormation = async (id: string): Promise<ActionResult> => {
 
   // Check if there are registrations
   const { count } = await supabase
-    .from("event_registrations")
+    .from("formation_registrations")
     .select("*", { count: "exact", head: true })
-    .eq("event_id", id);
+    .eq("formation_id", id);
 
   if (count && count > 0) {
     return {
@@ -176,7 +176,7 @@ export const deleteFormation = async (id: string): Promise<ActionResult> => {
     };
   }
 
-  const { error } = await supabase.from("events").delete().eq("id", id);
+  const { error } = await supabase.from("formations").delete().eq("id", id);
 
   if (error) {
     return { success: false, error: "Erreur lors de la suppression" };
@@ -194,9 +194,9 @@ export const getFormationRegistrationsCount = async (
 ): Promise<number> => {
   const supabase = createAdminClient();
   const { count } = await supabase
-    .from("event_registrations")
+    .from("formation_registrations")
     .select("*", { count: "exact", head: true })
-    .eq("event_id", formationId)
+    .eq("formation_id", formationId)
     .eq("status", "registered");
 
   return count ?? 0;

@@ -88,8 +88,8 @@ const UserDetailPage = async ({ params }: Props) => {
       .eq("client_id", id)
       .order("starts_at", { ascending: false }),
     supabase
-      .from("formation_enrollments")
-      .select("id, enrolled_at, formation_id, formations(title, status)")
+      .from("accompagnement_enrollments")
+      .select("id, enrolled_at, accompagnement_id, accompagnements(title, status)")
       .eq("client_id", id)
       .order("enrolled_at", { ascending: false }),
     supabase
@@ -100,8 +100,8 @@ const UserDetailPage = async ({ params }: Props) => {
       .eq("client_id", id)
       .order("created_at", { ascending: false }),
     supabase
-      .from("event_registrations")
-      .select("id, registered_at, status, events(title, starts_at, type)")
+      .from("formation_registrations")
+      .select("id, registered_at, status, formations(title, starts_at, type)")
       .eq("client_id", id)
       .order("registered_at", { ascending: false }),
     supabase
@@ -136,14 +136,14 @@ const UserDetailPage = async ({ params }: Props) => {
   let enrollmentsWithProgress: {
     id: string;
     enrolled_at: string;
-    formations: { title: string; status: string } | null;
+    accompagnements: { title: string; status: string } | null;
     progress_pct: number;
   }[] = [];
 
   if (enrollments.length > 0) {
     const enrollmentIds = enrollments.map((e) => e.id);
     const { data: progressData } = await supabase
-      .from("formation_progress")
+      .from("accompagnement_progress")
       .select("enrollment_id, completed")
       .in("enrollment_id", enrollmentIds);
 
@@ -170,7 +170,7 @@ const UserDetailPage = async ({ params }: Props) => {
       return {
         id: e.id,
         enrolled_at: e.enrolled_at,
-        formations: e.formations as unknown as { title: string; status: string } | null,
+        accompagnements: e.accompagnements as unknown as { title: string; status: string } | null,
         progress_pct: pct,
       };
     });
@@ -210,7 +210,7 @@ const UserDetailPage = async ({ params }: Props) => {
     id: r.id,
     registered_at: r.registered_at,
     status: r.status,
-    events: r.events as unknown as {
+    formations: r.formations as unknown as {
       title: string;
       starts_at: string;
       type: string;
@@ -271,7 +271,7 @@ const UserDetailPage = async ({ params }: Props) => {
     timeline.push({
       id: e.id,
       type: "enrollment",
-      title: e.formations?.title ?? "Accompagnement",
+      title: e.accompagnements?.title ?? "Accompagnement",
       subtitle: `Progression: ${e.progress_pct}%`,
       date: e.enrolled_at,
     });
@@ -295,8 +295,8 @@ const UserDetailPage = async ({ params }: Props) => {
   for (const r of registrations) {
     timeline.push({
       id: r.id,
-      type: "event",
-      title: r.events?.title ?? "Formation",
+      type: "formation",
+      title: r.formations?.title ?? "Formation",
       date: r.registered_at,
       status: r.status,
     });
@@ -417,7 +417,7 @@ const UserDetailPage = async ({ params }: Props) => {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="formations">
+          <TabsTrigger value="accompagnements">
             <BookOpen className="mr-1.5 h-4 w-4" />
             Accompagnements
             {enrollmentsWithProgress.length > 0 && (
@@ -430,7 +430,7 @@ const UserDetailPage = async ({ params }: Props) => {
             <CreditCard className="mr-1.5 h-4 w-4" />
             Paiements
           </TabsTrigger>
-          <TabsTrigger value="formations">
+          <TabsTrigger value="accompagnements">
             <Calendar className="mr-1.5 h-4 w-4" />
             Événements
           </TabsTrigger>
@@ -469,7 +469,7 @@ const UserDetailPage = async ({ params }: Props) => {
           <TabReservations bookings={bookings} />
         </TabsContent>
 
-        <TabsContent value="formations">
+        <TabsContent value="accompagnements">
           <TabAccompagnements enrollments={enrollmentsWithProgress} userId={id} />
         </TabsContent>
 
@@ -477,7 +477,7 @@ const UserDetailPage = async ({ params }: Props) => {
           <TabPaiements payments={payments} />
         </TabsContent>
 
-        <TabsContent value="formations">
+        <TabsContent value="accompagnements">
           <TabFormations registrations={registrations} />
         </TabsContent>
 

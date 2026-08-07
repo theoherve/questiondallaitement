@@ -203,7 +203,7 @@ const main = async () => {
   }
 
   const { data: existing } = await supabase
-    .from("events")
+    .from("formations")
     .select("slug")
     .in("slug", events.map((e) => e.slug));
   const existingSlugs = new Set((existing ?? []).map((e) => e.slug));
@@ -225,7 +225,7 @@ const main = async () => {
   }
   if (toInsert.length === 0) return;
 
-  const { error } = await supabase.from("events").insert(toInsert);
+  const { error } = await supabase.from("formations").insert(toInsert);
   if (error) {
     console.error("Insertion echouee :", error.message);
     process.exit(1);

@@ -42,13 +42,13 @@ type PromoCodeFormProps = {
     targets: TargetDraft[];
     triggers: TriggerDraft[];
   };
+  accompagnements: Option[];
   formations: Option[];
-  events: Option[];
   consultationTypes: Option[];
 };
 
 /** Types de cible exigeant le choix d'un item precis. */
-const ITEM_TARGET_TYPES = ["formation", "event", "booking_service"];
+const ITEM_TARGET_TYPES = ["accompagnement", "formation", "booking_service"];
 
 /** `datetime-local` ne comprend pas l'ISO complet avec fuseau. */
 const toLocalInput = (iso: string | null): string =>
@@ -59,8 +59,8 @@ const fromLocalInput = (value: string): string | null =>
 
 export const PromoCodeForm = ({
   initial,
+  accompagnements,
   formations,
-  events,
   consultationTypes,
 }: PromoCodeFormProps) => {
   const router = useRouter();
@@ -105,14 +105,14 @@ export const PromoCodeForm = ({
   );
   const [isActive, setIsActive] = useState(initial?.is_active ?? true);
 
-  const [draftTargetType, setDraftTargetType] = useState("formations_all");
+  const [draftTargetType, setDraftTargetType] = useState("accompagnements_all");
   const [draftTargetId, setDraftTargetId] = useState("");
-  const [draftTriggerType, setDraftTriggerType] = useState("event_purchase");
+  const [draftTriggerType, setDraftTriggerType] = useState("formation_purchase");
   const [draftTriggerId, setDraftTriggerId] = useState("");
 
   const optionsFor = (targetType: string): Option[] => {
+    if (targetType === "accompagnement") return accompagnements;
     if (targetType === "formation") return formations;
-    if (targetType === "event") return formations;
     if (targetType === "booking_service") return consultationTypes;
     return [];
   };
@@ -450,9 +450,9 @@ export const PromoCodeForm = ({
                   <SelectValue placeholder="N'importe lequel" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(draftTriggerType === "event_purchase"
-                    ? events
-                    : formations
+                  {(draftTriggerType === "formation_purchase"
+                    ? formations
+                    : accompagnements
                   ).map((option) => (
                     <SelectItem key={option.id} value={option.id}>
                       {option.title}

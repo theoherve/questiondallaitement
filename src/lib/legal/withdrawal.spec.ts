@@ -45,8 +45,8 @@ describe("textes de renonciation", () => {
 
   it("couvre les deux cas prevus par le code de la consommation", () => {
     expect(Object.keys(WITHDRAWAL_TEXTS).sort()).toEqual([
+      "accompagnement",
       "booking",
-      "formation",
     ]);
   });
 
@@ -59,7 +59,7 @@ describe("textes de renonciation", () => {
   it("recueille consentement et renonciation pour un contenu immediat", () => {
     // L221-28 13° : acces immediat, donc consentement prealable *et*
     // renonciation explicite.
-    expect(WITHDRAWAL_TEXTS.formation).toMatch(/imm(é|e)diatement/i);
-    expect(WITHDRAWAL_TEXTS.formation).toMatch(/renonce/i);
+    expect(WITHDRAWAL_TEXTS.accompagnement).toMatch(/imm(é|e)diatement/i);
+    expect(WITHDRAWAL_TEXTS.accompagnement).toMatch(/renonce/i);
   });
 });

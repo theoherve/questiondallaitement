@@ -20,10 +20,10 @@ import {
 import { AutomationFormDialog } from "./automation-form-dialog";
 
 const TRIGGER_LABELS: Record<string, string> = {
-  formation_purchased: "Achat formation",
+  accompagnement_purchased: "Achat formation",
   booking_confirmed: "Réservation confirmée",
-  event_registered: "Inscription formation",
-  delay_after_event: "Jours après formation",
+  formation_registered: "Inscription formation",
+  delay_after_formation: "Jours après formation",
 };
 
 type Automation = {
@@ -36,9 +36,9 @@ type Automation = {
 };
 
 type FormOptions = {
-  formations: { id: string; title: string }[];
+  accompagnements: { id: string; title: string }[];
   consultationTypes: { id: string; title: string }[];
-  events: { id: string; title: string }[];
+  formations: { id: string; title: string }[];
   tags: { id: string; name: string }[];
 };
 

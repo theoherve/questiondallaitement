@@ -30,7 +30,7 @@ const makeCode = (
 });
 
 const makeContext = (overrides: Partial<PromoContext> = {}): PromoContext => ({
-  serviceKind: "formation",
+  serviceKind: "accompagnement",
   itemId: "formation-1",
   amountCents: 10_000,
   nowMs: NOW,
@@ -109,9 +109,9 @@ describe("evaluatePromoCode", () => {
     const result = evaluatePromoCode(
       makeCode({
         scope_all: false,
-        targets: [{ target_type: "events_all", target_id: null }],
+        targets: [{ target_type: "formations_all", target_id: null }],
       }),
-      makeContext({ serviceKind: "event", itemId: "formation-1" }),
+      makeContext({ serviceKind: "formation", itemId: "formation-1" }),
     );
     expect(result).toMatchObject({ ok: true });
   });
@@ -120,9 +120,9 @@ describe("evaluatePromoCode", () => {
     const result = evaluatePromoCode(
       makeCode({
         scope_all: false,
-        targets: [{ target_type: "events_all", target_id: null }],
+        targets: [{ target_type: "formations_all", target_id: null }],
       }),
-      makeContext({ serviceKind: "formation" }),
+      makeContext({ serviceKind: "accompagnement" }),
     );
     expect(result).toEqual({ ok: false, reason: "not_applicable" });
   });
@@ -131,7 +131,7 @@ describe("evaluatePromoCode", () => {
     const result = evaluatePromoCode(
       makeCode({
         scope_all: false,
-        targets: [{ target_type: "formation", target_id: "formation-pack" }],
+        targets: [{ target_type: "accompagnement", target_id: "formation-pack" }],
       }),
       makeContext({ itemId: "formation-pack" }),
     );
@@ -142,7 +142,7 @@ describe("evaluatePromoCode", () => {
     const result = evaluatePromoCode(
       makeCode({
         scope_all: false,
-        targets: [{ target_type: "formation", target_id: "formation-pack" }],
+        targets: [{ target_type: "accompagnement", target_id: "formation-pack" }],
       }),
       makeContext({ itemId: "formation-autre" }),
     );
@@ -200,7 +200,7 @@ describe("evaluatePromoCode", () => {
     const result = evaluatePromoCode(
       makeCode({
         trigger_delay_hours: 48,
-        triggers: [{ trigger_type: "event_purchase", target_id: null }],
+        triggers: [{ trigger_type: "formation_purchase", target_id: null }],
       }),
       makeContext(),
     );
@@ -211,11 +211,11 @@ describe("evaluatePromoCode", () => {
     const result = evaluatePromoCode(
       makeCode({
         trigger_delay_hours: 48,
-        triggers: [{ trigger_type: "event_purchase", target_id: null }],
+        triggers: [{ trigger_type: "formation_purchase", target_id: null }],
       }),
       makeContext({
         triggeringPurchases: [
-          { kind: "event", itemId: "formation-1", purchasedAtMs: NOW - 49 * HOUR },
+          { kind: "formation", itemId: "formation-1", purchasedAtMs: NOW - 49 * HOUR },
         ],
       }),
     );
@@ -228,11 +228,11 @@ describe("evaluatePromoCode", () => {
         discount_type: "fixed_cents",
         discount_value: 2000,
         trigger_delay_hours: 48,
-        triggers: [{ trigger_type: "event_purchase", target_id: null }],
+        triggers: [{ trigger_type: "formation_purchase", target_id: null }],
       }),
       makeContext({
         triggeringPurchases: [
-          { kind: "event", itemId: "formation-1", purchasedAtMs: NOW - 47 * HOUR },
+          { kind: "formation", itemId: "formation-1", purchasedAtMs: NOW - 47 * HOUR },
         ],
       }),
     );
@@ -243,11 +243,11 @@ describe("evaluatePromoCode", () => {
     const result = evaluatePromoCode(
       makeCode({
         trigger_delay_hours: 48,
-        triggers: [{ trigger_type: "event_purchase", target_id: "formation-cible" }],
+        triggers: [{ trigger_type: "formation_purchase", target_id: "formation-cible" }],
       }),
       makeContext({
         triggeringPurchases: [
-          { kind: "event", itemId: "formation-autre", purchasedAtMs: NOW - HOUR },
+          { kind: "formation", itemId: "formation-autre", purchasedAtMs: NOW - HOUR },
         ],
       }),
     );

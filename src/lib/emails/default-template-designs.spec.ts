@@ -24,9 +24,9 @@ const REQUIRED_PLACEHOLDERS: Record<string, string[]> = {
   booking_confirmation: ["client_name", "consultant_name", "date", "time", "zoom_block"],
   booking_reminder: ["client_name", "consultant_name", "time"],
   booking_cancelled: ["client_name", "date", "refund_info"],
-  // sendAccompagnementAccess fournit access_url ET formation_url, pointant sur la
-  // meme URL. Le design utilise formation_url ; c'est celui qui doit etre la.
-  formation_access: ["client_name", "formation_title", "formation_url"],
+  // sendAccompagnementAccess fournit access_url ET accompagnement_url, pointant sur la
+  // meme URL. Le design utilise accompagnement_url ; c'est celui qui doit etre la.
+  accompagnement_access: ["client_name", "accompagnement_title", "accompagnement_url"],
   welcome: ["client_name", "dashboard_url"],
   password_reset: ["client_name", "reset_url"],
   // sendMigrationWelcomeEmail fournit setup_url : le lien d'activation du

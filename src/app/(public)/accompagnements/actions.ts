@@ -27,10 +27,10 @@ export const purchaseAccompagnement = async (
   const supabase = createAdminClient();
 
   const { data: existing } = await supabase
-    .from("formation_enrollments")
+    .from("accompagnement_enrollments")
     .select("id")
     .eq("client_id", user.id)
-    .eq("formation_id", accompagnementId)
+    .eq("accompagnement_id", accompagnementId)
     .single();
 
   if (existing) {
@@ -41,7 +41,7 @@ export const purchaseAccompagnement = async (
   }
 
   const { data: accompagnement } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select(
       "id, title, short_description, price_cents, currency, consultant_id, status",
     )
@@ -67,9 +67,9 @@ export const purchaseAccompagnement = async (
   // Elle est donc encaissee par la plateforme, qui repartit ensuite chaque
   // part en citant la charge source (voir distributeAccompagnementRevenue).
   const { count: collaboratorCount } = await supabase
-    .from("formation_collaborators")
+    .from("accompagnement_collaborators")
     .select("consultant_id", { count: "exact", head: true })
-    .eq("formation_id", accompagnement.id);
+    .eq("accompagnement_id", accompagnement.id);
 
   const hasCollaborators = (collaboratorCount ?? 0) > 0;
 
@@ -112,12 +112,12 @@ export const purchaseAccompagnement = async (
   const promo = promoCode?.trim()
     ? await resolvePromoForPurchase({
         code: promoCode,
-        serviceKind: "formation",
+        serviceKind: "accompagnement",
         itemId: accompagnement.id,
         amountCents: accompagnement.price_cents,
         profileId: user.id,
         reserve: true,
-        orderKind: "formation",
+        orderKind: "accompagnement",
         referenceId: accompagnement.id,
       })
     : null;
@@ -139,7 +139,7 @@ export const purchaseAccompagnement = async (
       productDescription: accompagnement.short_description ?? undefined,
       customerEmail: user.email,
       metadata: {
-        type: "formation",
+        type: "accompagnement",
         reference_id: accompagnement.id,
         client_id: user.id,
         consultant_id: accompagnement.consultant_id,

@@ -12,8 +12,8 @@ export const labelSchema = z.object({
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Couleur invalide"),
   auto_assign_rule: z
     .object({
-      trigger: z.literal("formation_enrolled"),
-      formation_ids: z.array(z.string().uuid()).optional(),
+      trigger: z.literal("accompagnement_enrolled"),
+      accompagnement_ids: z.array(z.string().uuid()).optional(),
     })
     .nullable()
     .optional(),

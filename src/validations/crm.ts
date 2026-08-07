@@ -30,8 +30,8 @@ export type CrmTagInput = z.infer<typeof crmTagSchema>;
 const SEGMENT_FIELDS = [
   "booking_count",
   "total_spent_cents",
+  "accompagnement_count",
   "formation_count",
-  "event_count",
   "inactive_days",
   "days_since_registration",
 ] as const;

@@ -52,21 +52,21 @@ export const cleanup = async () => {
       supabase.from("bookings").delete().eq("client_id", IDS.clientProfile),
     ],
     [
-      "formation_enrollments",
+      "accompagnement_enrollments",
       supabase
-        .from("formation_enrollments")
+        .from("accompagnement_enrollments")
         .delete()
         .eq("client_id", IDS.clientProfile),
     ],
     [
-      "event_registrations",
+      "formation_registrations",
       supabase
-        .from("event_registrations")
+        .from("formation_registrations")
         .delete()
         .eq("client_id", IDS.clientProfile),
     ],
-    ["events", supabase.from("events").delete().eq("id", IDS.event)],
-    ["formations", supabase.from("formations").delete().eq("id", IDS.formation)],
+    ["formations", supabase.from("formations").delete().eq("id", IDS.event)],
+    ["accompagnements", supabase.from("accompagnements").delete().eq("id", IDS.formation)],
     [
       "consultation_type_durations",
       supabase

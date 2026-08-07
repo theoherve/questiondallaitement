@@ -9,7 +9,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * laissaient donc modifier — ou supprimer — le contenu d'une autre consultante.
  *
  * La regle suit ce que l'espace consultante affiche : proprietaire, ou
- * collaboratrice declaree sur la accompagnement. `formation_collaborators` n'a pas
+ * collaboratrice declaree sur la accompagnement. `accompagnement_collaborators` n'a pas
  * de niveau de permission, la collaboration est binaire.
  */
 
@@ -27,7 +27,7 @@ export const canEditAccompagnement = async (
   userId: string,
 ): Promise<boolean> => {
   const { data: owned } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("id")
     .eq("id", accompagnementId)
     .eq("consultant_id", userId)
@@ -36,9 +36,9 @@ export const canEditAccompagnement = async (
   if (owned) return true;
 
   const { data: collaboration } = await supabase
-    .from("formation_collaborators")
-    .select("formation_id")
-    .eq("formation_id", accompagnementId)
+    .from("accompagnement_collaborators")
+    .select("accompagnement_id")
+    .eq("accompagnement_id", accompagnementId)
     .eq("consultant_id", userId)
     .maybeSingle();
 
@@ -54,13 +54,13 @@ export const canEditSection = async (
   // exister entre les memes tables, et l'embed repond alors PGRST201 — un
   // echec qui, ici, se lirait comme un refus d'acces.
   const { data: section } = await supabase
-    .from("formation_sections")
-    .select("formation_id")
+    .from("accompagnement_sections")
+    .select("accompagnement_id")
     .eq("id", sectionId)
     .maybeSingle();
 
-  const accompagnementId = (section as { formation_id?: string } | null)
-    ?.formation_id;
+  const accompagnementId = (section as { accompagnement_id?: string } | null)
+    ?.accompagnement_id;
   if (!accompagnementId) return false;
 
   return canEditAccompagnement(supabase, accompagnementId, userId);
@@ -72,7 +72,7 @@ export const canEditBlock = async (
   userId: string,
 ): Promise<boolean> => {
   const { data: block } = await supabase
-    .from("formation_blocks")
+    .from("accompagnement_blocks")
     .select("section_id")
     .eq("id", blockId)
     .maybeSingle();

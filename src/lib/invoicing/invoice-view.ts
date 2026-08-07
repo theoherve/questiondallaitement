@@ -6,7 +6,7 @@
 export type InvoiceRecord = {
   number: string;
   issued_at: string;
-  type: "formation" | "booking" | "event";
+  type: "accompagnement" | "booking" | "formation";
   currency: string;
   vat_rate: number;
   amount_ht_cents: number;

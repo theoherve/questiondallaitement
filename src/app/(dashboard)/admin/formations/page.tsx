@@ -64,7 +64,7 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
   const supabase = createAdminClient();
 
   let query = supabase
-    .from("events")
+    .from("formations")
     .select(
       `
       id,
@@ -117,8 +117,8 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
         .select("id, profiles!consultants_id_fkey(first_name, last_name)")
         .eq("is_active", true),
       supabase
-        .from("event_registrations")
-        .select("event_id")
+        .from("formation_registrations")
+        .select("formation_id")
         .eq("status", "registered"),
     ]);
 
@@ -157,7 +157,7 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
   // Count registrations per formation
   const regCounts = new Map<string, number>();
   for (const reg of registrationsResult.data ?? []) {
-    regCounts.set(reg.event_id, (regCounts.get(reg.event_id) ?? 0) + 1);
+    regCounts.set(reg.formation_id, (regCounts.get(reg.formation_id) ?? 0) + 1);
   }
 
   return (

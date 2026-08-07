@@ -114,7 +114,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
 
   const [formationsRes, bookingsRes, paymentsRes, consultationTypes, consultationTypeTemplates, consultantLocations, availabilities, locationConfigs] = await Promise.all([
     supabase
-      .from("formations")
+      .from("accompagnements")
       .select("id, title, slug, status, price_cents, currency")
       .eq("consultant_id", id)
       .is("deleted_at", null)

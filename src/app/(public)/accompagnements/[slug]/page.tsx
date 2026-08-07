@@ -33,7 +33,7 @@ export const generateMetadata = async ({
   const { slug } = await params;
   const supabase = await createClient();
   const { data } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select("title, short_description, thumbnail_url")
     .eq("slug", slug)
     .eq("status", "published")
@@ -74,7 +74,7 @@ const AccompagnementDetailPage = async ({ params }: Props) => {
   const currentUser = await getSessionUser();
 
   const { data: accompagnement } = await supabase
-    .from("formations")
+    .from("accompagnements")
     .select(
       `
       *,
@@ -87,11 +87,11 @@ const AccompagnementDetailPage = async ({ params }: Props) => {
           avatar_url
         )
       ),
-      formation_sections (
+      accompagnement_sections (
         id,
         title,
         position,
-        formation_blocks (
+        accompagnement_blocks (
           id,
           type,
           position
@@ -114,22 +114,22 @@ const AccompagnementDetailPage = async ({ params }: Props) => {
   if (currentUser) {
     const admin = createAdminClient();
     const { data: enrollment } = await admin
-      .from("formation_enrollments")
+      .from("accompagnement_enrollments")
       .select("id")
       .eq("client_id", currentUser.id)
-      .eq("formation_id", accompagnement.id)
+      .eq("accompagnement_id", accompagnement.id)
       .maybeSingle();
     isEnrolled = !!enrollment;
   }
 
   if (slug === PACK_SLUG) {
     const moduleRows = await fetchPackModuleRows();
-    const packSections = (accompagnement.formation_sections ?? []) as {
-      formation_blocks?: unknown[];
+    const packSections = (accompagnement.accompagnement_sections ?? []) as {
+      accompagnement_blocks?: unknown[];
     }[];
     const sectionsCount = packSections.length;
     const lessonsCount = packSections.reduce(
-      (acc, s) => acc + (s.formation_blocks?.length ?? 0),
+      (acc, s) => acc + (s.accompagnement_blocks?.length ?? 0),
       0
     );
     return (
@@ -151,12 +151,12 @@ const AccompagnementDetailPage = async ({ params }: Props) => {
     );
   }
 
-  const sections = (accompagnement.formation_sections ?? []).sort(
+  const sections = (accompagnement.accompagnement_sections ?? []).sort(
     (a: { position: number }, b: { position: number }) => a.position - b.position
   );
   const totalBlocks = sections.reduce(
-    (acc: number, s: { formation_blocks?: unknown[] }) =>
-      acc + (s.formation_blocks?.length ?? 0),
+    (acc: number, s: { accompagnement_blocks?: unknown[] }) =>
+      acc + (s.accompagnement_blocks?.length ?? 0),
     0
   );
 
@@ -230,11 +230,11 @@ const AccompagnementDetailPage = async ({ params }: Props) => {
                     section: {
                       id: string;
                       title: string;
-                      formation_blocks?: { id: string; type: string }[];
+                      accompagnement_blocks?: { id: string; type: string }[];
                     },
                     idx: number
                   ) => {
-                    const blockCount = section.formation_blocks?.length ?? 0;
+                    const blockCount = section.accompagnement_blocks?.length ?? 0;
                     return (
                       <Card key={section.id} className="overflow-hidden">
                         <CardContent className="flex items-center justify-between py-4 px-5">

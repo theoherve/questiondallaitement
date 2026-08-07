@@ -9,7 +9,7 @@ import {
 
 type Reader = SupabaseClient;
 
-type PaymentType = "formation" | "booking" | "event";
+type PaymentType = "accompagnement" | "booking" | "formation";
 
 /**
  * Emet la facture d'un paiement confirme, designe par son identifiant.
@@ -144,18 +144,18 @@ const describeSale = async (
   type: PaymentType,
   referenceId: string,
 ): Promise<string> => {
-  if (type === "formation") {
+  if (type === "accompagnement") {
     const { data } = await supabase
-      .from("formations")
+      .from("accompagnements")
       .select("title")
       .eq("id", referenceId)
       .maybeSingle();
     return data?.title ?? "Accompagnement";
   }
 
-  if (type === "event") {
+  if (type === "formation") {
     const { data } = await supabase
-      .from("events")
+      .from("formations")
       .select("title")
       .eq("id", referenceId)
       .maybeSingle();
