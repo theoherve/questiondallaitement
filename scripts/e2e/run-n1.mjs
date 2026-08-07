@@ -53,16 +53,16 @@ const one = async (table, column, value, select = "*") => {
 
 // --- Scenarios --------------------------------------------------------------
 
-const scenarioFormation = async () => {
-  const amount = PRICES.formation;
+const scenarioAccompagnement = async () => {
+  const amount = PRICES.accompagnement;
   const event = buildEvent(
     "checkout.session.completed",
     checkoutSession({
-      paymentIntentId: PI.formation,
+      paymentIntentId: PI.accompagnement,
       amountTotal: amount,
       metadata: {
-        type: "formation",
-        reference_id: IDS.formation,
+        type: "accompagnement",
+        reference_id: IDS.accompagnement,
         client_id: IDS.clientProfile,
         consultant_id: IDS.consultantProfile,
         platform_fee_cents: platformFee(amount).toString(),
@@ -76,16 +76,16 @@ const scenarioFormation = async () => {
   const enrollment = await one(
     "accompagnement_enrollments",
     "stripe_payment_intent_id",
-    PI.formation,
+    PI.accompagnement,
   );
   assert(enrollment, "aucun accompagnement_enrollments cree");
-  assertEqual(enrollment.accompagnement_id, IDS.formation, "accompagnement_id");
+  assertEqual(enrollment.accompagnement_id, IDS.accompagnement, "accompagnement_id");
   assertEqual(enrollment.client_id, IDS.clientProfile, "client_id");
 
-  const payment = await one("payments", "stripe_payment_intent_id", PI.formation);
+  const payment = await one("payments", "stripe_payment_intent_id", PI.accompagnement);
   assert(payment, "aucune ligne payments creee");
   assertEqual(payment.status, "succeeded", "payments.status");
-  assertEqual(payment.type, "formation", "payments.type");
+  assertEqual(payment.type, "accompagnement", "payments.type");
   assertEqual(payment.amount_cents, amount, "payments.amount_cents");
   assertEqual(
     payment.platform_fee_cents,
@@ -141,16 +141,16 @@ const scenarioBooking = async () => {
   assertEqual(payment.reference_id, IDS.booking, "payments.reference_id");
 };
 
-const scenarioEvent = async () => {
-  const amount = PRICES.event;
+const scenarioFormation = async () => {
+  const amount = PRICES.formation;
   const event = buildEvent(
     "checkout.session.completed",
     checkoutSession({
-      paymentIntentId: PI.event,
+      paymentIntentId: PI.formation,
       amountTotal: amount,
       metadata: {
-        type: "event",
-        reference_id: IDS.event,
+        type: "formation",
+        reference_id: IDS.formation,
         client_id: IDS.clientProfile,
         consultant_id: IDS.consultantProfile,
         platform_fee_cents: platformFee(amount).toString(),
@@ -164,7 +164,7 @@ const scenarioEvent = async () => {
   const registration = await one(
     "formation_registrations",
     "stripe_payment_intent_id",
-    PI.event,
+    PI.formation,
   );
   assert(registration, "aucune formation_registrations creee");
   assertEqual(registration.status, "registered", "formation_registrations.status");
@@ -175,18 +175,18 @@ const scenarioPaymentIntentSucceeded = async () => {
   const { error } = await supabase
     .from("payments")
     .update({ status: "pending" })
-    .eq("stripe_payment_intent_id", PI.formation);
+    .eq("stripe_payment_intent_id", PI.accompagnement);
   if (error) throw new Error(`preparation : ${error.message}`);
 
   const event = buildEvent(
     "payment_intent.succeeded",
-    paymentIntent({ id: PI.formation, amount: PRICES.formation }),
+    paymentIntent({ id: PI.accompagnement, amount: PRICES.accompagnement }),
   );
 
   const { status } = await postEvent(event);
   assertEqual(status, 200, "status webhook");
 
-  const payment = await one("payments", "stripe_payment_intent_id", PI.formation);
+  const payment = await one("payments", "stripe_payment_intent_id", PI.accompagnement);
   assertEqual(payment.status, "succeeded", "payments.status");
 };
 
@@ -392,8 +392,8 @@ const scenarioInvalidSignature = async () => {
       paymentIntentId: "pi_e2e_should_not_exist",
       amountTotal: 1000,
       metadata: {
-        type: "formation",
-        reference_id: IDS.formation,
+        type: "accompagnement",
+        reference_id: IDS.accompagnement,
         client_id: IDS.clientProfile,
         consultant_id: IDS.consultantProfile,
       },
@@ -448,9 +448,9 @@ const main = async () => {
   await seed();
 
   console.log("Scenarios :");
-  await test("achat accompagnement → enrollment + payment", scenarioFormation);
+  await test("achat accompagnement → enrollment + payment", scenarioAccompagnement);
   await test("reservation → booking confirme + payment", scenarioBooking);
-  await test("inscription formation → registration", scenarioEvent);
+  await test("inscription formation → registration", scenarioFormation);
   await test("payment_intent.succeeded → payment succeeded", scenarioPaymentIntentSucceeded);
   await test("refund total → payment refunded + booking annule", scenarioRefundFull);
   await test("refund partiel → montant enregistre, booking maintenu", scenarioRefundPartial);

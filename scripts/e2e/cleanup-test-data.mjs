@@ -65,8 +65,8 @@ export const cleanup = async () => {
         .delete()
         .eq("client_id", IDS.clientProfile),
     ],
-    ["formations", supabase.from("formations").delete().eq("id", IDS.event)],
-    ["accompagnements", supabase.from("accompagnements").delete().eq("id", IDS.formation)],
+    ["formations", supabase.from("formations").delete().eq("id", IDS.formation)],
+    ["accompagnements", supabase.from("accompagnements").delete().eq("id", IDS.accompagnement)],
     [
       "consultation_type_durations",
       supabase
