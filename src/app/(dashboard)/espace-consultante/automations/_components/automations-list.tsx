@@ -22,8 +22,8 @@ import { AutomationFormDialog } from "./automation-form-dialog";
 const TRIGGER_LABELS: Record<string, string> = {
   formation_purchased: "Achat formation",
   booking_confirmed: "Réservation confirmée",
-  event_registered: "Inscription événement",
-  delay_after_event: "Jours après événement",
+  event_registered: "Inscription formation",
+  delay_after_event: "Jours après formation",
 };
 
 type Automation = {

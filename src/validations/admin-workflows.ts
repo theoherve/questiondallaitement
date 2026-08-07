@@ -30,9 +30,9 @@ export const recurrenceRuleSchema = z.object({
   week_of_month: z.number().int().min(-1).max(5).optional(),
 });
 
-// ─── Recurring Event Definition ─────────────────────────────
+// ─── Recurring Formation Definition ─────────────────────────────
 
-export const recurringEventDefinitionSchema = z.object({
+export const recurringFormationDefinitionSchema = z.object({
   title: z.string().min(3, "Titre trop court"),
   slug_prefix: z
     .string()
@@ -53,8 +53,8 @@ export const recurringEventDefinitionSchema = z.object({
   generate_ahead_days: z.number().int().min(7).max(365).default(45),
 });
 
-export type RecurringEventDefinitionInput = z.infer<
-  typeof recurringEventDefinitionSchema
+export type RecurringFormationDefinitionInput = z.infer<
+  typeof recurringFormationDefinitionSchema
 >;
 
 // ─── Workflow Step ──────────────────────────────────────────

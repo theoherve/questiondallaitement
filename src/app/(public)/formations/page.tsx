@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 const FormationsProPage = async () => {
   const supabase = await createClient();
 
-  const { data: events, error } = await supabase
+  const { data: formations, error } = await supabase
     .from("events")
     .select(
       `
@@ -66,13 +66,13 @@ const FormationsProPage = async () => {
     );
   }
 
-  const all = (events ?? []).map((e) => ({
+  const all = (formations ?? []).map((e) => ({
     ...e,
     provider: (e as Record<string, unknown>).training_providers as { name: string; logo_url: string | null } | null,
   }));
   const now = new Date().toISOString();
-  const upcomingEvents = all.filter((e) => e.starts_at >= now);
-  const pastEvents = all.filter((e) => e.starts_at < now).reverse();
+  const upcomingFormations = all.filter((e) => e.starts_at >= now);
+  const pastFormations = all.filter((e) => e.starts_at < now).reverse();
 
   return (
     <div>
@@ -96,17 +96,17 @@ const FormationsProPage = async () => {
             <div className="flex items-center gap-2">
               <CalendarDays className="h-5 w-5" />
               <span className="text-sm font-medium">
-                {upcomingEvents.length > 0
-                  ? `${upcomingEvents.length} session${upcomingEvents.length > 1 ? "s" : ""} à venir`
+                {upcomingFormations.length > 0
+                  ? `${upcomingFormations.length} session${upcomingFormations.length > 1 ? "s" : ""} à venir`
                   : "Nouvelles sessions bientôt"}
               </span>
             </div>
-            {upcomingEvents.length > 0 && (
+            {upcomingFormations.length > 0 && (
               <div className="flex items-center gap-2">
                 <Clock className="h-5 w-5" />
                 <span className="text-sm font-medium">
                   Prochaine le{" "}
-                  {format(new Date(upcomingEvents[0].starts_at), "d MMMM", { locale: fr })}
+                  {format(new Date(upcomingFormations[0].starts_at), "d MMMM", { locale: fr })}
                 </span>
               </div>
             )}
@@ -118,7 +118,7 @@ const FormationsProPage = async () => {
                 </span>
               </div>
             )}
-            {upcomingEvents.some((e) => e.show_price && e.price_cents === 0) && (
+            {upcomingFormations.some((e) => e.show_price && e.price_cents === 0) && (
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5" />
                 <span className="text-sm font-medium">
@@ -151,11 +151,11 @@ const FormationsProPage = async () => {
         </div>
       </section>
 
-      {/* Events listing with filters */}
+      {/* Formations listing with filters */}
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <FormationsList
-          upcomingEvents={upcomingEvents}
-          pastEvents={pastEvents}
+          upcomingFormations={upcomingFormations}
+          pastFormations={pastFormations}
         />
       </div>
     </div>

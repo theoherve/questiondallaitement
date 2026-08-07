@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 };
 
 const TRIGGER_LABELS: Record<string, string> = {
-  recurring_event: "Événement récurrent",
+  recurring_event: "Formation récurrente",
   formation_enrolled: "Achat accompagnement",
   manual: "Manuel",
 };
@@ -55,7 +55,7 @@ const AdminAutomationsPage = async () => {
           <Button variant="outline" asChild>
             <Link href="/admin/automations/recurrents">
               <Repeat className="mr-2 h-4 w-4" />
-              Événements récurrents
+              Formations récurrentes
             </Link>
           </Button>
           <Button asChild className="bg-primary-red hover:bg-primary-red-dark">
@@ -93,7 +93,7 @@ const AdminAutomationsPage = async () => {
             <div>
               <p className="text-2xl font-bold">{recurringDefs.length}</p>
               <p className="text-sm text-muted-foreground">
-                Événements récurrents
+                Formations récurrentes
               </p>
             </div>
           </CardContent>

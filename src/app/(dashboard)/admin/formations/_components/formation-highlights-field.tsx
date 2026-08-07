@@ -1,8 +1,8 @@
 "use client";
 
-import { EVENT_HIGHLIGHTS } from "@/config/event-highlights";
+import { FORMATION_HIGHLIGHTS } from "@/config/formation-highlights";
 
-export type EventHighlightsFieldProps = {
+export type FormationHighlightsFieldProps = {
   value: string[];
   onChange: (keys: string[]) => void;
 };
@@ -14,10 +14,10 @@ export type EventHighlightsFieldProps = {
  * catalogue, pas de la saisie, pour que deux formations qui cochent les memes
  * reperes les presentent dans la meme sequence.
  */
-export const EventHighlightsField = ({
+export const FormationHighlightsField = ({
   value,
   onChange,
-}: EventHighlightsFieldProps) => {
+}: FormationHighlightsFieldProps) => {
   const toggle = (key: string) =>
     onChange(
       value.includes(key)
@@ -28,7 +28,7 @@ export const EventHighlightsField = ({
   return (
     <div className="space-y-3">
       <div className="grid gap-2 sm:grid-cols-2">
-        {EVENT_HIGHLIGHTS.map(({ key, label, icon: Icon }) => (
+        {FORMATION_HIGHLIGHTS.map(({ key, label, icon: Icon }) => (
           <label
             key={key}
             className="flex cursor-pointer items-center gap-3 rounded-md border border-input p-3 text-sm hover:bg-muted/50"

@@ -13,13 +13,13 @@ import { siteConfig } from "@/config/site";
 import type { ActionResult } from "@/types";
 
 /**
- * L'inscription a un evenement payant est ecrite par le webhook Stripe
+ * L'inscription a une formation payante est ecrite par le webhook Stripe
  * `checkout.session.completed`, livre en asynchrone. Au retour du paiement, la
  * ligne `event_registrations` peut ne pas encore exister : cette action permet
  * a l'ilot client de sonder son apparition sans recharger toute la page.
  */
-export const hasEventRegistration = async (
-  eventId: string,
+export const hasFormationRegistration = async (
+  formationId: string,
 ): Promise<boolean> => {
   const user = await getSessionUser();
   if (!user) return false;
@@ -28,7 +28,7 @@ export const hasEventRegistration = async (
   const { data } = await supabase
     .from("event_registrations")
     .select("id")
-    .eq("event_id", eventId)
+    .eq("event_id", formationId)
     .eq("client_id", user.id)
     .eq("status", "registered")
     .maybeSingle();
@@ -36,8 +36,8 @@ export const hasEventRegistration = async (
   return Boolean(data);
 };
 
-export const registerForEvent = async (
-  eventId: string,
+export const registerForFormation = async (
+  formationId: string,
   promoCode?: string,
 ): Promise<ActionResult<{ redirect_url?: string }>> => {
   const user = await getSessionUser();
@@ -55,50 +55,50 @@ export const registerForEvent = async (
     .from("event_registrations")
     .select("id")
     .eq("client_id", user.id)
-    .eq("event_id", eventId)
+    .eq("event_id", formationId)
     .eq("status", "registered")
     .single();
 
   if (existing) {
     return {
       success: false,
-      error: "Vous êtes déjà inscrit(e) à cet événement",
+      error: "Vous êtes déjà inscrit(e) à cette formation",
     };
   }
 
-  // Load event
-  const { data: event } = await supabase
+  // Load formation
+  const { data: formation } = await supabase
     .from("events")
     .select(
       "id, title, description, price_cents, currency, consultant_id, is_published, max_participants, slug",
     )
-    .eq("id", eventId)
+    .eq("id", formationId)
     .eq("is_published", true)
     .single();
 
-  if (!event) {
-    return { success: false, error: "Événement introuvable ou non publié" };
+  if (!formation) {
+    return { success: false, error: "Formation introuvable ou non publiée" };
   }
 
   // Check available spots (16-06)
-  if (event.max_participants) {
+  if (formation.max_participants) {
     const { count } = await supabase
       .from("event_registrations")
       .select("*", { count: "exact", head: true })
-      .eq("event_id", eventId)
+      .eq("event_id", formationId)
       .eq("status", "registered");
 
-    if ((count ?? 0) >= event.max_participants) {
+    if ((count ?? 0) >= formation.max_participants) {
       return { success: false, error: "Il n'y a plus de places disponibles" };
     }
   }
 
-  // Free event → direct registration
-  if (event.price_cents === 0) {
+  // Free formation → direct registration
+  if (formation.price_cents === 0) {
     const { error } = await supabase.from("event_registrations").upsert(
       {
         client_id: user.id,
-        event_id: eventId,
+        event_id: formationId,
         stripe_payment_intent_id: null,
         status: "registered",
       },
@@ -106,34 +106,34 @@ export const registerForEvent = async (
     );
 
     if (error) {
-      console.error("Free event registration error:", error);
+      console.error("Free formation registration error:", error);
       return { success: false, error: "Erreur lors de l'inscription" };
     }
 
     return { success: true };
   }
 
-  // Paid event → Stripe Checkout
+  // Paid formation → Stripe Checkout
   const { data: consultant } = await supabase
     .from("consultants")
     .select("stripe_account_id, commission_rate")
-    .eq("id", event.consultant_id)
+    .eq("id", formation.consultant_id)
     .single();
 
   if (!consultant?.stripe_account_id) {
     return {
       success: false,
-      error: "Le paiement n'est pas disponible pour cet événement",
+      error: "Le paiement n'est pas disponible pour cette formation",
     };
   }
 
   // Pas de vente en ligne sans pouvoir facturer (voir consultant-billing).
-  if (!(await consultantCanSell(supabase, event.consultant_id))) {
+  if (!(await consultantCanSell(supabase, formation.consultant_id))) {
     return {
       success: false,
       error:
         "L'inscription en ligne est momentanément indisponible pour cet " +
-        "événement.",
+        "formation.",
     };
   }
 
@@ -141,12 +141,12 @@ export const registerForEvent = async (
     ? await resolvePromoForPurchase({
         code: promoCode,
         serviceKind: "event",
-        itemId: event.id,
-        amountCents: event.price_cents,
+        itemId: formation.id,
+        amountCents: formation.price_cents,
         profileId: user.id,
         reserve: true,
         orderKind: "event",
-        referenceId: event.id,
+        referenceId: formation.id,
       })
     : null;
 
@@ -154,15 +154,15 @@ export const registerForEvent = async (
     return { success: false, error: promo.error };
   }
 
-  const chargedCents = promo?.ok ? promo.finalCents : event.price_cents;
+  const chargedCents = promo?.ok ? promo.finalCents : formation.price_cents;
 
   // Remise totale : Stripe refuse une session a zero, et il n'y a rien a
-  // encaisser. Meme traitement que l'evenement gratuit, plus haut.
+  // encaisser. Meme traitement que la formation gratuite, plus haut.
   if (chargedCents === 0) {
     const { error } = await supabase.from("event_registrations").upsert(
       {
         client_id: user.id,
-        event_id: eventId,
+        event_id: formationId,
         stripe_payment_intent_id: null,
         status: "registered",
       },
@@ -186,15 +186,15 @@ export const registerForEvent = async (
       consultantStripeAccountId: consultant.stripe_account_id,
       commissionRate: consultant.commission_rate,
       priceInCents: chargedCents,
-      currency: event.currency,
-      productName: event.title,
-      productDescription: event.description ?? undefined,
+      currency: formation.currency,
+      productName: formation.title,
+      productDescription: formation.description ?? undefined,
       customerEmail: user.email,
       metadata: {
         type: "event",
-        reference_id: event.id,
+        reference_id: formation.id,
         client_id: user.id,
-        consultant_id: event.consultant_id,
+        consultant_id: formation.consultant_id,
         platform_fee_cents: Math.round(
           chargedCents * (consultant.commission_rate / 100),
         ).toString(),
@@ -204,12 +204,12 @@ export const registerForEvent = async (
               promo_code_id: promo.promoCodeId,
               promo_redemption_id: promo.redemptionId as string,
               discount_cents: promo.discountCents.toString(),
-              original_price_cents: event.price_cents.toString(),
+              original_price_cents: formation.price_cents.toString(),
             }
           : {}),
       },
-      successUrl: `${siteConfig.url}/formations/${event.slug}?registered=true`,
-      cancelUrl: `${siteConfig.url}/formations/${event.slug}?cancelled=true`,
+      successUrl: `${siteConfig.url}/formations/${formation.slug}?registered=true`,
+      cancelUrl: `${siteConfig.url}/formations/${formation.slug}?cancelled=true`,
     });
 
     if (promo?.ok && promo.redemptionId) {

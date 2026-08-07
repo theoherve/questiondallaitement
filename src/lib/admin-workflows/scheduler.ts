@@ -3,10 +3,10 @@ import { resolveAudience, computeScheduledFor } from "./labels";
 import type { AudienceConfig } from "./types";
 
 /**
- * Schedule workflow actions for all upcoming events that don't have actions yet.
- * Called by the cron job after event generation.
+ * Schedule workflow actions for all upcoming formations that don't have actions yet.
+ * Called by the cron job after formation generation.
  */
-export const scheduleWorkflowActionsForUpcomingEvents = async (): Promise<{
+export const scheduleWorkflowActionsForUpcomingFormations = async (): Promise<{
   scheduled: number;
 }> => {
   const supabase = createAdminClient();
@@ -27,14 +27,14 @@ export const scheduleWorkflowActionsForUpcomingEvents = async (): Promise<{
     };
     if (!triggerConfig.recurring_definition_id) continue;
 
-    // Get future events for this definition
-    const { data: events } = await supabase
+    // Get future formations for this definition
+    const { data: formations } = await supabase
       .from("events")
       .select("id, occurrence_date")
       .eq("recurring_definition_id", triggerConfig.recurring_definition_id)
       .gte("starts_at", new Date().toISOString());
 
-    if (!events?.length) continue;
+    if (!formations?.length) continue;
 
     // Get workflow steps
     const { data: steps } = await supabase
@@ -56,7 +56,7 @@ export const scheduleWorkflowActionsForUpcomingEvents = async (): Promise<{
       .from("admin_workflow_logs")
       .insert({
         workflow_id: workflow.id,
-        trigger_data: { event_count: events.length, audience_count: profileIds.length },
+        trigger_data: { event_count: formations.length, audience_count: profileIds.length },
         status: "pending",
       })
       .select("id")
@@ -64,12 +64,12 @@ export const scheduleWorkflowActionsForUpcomingEvents = async (): Promise<{
 
     let workflowScheduled = 0;
 
-    for (const event of events) {
-      if (!event.occurrence_date) continue;
+    for (const formation of formations) {
+      if (!formation.occurrence_date) continue;
 
       for (const step of steps) {
         const scheduledForStr = computeScheduledFor(
-          event.occurrence_date,
+          formation.occurrence_date,
           step.delay_days,
           step.send_time,
         );
@@ -88,7 +88,7 @@ export const scheduleWorkflowActionsForUpcomingEvents = async (): Promise<{
               workflow_id: workflow.id,
               step_id: step.id,
               profile_id: profileId,
-              anchor_event_id: event.id,
+              anchor_event_id: formation.id,
               scheduled_for: scheduledForStr,
               status: "pending",
             });

@@ -18,7 +18,7 @@ import { TabInfos } from "./_components/tab-infos";
 import { TabReservations } from "./_components/tab-reservations";
 import { TabAccompagnements } from "./_components/tab-accompagnements";
 import { TabPaiements } from "./_components/tab-paiements";
-import { TabEvenements } from "./_components/tab-evenements";
+import { TabFormations } from "./_components/tab-formations";
 import { TabCrm } from "./_components/tab-crm";
 import { TabActivite, type TimelineEntry } from "./_components/tab-activite";
 import { TabConsultant } from "./_components/tab-consultant";
@@ -205,7 +205,7 @@ const UserDetailPage = async ({ params }: Props) => {
     } | null,
   }));
 
-  // ─── Process events ──────────────────────────────────────
+  // ─── Process formations ──────────────────────────────────────
   const registrations = (eventsRes.data ?? []).map((r) => ({
     id: r.id,
     registered_at: r.registered_at,
@@ -296,7 +296,7 @@ const UserDetailPage = async ({ params }: Props) => {
     timeline.push({
       id: r.id,
       type: "event",
-      title: r.events?.title ?? "Événement",
+      title: r.events?.title ?? "Formation",
       date: r.registered_at,
       status: r.status,
     });
@@ -430,7 +430,7 @@ const UserDetailPage = async ({ params }: Props) => {
             <CreditCard className="mr-1.5 h-4 w-4" />
             Paiements
           </TabsTrigger>
-          <TabsTrigger value="evenements">
+          <TabsTrigger value="formations">
             <Calendar className="mr-1.5 h-4 w-4" />
             Événements
           </TabsTrigger>
@@ -477,8 +477,8 @@ const UserDetailPage = async ({ params }: Props) => {
           <TabPaiements payments={payments} />
         </TabsContent>
 
-        <TabsContent value="evenements">
-          <TabEvenements registrations={registrations} />
+        <TabsContent value="formations">
+          <TabFormations registrations={registrations} />
         </TabsContent>
 
         <TabsContent value="crm">

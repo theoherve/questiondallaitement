@@ -63,7 +63,7 @@ const setupClientStats = ({
   enrollments = [] as { client_id: string; enrolled_at: string }[],
   profiles = [] as { id: string; first_name: string | null; last_name: string | null; email: string; created_at: string }[],
   payments = [] as { client_id: string; amount_cents: number }[],
-  events = [] as { client_id: string }[],
+  formations = [] as { client_id: string }[],
   score = 0,
 } = {}) => {
   // mockFrom retourne un chaînable dont chaque méthode retourne `this`
@@ -90,7 +90,7 @@ const setupClientStats = ({
             table === "formation_enrollments" ? { data: enrollments } :
             table === "profiles" ? { data: profiles } :
             table === "payments" ? { data: payments } :
-            table === "event_registrations" ? { data: events } :
+            table === "event_registrations" ? { data: formations } :
             { data: [] },
           ),
       });

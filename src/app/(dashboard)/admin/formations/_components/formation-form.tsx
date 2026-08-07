@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EventContentFields } from "./event-content-fields";
-import { EventHighlightsField } from "./event-highlights-field";
-import { EVENT_HIGHLIGHT_KEYS } from "@/config/event-highlights";
+import { FormationContentFields } from "./formation-content-fields";
+import { FormationHighlightsField } from "./formation-highlights-field";
+import { FORMATION_HIGHLIGHT_KEYS } from "@/config/formation-highlights";
 import {
-  createEvent,
-  updateEvent,
-  deleteEvent,
-  toggleEventPublish,
+  createFormation,
+  updateFormation,
+  deleteFormation,
+  toggleFormationPublish,
 } from "../actions";
 import { toast } from "sonner";
 import {
@@ -26,7 +26,7 @@ import {
   GlobeLock,
 } from "lucide-react";
 import Link from "next/link";
-import type { Event } from "@/types";
+import type { Formation } from "@/types";
 
 type ConsultantOption = {
   id: string;
@@ -39,15 +39,15 @@ type ProviderOption = {
 };
 
 type Props = {
-  event?: Event;
+  formation?: Formation;
   consultants: ConsultantOption[];
   providers?: ProviderOption[];
   mode: "create" | "edit";
   registrationsCount?: number;
 };
 
-export const EventForm = ({
-  event,
+export const FormationForm = ({
+  formation,
   consultants,
   providers = [],
   mode,
@@ -65,29 +65,29 @@ export const EventForm = ({
   };
 
   const [formData, setFormData] = useState({
-    title: event?.title ?? "",
-    slug: event?.slug ?? "",
-    description: event?.description ?? "",
-    summary_html: event?.summary_html ?? "",
-    objectives_html: event?.objectives_html ?? "",
-    program_html: event?.program_html ?? "",
-    audience_html: event?.audience_html ?? "",
+    title: formation?.title ?? "",
+    slug: formation?.slug ?? "",
+    description: formation?.description ?? "",
+    summary_html: formation?.summary_html ?? "",
+    objectives_html: formation?.objectives_html ?? "",
+    program_html: formation?.program_html ?? "",
+    audience_html: formation?.audience_html ?? "",
     // A la creation, le jeu complet est propose : c'est ce qu'affichaient
     // toutes les fiches jusqu'ici, et retirer est plus rapide qu'ajouter.
-    highlights: event?.highlights ?? EVENT_HIGHLIGHT_KEYS,
-    type: event?.type ?? ("online" as "online" | "in_person" | "hybrid"),
-    starts_at: toLocalDatetime(event?.starts_at) || "",
-    ends_at: toLocalDatetime(event?.ends_at) || "",
-    location: event?.location ?? "",
-    max_participants: event?.max_participants ?? ("" as number | ""),
-    price_cents: event?.price_cents ?? 0,
-    discounted_price_cents: event?.discounted_price_cents ?? ("" as number | ""),
-    currency: event?.currency ?? "eur",
-    show_price: event?.show_price ?? true,
-    provider_id: event?.provider_id ?? "",
-    external_url: event?.external_url ?? "",
-    consultant_id: event?.consultant_id ?? "",
-    is_published: event?.is_published ?? false,
+    highlights: formation?.highlights ?? FORMATION_HIGHLIGHT_KEYS,
+    type: formation?.type ?? ("online" as "online" | "in_person" | "hybrid"),
+    starts_at: toLocalDatetime(formation?.starts_at) || "",
+    ends_at: toLocalDatetime(formation?.ends_at) || "",
+    location: formation?.location ?? "",
+    max_participants: formation?.max_participants ?? ("" as number | ""),
+    price_cents: formation?.price_cents ?? 0,
+    discounted_price_cents: formation?.discounted_price_cents ?? ("" as number | ""),
+    currency: formation?.currency ?? "eur",
+    show_price: formation?.show_price ?? true,
+    provider_id: formation?.provider_id ?? "",
+    external_url: formation?.external_url ?? "",
+    consultant_id: formation?.consultant_id ?? "",
+    is_published: formation?.is_published ?? false,
   });
 
   const slugify = (text: string): string =>
@@ -137,17 +137,17 @@ export const EventForm = ({
 
     startTransition(async () => {
       if (mode === "create") {
-        const result = await createEvent(payload);
+        const result = await createFormation(payload);
         if (result.success && result.data) {
-          toast.success("Événement créé");
-          router.push(`/admin/evenements/${result.data.id}/edit`);
+          toast.success("Formation créée");
+          router.push(`/admin/formations/${result.data.id}/edit`);
         } else {
           toast.error(result.error || "Erreur lors de la création");
         }
-      } else if (event) {
-        const result = await updateEvent(event.id, payload);
+      } else if (formation) {
+        const result = await updateFormation(formation.id, payload);
         if (result.success) {
-          toast.success("Événement mis à jour");
+          toast.success("Formation mise à jour");
           router.refresh();
         } else {
           toast.error(result.error);
@@ -157,19 +157,19 @@ export const EventForm = ({
   };
 
   const handleDelete = async () => {
-    if (!event) return;
+    if (!formation) return;
     if (
       !confirm(
-        "Supprimer cet événement ? Cette action est irréversible.",
+        "Supprimer cette formation ? Cette action est irréversible.",
       )
     )
       return;
 
     startTransition(async () => {
-      const result = await deleteEvent(event.id);
+      const result = await deleteFormation(formation.id);
       if (result.success) {
-        toast.success("Événement supprimé");
-        router.push("/admin/evenements");
+        toast.success("Formation supprimée");
+        router.push("/admin/formations");
       } else {
         toast.error(result.error);
       }
@@ -177,13 +177,13 @@ export const EventForm = ({
   };
 
   const handleTogglePublish = async () => {
-    if (!event) return;
+    if (!formation) return;
 
     startTransition(async () => {
-      const result = await toggleEventPublish(event.id, !event.is_published);
+      const result = await toggleFormationPublish(formation.id, !formation.is_published);
       if (result.success) {
         toast.success(
-          event.is_published ? "Événement dépublié" : "Événement publié",
+          formation.is_published ? "Formation dépubliée" : "Formation publiée",
         );
         router.refresh();
       } else {
@@ -204,23 +204,23 @@ export const EventForm = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/admin/evenements">
+            <Link href="/admin/formations">
               <ArrowLeft className="h-5 w-5" />
             </Link>
           </Button>
           <h1 className="font-serif text-2xl font-bold text-primary-green">
             {mode === "create"
-              ? "Nouvel événement"
-              : "Modifier l\u2019événement"}
+              ? "Nouvelle formation"
+              : "Modifier la formation"}
           </h1>
         </div>
         <div className="flex gap-2">
           {/* « Aperçu » couvre aussi les brouillons, c'est sa raison d'etre.
-              « Voir » reste reserve aux evenements publies. */}
-          {mode === "edit" && event && (
+              « Voir » reste reserve aux formations publies. */}
+          {mode === "edit" && formation && (
             <Button type="button" variant="outline" asChild>
               <Link
-                href={`/admin/evenements/${event.id}/preview`}
+                href={`/admin/formations/${formation.id}/preview`}
                 target="_blank"
               >
                 <Eye className="mr-2 h-4 w-4" />
@@ -228,9 +228,9 @@ export const EventForm = ({
               </Link>
             </Button>
           )}
-          {mode === "edit" && event?.is_published && (
+          {mode === "edit" && formation?.is_published && (
             <Button type="button" variant="outline" asChild>
-              <Link href={`/evenements/${event.slug}`} target="_blank">
+              <Link href={`/formations/${formation.slug}`} target="_blank">
                 <Eye className="mr-2 h-4 w-4" />
                 Voir
               </Link>
@@ -243,7 +243,7 @@ export const EventForm = ({
               onClick={handleTogglePublish}
               disabled={isPending}
             >
-              {event?.is_published ? (
+              {formation?.is_published ? (
                 <>
                   <GlobeLock className="mr-2 h-4 w-4" />
                   Dépublier
@@ -289,7 +289,7 @@ export const EventForm = ({
                   id="title"
                   value={formData.title}
                   onChange={handleTitleChange}
-                  placeholder="Titre de l'événement"
+                  placeholder="Titre de la formation"
                   required
                 />
               </div>
@@ -302,7 +302,7 @@ export const EventForm = ({
                   onChange={(e) =>
                     setFormData((p) => ({ ...p, slug: e.target.value }))
                   }
-                  placeholder="mon-evenement"
+                  placeholder="ma-formation"
                   required
                 />
               </div>
@@ -315,12 +315,12 @@ export const EventForm = ({
                   onChange={(e) =>
                     setFormData((p) => ({ ...p, description: e.target.value }))
                   }
-                  placeholder="Description de l'événement..."
+                  placeholder="Description de la formation..."
                   rows={6}
                 />
               </div>
 
-              <EventContentFields
+              <FormationContentFields
                 values={{
                   summary_html: formData.summary_html,
                   objectives_html: formData.objectives_html,
@@ -339,7 +339,7 @@ export const EventForm = ({
               <CardTitle>Repères affichés sur la fiche</CardTitle>
             </CardHeader>
             <CardContent>
-              <EventHighlightsField
+              <FormationHighlightsField
                 value={formData.highlights}
                 onChange={(highlights) =>
                   setFormData((p) => ({ ...p, highlights }))
@@ -589,8 +589,8 @@ export const EventForm = ({
                   <p className="font-medium">Inscriptions</p>
                   <p className="text-muted-foreground">
                     {registrationsCount} inscrit(s)
-                    {event?.max_participants
-                      ? ` / ${event.max_participants} places`
+                    {formation?.max_participants
+                      ? ` / ${formation.max_participants} places`
                       : ""}
                   </p>
                 </div>
@@ -617,13 +617,13 @@ export const EventForm = ({
                   className="h-4 w-4 rounded border-gray-300"
                 />
                 <Label htmlFor="is_published">
-                  Publier l&apos;événement
+                  Publier la formation
                 </Label>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
                 {formData.is_published
-                  ? "L'événement est visible publiquement"
-                  : "L'événement est en brouillon (invisible)"}
+                  ? "La formation est visible publiquement"
+                  : "La formation est en brouillon (invisible)"}
               </p>
             </CardContent>
           </Card>

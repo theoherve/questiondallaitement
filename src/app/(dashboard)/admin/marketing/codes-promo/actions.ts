@@ -291,7 +291,7 @@ export const listPromoTargetOptions = async (): Promise<{
   await requireAdmin();
   const supabase = createAdminClient();
 
-  const [formations, events, consultationTypes] = await Promise.all([
+  const [accompagnements, formations, consultationTypes] = await Promise.all([
     supabase
       .from("formations")
       .select("id, title")
@@ -307,8 +307,8 @@ export const listPromoTargetOptions = async (): Promise<{
   ]);
 
   return {
-    formations: (formations.data ?? []) as { id: string; title: string }[],
-    events: (events.data ?? []) as { id: string; title: string }[],
+    formations: (accompagnements.data ?? []) as { id: string; title: string }[],
+    events: (formations.data ?? []) as { id: string; title: string }[],
     consultationTypes: (consultationTypes.data ?? []) as {
       id: string;
       title: string;

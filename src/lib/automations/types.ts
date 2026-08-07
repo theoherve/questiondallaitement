@@ -45,11 +45,11 @@ export type BookingConfirmedConfig = {
   consultation_type_ids?: string[];
 };
 
-export type EventRegisteredConfig = {
+export type FormationRegisteredConfig = {
   event_ids?: string[];
 };
 
-export type DelayAfterEventConfig = {
+export type DelayAfterFormationConfig = {
   event_ids?: string[];
   delay_days: number;
 };
@@ -57,8 +57,8 @@ export type DelayAfterEventConfig = {
 export type AutomationTriggerConfig =
   | AccompagnementPurchasedConfig
   | BookingConfirmedConfig
-  | EventRegisteredConfig
-  | DelayAfterEventConfig;
+  | FormationRegisteredConfig
+  | DelayAfterFormationConfig;
 
 export type TriggerData = {
   client_id: string;

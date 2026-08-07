@@ -247,7 +247,7 @@ const AdminDashboardPage = async () => {
   const typeLabels: Record<string, string> = {
     formation: "Accompagnements",
     booking: "Consultations",
-    event: "Événements",
+    event: "Formations",
   };
   const revenueByType = new Map<string, number>();
   for (const p of allPaymentsRes.data ?? []) {

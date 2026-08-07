@@ -29,7 +29,7 @@ vi.mock("@/lib/invoicing/consultant-billing", () => ({
   consultantCanSell: async () => true,
 }));
 
-import { registerForEvent } from "./actions";
+import { registerForFormation } from "./actions";
 
 const createChain = (result: {
   data?: unknown;
@@ -46,8 +46,8 @@ const createChain = (result: {
   return chain;
 };
 
-const eventRow = {
-  id: "event-1",
+const formationRow = {
+  id: "formation-1",
   title: "Webinaire",
   description: "desc",
   price_cents: 5000,
@@ -70,11 +70,11 @@ beforeEach(() => {
   });
 });
 
-describe("registerForEvent avec code promo", () => {
+describe("registerForFormation avec code promo", () => {
   it("applique la remise et recalcule la commission", async () => {
     mockFrom
       .mockReturnValueOnce(createChain({ data: null })) // inscription existante
-      .mockReturnValueOnce(createChain({ data: eventRow })) // event
+      .mockReturnValueOnce(createChain({ data: formationRow })) // formation
       .mockReturnValueOnce(
         createChain({
           data: { stripe_account_id: "acct_1", commission_rate: 20 },
@@ -90,7 +90,7 @@ describe("registerForEvent avec code promo", () => {
       redemptionId: "redemption-2",
     });
 
-    const result = await registerForEvent("event-1", "allaitement15");
+    const result = await registerForFormation("formation-1", "allaitement15");
 
     expect(result.success).toBe(true);
     const args = mockCreateCheckoutSession.mock.calls[0][0];
@@ -103,7 +103,7 @@ describe("registerForEvent avec code promo", () => {
   it("inscrit directement et confirme la reservation quand la remise ramene a zero", async () => {
     mockFrom
       .mockReturnValueOnce(createChain({ data: null }))
-      .mockReturnValueOnce(createChain({ data: eventRow }))
+      .mockReturnValueOnce(createChain({ data: formationRow }))
       .mockReturnValueOnce(
         createChain({
           data: { stripe_account_id: "acct_1", commission_rate: 20 },
@@ -120,7 +120,7 @@ describe("registerForEvent avec code promo", () => {
       redemptionId: "redemption-3",
     });
 
-    const result = await registerForEvent("event-1", "milkpower");
+    const result = await registerForFormation("formation-1", "milkpower");
 
     expect(result.success).toBe(true);
     expect(mockCreateCheckoutSession).not.toHaveBeenCalled();

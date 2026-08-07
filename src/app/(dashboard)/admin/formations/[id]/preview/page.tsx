@@ -6,10 +6,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Pencil } from "lucide-react";
 import {
-  EventDetail,
-  type EventDetailConsultant,
-  type EventDetailProps,
-} from "@/app/(public)/formations/[slug]/_components/event-detail";
+  FormationDetail,
+  type FormationDetailConsultant,
+  type FormationDetailProps,
+} from "@/app/(public)/formations/[slug]/_components/formation-detail";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -32,7 +32,7 @@ export const generateMetadata = async ({
   };
 };
 
-const EventPreviewPage = async ({ params }: Props) => {
+const FormationPreviewPage = async ({ params }: Props) => {
   const user = await getSessionUser();
   if (!user || !user.roles.includes("admin")) redirect("/connexion");
 
@@ -41,7 +41,7 @@ const EventPreviewPage = async ({ params }: Props) => {
   // Client admin et pas de filtre `is_published` : l'interet de l'apercu est
   // justement de voir un brouillon tel qu'il sera publie.
   const supabase = createAdminClient();
-  const { data: event } = await supabase
+  const { data: formation } = await supabase
     .from("events")
     .select(
       `
@@ -59,16 +59,16 @@ const EventPreviewPage = async ({ params }: Props) => {
     .eq("id", id)
     .single();
 
-  if (!event) notFound();
+  if (!formation) notFound();
 
   const { count } = await supabase
     .from("event_registrations")
     .select("*", { count: "exact", head: true })
-    .eq("event_id", event.id)
+    .eq("event_id", formation.id)
     .eq("status", "registered");
 
   const registrationsCount = count ?? 0;
-  const consultant = event.consultants as unknown as EventDetailConsultant;
+  const consultant = formation.consultants as unknown as FormationDetailConsultant;
 
   return (
     // Les marges negatives annulent la gouttiere du gabarit d'administration
@@ -78,25 +78,25 @@ const EventPreviewPage = async ({ params }: Props) => {
       <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-3 border-b border-primary-green/10 bg-accent-honey-soft px-4 py-3">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/admin/evenements">
+            <Link href="/admin/formations">
               <ArrowLeft className="h-5 w-5" />
             </Link>
           </Button>
           <p className="text-sm font-medium text-primary-green">
-            Aperçu — {event.is_published ? "publié" : "brouillon"}. Cette page
+            Aperçu — {formation.is_published ? "publié" : "brouillon"}. Cette page
             n’est pas visible du public.
           </p>
         </div>
         <Button variant="outline" asChild>
-          <Link href={`/admin/evenements/${id}/edit`}>
+          <Link href={`/admin/formations/${id}/edit`}>
             <Pencil className="mr-2 h-4 w-4" />
             Modifier
           </Link>
         </Button>
       </div>
 
-      <EventDetail
-        event={event as EventDetailProps["event"]}
+      <FormationDetail
+        formation={formation as FormationDetailProps["formation"]}
         consultant={consultant}
         isAlreadyRegistered={false}
         isFullyBooked={false}
@@ -109,4 +109,4 @@ const EventPreviewPage = async ({ params }: Props) => {
   );
 };
 
-export default EventPreviewPage;
+export default FormationPreviewPage;

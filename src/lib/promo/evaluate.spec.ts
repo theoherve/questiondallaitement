@@ -111,7 +111,7 @@ describe("evaluatePromoCode", () => {
         scope_all: false,
         targets: [{ target_type: "events_all", target_id: null }],
       }),
-      makeContext({ serviceKind: "event", itemId: "event-1" }),
+      makeContext({ serviceKind: "event", itemId: "formation-1" }),
     );
     expect(result).toMatchObject({ ok: true });
   });
@@ -215,7 +215,7 @@ describe("evaluatePromoCode", () => {
       }),
       makeContext({
         triggeringPurchases: [
-          { kind: "event", itemId: "event-1", purchasedAtMs: NOW - 49 * HOUR },
+          { kind: "event", itemId: "formation-1", purchasedAtMs: NOW - 49 * HOUR },
         ],
       }),
     );
@@ -232,7 +232,7 @@ describe("evaluatePromoCode", () => {
       }),
       makeContext({
         triggeringPurchases: [
-          { kind: "event", itemId: "event-1", purchasedAtMs: NOW - 47 * HOUR },
+          { kind: "event", itemId: "formation-1", purchasedAtMs: NOW - 47 * HOUR },
         ],
       }),
     );
@@ -243,11 +243,11 @@ describe("evaluatePromoCode", () => {
     const result = evaluatePromoCode(
       makeCode({
         trigger_delay_hours: 48,
-        triggers: [{ trigger_type: "event_purchase", target_id: "event-cible" }],
+        triggers: [{ trigger_type: "event_purchase", target_id: "formation-cible" }],
       }),
       makeContext({
         triggeringPurchases: [
-          { kind: "event", itemId: "event-autre", purchasedAtMs: NOW - HOUR },
+          { kind: "event", itemId: "formation-autre", purchasedAtMs: NOW - HOUR },
         ],
       }),
     );

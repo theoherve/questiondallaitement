@@ -27,8 +27,8 @@ import { AUTOMATION_TRIGGER_TYPES } from "@/lib/automations/types";
 const TRIGGER_LABELS: Record<string, string> = {
   formation_purchased: "Achat formation",
   booking_confirmed: "Réservation confirmée",
-  event_registered: "Inscription événement",
-  delay_after_event: "Jours après événement",
+  event_registered: "Inscription formation",
+  delay_after_event: "Jours après formation",
 };
 
 type FormOptions = {
@@ -256,7 +256,7 @@ export const AutomationFormDialog = ({
               <div className="space-y-2">
                 {triggerType === "delay_after_event" && (
                   <div>
-                    <Label htmlFor="delay_days">Nombre de jours après l&apos;événement</Label>
+                    <Label htmlFor="delay_days">Nombre de jours après la formation</Label>
                     <Input
                       id="delay_days"
                       type="number"
@@ -272,7 +272,7 @@ export const AutomationFormDialog = ({
                   </div>
                 )}
                 <div>
-                  <Label>Événements concernés (vide = tous)</Label>
+                  <Label>Formations concernées (vide = tous)</Label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {formOptions.events.map((ev) => {
                       const ids = (triggerConfig.event_ids as string[]) ?? [];

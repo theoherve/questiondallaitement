@@ -97,14 +97,14 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
     },
   ];
 
-  // Formations
-  const { data: formations } = await supabase
+  // Accompagnements
+  const { data: accompagnements } = await supabase
     .from("formations")
     .select("slug, updated_at")
     .eq("status", "published")
     .is("deleted_at", null);
 
-  const formationPages: MetadataRoute.Sitemap = (formations ?? []).map((f) => ({
+  const accompagnementPages: MetadataRoute.Sitemap = (accompagnements ?? []).map((f) => ({
     url: `${BASE_URL}/accompagnements/${f.slug}`,
     lastModified: f.updated_at,
     changeFrequency: "weekly" as const,
@@ -126,13 +126,13 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
     }),
   );
 
-  // Events
-  const { data: events } = await supabase
+  // Formations
+  const { data: formations } = await supabase
     .from("events")
     .select("slug, updated_at")
     .eq("is_published", true);
 
-  const eventPages: MetadataRoute.Sitemap = (events ?? []).map((e) => ({
+  const formationPages: MetadataRoute.Sitemap = (formations ?? []).map((e) => ({
     url: `${BASE_URL}/formations/${e.slug}`,
     lastModified: e.updated_at,
     changeFrequency: "weekly" as const,
@@ -170,9 +170,9 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
 
   return [
     ...staticPages,
-    ...formationPages,
+    ...accompagnementPages,
     ...consultantPages,
-    ...eventPages,
+    ...formationPages,
     ...blogPages,
     ...categoryPages,
   ];

@@ -15,7 +15,7 @@ import {
   CheckCircle,
   type LucideIcon,
 } from "lucide-react";
-import { resolveEventHighlights } from "@/config/event-highlights";
+import { resolveFormationHighlights } from "@/config/formation-highlights";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -46,16 +46,16 @@ const formatDuration = (startsAt: string, endsAt: string): string => {
   return `${diffDays} jours`;
 };
 
-type EventCategory = "formation" | "masterclass" | "atelier" | "conference" | "live" | "autre";
+type FormationCategory = "formation" | "masterclass" | "atelier" | "conference" | "live" | "autre";
 
-const categorizeEvent = (title: string): { category: EventCategory; label: string; color: string } => {
+const categorizeFormation = (title: string): { category: FormationCategory; label: string; color: string } => {
   const t = title.toLowerCase();
   if (t.startsWith("formation")) return { category: "formation", label: "Formation", color: "bg-primary-red text-white" };
   if (t.startsWith("masterclass")) return { category: "masterclass", label: "Masterclass", color: "bg-amber-600 text-white" };
   if (t.startsWith("atelier")) return { category: "atelier", label: "Atelier", color: "bg-primary-green text-white" };
   if (t.includes("conférence") || t.includes("conference")) return { category: "conference", label: "Conférence", color: "bg-blue-700 text-white" };
   if (t.startsWith("live")) return { category: "live", label: "Live", color: "bg-pink-600 text-white" };
-  return { category: "autre", label: "Événement", color: "bg-primary-green/80 text-white" };
+  return { category: "autre", label: "Formation", color: "bg-primary-green/80 text-white" };
 };
 
 /**
@@ -98,7 +98,7 @@ const SectionHeading = ({
   </div>
 );
 
-export type EventDetailConsultant = {
+export type FormationDetailConsultant = {
   slug: string;
   profiles: {
     first_name: string | null;
@@ -107,8 +107,8 @@ export type EventDetailConsultant = {
   } | null;
 } | null;
 
-export type EventDetailProps = {
-  event: {
+export type FormationDetailProps = {
+  formation: {
     id: string;
     title: string;
     slug: string;
@@ -129,7 +129,7 @@ export type EventDetailProps = {
     show_price: boolean;
     thumbnail_url: string | null;
   };
-  consultant: EventDetailConsultant;
+  consultant: FormationDetailConsultant;
   isAlreadyRegistered: boolean;
   isFullyBooked: boolean;
   registrationsCount: number;
@@ -144,8 +144,8 @@ export type EventDetailProps = {
  * la recuperation des donnees reste a l'appelant, ce composant ne fait que
  * presenter.
  */
-export const EventDetail = ({
-  event,
+export const FormationDetail = ({
+  formation,
   consultant,
   isAlreadyRegistered,
   isFullyBooked,
@@ -153,35 +153,35 @@ export const EventDetail = ({
   isAuthenticated,
   awaitingRegistration,
   isPreview = false,
-}: EventDetailProps) => {
+}: FormationDetailProps) => {
   const consultantName = consultant?.profiles
     ? `${consultant.profiles.first_name ?? ""} ${consultant.profiles.last_name ?? ""}`.trim()
     : "Consultante";
 
   const typeLabel =
-    event.type === "online"
+    formation.type === "online"
       ? "En ligne"
-      : event.type === "in_person"
+      : formation.type === "in_person"
         ? "Présentiel"
         : "Hybride";
 
   const TypeIcon =
-    event.type === "online"
+    formation.type === "online"
       ? Video
-      : event.type === "in_person"
+      : formation.type === "in_person"
         ? MapPin
         : Users;
 
-  const { label: categoryLabel, color: categoryColor } = categorizeEvent(
-    event.title,
+  const { label: categoryLabel, color: categoryColor } = categorizeFormation(
+    formation.title,
   );
-  const highlights = resolveEventHighlights(event.highlights);
-  const duration = formatDuration(event.starts_at, event.ends_at);
-  const isFree = event.price_cents === 0;
-  const isPast = new Date(event.ends_at) < new Date();
-  const isMultiDay = new Date(event.ends_at).getDate() !== new Date(event.starts_at).getDate();
-  const spotsLeft = event.max_participants
-    ? event.max_participants - registrationsCount
+  const highlights = resolveFormationHighlights(formation.highlights);
+  const duration = formatDuration(formation.starts_at, formation.ends_at);
+  const isFree = formation.price_cents === 0;
+  const isPast = new Date(formation.ends_at) < new Date();
+  const isMultiDay = new Date(formation.ends_at).getDate() !== new Date(formation.starts_at).getDate();
+  const spotsLeft = formation.max_participants
+    ? formation.max_participants - registrationsCount
     : null;
 
   return (
@@ -198,7 +198,7 @@ export const EventDetail = ({
         <div className="relative">
           <div
             className={`mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8 ${
-              event.thumbnail_url ? "lg:pr-[calc(38%+2rem)]" : ""
+              formation.thumbnail_url ? "lg:pr-[calc(38%+2rem)]" : ""
             }`}
           >
             {/* Back link */}
@@ -230,13 +230,13 @@ export const EventDetail = ({
 
                 {/* Title */}
                 <h1 className="mt-4 font-serif text-2xl font-bold text-primary-green sm:text-3xl lg:text-4xl">
-                  {event.title}
+                  {formation.title}
                 </h1>
 
                 {/* Short description */}
-                {event.description && (
+                {formation.description && (
                   <p className="mt-4 max-w-2xl text-base leading-relaxed text-primary-green/75">
-                    {event.description}
+                    {formation.description}
                   </p>
                 )}
 
@@ -245,7 +245,7 @@ export const EventDetail = ({
                     surface pleine, une boite dedans ferait boite dans boite.
                     Titres masques : l'editeur les autorise, mais ils
                     entreraient en concurrence avec le h1 juste au-dessus. */}
-                {event.summary_html && (
+                {formation.summary_html && (
                   <div
                     className="mt-5 max-w-2xl border-l-2 border-primary-red/40 pl-4
                                text-[0.95rem] leading-relaxed text-primary-green/75
@@ -256,7 +256,7 @@ export const EventDetail = ({
                                [&_em]:not-italic [&_em]:text-primary-red
                                [&_a]:underline [&_a]:underline-offset-2
                                [&_h1]:hidden [&_h2]:hidden [&_h3]:hidden"
-                    dangerouslySetInnerHTML={{ __html: event.summary_html }}
+                    dangerouslySetInnerHTML={{ __html: formation.summary_html }}
                   />
                 )}
 
@@ -265,7 +265,7 @@ export const EventDetail = ({
                   <div className="flex items-center gap-1.5">
                     <CalendarDays className="h-4 w-4" />
                     <span>
-                      {format(new Date(event.starts_at), "d MMMM yyyy", { locale: fr })}
+                      {format(new Date(formation.starts_at), "d MMMM yyyy", { locale: fr })}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -280,10 +280,10 @@ export const EventDetail = ({
               </div>
 
               {/* Price highlight (desktop) */}
-              {event.show_price && (
+              {formation.show_price && (
                 <div className="mt-8 hidden border-t border-primary-green/15 pt-6 lg:block">
                   <p className="font-serif text-2xl font-bold text-primary-green">
-                    {formatPrice(event.price_cents, event.currency)}
+                    {formatPrice(formation.price_cents, formation.currency)}
                   </p>
                   {isFree && (
                     <p className="mt-1 text-sm text-primary-green/60">
@@ -298,11 +298,11 @@ export const EventDetail = ({
           {/* Visuel : sous le texte en mobile, cale a droite en desktop.
               Aucun voile, et `contain` plutot que `cover` — les vignettes sont
               des supports de formation composes, un recadrage les mutile. */}
-          {event.thumbnail_url && (
+          {formation.thumbnail_url && (
             <div className="relative h-56 w-full sm:h-72 lg:absolute lg:inset-y-0 lg:right-0 lg:h-full lg:w-[38%]">
               <Image
-                src={event.thumbnail_url}
-                alt={event.title}
+                src={formation.thumbnail_url}
+                alt={formation.title}
                 fill
                 className="object-contain p-6 lg:p-10"
                 sizes="(min-width: 1024px) 38vw, 100vw"
@@ -345,38 +345,38 @@ export const EventDetail = ({
           {/* -------------------------------------------------------- */}
           <div className="lg:col-span-2 space-y-10">
             {/* Objectifs pédagogiques — puces cochées */}
-            {event.objectives_html && (
+            {formation.objectives_html && (
               <div>
                 <SectionHeading icon={Target}>
                   Ce que vous saurez faire
                 </SectionHeading>
                 <div
                   className={`mt-5 max-w-none ${PROSE_OBJECTIVES}`}
-                  dangerouslySetInnerHTML={{ __html: event.objectives_html }}
+                  dangerouslySetInnerHTML={{ __html: formation.objectives_html }}
                 />
               </div>
             )}
 
             {/* Programme — fil vertical numéroté */}
-            {event.program_html && (
+            {formation.program_html && (
               <div>
                 <SectionHeading icon={BookOpen}>Le programme</SectionHeading>
                 <div
                   className={`mt-5 max-w-none ${PROSE_BASE} ${PROSE_PROGRAM}`}
-                  dangerouslySetInnerHTML={{ __html: event.program_html }}
+                  dangerouslySetInnerHTML={{ __html: formation.program_html }}
                 />
               </div>
             )}
 
             {/* Public visé — encadré, pour trancher avec les deux au-dessus */}
-            {event.audience_html && (
+            {formation.audience_html && (
               <div className="bg-background-beige-dark p-6 sm:p-8">
                 <SectionHeading icon={Users}>
                   À qui s’adresse cette formation
                 </SectionHeading>
                 <div
                   className={`mt-4 max-w-none ${PROSE_BASE} [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5`}
-                  dangerouslySetInnerHTML={{ __html: event.audience_html }}
+                  dangerouslySetInnerHTML={{ __html: formation.audience_html }}
                 />
               </div>
             )}
@@ -421,7 +421,7 @@ export const EventDetail = ({
                 <CardContent className="space-y-5 pt-6">
                   {/* Price */}
                   <div className="text-center">
-                    {!event.show_price ? (
+                    {!formation.show_price ? (
                       <p className="text-sm text-muted-foreground">
                         Tarif à venir
                       </p>
@@ -436,7 +436,7 @@ export const EventDetail = ({
                       </>
                     ) : (
                       <p className="font-serif text-3xl font-bold text-primary-green">
-                        {formatPrice(event.price_cents, event.currency)}
+                        {formatPrice(formation.price_cents, formation.currency)}
                       </p>
                     )}
                   </div>
@@ -452,13 +452,13 @@ export const EventDetail = ({
                       <div>
                         <p className="font-medium text-primary-green">
                           {isMultiDay
-                            ? `${format(new Date(event.starts_at), "d", { locale: fr })} — ${format(new Date(event.ends_at), "d MMMM yyyy", { locale: fr })}`
-                            : format(new Date(event.starts_at), "EEEE d MMMM yyyy", { locale: fr })}
+                            ? `${format(new Date(formation.starts_at), "d", { locale: fr })} — ${format(new Date(formation.ends_at), "d MMMM yyyy", { locale: fr })}`
+                            : format(new Date(formation.starts_at), "EEEE d MMMM yyyy", { locale: fr })}
                         </p>
                         <p className="text-xs text-primary-green/50">
                           {isMultiDay
-                            ? `${format(new Date(event.starts_at), "EEEE", { locale: fr }).charAt(0).toUpperCase() + format(new Date(event.starts_at), "EEEE", { locale: fr }).slice(1)} et ${format(new Date(event.ends_at), "EEEE", { locale: fr })}`
-                            : format(new Date(event.starts_at), "EEEE", { locale: fr }).charAt(0).toUpperCase() + format(new Date(event.starts_at), "EEEE", { locale: fr }).slice(1)}
+                            ? `${format(new Date(formation.starts_at), "EEEE", { locale: fr }).charAt(0).toUpperCase() + format(new Date(formation.starts_at), "EEEE", { locale: fr }).slice(1)} et ${format(new Date(formation.ends_at), "EEEE", { locale: fr })}`
+                            : format(new Date(formation.starts_at), "EEEE", { locale: fr }).charAt(0).toUpperCase() + format(new Date(formation.starts_at), "EEEE", { locale: fr }).slice(1)}
                         </p>
                       </div>
                     </div>
@@ -468,9 +468,9 @@ export const EventDetail = ({
                       <Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary-red" />
                       <div>
                         <p className="font-medium text-primary-green">
-                          {format(new Date(event.starts_at), "HH'h'mm", { locale: fr })}
+                          {format(new Date(formation.starts_at), "HH'h'mm", { locale: fr })}
                           {" — "}
-                          {format(new Date(event.ends_at), "HH'h'mm", { locale: fr })}
+                          {format(new Date(formation.ends_at), "HH'h'mm", { locale: fr })}
                         </p>
                         <p className="text-xs text-primary-green/50">
                           Durée : {duration}
@@ -479,12 +479,12 @@ export const EventDetail = ({
                     </div>
 
                     {/* Location */}
-                    {event.location && (
+                    {formation.location && (
                       <div className="flex items-start gap-3">
                         <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary-red" />
                         <div>
                           <p className="font-medium text-primary-green">
-                            {event.location}
+                            {formation.location}
                           </p>
                           <p className="text-xs text-primary-green/50">
                             {typeLabel}
@@ -494,7 +494,7 @@ export const EventDetail = ({
                     )}
 
                     {/* Spots */}
-                    {event.max_participants && (
+                    {formation.max_participants && (
                       <div className="flex items-start gap-3">
                         <Users className="mt-0.5 h-4 w-4 shrink-0 text-primary-red" />
                         <div>
@@ -503,7 +503,7 @@ export const EventDetail = ({
                               ? `${spotsLeft} place${spotsLeft > 1 ? "s" : ""} restante${spotsLeft > 1 ? "s" : ""}`
                               : spotsLeft === 0
                                 ? "Complet"
-                                : `${event.max_participants} places`}
+                                : `${formation.max_participants} places`}
                           </p>
                           {spotsLeft !== null && spotsLeft > 0 && spotsLeft <= 5 && (
                             <p className="text-xs font-medium text-primary-red">
@@ -521,19 +521,19 @@ export const EventDetail = ({
                   {/* CTA */}
                   {awaitingRegistration && (
                     <div className="mb-3">
-                      <RegistrationReconciler eventId={event.id} />
+                      <RegistrationReconciler formationId={formation.id} />
                     </div>
                   )}
                   <RegisterButton
-                    eventId={event.id}
+                    formationId={formation.id}
                     isFree={isFree}
                     isFullyBooked={isFullyBooked}
                     isAlreadyRegistered={isAlreadyRegistered}
                     isPast={isPast}
                     isAuthenticated={isAuthenticated}
-                    priceCents={event.price_cents}
-                    currency={event.currency}
-                    externalUrl={event.external_url}
+                    priceCents={formation.price_cents}
+                    currency={formation.currency}
+                    externalUrl={formation.external_url}
                     isPreview={isPreview}
                   />
 
@@ -543,7 +543,7 @@ export const EventDetail = ({
                         l'inscription part chez l'organisme : l'annoncer ici
                         serait faux. */}
                     {[
-                      ...(event.external_url ? [] : ["Paiement sécurisé"]),
+                      ...(formation.external_url ? [] : ["Paiement sécurisé"]),
                       "Attestation de participation",
                       "Support disponible",
                     ].map((text) => (

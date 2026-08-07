@@ -112,7 +112,7 @@ export const PromoCodeForm = ({
 
   const optionsFor = (targetType: string): Option[] => {
     if (targetType === "formation") return formations;
-    if (targetType === "event") return events;
+    if (targetType === "event") return formations;
     if (targetType === "booking_service") return consultationTypes;
     return [];
   };

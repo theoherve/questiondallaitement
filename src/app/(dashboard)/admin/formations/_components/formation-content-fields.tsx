@@ -4,20 +4,20 @@ import { Label } from "@/components/ui/label";
 import { WysiwygEditor } from "@/components/editor/wysiwyg-editor";
 
 /**
- * Les sections editoriales vivent hors d'`event-form` : l'editeur n'est pas
+ * Les sections editoriales vivent hors d'`formation-form` : l'editeur n'est pas
  * controle (`initialContent` une fois, puis `onChange`) alors que le
  * formulaire l'est entierement. Isoler le pont entre les deux modeles evite
  * de le disperser dans un fichier deja tres long.
  */
-export type EventContentField =
+export type FormationContentField =
   | "summary_html"
   | "objectives_html"
   | "program_html"
   | "audience_html";
 
-export type EventContentFieldsProps = {
-  values: Record<EventContentField, string>;
-  onChange: (field: EventContentField, html: string) => void;
+export type FormationContentFieldsProps = {
+  values: Record<FormationContentField, string>;
+  onChange: (field: FormationContentField, html: string) => void;
 };
 
 /**
@@ -27,7 +27,7 @@ export type EventContentFieldsProps = {
  * (liste a puces pour les objectifs, liste numerotee pour le programme).
  */
 const FIELDS: Array<{
-  key: EventContentField;
+  key: FormationContentField;
   label: string;
   hint: string;
   placeholder: string;
@@ -58,10 +58,10 @@ const FIELDS: Array<{
   },
 ];
 
-export const EventContentFields = ({
+export const FormationContentFields = ({
   values,
   onChange,
-}: EventContentFieldsProps) => (
+}: FormationContentFieldsProps) => (
   <>
     {FIELDS.map(({ key, label, hint, placeholder }) => (
       <div key={key} className="space-y-2">

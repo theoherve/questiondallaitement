@@ -186,8 +186,8 @@ export const SectionEditor = ({
     }
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
+  const handleDragEnd = async (formation: DragEndEvent) => {
+    const { active, over } = formation;
     if (!over || active.id === over.id) return;
 
     const oldIndex = blocks.findIndex((b) => b.id === active.id);

@@ -4,7 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   labelSchema,
-  recurringEventDefinitionSchema,
+  recurringFormationDefinitionSchema,
   adminWorkflowSchema,
 } from "@/validations/admin-workflows";
 import { revalidatePath } from "next/cache";
@@ -14,7 +14,7 @@ import type {
   AdminWorkflow,
   AdminWorkflowStep,
   Label,
-  RecurringEventDefinition,
+  RecurringFormationDefinition,
   AdminWorkflowLog,
   ScheduledWorkflowAction,
 } from "@/lib/admin-workflows/types";
@@ -117,10 +117,10 @@ export const deleteLabel = async (id: string): Promise<ActionResult> => {
   return { success: true };
 };
 
-// ─── Recurring Event Definitions ────────────────────────────
+// ─── Recurring Formation Definitions ────────────────────────────
 
 export const getRecurringDefinitions = async (): Promise<
-  RecurringEventDefinition[]
+  RecurringFormationDefinition[]
 > => {
   await requireAdmin();
   const supabase = createAdminClient();
@@ -128,12 +128,12 @@ export const getRecurringDefinitions = async (): Promise<
     .from("recurring_event_definitions")
     .select("*")
     .order("created_at", { ascending: false });
-  return (data ?? []) as RecurringEventDefinition[];
+  return (data ?? []) as RecurringFormationDefinition[];
 };
 
 export const getRecurringDefinition = async (
   id: string,
-): Promise<RecurringEventDefinition | null> => {
+): Promise<RecurringFormationDefinition | null> => {
   await requireAdmin();
   const supabase = createAdminClient();
   const { data } = await supabase
@@ -141,14 +141,14 @@ export const getRecurringDefinition = async (
     .select("*")
     .eq("id", id)
     .single();
-  return data as RecurringEventDefinition | null;
+  return data as RecurringFormationDefinition | null;
 };
 
 export const createRecurringDefinition = async (
   data: unknown,
 ): Promise<ActionResult<{ id: string }>> => {
   await requireAdmin();
-  const parsed = recurringEventDefinitionSchema.safeParse(data);
+  const parsed = recurringFormationDefinitionSchema.safeParse(data);
   if (!parsed.success)
     return { success: false, error: parsed.error.issues[0]?.message };
 
@@ -169,7 +169,7 @@ export const updateRecurringDefinition = async (
   data: unknown,
 ): Promise<ActionResult> => {
   await requireAdmin();
-  const parsed = recurringEventDefinitionSchema.safeParse(data);
+  const parsed = recurringFormationDefinitionSchema.safeParse(data);
   if (!parsed.success)
     return { success: false, error: parsed.error.issues[0]?.message };
 

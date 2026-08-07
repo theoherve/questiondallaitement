@@ -2,13 +2,13 @@ import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { EventForm } from "../_components/event-form";
+import { FormationForm } from "../_components/formation-form";
 
 export const metadata: Metadata = {
-  title: "Nouvel événement",
+  title: "Nouvelle formation",
 };
 
-const NewEventPage = async () => {
+const NewFormationPage = async () => {
   const user = await getSessionUser();
   if (!user || !user.roles.includes("admin")) redirect("/connexion");
 
@@ -31,7 +31,7 @@ const NewEventPage = async () => {
   }));
 
   return (
-    <EventForm
+    <FormationForm
       consultants={consultants}
       providers={providers ?? []}
       mode="create"
@@ -39,4 +39,4 @@ const NewEventPage = async () => {
   );
 };
 
-export default NewEventPage;
+export default NewFormationPage;

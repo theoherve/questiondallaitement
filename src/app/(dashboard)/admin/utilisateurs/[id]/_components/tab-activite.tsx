@@ -34,7 +34,7 @@ const TYPE_LABEL: Record<string, string> = {
   booking: "Réservation",
   enrollment: "Accompagnement",
   payment: "Paiement",
-  event: "Événement",
+  event: "Formation",
   audit: "Action",
 };
 

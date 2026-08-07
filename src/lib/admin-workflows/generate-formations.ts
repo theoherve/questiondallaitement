@@ -1,20 +1,20 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { computeOccurrences } from "./recurrence";
-import type { RecurrenceRule, RecurringEventDefinition } from "./types";
+import type { RecurrenceRule, RecurringFormationDefinition } from "./types";
 import { addMinutes, format } from "date-fns";
 
 /**
- * Generate upcoming event occurrences from active recurring definitions.
+ * Generate upcoming formation occurrences from active recurring definitions.
  * Called by the cron job.
  */
-export const generateRecurringEvents = async (): Promise<{
+export const generateRecurringFormations = async (): Promise<{
   generated: number;
 }> => {
   const supabase = createAdminClient();
   let generated = 0;
 
   const { data: definitions } = await supabase
-    .from("recurring_event_definitions")
+    .from("CDEFEvent")
     .select("*")
     .eq("is_active", true);
 
@@ -28,7 +28,7 @@ export const generateRecurringEvents = async (): Promise<{
   const [py, pm, pd] = parisTodayStr.split("-").map(Number);
   const today = new Date(py, pm - 1, pd);
 
-  for (const def of definitions as RecurringEventDefinition[]) {
+  for (const def of definitions as RecurringFormationDefinition[]) {
     const horizon = new Date(today);
     horizon.setDate(horizon.getDate() + def.generate_ahead_days);
 
@@ -99,7 +99,7 @@ export const generateRecurringEvents = async (): Promise<{
         lastGenerated = occDate;
       } else {
         console.error(
-          `Failed to generate event for ${def.title} on ${occDateStr}:`,
+          `Failed to generate formation for ${def.title} on ${occDateStr}:`,
           error.message,
         );
       }
@@ -108,7 +108,7 @@ export const generateRecurringEvents = async (): Promise<{
     // Update last_generated_until
     if (lastGenerated) {
       await supabase
-        .from("recurring_event_definitions")
+        .from("CDEFEvent")
         .update({
           last_generated_until: format(lastGenerated, "yyyy-MM-dd"),
         })

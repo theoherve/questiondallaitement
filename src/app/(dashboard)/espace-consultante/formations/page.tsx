@@ -19,7 +19,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export const metadata: Metadata = {
-  title: "Mes événements",
+  title: "Mes formations",
 };
 
 const TYPE_CONFIG: Record<
@@ -39,7 +39,7 @@ const formatPrice = (cents: number, currency: string): string => {
   }).format(cents / 100);
 };
 
-const ConsultanteEvenementsPage = async () => {
+const ConsultanteFormationsPage = async () => {
   const user = await getSessionUser();
   if (!user) redirect("/connexion");
 
@@ -56,7 +56,7 @@ const ConsultanteEvenementsPage = async () => {
     return (
       <div className="space-y-6">
         <h1 className="font-serif text-2xl font-bold text-primary-green">
-          Mes événements
+          Mes formations
         </h1>
         <Card>
           <CardContent className="py-12 text-center">
@@ -69,19 +69,19 @@ const ConsultanteEvenementsPage = async () => {
     );
   }
 
-  const { data: events } = await supabase
+  const { data: formations } = await supabase
     .from("events")
     .select("id, title, slug, type, starts_at, ends_at, location, max_participants, price_cents, currency, is_published, created_at")
     .eq("consultant_id", consultant.id)
     .order("starts_at", { ascending: false });
 
-  // Count registrations for all events
-  const eventIds = (events ?? []).map((e) => e.id);
-  const { data: registrations } = eventIds.length
+  // Count registrations for all formations
+  const formationIds = (formations ?? []).map((e) => e.id);
+  const { data: registrations } = formationIds.length
     ? await supabase
         .from("event_registrations")
         .select("event_id")
-        .in("event_id", eventIds)
+        .in("event_id", formationIds)
         .eq("status", "registered")
     : { data: [] };
 
@@ -90,7 +90,7 @@ const ConsultanteEvenementsPage = async () => {
     regCounts.set(reg.event_id, (regCounts.get(reg.event_id) ?? 0) + 1);
   }
 
-  type EventRow = {
+  type FormationRow = {
     id: string;
     title: string;
     slug: string;
@@ -105,12 +105,12 @@ const ConsultanteEvenementsPage = async () => {
     created_at: string;
   };
 
-  const rows = (events ?? []) as EventRow[];
+  const rows = (formations ?? []) as FormationRow[];
 
   return (
     <div className="space-y-6">
       <h1 className="font-serif text-2xl font-bold text-primary-green">
-        Mes événements
+        Mes formations
       </h1>
 
       <Card>
@@ -134,32 +134,32 @@ const ConsultanteEvenementsPage = async () => {
                     colSpan={7}
                     className="py-8 text-center text-muted-foreground"
                   >
-                    Aucun événement trouvé
+                    Aucune formation trouvée
                   </TableCell>
                 </TableRow>
               ) : (
-                rows.map((event) => {
+                rows.map((formation) => {
                   const typeConfig =
-                    TYPE_CONFIG[event.type] ?? TYPE_CONFIG.online;
-                  const regCount = regCounts.get(event.id) ?? 0;
-                  const spotsLabel = event.max_participants
-                    ? `${regCount}/${event.max_participants}`
+                    TYPE_CONFIG[formation.type] ?? TYPE_CONFIG.online;
+                  const regCount = regCounts.get(formation.id) ?? 0;
+                  const spotsLabel = formation.max_participants
+                    ? `${regCount}/${formation.max_participants}`
                     : `${regCount}`;
-                  const isPast = new Date(event.ends_at) < new Date();
+                  const isPast = new Date(formation.ends_at) < new Date();
 
                   return (
                     <TableRow
-                      key={event.id}
+                      key={formation.id}
                       className={isPast ? "opacity-60" : ""}
                     >
                       <TableCell>
-                        <p className="font-medium">{event.title}</p>
+                        <p className="font-medium">{formation.title}</p>
                       </TableCell>
                       <TableCell>
                         <Badge variant={typeConfig.variant} className="gap-1">
-                          {event.type === "online" ? (
+                          {formation.type === "online" ? (
                             <Video className="mr-1 h-3 w-3" />
-                          ) : event.type === "in_person" ? (
+                          ) : formation.type === "in_person" ? (
                             <MapPin className="mr-1 h-3 w-3" />
                           ) : (
                             <Users className="mr-1 h-3 w-3" />
@@ -169,28 +169,28 @@ const ConsultanteEvenementsPage = async () => {
                       </TableCell>
                       <TableCell className="text-sm">
                         <div>
-                          {format(new Date(event.starts_at), "d MMM yyyy", {
+                          {format(new Date(formation.starts_at), "d MMM yyyy", {
                             locale: fr,
                           })}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {format(new Date(event.starts_at), "HH'h'mm", {
+                          {format(new Date(formation.starts_at), "HH'h'mm", {
                             locale: fr,
                           })}{" "}
                           –{" "}
-                          {format(new Date(event.ends_at), "HH'h'mm", {
+                          {format(new Date(formation.ends_at), "HH'h'mm", {
                             locale: fr,
                           })}
                         </div>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {formatPrice(event.price_cents, event.currency)}
+                        {formatPrice(formation.price_cents, formation.currency)}
                       </TableCell>
                       <TableCell className="text-sm">
                         <span
                           className={
-                            event.max_participants &&
-                            regCount >= event.max_participants
+                            formation.max_participants &&
+                            regCount >= formation.max_participants
                               ? "font-medium text-destructive"
                               : ""
                           }
@@ -199,7 +199,7 @@ const ConsultanteEvenementsPage = async () => {
                         </span>
                       </TableCell>
                       <TableCell>
-                        {event.is_published ? (
+                        {formation.is_published ? (
                           <Badge variant="default">Publié</Badge>
                         ) : (
                           <Badge variant="secondary">Brouillon</Badge>
@@ -211,7 +211,7 @@ const ConsultanteEvenementsPage = async () => {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        {event.is_published && (
+                        {formation.is_published && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -219,7 +219,7 @@ const ConsultanteEvenementsPage = async () => {
                             title="Voir"
                           >
                             <Link
-                              href={`/evenements/${event.slug}`}
+                              href={`/formations/${formation.slug}`}
                               target="_blank"
                             >
                               <Eye className="h-4 w-4" />
@@ -239,4 +239,4 @@ const ConsultanteEvenementsPage = async () => {
   );
 };
 
-export default ConsultanteEvenementsPage;
+export default ConsultanteFormationsPage;

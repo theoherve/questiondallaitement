@@ -2,26 +2,26 @@ import { Metadata } from "next";
 import { redirect, notFound } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { EventForm } from "../../_components/event-form";
-import { getEventRegistrationsCount } from "../../actions";
-import type { Event } from "@/types";
+import { FormationForm } from "../../_components/formation-form";
+import { getFormationRegistrationsCount } from "../../actions";
+import type { Formation } from "@/types";
 
 export const metadata: Metadata = {
-  title: "Modifier l'événement",
+  title: "Modifier la formation",
 };
 
 type Props = {
   params: Promise<{ id: string }>;
 };
 
-const EditEventPage = async ({ params }: Props) => {
+const EditFormationPage = async ({ params }: Props) => {
   const user = await getSessionUser();
   if (!user || !user.roles.includes("admin")) redirect("/connexion");
 
   const { id } = await params;
   const supabase = createAdminClient();
 
-  const [eventResult, consultantsResult, providersResult, registrationsCount] =
+  const [formationResult, consultantsResult, providersResult, registrationsCount] =
     await Promise.all([
       supabase.from("events").select("*").eq("id", id).single(),
       supabase
@@ -29,14 +29,14 @@ const EditEventPage = async ({ params }: Props) => {
         .select("id, profiles!consultants_id_fkey(first_name, last_name)")
         .eq("is_active", true),
       supabase.from("training_providers").select("id, name").order("name"),
-      getEventRegistrationsCount(id),
+      getFormationRegistrationsCount(id),
     ]);
 
-  if (eventResult.error || !eventResult.data) {
+  if (formationResult.error || !formationResult.data) {
     notFound();
   }
 
-  const event = eventResult.data as Event;
+  const formation = formationResult.data as Formation;
   const consultants = (consultantsResult.data ?? []).map(
     (c: Record<string, unknown>) => ({
       id: c.id as string,
@@ -48,8 +48,8 @@ const EditEventPage = async ({ params }: Props) => {
   );
 
   return (
-    <EventForm
-      event={event}
+    <FormationForm
+      formation={formation}
       consultants={consultants}
       providers={providersResult.data ?? []}
       mode="edit"
@@ -58,4 +58,4 @@ const EditEventPage = async ({ params }: Props) => {
   );
 };
 
-export default EditEventPage;
+export default EditFormationPage;

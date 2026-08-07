@@ -170,8 +170,8 @@ export const AccompagnementEditor = ({
 
   const statusConfig = STATUS_CONFIG[accompagnement.status] ?? STATUS_CONFIG.draft;
 
-  const handleSectionDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
+  const handleSectionDragEnd = async (formation: DragEndEvent) => {
+    const { active, over } = formation;
     if (!over || active.id === over.id) return;
 
     const oldIndex = orderedSections.findIndex((s) => s.id === active.id);

@@ -175,21 +175,21 @@ const executeAction = async (
     replay_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/replay-lives`,
   };
 
-  // Load event data if available
+  // Load formation data if available
   if (eventId) {
-    const { data: event } = await supabase
+    const { data: formation } = await supabase
       .from("events")
       .select("title, starts_at, location, zoom_join_url")
       .eq("id", eventId)
       .single();
 
-    if (event) {
-      const startsAt = new Date(event.starts_at);
-      vars.event_title = event.title;
+    if (formation) {
+      const startsAt = new Date(formation.starts_at);
+      vars.event_title = formation.title;
       vars.event_date = format(startsAt, "EEEE d MMMM yyyy", { locale: fr });
       vars.event_time = format(startsAt, "HH'h'mm", { locale: fr });
-      vars.event_location = event.location ?? "";
-      vars.zoom_join_url = event.zoom_join_url ?? "";
+      vars.event_location = formation.location ?? "";
+      vars.zoom_join_url = formation.zoom_join_url ?? "";
     }
   }
 

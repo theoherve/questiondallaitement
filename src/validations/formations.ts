@@ -1,8 +1,8 @@
 import { z } from "zod/v4";
 
-// ─── Event ──────────────────────────────────────────────────
+// ─── Formation ──────────────────────────────────────────────────
 
-export const eventSchema = z
+export const formationSchema = z
   .object({
     title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
     slug: z
@@ -18,7 +18,7 @@ export const eventSchema = z
     program_html: z.string().optional().nullable(),
     audience_html: z.string().optional().nullable(),
     // Cles du catalogue des reperes. Le filtrage sur le catalogue se fait a
-    // l'ecriture (`filterEventHighlightKeys`) : une cle devenue obsolete doit
+    // l'ecriture (`filterFormationHighlightKeys`) : une cle devenue obsolete doit
     // etre ignoree, pas faire echouer l'enregistrement de toute la formation.
     highlights: z.array(z.string()).optional(),
     type: z.enum(["online", "in_person", "hybrid"]),
@@ -64,4 +64,4 @@ export const eventSchema = z
     },
   );
 
-export type EventInput = z.infer<typeof eventSchema>;
+export type FormationInput = z.infer<typeof formationSchema>;

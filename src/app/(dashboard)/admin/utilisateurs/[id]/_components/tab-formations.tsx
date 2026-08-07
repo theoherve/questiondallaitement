@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-type EventRegistration = {
+type FormationRegistration = {
   id: string;
   registered_at: string;
   status: string;
@@ -35,29 +35,29 @@ const TYPE_MAP: Record<string, string> = {
   hybrid: "Hybride",
 };
 
-export const TabEvenements = ({
+export const TabFormations = ({
   registrations,
 }: {
-  registrations: EventRegistration[];
+  registrations: FormationRegistration[];
 }) => {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-primary-green">
-          Événements ({registrations.length})
+          Formations ({registrations.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
         {registrations.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Aucune inscription à un événement.
+            Aucune inscription à une formation.
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Événement</TableHead>
-                <TableHead>Date événement</TableHead>
+                <TableHead>Formation</TableHead>
+                <TableHead>Date formation</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Inscrit le</TableHead>
                 <TableHead>Statut</TableHead>

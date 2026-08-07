@@ -121,7 +121,7 @@ export const adminNav: NavItem[] = [
   { title: "Accompagnements", href: "/admin/accompagnements", iconKey: "BookOpen" },
   { title: "Blog", href: "/admin/blog", iconKey: "FileText" },
   { title: "Sondages", href: "/admin/sondages", iconKey: "BarChart3" },
-  { title: "Événements", href: "/admin/evenements", iconKey: "CalendarClock" },
+  { title: "Formations", href: "/admin/formations", iconKey: "CalendarClock" },
   { title: "Replay Lives", href: "/admin/replay-lives", iconKey: "Video" },
   { title: "Réservation", href: "/admin/reservation", iconKey: "CalendarCheck" },
   { title: "Paiements", href: "/admin/paiements", iconKey: "CreditCard" },

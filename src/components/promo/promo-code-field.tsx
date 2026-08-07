@@ -15,7 +15,7 @@ export type AppliedPromo = {
 
 type PromoCodeFieldProps = {
   serviceKind: PromoServiceKind;
-  /** formation.id, event.id ou consultation_type_id. */
+  /** formation.id, formation.id ou consultation_type_id. */
   itemId: string;
   amountCents: number;
   currency: string;
@@ -125,7 +125,7 @@ export const PromoCodeField = ({
       <div className="flex gap-2">
         <Input
           value={value}
-          onChange={(event) => setValue(event.target.value.toUpperCase())}
+          onChange={(formation) => setValue(formation.target.value.toUpperCase())}
           placeholder="VOTRECODE"
           data-testid="promo-input"
           aria-label="Code promo"

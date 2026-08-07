@@ -19,7 +19,7 @@ import {
  * Presentation pour le webinaire (quelqu'un presente en direct) : les deux se
  * distinguent l'un de l'autre, et du Monitor nu de la visio Zoom.
  */
-export const EVENT_HIGHLIGHTS: ReadonlyArray<{
+export const FORMATION_HIGHLIGHTS: ReadonlyArray<{
   key: string;
   label: string;
   icon: LucideIcon;
@@ -32,7 +32,7 @@ export const EVENT_HIGHLIGHTS: ReadonlyArray<{
   { key: "ibclc", label: "Formatrice certifiée IBCLC", icon: GraduationCap },
 ];
 
-export const EVENT_HIGHLIGHT_KEYS = EVENT_HIGHLIGHTS.map(({ key }) => key);
+export const FORMATION_HIGHLIGHT_KEYS = FORMATION_HIGHLIGHTS.map(({ key }) => key);
 
 /**
  * Ne garde que les cles du catalogue, dans son ordre.
@@ -40,10 +40,10 @@ export const EVENT_HIGHLIGHT_KEYS = EVENT_HIGHLIGHTS.map(({ key }) => key);
  * Applique a l'ecriture : ce qui part en base est deja propre, donc la lecture
  * n'a pas a se defendre d'une cle inventee.
  */
-export const filterEventHighlightKeys = (
+export const filterFormationHighlightKeys = (
   keys: string[] | null | undefined,
 ): string[] =>
-  keys == null ? [] : EVENT_HIGHLIGHT_KEYS.filter((key) => keys.includes(key));
+  keys == null ? [] : FORMATION_HIGHLIGHT_KEYS.filter((key) => keys.includes(key));
 
 /**
  * Traduit les cles stockees en reperes affichables.
@@ -53,7 +53,7 @@ export const filterEventHighlightKeys = (
  * retire du catalogue, une donnee ancienne — sont ignorees plutot que rendues
  * sans icone.
  */
-export const resolveEventHighlights = (keys: string[] | null | undefined) =>
+export const resolveFormationHighlights = (keys: string[] | null | undefined) =>
   keys == null || keys.length === 0
     ? []
-    : EVENT_HIGHLIGHTS.filter(({ key }) => keys.includes(key));
+    : FORMATION_HIGHLIGHTS.filter(({ key }) => keys.includes(key));

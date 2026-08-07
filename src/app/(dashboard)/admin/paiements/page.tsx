@@ -60,7 +60,7 @@ const STATUS_CONFIG: Record<
 const TYPE_CONFIG: Record<string, { label: string }> = {
   formation: { label: "Accompagnement" },
   booking: { label: "Consultation" },
-  event: { label: "Événement" },
+  event: { label: "Formation" },
 };
 
 const PaiementsPage = async ({
@@ -233,7 +233,7 @@ const PaiementsPage = async ({
                 <option value="all">Tous</option>
                 <option value="formation">Accompagnement</option>
                 <option value="booking">Consultation</option>
-                <option value="event">Événement</option>
+                <option value="event">Formation</option>
               </select>
             </div>
             <div className="flex flex-col gap-2">

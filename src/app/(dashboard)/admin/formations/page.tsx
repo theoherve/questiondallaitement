@@ -20,7 +20,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export const metadata: Metadata = {
-  title: "Gestion des événements",
+  title: "Gestion des formations",
 };
 
 const TYPE_CONFIG: Record<
@@ -56,7 +56,7 @@ type Props = {
   }>;
 };
 
-const AdminEvenementsPage = async ({ searchParams }: Props) => {
+const AdminFormationsPage = async ({ searchParams }: Props) => {
   const user = await getSessionUser();
   if (!user || !user.roles.includes("admin")) redirect("/connexion");
 
@@ -109,7 +109,7 @@ const AdminEvenementsPage = async ({ searchParams }: Props) => {
     query = query.ilike("title", `%${params.q}%`);
   }
 
-  const [eventsResult, consultantsResult, registrationsResult] =
+  const [formationsResult, consultantsResult, registrationsResult] =
     await Promise.all([
       query,
       supabase
@@ -122,7 +122,7 @@ const AdminEvenementsPage = async ({ searchParams }: Props) => {
         .eq("status", "registered"),
     ]);
 
-  type EventRow = {
+  type FormationRow = {
     id: string;
     title: string;
     slug: string;
@@ -150,11 +150,11 @@ const AdminEvenementsPage = async ({ searchParams }: Props) => {
     profiles: { first_name: string | null; last_name: string | null } | null;
   };
 
-  const rows = (eventsResult.data ?? []) as unknown as EventRow[];
+  const rows = (formationsResult.data ?? []) as unknown as FormationRow[];
   const consultantOptions =
     (consultantsResult.data ?? []) as unknown as ConsultantOption[];
 
-  // Count registrations per event
+  // Count registrations per formation
   const regCounts = new Map<string, number>();
   for (const reg of registrationsResult.data ?? []) {
     regCounts.set(reg.event_id, (regCounts.get(reg.event_id) ?? 0) + 1);
@@ -164,12 +164,12 @@ const AdminEvenementsPage = async ({ searchParams }: Props) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-2xl font-bold text-primary-green">
-          Événements
+          Formations
         </h1>
         <Button asChild className="bg-primary-red hover:bg-primary-red-dark">
-          <Link href="/admin/evenements/nouveau">
+          <Link href="/admin/formations/nouveau">
             <Plus className="mr-2 h-4 w-4" />
-            Nouvel événement
+            Nouvelle formation
           </Link>
         </Button>
       </div>
@@ -188,7 +188,7 @@ const AdminEvenementsPage = async ({ searchParams }: Props) => {
               <Input
                 id="search"
                 name="q"
-                placeholder="Rechercher un événement..."
+                placeholder="Rechercher une formation..."
                 defaultValue={params.q}
               />
             </div>
@@ -279,52 +279,52 @@ const AdminEvenementsPage = async ({ searchParams }: Props) => {
                     colSpan={8}
                     className="py-8 text-center text-muted-foreground"
                   >
-                    Aucun événement trouvé
+                    Aucune formation trouvée
                   </TableCell>
                 </TableRow>
               ) : (
-                rows.map((event) => {
+                rows.map((formation) => {
                   const typeConfig =
-                    TYPE_CONFIG[event.type] ?? TYPE_CONFIG.online;
-                  const consultantName = event.consultants?.profiles
-                    ? `${event.consultants.profiles.first_name ?? ""} ${event.consultants.profiles.last_name ?? ""}`.trim()
+                    TYPE_CONFIG[formation.type] ?? TYPE_CONFIG.online;
+                  const consultantName = formation.consultants?.profiles
+                    ? `${formation.consultants.profiles.first_name ?? ""} ${formation.consultants.profiles.last_name ?? ""}`.trim()
                     : "—";
 
-                  const regCount = regCounts.get(event.id) ?? 0;
-                  const spotsLabel = event.max_participants
-                    ? `${regCount}/${event.max_participants}`
+                  const regCount = regCounts.get(formation.id) ?? 0;
+                  const spotsLabel = formation.max_participants
+                    ? `${regCount}/${formation.max_participants}`
                     : `${regCount}`;
 
-                  const isPast = new Date(event.ends_at) < new Date();
+                  const isPast = new Date(formation.ends_at) < new Date();
 
                   return (
-                    <TableRow key={event.id} className={isPast ? "opacity-60" : ""}>
+                    <TableRow key={formation.id} className={isPast ? "opacity-60" : ""}>
                       <TableCell>
                         <div className="min-w-0">
-                          <p className="font-medium truncate" title={event.title}>{event.title}</p>
-                          <p className="text-xs text-muted-foreground truncate" title={`/evenements/${event.slug}`}>
-                            /evenements/{event.slug}
+                          <p className="font-medium truncate" title={formation.title}>{formation.title}</p>
+                          <p className="text-xs text-muted-foreground truncate" title={`/formations/${formation.slug}`}>
+                            /formations/{formation.slug}
                           </p>
                         </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant={typeConfig.variant} className="gap-1">
-                          <TypeIcon type={event.type} />
+                          <TypeIcon type={formation.type} />
                           {typeConfig.label}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm">
                         <div>
-                          {format(new Date(event.starts_at), "d MMM yyyy", {
+                          {format(new Date(formation.starts_at), "d MMM yyyy", {
                             locale: fr,
                           })}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {format(new Date(event.starts_at), "HH'h'mm", {
+                          {format(new Date(formation.starts_at), "HH'h'mm", {
                             locale: fr,
                           })}{" "}
                           –{" "}
-                          {format(new Date(event.ends_at), "HH'h'mm", {
+                          {format(new Date(formation.ends_at), "HH'h'mm", {
                             locale: fr,
                           })}
                         </div>
@@ -335,13 +335,13 @@ const AdminEvenementsPage = async ({ searchParams }: Props) => {
                         </span>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {formatPrice(event.price_cents, event.currency)}
+                        {formatPrice(formation.price_cents, formation.currency)}
                       </TableCell>
                       <TableCell className="text-sm">
                         <span
                           className={
-                            event.max_participants &&
-                            regCount >= event.max_participants
+                            formation.max_participants &&
+                            regCount >= formation.max_participants
                               ? "font-medium text-destructive"
                               : ""
                           }
@@ -350,7 +350,7 @@ const AdminEvenementsPage = async ({ searchParams }: Props) => {
                         </span>
                       </TableCell>
                       <TableCell>
-                        {event.is_published ? (
+                        {formation.is_published ? (
                           <Badge variant="default">Publié</Badge>
                         ) : (
                           <Badge variant="secondary">Brouillon</Badge>
@@ -363,7 +363,7 @@ const AdminEvenementsPage = async ({ searchParams }: Props) => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          {event.is_published && (
+                          {formation.is_published && (
                             <Button
                               variant="ghost"
                               size="icon"
@@ -371,7 +371,7 @@ const AdminEvenementsPage = async ({ searchParams }: Props) => {
                               title="Voir"
                             >
                               <Link
-                                href={`/evenements/${event.slug}`}
+                                href={`/formations/${formation.slug}`}
                                 target="_blank"
                               >
                                 <Eye className="h-4 w-4" />
@@ -385,7 +385,7 @@ const AdminEvenementsPage = async ({ searchParams }: Props) => {
                             title="Modifier"
                           >
                             <Link
-                              href={`/admin/evenements/${event.id}/edit`}
+                              href={`/admin/formations/${formation.id}/edit`}
                             >
                               <Pencil className="h-4 w-4" />
                             </Link>
@@ -404,4 +404,4 @@ const AdminEvenementsPage = async ({ searchParams }: Props) => {
   );
 };
 
-export default AdminEvenementsPage;
+export default AdminFormationsPage;

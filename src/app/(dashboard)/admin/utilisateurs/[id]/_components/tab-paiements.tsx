@@ -35,7 +35,7 @@ const STATUS_MAP: Record<
 const TYPE_MAP: Record<string, string> = {
   formation: "Accompagnement",
   booking: "Réservation",
-  event: "Événement",
+  event: "Formation",
 };
 
 const formatPrice = (cents: number, currency = "eur") =>

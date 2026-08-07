@@ -44,7 +44,7 @@ const slugify = (str: string): string =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
-export const RecurringEventFormDialog = ({ consultants }: Props) => {
+export const RecurringFormationFormDialog = ({ consultants }: Props) => {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -103,7 +103,7 @@ export const RecurringEventFormDialog = ({ consultants }: Props) => {
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Nouvel événement récurrent</DialogTitle>
+          <DialogTitle>Nouvelle formation récurrente</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>

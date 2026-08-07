@@ -159,7 +159,7 @@ const describeSale = async (
       .select("title")
       .eq("id", referenceId)
       .maybeSingle();
-    return data?.title ?? "Événement";
+    return data?.title ?? "Formation";
   }
 
   // booking : le libelle porte le type de consultation quand on le retrouve.

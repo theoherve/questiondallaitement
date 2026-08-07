@@ -223,7 +223,7 @@ export const exportUserData = async (
 
   const supabase = createAdminClient();
 
-  const [profile, bookings, enrollments, payments, events, tags, notes] =
+  const [profile, bookings, enrollments, payments, formations, tags, notes] =
     await Promise.all([
       supabase.from("profiles").select("*").eq("id", parsedId).single(),
       supabase
@@ -265,7 +265,7 @@ export const exportUserData = async (
       bookings: bookings.data ?? [],
       enrollments: enrollments.data ?? [],
       payments: payments.data ?? [],
-      events: events.data ?? [],
+      events: formations.data ?? [],
       tags: tags.data ?? [],
       notes: notes.data ?? [],
       exported_at: new Date().toISOString(),

@@ -21,7 +21,7 @@ import type {
   AdminWorkflow,
   AdminWorkflowStep,
   Label,
-  RecurringEventDefinition,
+  RecurringFormationDefinition,
   AdminWorkflowActionType,
 } from "@/lib/admin-workflows/types";
 
@@ -37,7 +37,7 @@ type StepDraft = {
 type Props = {
   workflow?: AdminWorkflow & { steps: AdminWorkflowStep[] };
   labels: Label[];
-  recurringDefinitions: RecurringEventDefinition[];
+  recurringDefinitions: RecurringFormationDefinition[];
   formations: { id: string; title: string }[];
   emailTemplates: {
     id: string;
@@ -262,7 +262,7 @@ export const WorkflowForm = ({
                 setTriggerConfig({});
               }}
             >
-              <option value="recurring_event">Événement récurrent</option>
+              <option value="recurring_event">Formation récurrente</option>
               <option value="formation_enrolled">Achat accompagnement</option>
               <option value="manual">Manuel</option>
             </select>

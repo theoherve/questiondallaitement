@@ -22,7 +22,7 @@ export type PromoPurchase = {
 
 export type PromoContext = {
   serviceKind: PromoServiceKind;
-  /** formation.id, event.id ou consultation_type_id. */
+  /** formation.id, formation.id ou consultation_type_id. */
   itemId: string;
   amountCents: number;
   nowMs: number;

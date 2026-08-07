@@ -17,7 +17,7 @@ export type AccompagnementStatus = "draft" | "published" | "archived";
 
 export type BlockType = "text" | "video" | "image" | "quiz" | "download";
 
-export type EventType = "online" | "in_person" | "hybrid";
+export type FormationType = "online" | "in_person" | "hybrid";
 
 export type PaymentStatus =
   | "pending"
@@ -252,7 +252,7 @@ export type TrainingProvider = {
   created_at: string;
 };
 
-export type Event = {
+export type Formation = {
   id: string;
   consultant_id: string;
   title: string;
@@ -264,9 +264,9 @@ export type Event = {
   objectives_html: string | null;
   program_html: string | null;
   audience_html: string | null;
-  // Cles du catalogue src/config/event-highlights.ts. Jamais null cote base.
+  // Cles du catalogue src/config/formation-highlights.ts. Jamais null cote base.
   highlights: string[];
-  type: EventType;
+  type: FormationType;
   starts_at: string;
   ends_at: string;
   location: string | null;
@@ -286,7 +286,7 @@ export type Event = {
   updated_at: string;
 };
 
-export type EventRegistration = {
+export type FormationRegistration = {
   id: string;
   event_id: string;
   client_id: string;

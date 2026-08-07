@@ -30,7 +30,7 @@ import { FORMATION_SCHOOL_PRICE_LABEL } from "@/config/formations";
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-export type EventData = {
+export type FormationData = {
   id: string;
   title: string;
   slug: string;
@@ -50,13 +50,13 @@ export type EventData = {
   provider: { name: string; logo_url: string | null } | null;
 };
 
-type EventCategory = "all" | "formation" | "masterclass" | "atelier" | "conference" | "live" | "autre";
+type FormationCategory = "all" | "formation" | "masterclass" | "atelier" | "conference" | "live" | "autre";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
-const EVENT_TYPE_LABELS: Record<string, { label: string; icon: typeof Video }> = {
+const FORMATION_TYPE_LABELS: Record<string, { label: string; icon: typeof Video }> = {
   online: { label: "En ligne", icon: Video },
   in_person: { label: "Présentiel", icon: MapPin },
   hybrid: { label: "Hybride", icon: Users },
@@ -67,14 +67,14 @@ const formatPrice = (cents: number, currency: string): string => {
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(cents / 100);
 };
 
-const categorizeEvent = (title: string): { category: Exclude<EventCategory, "all">; label: string; color: string } => {
+const categorizeFormation = (title: string): { category: Exclude<FormationCategory, "all">; label: string; color: string } => {
   const t = title.toLowerCase();
   if (t.startsWith("formation")) return { category: "formation", label: "Formation", color: "bg-primary-red text-white" };
   if (t.startsWith("masterclass")) return { category: "masterclass", label: "Masterclass", color: "bg-amber-600 text-white" };
   if (t.startsWith("atelier")) return { category: "atelier", label: "Atelier", color: "bg-primary-green text-white" };
   if (t.includes("conférence") || t.includes("conference")) return { category: "conference", label: "Conférence", color: "bg-blue-700 text-white" };
   if (t.startsWith("live")) return { category: "live", label: "Live", color: "bg-pink-600 text-white" };
-  return { category: "autre", label: "Événement", color: "bg-primary-green/80 text-white" };
+  return { category: "autre", label: "Formation", color: "bg-primary-green/80 text-white" };
 };
 
 const formatDuration = (startsAt: string, endsAt: string): string => {
@@ -96,7 +96,7 @@ const PAST_INITIAL_VISIBLE = 3;
 /*  Category filter config                                             */
 /* ------------------------------------------------------------------ */
 
-const CATEGORY_FILTERS: { value: EventCategory; label: string }[] = [
+const CATEGORY_FILTERS: { value: FormationCategory; label: string }[] = [
   { value: "all", label: "Tout" },
   { value: "formation", label: "Formations" },
   { value: "masterclass", label: "Masterclass" },
@@ -110,52 +110,52 @@ const CATEGORY_FILTERS: { value: EventCategory; label: string }[] = [
 /* ------------------------------------------------------------------ */
 
 export const FormationsList = ({
-  upcomingEvents,
-  pastEvents,
+  upcomingFormations,
+  pastFormations,
 }: {
-  upcomingEvents: EventData[];
-  pastEvents: EventData[];
+  upcomingFormations: FormationData[];
+  pastFormations: FormationData[];
 }) => {
-  const [activeCategory, setActiveCategory] = useState<EventCategory>("all");
+  const [activeCategory, setActiveCategory] = useState<FormationCategory>("all");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
   const [showPast, setShowPast] = useState(false);
   const [showAllPast, setShowAllPast] = useState(false);
 
   // Build a set of dates that have events (for calendar highlighting)
-  const eventDates = useMemo(() => {
-    return upcomingEvents.map((e) => startOfDay(new Date(e.starts_at)));
-  }, [upcomingEvents]);
+  const formationDates = useMemo(() => {
+    return upcomingFormations.map((e) => startOfDay(new Date(e.starts_at)));
+  }, [upcomingFormations]);
 
-  // Determine which categories actually have events
+  // Determine which categories actually have formations
   const availableCategories = useMemo(() => {
-    const allEvents = [...upcomingEvents, ...pastEvents];
-    const cats = new Set(allEvents.map((e) => categorizeEvent(e.title).category));
+    const allFormations = [...upcomingFormations, ...pastFormations];
+    const cats = new Set(allFormations.map((e) => categorizeFormation(e.title).category));
     return CATEGORY_FILTERS.filter((f) => f.value === "all" || cats.has(f.value));
-  }, [upcomingEvents, pastEvents]);
+  }, [upcomingFormations, pastFormations]);
 
-  // Filter events by category + selected date
+  // Filter formations by category + selected date
   const filteredUpcoming = useMemo(() => {
-    let result = upcomingEvents;
+    let result = upcomingFormations;
     if (activeCategory !== "all") {
-      result = result.filter((e) => categorizeEvent(e.title).category === activeCategory);
+      result = result.filter((e) => categorizeFormation(e.title).category === activeCategory);
     }
     if (selectedDate) {
       result = result.filter((e) => isSameDay(new Date(e.starts_at), selectedDate));
     }
     return result;
-  }, [upcomingEvents, activeCategory, selectedDate]);
+  }, [upcomingFormations, activeCategory, selectedDate]);
 
   const filteredPast = useMemo(() => {
-    let result = pastEvents;
+    let result = pastFormations;
     if (activeCategory !== "all") {
-      result = result.filter((e) => categorizeEvent(e.title).category === activeCategory);
+      result = result.filter((e) => categorizeFormation(e.title).category === activeCategory);
     }
     if (selectedDate) {
       result = result.filter((e) => isSameDay(new Date(e.starts_at), selectedDate));
     }
     return result;
-  }, [pastEvents, activeCategory, selectedDate]);
+  }, [pastFormations, activeCategory, selectedDate]);
 
   // Progressive disclosure
   const visibleUpcoming = showAllUpcoming ? filteredUpcoming : filteredUpcoming.slice(0, INITIAL_VISIBLE);
@@ -200,9 +200,9 @@ export const FormationsList = ({
                 const isActive = activeCategory === cat.value;
                 const count =
                   cat.value === "all"
-                    ? upcomingEvents.length + pastEvents.length
-                    : [...upcomingEvents, ...pastEvents].filter(
-                        (e) => categorizeEvent(e.title).category === cat.value
+                    ? upcomingFormations.length + pastFormations.length
+                    : [...upcomingFormations, ...pastFormations].filter(
+                        (e) => categorizeFormation(e.title).category === cat.value
                       ).length;
 
                 return (
@@ -242,10 +242,10 @@ export const FormationsList = ({
             onSelect={handleDateSelect}
             locale={fr}
             modifiers={{
-              hasEvent: eventDates,
+              hasFormation: formationDates,
             }}
             modifiersClassNames={{
-              hasEvent: "bg-primary-red/15! text-primary-red! font-semibold",
+              hasFormation: "bg-primary-red/15! text-primary-red! font-semibold",
             }}
             className="w-full! [--cell-size:--spacing(9)]"
             classNames={{
@@ -273,7 +273,7 @@ export const FormationsList = ({
       </aside>
 
       {/* ============================================================ */}
-      {/* Main content: Event list                                      */}
+      {/* Main content: Formation list                                      */}
       {/* ============================================================ */}
       <div className="min-w-0 flex-1">
         {/* Active filters summary */}
@@ -309,7 +309,7 @@ export const FormationsList = ({
           </div>
         )}
 
-        {/* Upcoming events */}
+        {/* Upcoming formations */}
         {filteredUpcoming.length > 0 ? (
           <section>
             <div className="mb-6 flex items-center justify-between">
@@ -325,8 +325,8 @@ export const FormationsList = ({
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2">
-              {visibleUpcoming.map((event) => (
-                <EventCard key={event.id} event={event} />
+              {visibleUpcoming.map((formation) => (
+                <FormationCard key={formation.id} formation={formation} />
               ))}
             </div>
 
@@ -383,7 +383,7 @@ export const FormationsList = ({
           </div>
         )}
 
-        {/* Past events — collapsible */}
+        {/* Past formations — collapsible */}
         {filteredPast.length > 0 && (
           <section className="mt-16">
             <button
@@ -413,8 +413,8 @@ export const FormationsList = ({
             {showPast && (
               <div className="mt-6">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {visiblePast.map((event) => (
-                    <PastEventCard key={event.id} event={event} />
+                  {visiblePast.map((formation) => (
+                    <PastFormationCard key={formation.id} formation={formation} />
                   ))}
                 </div>
 
@@ -452,34 +452,34 @@ export const FormationsList = ({
 };
 
 /* ------------------------------------------------------------------ */
-/*  Event Card                                                         */
+/*  Formation Card                                                         */
 /* ------------------------------------------------------------------ */
 
-const EventCard = ({ event }: { event: EventData }) => {
-  const typeInfo = EVENT_TYPE_LABELS[event.type] ?? EVENT_TYPE_LABELS.online;
+const FormationCard = ({ formation }: { formation: FormationData }) => {
+  const typeInfo = FORMATION_TYPE_LABELS[formation.type] ?? FORMATION_TYPE_LABELS.online;
   const TypeIcon = typeInfo.icon;
-  const { label: categoryLabel, color: categoryColor } = categorizeEvent(event.title);
-  const duration = formatDuration(event.starts_at, event.ends_at);
-  const consultant = event.consultants as {
+  const { label: categoryLabel, color: categoryColor } = categorizeFormation(formation.title);
+  const duration = formatDuration(formation.starts_at, formation.ends_at);
+  const consultant = formation.consultants as {
     slug: string;
     profiles: { first_name: string | null; last_name: string | null } | null;
   } | null;
   const consultantName = consultant?.profiles
     ? `${consultant.profiles.first_name ?? ""} ${consultant.profiles.last_name ?? ""}`.trim()
     : null;
-  const isFree = event.price_cents === 0;
-  const isExternal = !!event.external_url;
-  const hasDiscount = event.discounted_price_cents != null;
+  const isFree = formation.price_cents === 0;
+  const isExternal = !!formation.external_url;
+  const hasDiscount = formation.discounted_price_cents != null;
 
   const cardContent = (
     <Card className="group flex h-full flex-col overflow-hidden transition-shadow duration-200 hover:shadow-md">
       <div className="relative text-white">
-        {event.thumbnail_url ? (
+        {formation.thumbnail_url ? (
           <>
             <div className="relative aspect-video overflow-hidden">
               <Image
-                src={event.thumbnail_url}
-                alt={event.title}
+                src={formation.thumbnail_url}
+                alt={formation.title}
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                 sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
@@ -501,7 +501,7 @@ const EventCard = ({ event }: { event: EventData }) => {
             </div>
             <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
               <p className="text-2xl font-bold font-serif">
-                {format(new Date(event.starts_at), "d MMM", { locale: fr })}
+                {format(new Date(formation.starts_at), "d MMM", { locale: fr })}
               </p>
               <div className="flex items-center gap-1.5 text-sm text-white/80">
                 <Clock className="h-3.5 w-3.5" />
@@ -527,10 +527,10 @@ const EventCard = ({ event }: { event: EventData }) => {
             <div className="mt-4 flex items-end justify-between">
               <div>
                 <p className="text-3xl font-bold font-serif">
-                  {format(new Date(event.starts_at), "d MMM", { locale: fr })}
+                  {format(new Date(formation.starts_at), "d MMM", { locale: fr })}
                 </p>
                 <p className="mt-0.5 text-sm text-white/70">
-                  {format(new Date(event.starts_at), "yyyy", { locale: fr })}
+                  {format(new Date(formation.starts_at), "yyyy", { locale: fr })}
                 </p>
               </div>
               <div className="flex items-center gap-1.5 text-sm text-white/70">
@@ -545,24 +545,24 @@ const EventCard = ({ event }: { event: EventData }) => {
       <CardContent className="flex flex-1 flex-col pt-5">
         <div className="flex-1">
           <h3 className="line-clamp-2 font-serif text-base font-semibold text-primary-green">
-            {event.title}
+            {formation.title}
           </h3>
-          {event.description && (
+          {formation.description && (
             <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-primary-green/60">
-              {event.description}
+              {formation.description}
             </p>
           )}
           <div className="mt-3 space-y-1.5 text-xs text-primary-green/50">
             <div className="flex items-center gap-1.5">
               <CalendarDays className="h-3.5 w-3.5" />
               <span>
-                {format(new Date(event.starts_at), "EEEE d MMMM 'à' HH'h'mm", { locale: fr })}
+                {format(new Date(formation.starts_at), "EEEE d MMMM 'à' HH'h'mm", { locale: fr })}
               </span>
             </div>
-            {event.location && (
+            {formation.location && (
               <div className="flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5" />
-                <span>{event.location}</span>
+                <span>{formation.location}</span>
               </div>
             )}
             {consultantName && (
@@ -571,12 +571,12 @@ const EventCard = ({ event }: { event: EventData }) => {
                 <span>{consultantName}</span>
               </div>
             )}
-            {event.provider && (
+            {formation.provider && (
               <div className="flex items-center gap-1.5">
-                {event.provider.logo_url ? (
+                {formation.provider.logo_url ? (
                   <Image
-                    src={event.provider.logo_url}
-                    alt={event.provider.name}
+                    src={formation.provider.logo_url}
+                    alt={formation.provider.name}
                     width={14}
                     height={14}
                     className="rounded-sm"
@@ -584,7 +584,7 @@ const EventCard = ({ event }: { event: EventData }) => {
                 ) : (
                   <ExternalLink className="h-3.5 w-3.5" />
                 )}
-                <span>via {event.provider.name}</span>
+                <span>via {formation.provider.name}</span>
               </div>
             )}
           </div>
@@ -592,7 +592,7 @@ const EventCard = ({ event }: { event: EventData }) => {
 
         <div className="mt-5 flex items-center justify-between border-t border-primary-green/10 pt-4">
           <div>
-            {!event.show_price ? (
+            {!formation.show_price ? (
               <p className="text-sm text-primary-green/50">Tarif à venir</p>
             ) : isFree ? (
               <Badge variant="secondary" className="bg-accent-honey-soft text-primary-green">
@@ -601,15 +601,15 @@ const EventCard = ({ event }: { event: EventData }) => {
             ) : hasDiscount ? (
               <div className="flex items-center gap-2">
                 <p className="text-sm line-through text-primary-green/40">
-                  {formatPrice(event.price_cents, event.currency)}
+                  {formatPrice(formation.price_cents, formation.currency)}
                 </p>
                 <p className="font-serif text-xl font-bold text-primary-red">
-                  {formatPrice(event.discounted_price_cents!, event.currency)}
+                  {formatPrice(formation.discounted_price_cents!, formation.currency)}
                 </p>
               </div>
             ) : (
               <p className="font-serif text-xl font-bold text-primary-green">
-                {formatPrice(event.price_cents, event.currency)}
+                {formatPrice(formation.price_cents, formation.currency)}
               </p>
             )}
           </div>
@@ -619,7 +619,7 @@ const EventCard = ({ event }: { event: EventData }) => {
           <Button
             variant="outline"
             size="sm"
-            className="pointer-events-none border-primary-red text-primary-red transition-colors group-hover:bg-primary-red group-hover:text-white"
+            className="pointer-formations-none border-primary-red text-primary-red transition-colors group-hover:bg-primary-red group-hover:text-white"
           >
             En savoir plus
             <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
@@ -631,7 +631,7 @@ const EventCard = ({ event }: { event: EventData }) => {
 
   return (
     <Link
-      href={`/formations/${event.slug}`}
+      href={`/formations/${formation.slug}`}
       className="block h-full rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-red"
     >
       {cardContent}
@@ -640,22 +640,22 @@ const EventCard = ({ event }: { event: EventData }) => {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Past Event Card (compact)                                          */
+/*  Past Formation Card (compact)                                          */
 /* ------------------------------------------------------------------ */
 
-const PastEventCard = ({ event }: { event: EventData }) => {
-  const { label: categoryLabel } = categorizeEvent(event.title);
-  const duration = formatDuration(event.starts_at, event.ends_at);
+const PastFormationCard = ({ formation }: { formation: FormationData }) => {
+  const { label: categoryLabel } = categorizeFormation(formation.title);
+  const duration = formatDuration(formation.starts_at, formation.ends_at);
 
   return (
     <Card className="group flex flex-row overflow-hidden opacity-75 transition-opacity duration-200 hover:opacity-100">
       {/* Compact left image or date block */}
       <div className="relative w-28 shrink-0 text-white">
-        {event.thumbnail_url ? (
+        {formation.thumbnail_url ? (
           <>
             <Image
-              src={event.thumbnail_url}
-              alt={event.title}
+              src={formation.thumbnail_url}
+              alt={formation.title}
               fill
               className="object-cover grayscale transition-all duration-300 group-hover:grayscale-0"
               sizes="112px"
@@ -672,19 +672,19 @@ const PastEventCard = ({ event }: { event: EventData }) => {
       {/* Content */}
       <CardContent className="flex flex-1 flex-col justify-center py-3 px-4">
         <div className="flex items-center gap-2 text-xs text-primary-green/40">
-          <span>{format(new Date(event.starts_at), "d MMM yyyy", { locale: fr })}</span>
+          <span>{format(new Date(formation.starts_at), "d MMM yyyy", { locale: fr })}</span>
           <span>·</span>
           <span>{duration}</span>
           <span>·</span>
           <span>{categoryLabel}</span>
         </div>
         <h3 className="mt-1 line-clamp-1 font-serif text-sm font-semibold text-primary-green/70">
-          {event.title}
+          {formation.title}
         </h3>
-        {event.location && (
+        {formation.location && (
           <div className="mt-1 flex items-center gap-1 text-xs text-primary-green/30">
             <MapPin className="h-3 w-3" />
-            <span>{event.location}</span>
+            <span>{formation.location}</span>
           </div>
         )}
       </CardContent>

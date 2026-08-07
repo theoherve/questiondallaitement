@@ -5,8 +5,8 @@ import { format, addDays, startOfDay, endOfDay, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { revalidatePath } from "next/cache";
 import { runAutomations } from "@/lib/automations/engine";
-import { generateRecurringEvents } from "@/lib/admin-workflows/generate-events";
-import { scheduleWorkflowActionsForUpcomingEvents } from "@/lib/admin-workflows/scheduler";
+import { generateRecurringFormations } from "@/lib/admin-workflows/generate-formations";
+import { scheduleWorkflowActionsForUpcomingFormations } from "@/lib/admin-workflows/scheduler";
 import { executeScheduledActions } from "@/lib/admin-workflows/executor";
 
 export const GET = async (request: Request) => {
@@ -128,7 +128,7 @@ export const GET = async (request: Request) => {
 
   results.reminders_sent = remindersSent;
 
-  // ─── Delay-after-event automations ─────────────────────────
+  // ─── Delay-after-formation automations ─────────────────────────
   const { data: delayAutomations } = await supabase
     .from("automations")
     .select("id, consultant_id, trigger_config")
@@ -143,20 +143,20 @@ export const GET = async (request: Request) => {
     const targetStart = startOfDay(targetDate).toISOString();
     const targetEnd = endOfDay(targetDate).toISOString();
 
-    const { data: events } = await supabase
+    const { data: formations } = await supabase
       .from("events")
       .select("id, title, starts_at")
       .eq("consultant_id", auto.consultant_id)
       .gte("ends_at", targetStart)
       .lte("ends_at", targetEnd);
 
-    for (const event of events ?? []) {
-      if (config.event_ids?.length && !config.event_ids.includes(event.id)) continue;
+    for (const formation of formations ?? []) {
+      if (config.event_ids?.length && !config.event_ids.includes(formation.id)) continue;
 
       const { data: regs } = await supabase
         .from("event_registrations")
         .select("client_id")
-        .eq("event_id", event.id);
+        .eq("event_id", formation.id);
 
       for (const reg of regs ?? []) {
         const { data: client } = await supabase
@@ -170,9 +170,9 @@ export const GET = async (request: Request) => {
             client_id: reg.client_id,
             client_email: client?.email,
             client_name: client?.first_name ?? "",
-            event_id: event.id,
-            event_title: event.title,
-            event_starts_at: event.starts_at,
+            event_id: formation.id,
+            event_title: formation.title,
+            event_starts_at: formation.starts_at,
           });
           delayRuns++;
         } catch {
@@ -183,9 +183,9 @@ export const GET = async (request: Request) => {
   }
   results.delay_automations_run = delayRuns;
 
-  // ─── Generate Recurring Events ───────────────────────────
+  // ─── Generate Recurring Formations ───────────────────────────
   try {
-    const recurringResult = await generateRecurringEvents();
+    const recurringResult = await generateRecurringFormations();
     results.recurring_events_generated = recurringResult.generated;
   } catch (err) {
     console.error("Failed to generate recurring events:", err);
@@ -194,7 +194,7 @@ export const GET = async (request: Request) => {
 
   // ─── Schedule Workflow Actions ─────────────────────────────
   try {
-    const schedulingResult = await scheduleWorkflowActionsForUpcomingEvents();
+    const schedulingResult = await scheduleWorkflowActionsForUpcomingFormations();
     results.workflow_actions_scheduled = schedulingResult.scheduled;
   } catch (err) {
     console.error("Failed to schedule workflow actions:", err);

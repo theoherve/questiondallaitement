@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Question d'Allaitement",
     description:
-      "Formations, consultations et événements en allaitement et parentalité.",
+      "Formations, consultations et accompagnements en allaitement et parentalité.",
     images: ["/images/og-default.png"],
   },
   robots: {

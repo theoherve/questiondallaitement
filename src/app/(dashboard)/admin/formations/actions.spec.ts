@@ -13,12 +13,12 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 
-import { createEvent, updateEvent } from "./actions";
+import { createFormation, updateFormation } from "./actions";
 
 /**
  * Chaine Supabase minimale : chaque methode renvoie la chaine, `single`
  * resout le resultat fourni, et l'objet est thenable pour les appels sans
- * `single` (le `update(...).eq(...)` de `updateEvent`).
+ * `single` (le `update(...).eq(...)` de `updateFormation`).
  */
 const createChain = (result: { data?: unknown; error?: unknown }) => {
   const chain: Record<string, unknown> = {};
@@ -48,12 +48,12 @@ beforeEach(() => {
   mockFrom.mockReset();
 });
 
-describe("createEvent", () => {
+describe("createFormation", () => {
   it("persiste les quatre sections editoriales", async () => {
-    const chain = createChain({ data: { id: "event-1", slug: validInput.slug } });
+    const chain = createChain({ data: { id: "formation-1", slug: validInput.slug } });
     mockFrom.mockReturnValue(chain);
 
-    const result = await createEvent({
+    const result = await createFormation({
       ...validInput,
       summary_html: "<p>Trois points cles</p>",
       objectives_html: "<ul><li>Reperer une prise inefficace</li></ul>",
@@ -73,10 +73,10 @@ describe("createEvent", () => {
   });
 
   it("normalise un resume vide en null", async () => {
-    const chain = createChain({ data: { id: "event-1", slug: validInput.slug } });
+    const chain = createChain({ data: { id: "formation-1", slug: validInput.slug } });
     mockFrom.mockReturnValue(chain);
 
-    await createEvent({ ...validInput, summary_html: "<p></p>" });
+    await createFormation({ ...validInput, summary_html: "<p></p>" });
 
     expect(chain.insert).toHaveBeenCalledWith(
       expect.objectContaining({ summary_html: null }),
@@ -84,10 +84,10 @@ describe("createEvent", () => {
   });
 
   it("ne garde que les reperes du catalogue, dans son ordre", async () => {
-    const chain = createChain({ data: { id: "event-1", slug: validInput.slug } });
+    const chain = createChain({ data: { id: "formation-1", slug: validInput.slug } });
     mockFrom.mockReturnValue(chain);
 
-    await createEvent({
+    await createFormation({
       ...validInput,
       highlights: ["ibclc", "repere-invente", "elearning"],
     });
@@ -98,10 +98,10 @@ describe("createEvent", () => {
   });
 
   it("accepte une formation sans aucune section", async () => {
-    const chain = createChain({ data: { id: "event-1", slug: validInput.slug } });
+    const chain = createChain({ data: { id: "formation-1", slug: validInput.slug } });
     mockFrom.mockReturnValue(chain);
 
-    const result = await createEvent(validInput);
+    const result = await createFormation(validInput);
 
     expect(result.success).toBe(true);
     expect(chain.insert).toHaveBeenCalledWith(
@@ -116,12 +116,12 @@ describe("createEvent", () => {
   });
 });
 
-describe("updateEvent", () => {
+describe("updateFormation", () => {
   it("persiste les quatre sections editoriales", async () => {
     const chain = createChain({ data: { slug: "ancien-slug" } });
     mockFrom.mockReturnValue(chain);
 
-    const result = await updateEvent("event-1", {
+    const result = await updateFormation("formation-1", {
       ...validInput,
       summary_html: "<p>Resume mis a jour</p>",
       objectives_html: "<ul><li>Objectif mis a jour</li></ul>",

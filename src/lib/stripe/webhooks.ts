@@ -52,7 +52,7 @@ export const handleCheckoutCompleted = async (
       );
       break;
     case "event":
-      await handleEventRegistration(
+      await handleFormationRegistration(
         client_id,
         reference_id,
         paymentIntentId ?? null,
@@ -650,7 +650,7 @@ const notifySlotConflict = async (
   }
 };
 
-const handleEventRegistration = async (
+const handleFormationRegistration = async (
   clientId: string,
   eventId: string,
   paymentIntentId: string | null,
@@ -815,7 +815,7 @@ const fireCheckoutAutomations = async (
         consultation_type_title: ct?.title,
       });
     } else if (type === "event") {
-      const { data: event } = await supabase
+      const { data: formation } = await supabase
         .from("events")
         .select("title, starts_at")
         .eq("id", referenceId)
@@ -823,8 +823,8 @@ const fireCheckoutAutomations = async (
       await runAutomations("event_registered", consultantId, {
         ...triggerData,
         event_id: referenceId,
-        event_title: event?.title,
-        event_starts_at: event?.starts_at,
+        event_title: formation?.title,
+        event_starts_at: formation?.starts_at,
       });
     }
   } catch {

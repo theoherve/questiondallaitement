@@ -17,10 +17,10 @@ import { ArrowLeft } from "lucide-react";
 import { getRecurringDefinitions, getConsultants } from "../actions";
 import { describeRecurrence } from "@/lib/admin-workflows/recurrence";
 import type { RecurrenceRule } from "@/lib/admin-workflows/types";
-import { RecurringEventFormDialog } from "./_components/recurring-event-form-dialog";
+import { RecurringFormationFormDialog } from "./_components/recurring-formation-form-dialog";
 
 export const metadata: Metadata = {
-  title: "Événements récurrents - Automations",
+  title: "Formations récurrentes - Automations",
 };
 
 const AdminRecurrentsPage = async () => {
@@ -44,10 +44,10 @@ const AdminRecurrentsPage = async () => {
             </Link>
           </Button>
           <h1 className="font-serif text-2xl font-bold text-primary-green">
-            Événements récurrents
+            Formations récurrentes
           </h1>
         </div>
-        <RecurringEventFormDialog consultants={consultants} />
+        <RecurringFormationFormDialog consultants={consultants} />
       </div>
 
       <Card>
@@ -70,7 +70,7 @@ const AdminRecurrentsPage = async () => {
                     colSpan={6}
                     className="py-8 text-center text-muted-foreground"
                   >
-                    Aucune définition. Créez-en une pour générer des événements
+                    Aucune définition. Créez-en une pour générer des formations
                     automatiquement.
                   </TableCell>
                 </TableRow>

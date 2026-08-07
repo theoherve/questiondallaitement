@@ -11,7 +11,7 @@ export type AdminWorkflowTriggerType =
 
 // ─── Trigger Configs ────────────────────────────────────────
 
-export type RecurringEventTriggerConfig = {
+export type RecurringFormationTriggerConfig = {
   recurring_definition_id: string;
 };
 
@@ -22,7 +22,7 @@ export type AccompagnementEnrolledTriggerConfig = {
 export type ManualTriggerConfig = Record<string, never>;
 
 export type AdminWorkflowTriggerConfig =
-  | RecurringEventTriggerConfig
+  | RecurringFormationTriggerConfig
   | AccompagnementEnrolledTriggerConfig
   | ManualTriggerConfig;
 
@@ -144,7 +144,7 @@ export type Label = {
   updated_at: string;
 };
 
-export type RecurringEventDefinition = {
+export type RecurringFormationDefinition = {
   id: string;
   title: string;
   slug_prefix: string;

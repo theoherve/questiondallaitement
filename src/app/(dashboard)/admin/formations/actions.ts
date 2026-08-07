@@ -2,9 +2,9 @@
 
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { eventSchema } from "@/validations/events";
+import { formationSchema } from "@/validations/formations";
 import { normalizeRichText } from "@/lib/html/rich-text";
-import { filterEventHighlightKeys } from "@/config/event-highlights";
+import { filterFormationHighlightKeys } from "@/config/formation-highlights";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/types";
@@ -15,19 +15,19 @@ const requireAdmin = async () => {
   return user;
 };
 
-// ─── Create Event ───────────────────────────────────────────
+// ─── Create Formation ───────────────────────────────────────────
 
-export const createEvent = async (
+export const createFormation = async (
   data: unknown,
 ): Promise<ActionResult<{ id: string; slug: string }>> => {
   await requireAdmin();
-  const parsed = eventSchema.safeParse(data);
+  const parsed = formationSchema.safeParse(data);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
   const supabase = createAdminClient();
-  const { data: event, error } = await supabase
+  const { data: formation, error } = await supabase
     .from("events")
     .insert({
       title: parsed.data.title,
@@ -37,7 +37,7 @@ export const createEvent = async (
       objectives_html: normalizeRichText(parsed.data.objectives_html),
       program_html: normalizeRichText(parsed.data.program_html),
       audience_html: normalizeRichText(parsed.data.audience_html),
-      highlights: filterEventHighlightKeys(parsed.data.highlights),
+      highlights: filterFormationHighlightKeys(parsed.data.highlights),
       type: parsed.data.type,
       starts_at: new Date(parsed.data.starts_at).toISOString(),
       ends_at: new Date(parsed.data.ends_at).toISOString(),
@@ -59,30 +59,30 @@ export const createEvent = async (
     if (error.code === "23505") {
       return { success: false, error: "Ce slug est déjà utilisé" };
     }
-    console.error("Create event error:", error);
+    console.error("Create formation error:", error);
     return { success: false, error: "Erreur lors de la création" };
   }
 
-  revalidatePath("/admin/evenements");
+  revalidatePath("/admin/formations");
   revalidatePath("/formations");
-  return { success: true, data: event };
+  return { success: true, data: formation };
 };
 
-// ─── Update Event ───────────────────────────────────────────
+// ─── Update Formation ───────────────────────────────────────────
 
-export const updateEvent = async (
+export const updateFormation = async (
   id: string,
   data: unknown,
 ): Promise<ActionResult> => {
   await requireAdmin();
-  const parsed = eventSchema.safeParse(data);
+  const parsed = formationSchema.safeParse(data);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
   const supabase = createAdminClient();
 
-  const { data: currentEvent } = await supabase
+  const { data: currentFormation } = await supabase
     .from("events")
     .select("slug")
     .eq("id", id)
@@ -98,7 +98,7 @@ export const updateEvent = async (
       objectives_html: normalizeRichText(parsed.data.objectives_html),
       program_html: normalizeRichText(parsed.data.program_html),
       audience_html: normalizeRichText(parsed.data.audience_html),
-      highlights: filterEventHighlightKeys(parsed.data.highlights),
+      highlights: filterFormationHighlightKeys(parsed.data.highlights),
       type: parsed.data.type,
       starts_at: new Date(parsed.data.starts_at).toISOString(),
       ends_at: new Date(parsed.data.ends_at).toISOString(),
@@ -123,11 +123,11 @@ export const updateEvent = async (
     return { success: false, error: "Erreur lors de la mise à jour" };
   }
 
-  revalidatePath("/admin/evenements");
-  revalidatePath(`/admin/evenements/${id}/edit`);
-  revalidatePath(`/evenements/${parsed.data.slug}`);
-  if (currentEvent?.slug && currentEvent.slug !== parsed.data.slug) {
-    revalidatePath(`/evenements/${currentEvent.slug}`);
+  revalidatePath("/admin/formations");
+  revalidatePath(`/admin/formations/${id}/edit`);
+  revalidatePath(`/formations/${parsed.data.slug}`);
+  if (currentFormation?.slug && currentFormation.slug !== parsed.data.slug) {
+    revalidatePath(`/formations/${currentFormation.slug}`);
   }
   revalidatePath("/formations");
   return { success: true };
@@ -135,7 +135,7 @@ export const updateEvent = async (
 
 // ─── Toggle Publish ─────────────────────────────────────────
 
-export const toggleEventPublish = async (
+export const toggleFormationPublish = async (
   id: string,
   isPublished: boolean,
 ): Promise<ActionResult> => {
@@ -151,15 +151,15 @@ export const toggleEventPublish = async (
     return { success: false, error: "Erreur lors du changement de statut" };
   }
 
-  revalidatePath("/admin/evenements");
-  revalidatePath(`/admin/evenements/${id}/edit`);
+  revalidatePath("/admin/formations");
+  revalidatePath(`/admin/formations/${id}/edit`);
   revalidatePath("/formations");
   return { success: true };
 };
 
-// ─── Delete Event ───────────────────────────────────────────
+// ─── Delete Formation ───────────────────────────────────────────
 
-export const deleteEvent = async (id: string): Promise<ActionResult> => {
+export const deleteFormation = async (id: string): Promise<ActionResult> => {
   await requireAdmin();
   const supabase = createAdminClient();
 
@@ -182,21 +182,21 @@ export const deleteEvent = async (id: string): Promise<ActionResult> => {
     return { success: false, error: "Erreur lors de la suppression" };
   }
 
-  revalidatePath("/admin/evenements");
+  revalidatePath("/admin/formations");
   revalidatePath("/formations");
   return { success: true };
 };
 
-// ─── Get Event Registrations Count ──────────────────────────
+// ─── Get Formation Registrations Count ──────────────────────────
 
-export const getEventRegistrationsCount = async (
-  eventId: string,
+export const getFormationRegistrationsCount = async (
+  formationId: string,
 ): Promise<number> => {
   const supabase = createAdminClient();
   const { count } = await supabase
     .from("event_registrations")
     .select("*", { count: "exact", head: true })
-    .eq("event_id", eventId)
+    .eq("event_id", formationId)
     .eq("status", "registered");
 
   return count ?? 0;
