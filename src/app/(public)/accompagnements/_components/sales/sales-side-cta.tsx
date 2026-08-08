@@ -5,15 +5,18 @@ import Image from "next/image";
 import { BookOpen, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PurchaseButton } from "../purchase-button";
-import { ctaLabelFor } from "@/config/accompagnement-cta";
-import { PACK_SLUG } from "@/config/accompagnements";
+
+export type SideCtaAnchor = { href: string; label: string };
 
 type Props = {
+  ariaLabel: string;
   priceLabel: string;
   imageUrl: string | null;
-  sectionsCount: number;
-  lessonsCount: number;
+  /** Ligne de contenu, deja composee ; masquee si null. */
+  metaLabel: string | null;
   instructorName: string;
+  anchors: readonly SideCtaAnchor[];
+  ctaLabel: string | undefined;
   accompagnementId: string;
   isLoggedIn: boolean;
   isEnrolled: boolean;
@@ -21,25 +24,20 @@ type Props = {
   currency: string;
 };
 
-const ANCHORS = [
-  { href: "#programme", label: "Programme" },
-  { href: "#temoignages", label: "Témoignages" },
-  { href: "#tarif", label: "Tarif" },
-  { href: "#faq", label: "FAQ" },
-];
-
 /**
  * Carte-produit flottante (fixed) par-dessus le contenu, a droite. Apparait au
  * scroll apres le hero. Affichee sur desktop (lg+), masquee sur mobile/tablette
  * ou la section Tarif inline sert de CTA. Le bouton d'achat est le meme
  * composant que la section tarif (connexion / achat / acces si deja inscrite).
  */
-export function PackSideCta({
+export function SalesSideCta({
+  ariaLabel,
   priceLabel,
   imageUrl,
-  sectionsCount,
-  lessonsCount,
+  metaLabel,
   instructorName,
+  anchors,
+  ctaLabel,
   accompagnementId,
   isLoggedIn,
   isEnrolled,
@@ -56,20 +54,14 @@ export function PackSideCta({
   }, []);
 
   const meta = [
-    {
-      icon: BookOpen,
-      text:
-        `${sectionsCount} section${sectionsCount > 1 ? "s" : ""}` +
-        ` · ${lessonsCount} leçon${lessonsCount > 1 ? "s" : ""}`,
-      show: sectionsCount > 0 || lessonsCount > 0,
-    },
+    { icon: BookOpen, text: metaLabel, show: metaLabel !== null },
     { icon: Clock, text: "Accès illimité", show: true },
     { icon: User, text: `Par ${instructorName}`, show: true },
   ].filter((m) => m.show);
 
   return (
     <aside
-      aria-label="Rejoindre le pack"
+      aria-label={ariaLabel}
       className={cn(
         "fixed right-4 top-1/2 z-40 hidden w-60 -translate-y-1/2 transition-all duration-500 lg:block",
         visible
@@ -80,13 +72,7 @@ export function PackSideCta({
       <div className="overflow-hidden rounded-2xl border border-primary-green/10 bg-white shadow-xl">
         {imageUrl && (
           <div className="relative aspect-4/3 w-full bg-background-beige-dark">
-            <Image
-              src={imageUrl}
-              alt=""
-              fill
-              sizes="240px"
-              className="object-cover"
-            />
+            <Image src={imageUrl} alt="" fill sizes="240px" className="object-cover" />
           </div>
         )}
         <div className="p-4">
@@ -99,7 +85,10 @@ export function PackSideCta({
                 key={m.text}
                 className="flex items-center gap-2 text-xs text-primary-green/70"
               >
-                <m.icon className="h-3.5 w-3.5 shrink-0 text-primary-green/50" aria-hidden />
+                <m.icon
+                  className="h-3.5 w-3.5 shrink-0 text-primary-green/50"
+                  aria-hidden
+                />
                 <span>{m.text}</span>
               </li>
             ))}
@@ -112,12 +101,12 @@ export function PackSideCta({
               isEnrolled={isEnrolled}
               priceCents={priceCents}
               currency={currency}
-              ctaLabel={ctaLabelFor(PACK_SLUG)}
+              ctaLabel={ctaLabel}
             />
           </div>
 
           <nav className="mt-4 grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-primary-green/10 pt-3">
-            {ANCHORS.map((a) => (
+            {anchors.map((a) => (
               <a
                 key={a.href}
                 href={a.href}

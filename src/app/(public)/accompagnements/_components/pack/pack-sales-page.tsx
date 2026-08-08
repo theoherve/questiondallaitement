@@ -1,19 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
-import { MODULE_ORDER, formatPrice } from "@/config/accompagnements";
+import { MODULE_ORDER, PACK_SLUG, formatPrice } from "@/config/accompagnements";
+import { ctaLabelFor } from "@/config/accompagnement-cta";
 import { buildModuleCards, type ModuleRow } from "./pack-modules-data";
 import { PACK_CONTENT } from "./pack-content";
 import { SalesFaq } from "../sales/sales-faq";
-import { PackSideCta } from "./pack-side-cta";
+import { SalesHero } from "../sales/sales-hero";
+import { SalesInstructor } from "../sales/sales-instructor";
+import { SalesTestimonials } from "../sales/sales-testimonials";
+import { SalesPricing } from "../sales/sales-pricing";
+import { SalesSideCta } from "../sales/sales-side-cta";
 import {
-  PackHero,
   PackProblem,
   PackPromise,
   PackModules,
   PackHowItWorks,
   PackForWho,
-  PackInstructor,
-  PackTestimonials,
-  PackPricing,
   PackFinalCta,
 } from "./pack-sections";
 
@@ -83,22 +84,43 @@ export function PackSalesPage({
       ? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
       : PACK_CONTENT.instructor.fallbackName;
 
+  // Ligne de contenu de la carte flottante, composee ici pour que le composant
+  // partage reste agnostique du vocabulaire (« sections » cote pack,
+  // « chapitres » cote module).
+  const metaLabel =
+    sectionsCount > 0 || lessonsCount > 0
+      ? `${sectionsCount} section${sectionsCount > 1 ? "s" : ""}` +
+        ` · ${lessonsCount} leçon${lessonsCount > 1 ? "s" : ""}`
+      : null;
+
   return (
     <>
-      <PackSideCta
+      <SalesSideCta
+        ariaLabel="Rejoindre le pack"
         priceLabel={priceLabel}
         imageUrl={accompagnement.thumbnail_url}
-        sectionsCount={sectionsCount}
-        lessonsCount={lessonsCount}
+        metaLabel={metaLabel}
         instructorName={instructorName}
+        anchors={[
+          { href: "#programme", label: "Programme" },
+          { href: "#temoignages", label: "Témoignages" },
+          { href: "#tarif", label: "Tarif" },
+          { href: "#faq", label: "FAQ" },
+        ]}
+        ctaLabel={ctaLabelFor(PACK_SLUG)}
         accompagnementId={accompagnement.id}
         isLoggedIn={isLoggedIn}
         isEnrolled={isEnrolled}
         priceCents={accompagnement.price_cents}
         currency={accompagnement.currency}
       />
-      <PackHero
-        title={accompagnement.title}
+      <SalesHero
+        productName={accompagnement.title}
+        eyebrow={PACK_CONTENT.hero.eyebrow}
+        titleOverride={PACK_CONTENT.hero.titleOverride}
+        subtitle={PACK_CONTENT.hero.subtitle}
+        reassurances={PACK_CONTENT.hero.reassurances}
+        ctaLabel={PACK_CONTENT.hero.ctaLabel}
         priceLabel={priceLabel}
         imageUrl={accompagnement.thumbnail_url}
       />
@@ -107,15 +129,26 @@ export function PackSalesPage({
       <PackModules modules={modules} />
       <PackHowItWorks />
       <PackForWho />
-      <PackInstructor
+      <SalesInstructor
+        title={PACK_CONTENT.instructor.title}
         name={instructorName}
         bio={accompagnement.consultants?.bio ?? null}
+        fallbackBio={PACK_CONTENT.instructor.fallbackBio}
         avatarUrl={profile?.avatar_url ?? null}
+        credentials={PACK_CONTENT.instructor.credentials}
       />
-      <PackTestimonials />
-      <PackPricing
+      <SalesTestimonials
+        title={PACK_CONTENT.testimonials.title}
+        items={PACK_CONTENT.testimonials.items}
+      />
+      <SalesPricing
+        title={PACK_CONTENT.pricing.title}
+        subtitle={PACK_CONTENT.pricing.subtitle}
         priceLabel={priceLabel}
         anchorLabel={anchorLabel}
+        includes={PACK_CONTENT.pricing.includes}
+        guarantee={PACK_CONTENT.pricing.guarantee}
+        ctaLabel={ctaLabelFor(PACK_SLUG)}
         accompagnementId={accompagnement.id}
         isLoggedIn={isLoggedIn}
         isEnrolled={isEnrolled}
