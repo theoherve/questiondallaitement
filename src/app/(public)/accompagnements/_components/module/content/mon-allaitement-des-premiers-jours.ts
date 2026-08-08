@@ -1,7 +1,7 @@
 import type { ModuleContent } from "./types";
 
 /**
- * Page de vente « Mon allaitement des premiers jours » (75 €, 7 chapitres).
+ * Page de vente « Mon allaitement des premiers jours » (75 €).
  * Moment vise : la sortie de maternite et les six premieres semaines, quand
  * tout se joue et que la douleur fait abandonner.
  */
@@ -41,7 +41,7 @@ export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
   program: {
     title: "Ce que contient le module",
     intro:
-      "Sept chapitres qui suivent l'ordre réel des premières semaines, à consulter dans l'urgence ou à parcourir tranquillement.",
+      "Des chapitres qui suivent l'ordre réel des premières semaines, à consulter dans l'urgence ou à parcourir tranquillement.",
   },
   outcomes: {
     title: "Ce qui devient possible",
