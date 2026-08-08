@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileUpload } from "@/components/ui/file-upload";
 import { FormationContentFields } from "./formation-content-fields";
 import { FormationHighlightsField } from "./formation-highlights-field";
@@ -61,6 +62,26 @@ type TemplateOption = {
   audience_html?: string | null;
 };
 
+/** Onglets de la colonne principale. La colonne de droite reste visible. */
+type FormationTab = "contenu" | "dates" | "classement";
+
+/**
+ * Champs obligatoires, et onglet ou les trouver.
+ *
+ * `consultant_id` n'y figure pas : il vit dans la colonne de droite, toujours
+ * montee, donc le navigateur le valide deja.
+ */
+const REQUIRED_FIELDS: Array<{
+  field: "title" | "slug" | "start_date" | "end_date";
+  label: string;
+  tab: FormationTab;
+}> = [
+  { field: "title", label: "Le titre", tab: "contenu" },
+  { field: "slug", label: "Le slug", tab: "contenu" },
+  { field: "start_date", label: "La date de début", tab: "dates" },
+  { field: "end_date", label: "La date de fin", tab: "dates" },
+];
+
 type Props = {
   formation?: Formation;
   consultants: ConsultantOption[];
@@ -87,6 +108,7 @@ export const FormationForm = ({
     useState<ProviderOption[]>(providers);
   const [newProviderName, setNewProviderName] = useState("");
   const [isCreatingProvider, setIsCreatingProvider] = useState(false);
+  const [tab, setTab] = useState<FormationTab>("contenu");
 
   // Date et heure sont saisies separement : l'heure est facultative, et un
   // `datetime-local` ne sait pas exprimer « date connue, heure inconnue ».
@@ -185,9 +207,21 @@ export const FormationForm = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Les champs obligatoires sont repartis entre les onglets, et un onglet
+    // inactif n'est pas monte : le navigateur ne peut donc pas les valider
+    // lui-meme. On le fait ici, et on ouvre l'onglet fautif pour que le
+    // message ne designe pas un champ invisible.
+    const missing = REQUIRED_FIELDS.find(({ field }) => !formData[field]);
+    if (missing) {
+      setTab(missing.tab);
+      toast.error(`${missing.label} est requis`);
+      return;
+    }
+
     // Les deux heures vont ensemble : une seule renseignee laisserait une
     // borne inventee, on prefere le dire plutot que de la deviner.
     if (!formData.start_time !== !formData.end_time) {
+      setTab("dates");
       toast.error(
         "Renseignez l'heure de début et l'heure de fin, ou aucune des deux",
       );
@@ -371,7 +405,18 @@ export const FormationForm = ({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main content */}
-        <div className="space-y-6 lg:col-span-2">
+        <Tabs
+          value={tab}
+          onValueChange={(value) => setTab(value as FormationTab)}
+          className="lg:col-span-2"
+        >
+          <TabsList className="w-full">
+            <TabsTrigger value="contenu">Contenu</TabsTrigger>
+            <TabsTrigger value="dates">Dates et lieu</TabsTrigger>
+            <TabsTrigger value="classement">Classement</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="contenu" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Informations générales</CardTitle>
@@ -457,7 +502,9 @@ export const FormationForm = ({
               />
             </CardContent>
           </Card>
+          </TabsContent>
 
+          <TabsContent value="dates" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Date et lieu</CardTitle>
@@ -553,7 +600,9 @@ export const FormationForm = ({
               )}
             </CardContent>
           </Card>
+          </TabsContent>
 
+          <TabsContent value="classement" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Classement et fiche partagée</CardTitle>
@@ -743,7 +792,8 @@ export const FormationForm = ({
               </div>
             </CardContent>
           </Card>
-        </div>
+          </TabsContent>
+        </Tabs>
 
         {/* Sidebar */}
         <div className="space-y-6">

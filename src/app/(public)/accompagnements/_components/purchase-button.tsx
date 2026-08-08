@@ -52,7 +52,13 @@ export const PurchaseButton = ({
   if (!isLoggedIn) {
     return (
       <div className="space-y-2">
-        <Button asChild className="w-full bg-primary-red hover:bg-primary-red-dark">
+        {/* `h-auto whitespace-normal` : les libelles orientes benefice sont longs
+            (« Je comprends ce qui empeche mon enfant de dormir »). Sans ca, le
+            `whitespace-nowrap` du Button les fait deborder du viewport mobile. */}
+        <Button
+          asChild
+          className="h-auto w-full whitespace-normal bg-primary-red py-2.5 text-center leading-snug hover:bg-primary-red-dark"
+        >
           <a
             href={`/connexion?redirect=/accompagnements/${accompagnementId}`}
             data-testid="purchase-login-cta"
@@ -100,7 +106,7 @@ export const PurchaseButton = ({
         onClick={handlePurchase}
         disabled={isPending}
         data-testid="purchase-button"
-        className="w-full bg-primary-red hover:bg-primary-red-dark"
+        className="h-auto w-full whitespace-normal bg-primary-red py-2.5 text-center leading-snug hover:bg-primary-red-dark"
       >
         {isPending ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
