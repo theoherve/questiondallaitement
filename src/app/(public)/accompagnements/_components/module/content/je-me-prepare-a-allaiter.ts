@@ -76,29 +76,6 @@ export const JE_ME_PREPARE_A_ALLAITER: ModuleContent = {
     intro: "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
   // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
-  testimonials: {
-    title: "Elles sont arrivées préparées",
-    items: [
-      {
-        quote:
-          "J'ai su quoi demander dès la salle de naissance. Je crois que ça a tout changé pour la suite.",
-        author: "Chloé",
-        detail: "Enceinte de 7 mois",
-      },
-      {
-        quote:
-          "Ma mère me répétait que je n'aurais pas de lait. J'ai su quoi lui répondre, et surtout quoi en penser.",
-        author: "Anaïs",
-        detail: "Maman de Noé, 2 mois",
-      },
-      {
-        quote:
-          "Je pensais que ça viendrait tout seul. Comprendre avant m'a évité de paniquer après.",
-        author: "Léna",
-        detail: "Enceinte de 8 mois",
-      },
-    ],
-  },
   pricing: {
     title: "Préparez la seule chose que vous ferez dix fois par jour",
     subtitle: "Un accès unique au module complet, à vie.",

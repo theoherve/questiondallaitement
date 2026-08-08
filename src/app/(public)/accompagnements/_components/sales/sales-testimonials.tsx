@@ -1,16 +1,21 @@
-import { CheckCircle, Quote } from "lucide-react";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
+import { TestimonialGrid } from "@/components/public/testimonials/testimonial-grid";
+import type { TestimonialTopic } from "@/data/testimonials";
+import { getTestimonialsForModule } from "@/lib/testimonials";
 import { Section } from "./section";
 
-export type Testimonial = { quote: string; author: string; detail: string };
+const DEFAULT_TITLE = "Elles en parlent mieux que moi";
 
 export function SalesTestimonials({
-  title,
-  items,
+  topic,
+  title = DEFAULT_TITLE,
 }: {
-  title: string;
-  items: readonly Testimonial[];
+  topic: TestimonialTopic;
+  title?: string;
 }) {
+  const items = getTestimonialsForModule(topic);
+  if (items.length === 0) return null;
+
   return (
     <Section id="temoignages" className="bg-background-beige">
       <ScrollReveal className="mx-auto max-w-3xl text-center">
@@ -18,24 +23,8 @@ export function SalesTestimonials({
           {title}
         </h2>
       </ScrollReveal>
-      <div className="mt-10 grid gap-6 md:grid-cols-3">
-        {items.map((t, i) => (
-          <ScrollReveal key={t.author} delay={i * 80}>
-            <figure className="flex h-full flex-col rounded-lg border border-primary-green/10 bg-white p-6">
-              <Quote className="h-6 w-6 text-primary-red/40" aria-hidden />
-              <blockquote className="mt-3 flex-1 text-sm leading-relaxed text-primary-green/80">
-                « {t.quote} »
-              </blockquote>
-              <figcaption className="mt-4 flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-accent-sage" aria-hidden />
-                <span className="text-sm font-medium text-primary-green">
-                  {t.author}
-                </span>
-                <span className="text-xs text-primary-green/50">· {t.detail}</span>
-              </figcaption>
-            </figure>
-          </ScrollReveal>
-        ))}
+      <div className="mt-10">
+        <TestimonialGrid items={items} />
       </div>
     </Section>
   );

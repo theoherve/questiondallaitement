@@ -76,29 +76,6 @@ export const JE_REPRENDS_UNE_ACTIVITE_PROFESSIONNELLE: ModuleContent = {
     intro: "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
   // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
-  testimonials: {
-    title: "Elles ont repris sans arrêter d'allaiter",
-    items: [
-      {
-        quote:
-          "Je tirais trois gouttes et je désespérais. Le problème venait du réglage, pas de moi.",
-        author: "Amandine",
-        detail: "Maman de Gabriel, 4 mois",
-      },
-      {
-        quote:
-          "La crèche m'annonçait le passage au biberon comme une évidence. J'y suis arrivée avec un plan écrit, tout s'est bien passé.",
-        author: "Fanny",
-        detail: "Maman d'Inès, 6 mois",
-      },
-      {
-        quote:
-          "J'étais sûre d'arrêter à la reprise. Neuf mois plus tard, on allaite toujours matin et soir.",
-        author: "Laure",
-        detail: "Maman de Tom, 5 mois",
-      },
-    ],
-  },
   pricing: {
     title: "Reprenez le travail sans renoncer à votre allaitement",
     subtitle: "Un accès unique au module complet, à vie.",

@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { AccompagnementCard } from "@/components/accompagnements/accompagnement-card";
 import { AccompagnementsCarousel } from "./_components/accompagnements-carousel";
 import { ArrowRight, Video, MapPin, BookOpen, GraduationCap } from "lucide-react";
-import { TestimonialCarousel } from "./_components/testimonial-carousel";
+import { TestimonialCarousel } from "@/components/public/testimonials/testimonial-carousel";
+import { GoogleRatingBadge } from "@/components/public/testimonials/google-rating-badge";
+import { getFeaturedTestimonials } from "@/lib/testimonials";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { NEWSLETTER_NAME } from "@/config/newsletter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -160,6 +162,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
   );
   const blogPosts = blogRes.data ?? [];
   const consultants = consultantsRes.data ?? [];
+  const featuredTestimonials = getFeaturedTestimonials();
 
   return (
     <>
@@ -527,24 +530,29 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       </section>
 
       {/* ─── TÉMOIGNAGES ─── */}
-      <section className="bg-background-beige-dark section-padding">
-        <div className="mx-auto max-w-6xl">
-          <ScrollReveal>
-            <div className="text-center">
-              <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
-                Témoignages
-              </p>
-              <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-5xl">
-                Et la parentalité devient plus douce...
-              </h2>
-              <p className="mt-4 text-primary-green/60">
-                Des mamans partagent leur expérience
-              </p>
-            </div>
-          </ScrollReveal>
-          <TestimonialCarousel />
-        </div>
-      </section>
+      {featuredTestimonials.length > 0 && (
+        <section className="bg-background-beige-dark section-padding">
+          <div className="mx-auto max-w-6xl">
+            <ScrollReveal>
+              <div className="text-center">
+                <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
+                  Témoignages
+                </p>
+                <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-5xl">
+                  Et la parentalité devient plus douce...
+                </h2>
+                <p className="mt-4 text-primary-green/60">
+                  Des mamans partagent leur expérience
+                </p>
+                <div className="mt-6 flex justify-center">
+                  <GoogleRatingBadge />
+                </div>
+              </div>
+            </ScrollReveal>
+            <TestimonialCarousel testimonials={featuredTestimonials} />
+          </div>
+        </section>
+      )}
 
       {/* ─── CONSULTANTES — Teaser ─── */}
       {consultants.length > 0 && (

@@ -3,8 +3,8 @@ import type { ModuleContent } from "./types";
 /**
  * Page de vente « Les urgences allaitement » (27 €).
  *
- * Parcours volontairement court : `problem`, `promise` et `testimonials` sont
- * omis. La lectrice arrive ici avec une crevasse ou une mastite en cours ; lui
+ * Parcours volontairement court : `problem` et `promise` sont omis. La
+ * lectrice arrive ici avec une crevasse ou une mastite en cours ; lui
  * derouler six paragraphes sur sa douleur avant de montrer le remede serait
  * contre-productif. Le hero enchaine sur la barre de preuve, puis directement
  * sur le programme.

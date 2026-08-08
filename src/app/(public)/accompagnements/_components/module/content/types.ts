@@ -1,4 +1,3 @@
-import type { Testimonial } from "../../sales/sales-testimonials";
 import type { FaqItem } from "../../sales/sales-faq";
 
 /**
@@ -47,10 +46,6 @@ export type ModuleContent = {
   moment: {
     title: string;
     intro: string;
-  };
-  testimonials?: {
-    title: string;
-    items: Testimonial[];
   };
   pricing: {
     title: string;

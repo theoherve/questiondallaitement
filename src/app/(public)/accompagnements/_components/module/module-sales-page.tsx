@@ -21,6 +21,8 @@ import { ctaLabelFor } from "@/config/accompagnement-cta";
 import { SalesHero } from "../sales/sales-hero";
 import { SalesInstructor } from "../sales/sales-instructor";
 import { SalesTestimonials } from "../sales/sales-testimonials";
+import type { TestimonialTopic } from "@/data/testimonials";
+import { getTestimonialsForModule } from "@/lib/testimonials";
 import { SalesPricing } from "../sales/sales-pricing";
 import { SalesFaq, type FaqItem } from "../sales/sales-faq";
 import { SalesSideCta, type SideCtaAnchor } from "../sales/sales-side-cta";
@@ -155,9 +157,14 @@ export function ModuleSalesPage({
 
   const faqItems: FaqItem[] = [...content.faq, ...SHARED_CONTENT.faq.common];
 
+  // Le slug sert de sujet d'avis. Le transtypage est sûr : la page appelante a
+  // déjà validé que le slug appartient à MODULE_CONTENT.
+  const testimonialTopic = accompagnement.slug as TestimonialTopic;
+  const hasTestimonials = getTestimonialsForModule(testimonialTopic).length > 0;
+
   const anchors: SideCtaAnchor[] = [
     ...(chapters.length > 0 ? [{ href: "#programme", label: "Programme" }] : []),
-    ...(content.testimonials
+    ...(hasTestimonials
       ? [{ href: "#temoignages", label: "Témoignages" }]
       : []),
     { href: "#tarif", label: "Tarif" },
@@ -214,12 +221,7 @@ export function ModuleSalesPage({
         avatarUrl={profile?.avatar_url ?? null}
         credentials={SHARED_CONTENT.instructor.credentials}
       />
-      {content.testimonials && (
-        <SalesTestimonials
-          title={content.testimonials.title}
-          items={content.testimonials.items}
-        />
-      )}
+      <SalesTestimonials topic={testimonialTopic} />
       <SalesPricing
         title={content.pricing.title}
         subtitle={content.pricing.subtitle}

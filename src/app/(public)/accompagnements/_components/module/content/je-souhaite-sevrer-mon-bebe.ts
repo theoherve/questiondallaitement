@@ -76,29 +76,6 @@ export const JE_SOUHAITE_SEVRER_MON_BEBE: ModuleContent = {
     intro: "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
   // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
-  testimonials: {
-    title: "Elles ont sevré en douceur",
-    items: [
-      {
-        quote:
-          "J'avais arrêté d'un coup la première fois, avec un engorgement terrible. Là, en trois semaines, sans une douleur.",
-        author: "Marion",
-        detail: "Maman de Naël, 11 mois",
-      },
-      {
-        quote:
-          "Je culpabilisais énormément. Comprendre que ma décision était légitime a changé la façon dont je l'ai vécue.",
-        author: "Hélène",
-        detail: "Maman de Zoé, 18 mois",
-      },
-      {
-        quote:
-          "Je ne m'attendais pas au coup de blues. Savoir que c'était hormonal et passager m'a beaucoup aidée.",
-        author: "Sophie",
-        detail: "Maman de Liam, 4 mois",
-      },
-    ],
-  },
   pricing: {
     title: "Terminez votre allaitement comme vous l'avez commencé, accompagnée",
     subtitle: "Un accès unique au module complet, à vie.",

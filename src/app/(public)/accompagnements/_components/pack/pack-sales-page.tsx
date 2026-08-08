@@ -137,10 +137,7 @@ export function PackSalesPage({
         avatarUrl={profile?.avatar_url ?? null}
         credentials={PACK_CONTENT.instructor.credentials}
       />
-      <SalesTestimonials
-        title={PACK_CONTENT.testimonials.title}
-        items={PACK_CONTENT.testimonials.items}
-      />
+      <SalesTestimonials topic={PACK_SLUG} />
       <SalesPricing
         title={PACK_CONTENT.pricing.title}
         subtitle={PACK_CONTENT.pricing.subtitle}
