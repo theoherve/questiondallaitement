@@ -19,6 +19,11 @@ export const accompagnementSchema = z.object({
 export const sectionSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
   position: z.number().int().min(0),
+  /**
+   * Phrase de bénéfice affichée sous le titre du chapitre sur la page de vente
+   * publique. `nullish` : `null` efface l'accroche, `undefined` ne la touche pas.
+   */
+  sales_hook: z.string().max(200, "Max 200 caractères").nullish(),
 });
 
 export const textBlockSchema = z.object({

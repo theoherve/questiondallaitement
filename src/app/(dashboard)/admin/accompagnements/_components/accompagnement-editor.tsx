@@ -77,6 +77,7 @@ type SectionData = {
   id: string;
   title: string;
   position: number;
+  sales_hook: string | null;
   accompagnement_blocks: {
     id: string;
     type: string;

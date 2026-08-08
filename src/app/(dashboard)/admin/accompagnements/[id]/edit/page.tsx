@@ -36,6 +36,7 @@ const AdminEditAccompagnementPage = async ({ params }: Props) => {
         id,
         title,
         position,
+        sales_hook,
         accompagnement_blocks (
           id,
           type,
@@ -82,6 +83,7 @@ const AdminEditAccompagnementPage = async ({ params }: Props) => {
     id: string;
     title: string;
     position: number;
+    sales_hook: string | null;
     accompagnement_blocks: {
       id: string;
       type: string;

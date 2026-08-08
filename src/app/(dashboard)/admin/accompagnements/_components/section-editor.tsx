@@ -69,6 +69,8 @@ type SectionData = {
   id: string;
   title: string;
   position: number;
+  /** Accroche affichée sous le titre sur la page de vente publique. */
+  sales_hook: string | null;
   accompagnement_blocks: BlockData[];
 };
 
@@ -112,6 +114,7 @@ export const SectionEditor = ({
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(section.title);
+  const [editHook, setEditHook] = useState(section.sales_hook ?? "");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [blocks, setBlocks] = useState(section.accompagnement_blocks);
   const [prevServerBlocks, setPrevServerBlocks] = useState(
@@ -132,25 +135,40 @@ export const SectionEditor = ({
     })
   );
 
-  const handleRenameSection = async () => {
-    if (!editTitle.trim() || editTitle === section.title) {
+  /** Remet les deux champs sur la valeur serveur et sort du mode edition. */
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditTitle(section.title);
+    setEditHook(section.sales_hook ?? "");
+  };
+
+  const handleSaveSection = async () => {
+    const title = editTitle.trim();
+    const hook = editHook.trim();
+
+    if (!title) {
+      cancelEdit();
+      return;
+    }
+    if (title === section.title && hook === (section.sales_hook ?? "")) {
       setIsEditing(false);
-      setEditTitle(section.title);
       return;
     }
 
     const result = await updateSection(section.id, accompagnementId, {
-      title: editTitle.trim(),
+      title,
       position: section.position,
+      sales_hook: hook === "" ? null : hook,
     });
 
     setIsEditing(false);
     if (result.success) {
-      toast.success("Section renommée");
+      toast.success("Section enregistrée");
       router.refresh();
     } else {
       toast.error(result.error ?? "Erreur");
       setEditTitle(section.title);
+      setEditHook(section.sales_hook ?? "");
     }
   };
 
@@ -218,56 +236,71 @@ export const SectionEditor = ({
       >
         {isEditing ? (
           <div
-            className="flex items-center gap-2"
+            className="flex flex-1 flex-col gap-2"
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="flex items-center gap-2">
+              <Input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="h-8 w-60"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSaveSection();
+                  if (e.key === "Escape") cancelEdit();
+                }}
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8"
+                onClick={handleSaveSection}
+                aria-label="Confirmer"
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8"
+                onClick={cancelEdit}
+                aria-label="Annuler"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
             <Input
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              className="h-8 w-60"
-              autoFocus
+              value={editHook}
+              onChange={(e) => setEditHook(e.target.value)}
+              className="h-8 max-w-xl"
+              maxLength={200}
+              aria-label="Accroche de la page de vente"
+              placeholder="Accroche page de vente, ex. : à la fin de ce chapitre, vous saurez reconnaître une bonne prise du sein"
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleRenameSection();
-                if (e.key === "Escape") {
-                  setIsEditing(false);
-                  setEditTitle(section.title);
-                }
+                if (e.key === "Enter") handleSaveSection();
+                if (e.key === "Escape") cancelEdit();
               }}
             />
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8"
-              onClick={handleRenameSection}
-              aria-label="Confirmer"
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8"
-              onClick={() => {
-                setIsEditing(false);
-                setEditTitle(section.title);
-              }}
-              aria-label="Annuler"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         ) : (
-          <CardTitle className="flex items-center gap-2 text-base">
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <div className="flex flex-col gap-0.5">
+            <CardTitle className="flex items-center gap-2 text-base">
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+              {section.title}
+              <span className="text-xs text-muted-foreground">
+                ({blocks.length} bloc{blocks.length > 1 ? "s" : ""})
+              </span>
+            </CardTitle>
+            {section.sales_hook && (
+              <p className="pl-6 text-xs italic text-muted-foreground">
+                {section.sales_hook}
+              </p>
             )}
-            {section.title}
-            <span className="text-xs text-muted-foreground">
-              ({blocks.length} bloc{blocks.length > 1 ? "s" : ""})
-            </span>
-          </CardTitle>
+          </div>
         )}
 
         <div
