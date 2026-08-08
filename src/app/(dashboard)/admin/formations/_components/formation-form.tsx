@@ -44,11 +44,21 @@ type ProviderOption = {
   name: string;
 };
 
-/** Fiche partagée proposée au rattachement d'une session. */
+/**
+ * Fiche partagée proposée au rattachement d'une session.
+ *
+ * Le contenu voyage avec l'option : le formulaire montre sous chaque section
+ * vide le texte que la fiche fournira, et doit pouvoir le refléter dès qu'on
+ * change de fiche dans le menu.
+ */
 type TemplateOption = {
   id: string;
   title: string;
   category: FormationCategory;
+  summary_html?: string | null;
+  objectives_html?: string | null;
+  program_html?: string | null;
+  audience_html?: string | null;
 };
 
 type Props = {
@@ -128,6 +138,8 @@ export const FormationForm = ({
     template_id: formation?.template_id ?? "",
     is_evergreen: formation?.is_evergreen ?? false,
   });
+
+  const selectedTemplate = templates.find((t) => t.id === formData.template_id);
 
   const slugify = (text: string): string =>
     text
@@ -412,6 +424,22 @@ export const FormationForm = ({
                 onChange={(field, html) =>
                   setFormData((p) => ({ ...p, [field]: html }))
                 }
+                inherited={
+                  selectedTemplate
+                    ? {
+                        summary_html: selectedTemplate.summary_html,
+                        objectives_html: selectedTemplate.objectives_html,
+                        program_html: selectedTemplate.program_html,
+                        audience_html: selectedTemplate.audience_html,
+                      }
+                    : undefined
+                }
+                templateHref={
+                  selectedTemplate
+                    ? `/admin/formations/fiches/${selectedTemplate.id}/edit`
+                    : undefined
+                }
+                templateTitle={selectedTemplate?.title}
               />
             </CardContent>
           </Card>
@@ -589,6 +617,19 @@ export const FormationForm = ({
                   fiche. Ce qui est saisi ci-dessous prend le dessus, section
                   par section.
                 </p>
+                {selectedTemplate && (
+                  <p className="text-xs">
+                    <Link
+                      href={`/admin/formations/fiches/${selectedTemplate.id}/edit`}
+                      className="font-medium text-primary-green underline"
+                    >
+                      Modifier la fiche
+                    </Link>{" "}
+                    <span className="text-muted-foreground">
+                      pour corriger le texte de toutes les sessions à la fois.
+                    </span>
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">

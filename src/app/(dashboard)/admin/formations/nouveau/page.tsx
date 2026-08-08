@@ -21,7 +21,12 @@ const NewFormationPage = async () => {
         .select("id, profiles!consultants_id_fkey(first_name, last_name)")
         .eq("is_active", true),
       supabase.from("training_providers").select("id, name").order("name"),
-      supabase.from("formation_templates").select("id, title, category").order("title"),
+      supabase
+        .from("formation_templates")
+        .select(
+          "id, title, category, summary_html, objectives_html, program_html, audience_html",
+        )
+        .order("title"),
     ]);
 
   const consultants = (consultantsRaw ?? []).map((c: Record<string, unknown>) => ({
