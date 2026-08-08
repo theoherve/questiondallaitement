@@ -52,6 +52,7 @@ const FormationsProPage = async () => {
       show_price,
       thumbnail_url,
       external_url,
+      partner_promo_codes,
       discounted_price_cents,
       category,
       badge,

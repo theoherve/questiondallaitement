@@ -303,6 +303,9 @@ export type Formation = {
   category: FormationCategory;
   // Mention libre affichee sur la fiche (certification, eligibilite).
   badge: string | null;
+  // Codes de reduction de l'organisme partenaire, annonces au public. Sans
+  // rapport avec `promo_codes`, qui remise nos propres paiements.
+  partner_promo_codes: string[];
   // true = accessible en permanence : ni a venir, ni passee.
   is_evergreen: boolean;
   created_at: string;

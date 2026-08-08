@@ -33,6 +33,7 @@ import {
   type FormationCategory,
 } from "@/config/formation-categories";
 import { PARIS } from "@/lib/formations/paris-time";
+import { promoCodeLabel } from "@/lib/formations/external-url";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -56,6 +57,8 @@ export type FormationData = {
   thumbnail_url: string | null;
   consultants: unknown;
   external_url: string | null;
+  /** Codes de reduction de l'organisme, annonces sur la carte. */
+  partner_promo_codes: string[] | null;
   discounted_price_cents: number | null;
   provider: { name: string; logo_url: string | null } | null;
   category: string;
@@ -533,7 +536,7 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
     ? `${consultant.profiles.first_name ?? ""} ${consultant.profiles.last_name ?? ""}`.trim()
     : null;
   const isFree = formation.price_cents === 0;
-  const isExternal = !!formation.external_url;
+  const promoLabel = promoCodeLabel(formation.partner_promo_codes);
   const hasDiscount = formation.discounted_price_cents != null;
 
   const cardContent = (
@@ -557,10 +560,10 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
                 <TypeIcon className="mr-1 h-3 w-3" />
                 {typeInfo.label}
               </Badge>
-              {isExternal && (
+              {promoLabel && (
                 <Badge className="bg-amber-500 text-white border-0 text-xs backdrop-blur-sm">
                   <Tag className="mr-1 h-3 w-3" />
-                  Code MILKPOWER
+                  {promoLabel}
                 </Badge>
               )}
             </div>
@@ -582,10 +585,10 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
                 <TypeIcon className="mr-1 h-3 w-3" />
                 {typeInfo.label}
               </Badge>
-              {isExternal && (
+              {promoLabel && (
                 <Badge className="bg-amber-500 text-white border-0 text-xs">
                   <Tag className="mr-1 h-3 w-3" />
-                  Code MILKPOWER
+                  {promoLabel}
                 </Badge>
               )}
             </div>

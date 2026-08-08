@@ -138,8 +138,15 @@ export const FormationForm = ({
     is_published: formation?.is_published ?? false,
     category: formation?.category ?? "formation",
     badge: formation?.badge ?? "",
+    partner_promo_codes: formation?.partner_promo_codes ?? [],
     is_evergreen: formation?.is_evergreen ?? false,
   });
+
+  // Saisie libre separee de l'etat : couper sur la virgule a chaque frappe
+  // empecherait de taper la virgule elle-meme.
+  const [promoCodesInput, setPromoCodesInput] = useState(
+    (formation?.partner_promo_codes ?? []).join(", "),
+  );
 
   const slugify = (text: string): string =>
     text
@@ -238,6 +245,12 @@ export const FormationForm = ({
       ends_at: endsAt ? endsAt.toISOString() : "",
       show_time: showTime,
       badge: formData.badge.trim() || null,
+      // Majuscules : le code est recopie a la main par la visiteuse, sa casse
+      // ne doit pas dependre de qui l'a saisi ici.
+      partner_promo_codes: promoCodesInput
+        .split(",")
+        .map((code) => code.trim().toUpperCase())
+        .filter(Boolean),
     };
 
     startTransition(async () => {
@@ -698,9 +711,29 @@ export const FormationForm = ({
                 <p className="text-xs text-muted-foreground">
                   Si renseigné, la fiche reste consultable sur le site mais
                   l&apos;inscription part chez l&apos;organisme : le bouton
-                  « S&apos;inscrire » ouvre ce lien dans un nouvel onglet (avec
-                  le code MILKPOWER), sans demander de connexion. Aucune
-                  inscription n&apos;est enregistrée ici.
+                  « S&apos;inscrire » ouvre ce lien dans un nouvel onglet, sans
+                  demander de connexion. Aucune inscription n&apos;est
+                  enregistrée ici.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="partner_promo_codes">
+                  Codes de réduction de l&apos;organisme (optionnel)
+                </Label>
+                <Input
+                  id="partner_promo_codes"
+                  value={promoCodesInput}
+                  onChange={(e) => setPromoCodesInput(e.target.value)}
+                  placeholder="MILKPOWER, RENTREE10"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Séparez plusieurs codes par une virgule. Ils sont annoncés
+                  sur la carte du catalogue et sous le bouton d&apos;inscription.
+                  Le premier est ajouté au lien ci-dessus (paramètre{" "}
+                  <code>code</code>). Vide, aucune réduction n&apos;est
+                  annoncée. Ces codes sont ceux de l&apos;organisme : nous ne
+                  les appliquons pas, c&apos;est lui qui les honore.
                 </p>
               </div>
             </CardContent>

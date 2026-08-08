@@ -56,6 +56,10 @@ export const formationSchema = z
     category: z.enum(FORMATION_CATEGORIES).default("formation"),
     // Mention libre affichee sur la fiche : certification, eligibilite.
     badge: z.string().trim().optional().nullable(),
+    // Codes de l'organisme partenaire. Normalises en majuscules a la saisie :
+    // ils sont recopies a la main par la visiteuse, la casse ne doit pas
+    // dependre de qui les a tapes dans le back-office.
+    partner_promo_codes: z.array(z.string().trim().min(1)).default([]),
     // Accessible en permanence : ni a venir, ni passee.
     is_evergreen: z.boolean().default(false),
   })

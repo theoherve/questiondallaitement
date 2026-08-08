@@ -24,6 +24,8 @@ type Props = {
   currency: string;
   /** Lien d'inscription de l'organisme, si la formation est vendue par lui. */
   externalUrl?: string | null;
+  /** Codes de reduction de l'organisme : le premier part dans le lien. */
+  promoCodes?: string[] | null;
   isPreview?: boolean;
 };
 
@@ -37,6 +39,7 @@ export const RegisterButton = ({
   priceCents,
   currency,
   externalUrl,
+  promoCodes,
   isPreview = false,
 }: Props) => {
   const [isPending, startTransition] = useTransition();
@@ -72,7 +75,7 @@ export const RegisterButton = ({
         asChild
       >
         <a
-          href={buildExternalUrl(externalUrl)}
+          href={buildExternalUrl(externalUrl, promoCodes)}
           target="_blank"
           rel="noopener noreferrer"
         >

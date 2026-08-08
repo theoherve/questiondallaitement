@@ -24,6 +24,7 @@ import {
 } from "@/config/formations";
 import { resolveFormationCategory } from "@/config/formation-categories";
 import { PARIS } from "@/lib/formations/paris-time";
+import { promoCodeLabel } from "@/lib/formations/external-url";
 import { RegisterButton } from "../register-button";
 import { RegistrationReconciler } from "../registration-reconciler";
 
@@ -116,6 +117,8 @@ export type FormationDetailProps = {
     audience_html: string | null;
     highlights: string[] | null;
     external_url: string | null;
+    /** Codes de reduction de l'organisme, annonces sous le bouton. */
+    partner_promo_codes: string[] | null;
     type: "online" | "in_person" | "hybrid";
     starts_at: string;
     ends_at: string;
@@ -186,6 +189,7 @@ export const FormationDetail = ({
     ? formatDuration(formation.starts_at, formation.ends_at)
     : null;
   const isFree = formation.price_cents === 0;
+  const promoLabel = promoCodeLabel(formation.partner_promo_codes);
   // Une formation permanente n'expire pas : ses bornes ne portent que sa date
   // de mise en ligne, la dire « terminée » serait faux.
   const isPast = !formation.is_evergreen && new Date(formation.ends_at) < new Date();
@@ -577,8 +581,18 @@ export const FormationDetail = ({
                     priceCents={formation.price_cents}
                     currency={formation.currency}
                     externalUrl={formation.external_url}
+                    promoCodes={formation.partner_promo_codes}
                     isPreview={isPreview}
                   />
+
+                  {/* Le code se lit avant de partir chez l'organisme : une
+                      fois sur son site, la visiteuse ne revient pas le
+                      chercher. */}
+                  {promoLabel && (
+                    <p className="rounded-md bg-accent-honey-soft px-3 py-2 text-center text-sm font-medium text-primary-green">
+                      {promoLabel}
+                    </p>
+                  )}
 
                   {/* Trust indicators */}
                   <div className="space-y-2 pt-2">
