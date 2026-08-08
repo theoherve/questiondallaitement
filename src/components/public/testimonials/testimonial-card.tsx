@@ -2,24 +2,27 @@ import { Star } from "lucide-react";
 import type { Testimonial } from "@/data/testimonials";
 
 export function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
+  // Extrait avant le rendu : le rétrécissement de type se perd dans le callback
+  // de `map`.
+  const { rating } = testimonial;
+
   return (
     <blockquote className="flex h-full flex-col rounded-lg border border-primary-green/10 bg-white p-7 shadow-sm">
-      <div
-        className="flex gap-0.5"
-        aria-label={`${testimonial.rating} étoiles sur 5`}
-      >
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Star
-            key={i}
-            className={
-              i < testimonial.rating
-                ? "h-4 w-4 fill-primary-red text-primary-red"
-                : "h-4 w-4 text-primary-green/20"
-            }
-            aria-hidden
-          />
-        ))}
-      </div>
+      {rating !== undefined && (
+        <div className="flex gap-0.5" aria-label={`${rating} étoiles sur 5`}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Star
+              key={i}
+              className={
+                i < rating
+                  ? "h-4 w-4 fill-primary-red text-primary-red"
+                  : "h-4 w-4 text-primary-green/20"
+              }
+              aria-hidden
+            />
+          ))}
+        </div>
+      )}
 
       <p className="mt-4 flex-1 font-serif text-base leading-relaxed text-primary-green/90 italic">
         « {testimonial.quote} »
