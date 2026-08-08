@@ -692,7 +692,7 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
           <Button
             variant="outline"
             size="sm"
-            className="pointer-formations-none border-primary-red text-primary-red transition-colors group-hover:bg-primary-red group-hover:text-white"
+            className="pointer-events-none border-primary-red text-primary-red transition-colors group-hover:bg-primary-red group-hover:text-white"
           >
             En savoir plus
             <ArrowRight className="ml-1.5 h-3.5 w-3.5" />

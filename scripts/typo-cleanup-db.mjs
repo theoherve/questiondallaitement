@@ -11,9 +11,11 @@
  * une vraie citation ou un terme repris, les retirer en masse abîmerait le
  * sens. Le rapport les compte pour permettre une relecture ciblée.
  *
- * Usage :
- *   source .env.local && node scripts/typo-cleanup-db.mjs           # rapport
- *   source .env.local && node scripts/typo-cleanup-db.mjs --write   # applique
+ * Usage (le `set -a` est nécessaire : sous zsh, `source` déclare les variables
+ * sans les exporter, et le processus node ne les voit donc pas) :
+ *
+ *   set -a && . ./.env.local && set +a && node scripts/typo-cleanup-db.mjs
+ *   set -a && . ./.env.local && set +a && node scripts/typo-cleanup-db.mjs --write
  */
 
 import { writeFileSync } from "fs";
@@ -53,7 +55,14 @@ const TARGETS = [
 
 const clean = (value, asTitle) => {
   if (typeof value !== "string" || !value.includes("—")) return null;
-  const replacement = asTitle ? " : " : ", ";
+
+  // Deux-points seulement s'ils ne font pas doublon : « Allaiter en vacances :
+  // voiture, train — mon plan » deviendrait sinon un titre à deux
+  // deux-points. Idem après un point d'interrogation, où la virgule enchaîne
+  // mieux.
+  const alreadyPunctuated = /:/.test(value) || /[?!]\s*»?\s*—/.test(value);
+  const replacement = asTitle && !alreadyPunctuated ? " : " : ", ";
+
   const next = value
     .replace(/\s*—\s*/g, replacement)
     // Un tiret en fin de phrase ne séparait rien : le remplacer laisserait une

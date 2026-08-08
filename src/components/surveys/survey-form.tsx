@@ -32,8 +32,8 @@ export const SurveyForm = ({ payload, onSubmitted }: Props) => {
       [questionId]: { ...(current[questionId] ?? {}), [rowKey]: choiceKey },
     }));
 
-  const submit = async (formation: React.FormEvent) => {
-    formation.preventDefault();
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setPending(true);
     setError(null);
 
@@ -148,7 +148,7 @@ export const SurveyForm = ({ payload, onSubmitted }: Props) => {
             <Input
               id="survey-first-name"
               value={firstName}
-              onChange={(formation) => setFirstName(formation.target.value)}
+              onChange={(event) => setFirstName(event.target.value)}
               autoComplete="given-name"
             />
           </div>
@@ -158,7 +158,7 @@ export const SurveyForm = ({ payload, onSubmitted }: Props) => {
               id="survey-email"
               type="email"
               value={email}
-              onChange={(formation) => setEmail(formation.target.value)}
+              onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"
             />
           </div>
@@ -184,7 +184,7 @@ export const SurveyForm = ({ payload, onSubmitted }: Props) => {
         aria-hidden="true"
         className="hidden"
         value={website}
-        onChange={(formation) => setWebsite(formation.target.value)}
+        onChange={(event) => setWebsite(event.target.value)}
       />
 
       {error && <p className="text-sm text-primary-red">{error}</p>}
