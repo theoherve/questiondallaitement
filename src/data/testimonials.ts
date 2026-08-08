@@ -44,6 +44,9 @@ export type Testimonial =
  * d'origine, jamais des phrases recomposées : le lecteur qui suit le lien d'un
  * avis Google doit retrouver exactement ce qu'il a lu ici.
  *
+ * Les coquilles des avis `direct` sont corrigées, ceux-ci n'étant liés à aucune
+ * source publique. Un avis `google` reste verbatim, à la virgule près.
+ *
  * Seul l'avis de Sonia a pu être recoupé avec l'API Places, qui ne renvoie que
  * cinq avis sur 327. Les autres restent en `direct` faute de lien vérifiable :
  * le badge Google ne se pose que sur un avis qu'on peut prouver.
@@ -81,7 +84,7 @@ export const TESTIMONIALS: readonly Testimonial[] = [
     author: "Noella",
     detail: "Accompagnée avant et après la naissance",
     quote:
-      "Elle m'a accompagné avec une écoute et une attention que je n'aurais jamais imaginé recevoir. Que ce soit avant la naissance ou pendant mon allaitement, elle a su être présente, rassurante et d'un soutien inestimable.",
+      "Elle m'a accompagnée avec une écoute et une attention que je n'aurais jamais imaginé recevoir. Que ce soit avant la naissance ou pendant mon allaitement, elle a su être présente, rassurante et d'un soutien inestimable.",
     topics: [],
     featured: true,
     source: "direct",
@@ -121,7 +124,7 @@ export const TESTIMONIALS: readonly Testimonial[] = [
     author: "Mathilde",
     detail: "Professionnelle de santé, accompagnée puis formée",
     quote:
-      "Elle a su m'accompagner quand j'ai rencontré des difficultés lors de mes allaitements (crevasses, engorgements, baisse de lactations, planning tirage pour ma reprise du travail) et m'a permis d'acquérir suffisamment de connaissance pour accompagner mes patientes lors de mes consultations.",
+      "Elle a su m'accompagner quand j'ai rencontré des difficultés lors de mes allaitements (crevasses, engorgements, baisse de lactations, planning tirage pour ma reprise du travail) et m'a permis d'acquérir suffisamment de connaissances pour accompagner mes patientes lors de mes consultations.",
     topics: [],
     featured: true,
     source: "direct",
