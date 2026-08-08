@@ -1,6 +1,6 @@
 # Passe typographique en base
 
-95 ligne(s) à réécrire.
+95 ligne(s) réécrites.
 119 champ(s) contiennent des guillemets français, laissés en l'état pour relecture.
 
 accompagnements#f0000004-0004-4000-8000-000000000004 · description
