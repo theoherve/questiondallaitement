@@ -15,8 +15,10 @@ export function PackUpsellSection({ upsell }: { upsell: PackUpsell | null }) {
     <Section className="bg-primary-green">
       <ScrollReveal className="mx-auto max-w-3xl text-center">
         <Layers className="mx-auto h-8 w-8 text-accent-sage" aria-hidden />
+        {/* « fait partie de » et non « du pack » : le titre en base commence
+            deja par « Pack », doubler le mot donnerait « du pack « Pack … » ». */}
         <h2 className="mt-4 font-serif text-2xl font-bold text-white sm:text-3xl">
-          Ce module fait partie du pack « {upsell.packTitle} »
+          Ce module fait partie de « {upsell.packTitle} »
         </h2>
         <p className="mt-4 text-lg text-white/85">
           Les {upsell.otherModulesCount} autres accompagnements, de la
