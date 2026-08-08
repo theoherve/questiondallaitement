@@ -3,7 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { Button } from "@/components/ui/button";
-import { TestimonialCarousel } from "@/app/(public)/_components/testimonial-carousel";
+import { TestimonialCarousel } from "@/components/public/testimonials/testimonial-carousel";
+import { GoogleRatingBadge } from "@/components/public/testimonials/google-rating-badge";
+import { getFeaturedTestimonials } from "@/lib/testimonials";
 import { features } from "@/config/features";
 import {
   ArrowRight,
@@ -64,6 +66,8 @@ const MILESTONES = [
 ];
 
 const AProposPage = () => {
+  const featuredTestimonials = getFeaturedTestimonials();
+
   return (
     <>
       {/* ─── Hero ─── */}
@@ -338,6 +342,7 @@ const AProposPage = () => {
       </section>
 
       {/* ─── Témoignages ─── */}
+      {featuredTestimonials.length > 0 && (
       <section className="bg-background-beige-dark section-padding">
         <div className="mx-auto max-w-7xl">
           <ScrollReveal>
@@ -348,11 +353,15 @@ const AProposPage = () => {
               <h2 className="mt-4 font-serif text-3xl font-bold text-primary-green lg:text-5xl">
                 Ce que les mamans en disent
               </h2>
+              <div className="mt-6 flex justify-center">
+                <GoogleRatingBadge />
+              </div>
             </div>
           </ScrollReveal>
-          <TestimonialCarousel />
+          <TestimonialCarousel testimonials={featuredTestimonials} />
         </div>
       </section>
+      )}
 
       {/* ─── Certifications & expertise ─── */}
       <section className="section-padding">
