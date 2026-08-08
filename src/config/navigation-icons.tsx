@@ -7,6 +7,8 @@ import {
   CalendarClock,
   CalendarCheck,
   Users,
+  UserCog,
+  ClipboardList,
   Mail,
   Zap,
   BarChart3,
@@ -15,6 +17,7 @@ import {
   Megaphone,
   FileText,
   Video,
+  Link2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -25,6 +28,8 @@ export const navIconMap: Record<string, LucideIcon> = {
   CalendarClock,
   CalendarCheck,
   Users,
+  UserCog,
+  ClipboardList,
   Mail,
   Zap,
   BarChart3,
@@ -33,6 +38,7 @@ export const navIconMap: Record<string, LucideIcon> = {
   Megaphone,
   FileText,
   Video,
+  Link: Link2,
 };
 
 export const getNavIcon = (iconKey: string): LucideIcon =>

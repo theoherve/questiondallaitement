@@ -9,7 +9,64 @@ export type NavItem = {
   href: string;
   iconKey: string;
   badge?: string;
+  /**
+   * Clé de section pour regrouper les entrées dans la sidebar. Optionnelle :
+   * une nav sans section (client, consultante) reste rendue à plat.
+   */
+  section?: string;
 };
+
+/** Libellés affichés au-dessus de chaque groupe de la sidebar. */
+export const NAV_SECTION_LABELS: Record<string, string> = {
+  pilotage: "Pilotage",
+  personnes: "Personnes",
+  offre: "Offre",
+  contenus: "Contenus",
+  acquisition: "Acquisition",
+  finance: "Finance",
+  systeme: "Système",
+};
+
+export type NavGroup = {
+  /** `undefined` pour les entrées sans section : rendu à plat, sans libellé. */
+  label?: string;
+  items: NavItem[];
+};
+
+/**
+ * Regroupe les entrées consécutives partageant la même section, en préservant
+ * l'ordre déclaré. Les entrées sans section forment un groupe sans libellé.
+ */
+export const groupNavItems = (items: NavItem[]): NavGroup[] =>
+  items.reduce<NavGroup[]>((groups, item) => {
+    const last = groups.at(-1);
+    const label = item.section ? NAV_SECTION_LABELS[item.section] : undefined;
+
+    if (last && last.label === label) {
+      last.items.push(item);
+      return groups;
+    }
+    groups.push({ label, items: [item] });
+    return groups;
+  }, []);
+
+/**
+ * Détermine l'entrée active par plus long préfixe : `/admin/marketing/newsletter`
+ * n'allume que « Newsletter », pas « Marketing ».
+ */
+export const getActiveNavHref = (
+  pathname: string,
+  items: NavItem[],
+): string | undefined =>
+  items
+    .filter(
+      (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+    )
+    .reduce<NavItem | undefined>(
+      (best, item) =>
+        !best || item.href.length > best.href.length ? item : best,
+      undefined,
+    )?.href;
 
 /** Public site navigation — displayed in header, footer, mobile menu. */
 export type PublicNavItem = {
@@ -115,21 +172,109 @@ export const consultantNav: NavItem[] = [
 ];
 
 export const adminNav: NavItem[] = [
-  { title: "Tableau de bord", href: "/admin", iconKey: "LayoutDashboard" },
-  { title: "Utilisateurs", href: "/admin/utilisateurs", iconKey: "Users" },
-  { title: "Consultantes", href: "/admin/consultantes", iconKey: "Users" },
-  { title: "Accompagnements", href: "/admin/accompagnements", iconKey: "BookOpen" },
-  { title: "Blog", href: "/admin/blog", iconKey: "FileText" },
-  { title: "Sondages", href: "/admin/sondages", iconKey: "BarChart3" },
-  { title: "Formations", href: "/admin/formations", iconKey: "CalendarClock" },
-  { title: "Replay Lives", href: "/admin/replay-lives", iconKey: "Video" },
-  { title: "Réservation", href: "/admin/reservation", iconKey: "CalendarCheck" },
-  { title: "Paiements", href: "/admin/paiements", iconKey: "CreditCard" },
-  { title: "Analytics", href: "/admin/analytics", iconKey: "BarChart3" },
-  { title: "Marketing", href: "/admin/marketing", iconKey: "Megaphone" },
-  { title: "Newsletter", href: "/admin/marketing/newsletter", iconKey: "Mail" },
-  { title: "Automations", href: "/admin/automations", iconKey: "Zap" },
-  { title: "Paramètres", href: "/admin/parametres", iconKey: "Settings" },
+  // Pilotage
+  {
+    title: "Tableau de bord",
+    href: "/admin",
+    iconKey: "LayoutDashboard",
+    section: "pilotage",
+  },
+  {
+    title: "Analytics",
+    href: "/admin/analytics",
+    iconKey: "BarChart3",
+    section: "pilotage",
+  },
+  // Personnes
+  {
+    title: "Utilisateurs",
+    href: "/admin/utilisateurs",
+    iconKey: "Users",
+    section: "personnes",
+  },
+  {
+    title: "Consultantes",
+    href: "/admin/consultantes",
+    iconKey: "UserCog",
+    section: "personnes",
+  },
+  // Offre
+  {
+    title: "Accompagnements",
+    href: "/admin/accompagnements",
+    iconKey: "BookOpen",
+    section: "offre",
+  },
+  {
+    title: "Formations",
+    href: "/admin/formations",
+    iconKey: "CalendarClock",
+    section: "offre",
+  },
+  {
+    title: "Réservation",
+    href: "/admin/reservation",
+    iconKey: "CalendarCheck",
+    section: "offre",
+  },
+  // Contenus
+  {
+    title: "Blog",
+    href: "/admin/blog",
+    iconKey: "FileText",
+    section: "contenus",
+  },
+  {
+    title: "Replay Lives",
+    href: "/admin/replay-lives",
+    iconKey: "Video",
+    section: "contenus",
+  },
+  {
+    title: "Sondages",
+    href: "/admin/sondages",
+    iconKey: "ClipboardList",
+    section: "contenus",
+  },
+  {
+    title: "Page de liens",
+    href: "/admin/liens",
+    iconKey: "Link",
+    section: "contenus",
+  },
+  // Acquisition
+  {
+    title: "Marketing",
+    href: "/admin/marketing",
+    iconKey: "Megaphone",
+    section: "acquisition",
+  },
+  {
+    title: "Newsletter",
+    href: "/admin/marketing/newsletter",
+    iconKey: "Mail",
+    section: "acquisition",
+  },
+  {
+    title: "Automations",
+    href: "/admin/automations",
+    iconKey: "Zap",
+    section: "acquisition",
+  },
+  // Finance
+  {
+    title: "Paiements",
+    href: "/admin/paiements",
+    iconKey: "CreditCard",
+    section: "finance",
+  },
+  // Système
+  {
+    title: "Paramètres",
+    href: "/admin/parametres",
+    iconKey: "Settings",
+    section: "systeme",
+  },
 ];
 
 /** Hrefs accessibles au marketing_manager dans l’admin (dashboard + marketing uniquement). */
