@@ -93,29 +93,6 @@ export const PACK_CONTENT = {
       "Formatrice & conférencière internationale",
     ],
   },
-  testimonials: {
-    title: "Elles ont retrouvé un allaitement serein",
-    items: [
-      {
-        quote:
-          "J'étais à deux doigts d'arrêter à cause des douleurs. Les modules m'ont tout expliqué, aujourd'hui j'allaite sans douleur.",
-        author: "Marie",
-        detail: "Maman de Léa, 3 mois",
-      },
-      {
-        quote:
-          "Enfin des réponses claires et non culpabilisantes. J'ai repris confiance en moi.",
-        author: "Sarah",
-        detail: "Maman de Adam, 5 mois",
-      },
-      {
-        quote:
-          "La reprise du travail m'angoissait. Le module dédié a tout changé.",
-        author: "Camille",
-        detail: "Maman de Jules, 7 mois",
-      },
-    ],
-  },
   pricing: {
     title:
       "Offrez-vous, et offrez à votre bébé, le démarrage serein que vous méritez",

@@ -78,29 +78,6 @@ export const MON_ALLAITEMENT_AU_FIL_DES_MOIS: ModuleContent = {
     intro: "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
   // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
-  testimonials: {
-    title: "Elles ont retrouvé un allaitement apaisé",
-    items: [
-      {
-        quote:
-          "J'étais persuadée de ne plus avoir assez de lait. J'ai compris que mes seins s'étaient simplement régulés.",
-        author: "Élodie",
-        detail: "Maman de Lou, 5 mois",
-      },
-      {
-        quote:
-          "Mon fils se cambrait à chaque tétée. Comprendre pourquoi a suffi à tout apaiser.",
-        author: "Nadia",
-        detail: "Maman d'Éliott, 9 mois",
-      },
-      {
-        quote:
-          "On me demandait sans arrêt quand j'arrêterais. Maintenant je sais quoi répondre, et surtout pourquoi je continue.",
-        author: "Julie",
-        detail: "Maman de Rose, 14 mois",
-      },
-    ],
-  },
   pricing: {
     title: "Continuez votre allaitement avec les bonnes réponses",
     subtitle: "Un accès unique au module complet, à vie.",

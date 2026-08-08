@@ -75,29 +75,6 @@ export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
     intro: "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
   // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
-  testimonials: {
-    title: "Elles ont retrouvé des premières semaines sereines",
-    items: [
-      {
-        quote:
-          "J'avais mal à en pleurer. En comprenant la prise du sein, la douleur a disparu en trois jours.",
-        author: "Marie",
-        detail: "Maman de Léa, 3 semaines",
-      },
-      {
-        quote:
-          "Je pensais ne pas avoir assez de lait. J'avais juste un bébé au rythme normal, et personne ne me l'avait dit.",
-        author: "Sarah",
-        detail: "Maman d'Adam, 6 semaines",
-      },
-      {
-        quote:
-          "Enfin des réponses claires et non culpabilisantes. J'ai repris confiance en moi.",
-        author: "Camille",
-        detail: "Maman de Jules, 5 semaines",
-      },
-    ],
-  },
   pricing: {
     title: "Donnez à votre allaitement le démarrage qu'il mérite",
     subtitle: "Un accès unique au module complet, à vie.",

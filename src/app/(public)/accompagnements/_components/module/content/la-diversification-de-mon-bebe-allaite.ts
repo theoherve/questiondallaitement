@@ -77,29 +77,6 @@ export const LA_DIVERSIFICATION_DE_MON_BEBE_ALLAITE: ModuleContent = {
     intro: "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
   // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
-  testimonials: {
-    title: "Elles ont diversifié sans arrêter d'allaiter",
-    items: [
-      {
-        quote:
-          "On me donnait des grammages au gramme près. J'ai appris à regarder ma fille plutôt que la balance.",
-        author: "Manon",
-        detail: "Maman de Mila, 7 mois",
-      },
-      {
-        quote:
-          "Les allergènes me terrifiaient. Comprendre ce que dit la recherche actuelle m'a enlevé un poids énorme.",
-        author: "Sonia",
-        detail: "Maman de Sacha, 8 mois",
-      },
-      {
-        quote:
-          "Tout le monde m'annonçait la fin de l'allaitement. Il mange de tout et tète toujours.",
-        author: "Clara",
-        detail: "Maman d'Ava, 6 mois",
-      },
-    ],
-  },
   pricing: {
     title: "Diversifiez sans mettre fin à votre allaitement",
     subtitle: "Un accès unique au module complet, à vie.",

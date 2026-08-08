@@ -76,29 +76,6 @@ export const MON_BEBE_NE_FAIT_PAS_SES_NUITS: ModuleContent = {
     intro: "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
   // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
-  testimonials: {
-    title: "Leurs nuits sont redevenues lisibles",
-    items: [
-      {
-        quote:
-          "On me répétait qu'à huit mois elle devait faire ses nuits. Comprendre que c'était faux m'a enlevé la moitié de la fatigue.",
-        author: "Émilie",
-        detail: "Maman de Jade, 8 mois",
-      },
-      {
-        quote:
-          "L'endormissement durait une heure. En changeant trois choses dans l'environnement, on est passé à dix minutes.",
-        author: "Pauline",
-        detail: "Maman de Raphaël, 2 ans",
-      },
-      {
-        quote:
-          "C'est le seul contenu qui m'a parlé de mon sommeil à moi, pas seulement de celui de mon fils.",
-        author: "Delphine",
-        detail: "Maman de Léon, 14 mois",
-      },
-    ],
-  },
   pricing: {
     title: "Comprenez le sommeil de votre enfant, et retrouvez le vôtre",
     subtitle: "Le module le plus complet du catalogue. Un accès unique, à vie.",
