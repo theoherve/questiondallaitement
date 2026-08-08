@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSessionUser } from "@/lib/auth";
 import { stripHtml, truncate } from "@/lib/html/strip";
-import { inheritFromTemplate } from "@/lib/formations/inherit";
 import {
   FormationDetail,
   type FormationDetailConsultant,
@@ -24,7 +23,7 @@ export const generateMetadata = async ({
   const { data } = await supabase
     .from("formations")
     .select(
-      "title, description, summary_html, thumbnail_url, formation_templates (summary_html)",
+      "title, description, summary_html, thumbnail_url",
     )
     .eq("slug", slug)
     .eq("is_published", true)
@@ -34,9 +33,8 @@ export const generateMetadata = async ({
 
   // Le resume prend le relais quand la description courte n'est pas saisie :
   // mieux vaut une phrase extraite du contenu editorial qu'aucune metadonnee.
-  // Il peut lui-meme venir de la fiche partagee.
-  const summaryHtml = inheritFromTemplate(data).summary_html;
-  const description = data.description ?? truncate(stripHtml(summaryHtml), 155);
+  const description =
+    data.description ?? truncate(stripHtml(data.summary_html), 155);
 
   return {
     title: data.title,
@@ -67,14 +65,6 @@ const FormationDetailPage = async ({ params, searchParams }: Props) => {
           last_name,
           avatar_url
         )
-      ),
-      formation_templates (
-        summary_html,
-        objectives_html,
-        program_html,
-        audience_html,
-        external_url,
-        badge
       )
     `
     )
@@ -119,7 +109,7 @@ const FormationDetailPage = async ({ params, searchParams }: Props) => {
 
   return (
     <FormationDetail
-      formation={inheritFromTemplate(formation) as FormationDetailProps["formation"]}
+      formation={formation as FormationDetailProps["formation"]}
       consultant={consultant}
       isAlreadyRegistered={isAlreadyRegistered}
       isFullyBooked={isFullyBooked}

@@ -45,23 +45,6 @@ type ProviderOption = {
   name: string;
 };
 
-/**
- * Fiche partagée proposée au rattachement d'une session.
- *
- * Le contenu voyage avec l'option : le formulaire montre sous chaque section
- * vide le texte que la fiche fournira, et doit pouvoir le refléter dès qu'on
- * change de fiche dans le menu.
- */
-type TemplateOption = {
-  id: string;
-  title: string;
-  category: FormationCategory;
-  summary_html?: string | null;
-  objectives_html?: string | null;
-  program_html?: string | null;
-  audience_html?: string | null;
-};
-
 /** Onglets de la colonne principale. La colonne de droite reste visible. */
 type FormationTab = "contenu" | "dates" | "classement";
 
@@ -86,7 +69,6 @@ type Props = {
   formation?: Formation;
   consultants: ConsultantOption[];
   providers?: ProviderOption[];
-  templates?: TemplateOption[];
   mode: "create" | "edit";
   registrationsCount?: number;
 };
@@ -95,7 +77,6 @@ export const FormationForm = ({
   formation,
   consultants,
   providers = [],
-  templates = [],
   mode,
   registrationsCount = 0,
 }: Props) => {
@@ -157,11 +138,8 @@ export const FormationForm = ({
     is_published: formation?.is_published ?? false,
     category: formation?.category ?? "formation",
     badge: formation?.badge ?? "",
-    template_id: formation?.template_id ?? "",
     is_evergreen: formation?.is_evergreen ?? false,
   });
-
-  const selectedTemplate = templates.find((t) => t.id === formData.template_id);
 
   const slugify = (text: string): string =>
     text
@@ -260,7 +238,6 @@ export const FormationForm = ({
       ends_at: endsAt ? endsAt.toISOString() : "",
       show_time: showTime,
       badge: formData.badge.trim() || null,
-      template_id: formData.template_id || null,
     };
 
     startTransition(async () => {
@@ -469,22 +446,6 @@ export const FormationForm = ({
                 onChange={(field, html) =>
                   setFormData((p) => ({ ...p, [field]: html }))
                 }
-                inherited={
-                  selectedTemplate
-                    ? {
-                        summary_html: selectedTemplate.summary_html,
-                        objectives_html: selectedTemplate.objectives_html,
-                        program_html: selectedTemplate.program_html,
-                        audience_html: selectedTemplate.audience_html,
-                      }
-                    : undefined
-                }
-                templateHref={
-                  selectedTemplate
-                    ? `/admin/formations/fiches/${selectedTemplate.id}/edit`
-                    : undefined
-                }
-                templateTitle={selectedTemplate?.title}
               />
             </CardContent>
           </Card>
@@ -605,7 +566,7 @@ export const FormationForm = ({
           <TabsContent value="classement" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Classement et fiche partagée</CardTitle>
+              <CardTitle>Classement</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -631,54 +592,6 @@ export const FormationForm = ({
                   Pilote la pastille de la fiche et les filtres de la page
                   publique.
                 </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="template_id">Fiche partagée</Label>
-                <select
-                  id="template_id"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={formData.template_id}
-                  onChange={(e) => {
-                    const templateId = e.target.value;
-                    const template = templates.find((t) => t.id === templateId);
-                    setFormData((p) => ({
-                      ...p,
-                      template_id: templateId,
-                      // À la création, le titre et la catégorie de la fiche
-                      // sont repris : c'est ce que l'on veut neuf fois sur
-                      // dix, et ils restent modifiables juste après.
-                      ...(template && mode === "create"
-                        ? { title: template.title, slug: slugify(template.title), category: template.category }
-                        : {}),
-                    }));
-                  }}
-                >
-                  <option value="">Aucune (contenu propre à cette session)</option>
-                  {templates.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.title}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-muted-foreground">
-                  Résumé, objectifs, programme et public sont hérités de la
-                  fiche. Ce qui est saisi ci-dessous prend le dessus, section
-                  par section.
-                </p>
-                {selectedTemplate && (
-                  <p className="text-xs">
-                    <Link
-                      href={`/admin/formations/fiches/${selectedTemplate.id}/edit`}
-                      className="font-medium text-primary-green underline"
-                    >
-                      Modifier la fiche
-                    </Link>{" "}
-                    <span className="text-muted-foreground">
-                      pour corriger le texte de toutes les sessions à la fois.
-                    </span>
-                  </p>
-                )}
               </div>
 
               <div className="space-y-2">

@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Pencil, Eye, MapPin, Video, Users, BookOpen } from "lucide-react";
+import { Plus, Pencil, Eye, MapPin, Video, Users } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -168,22 +168,12 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
         <h1 className="font-serif text-2xl font-bold text-primary-green">
           Formations
         </h1>
-        <div className="flex items-center gap-2">
-          {/* Le contenu editorial vit sur les fiches partagees : sans ce lien,
-              on le cherche dans le formulaire d'une session, ou il n'est pas. */}
-          <Button variant="outline" asChild>
-            <Link href="/admin/formations/fiches">
-              <BookOpen className="mr-2 h-4 w-4" />
-              Fiches de formation
-            </Link>
-          </Button>
-          <Button asChild className="bg-primary-red hover:bg-primary-red-dark">
-            <Link href="/admin/formations/nouveau">
-              <Plus className="mr-2 h-4 w-4" />
-              Nouvelle formation
-            </Link>
-          </Button>
-        </div>
+        <Button asChild className="bg-primary-red hover:bg-primary-red-dark">
+          <Link href="/admin/formations/nouveau">
+            <Plus className="mr-2 h-4 w-4" />
+            Nouvelle formation
+          </Link>
+        </Button>
       </div>
 
       {/* Filters */}

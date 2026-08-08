@@ -101,7 +101,6 @@ export const createFormation = async (
       is_published: parsed.data.is_published,
       category: parsed.data.category,
       badge: parsed.data.badge || null,
-      template_id: parsed.data.template_id ?? null,
       is_evergreen: parsed.data.is_evergreen,
     })
     .select("id, slug")
@@ -168,7 +167,6 @@ export const updateFormation = async (
       is_published: parsed.data.is_published,
       category: parsed.data.category,
       badge: parsed.data.badge || null,
-      template_id: parsed.data.template_id ?? null,
       is_evergreen: parsed.data.is_evergreen,
       updated_at: new Date().toISOString(),
     })

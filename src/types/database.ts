@@ -303,26 +303,8 @@ export type Formation = {
   category: FormationCategory;
   // Mention libre affichee sur la fiche (certification, eligibilite).
   badge: string | null;
-  // Fiche partagee dont la session herite son contenu editorial.
-  template_id: string | null;
   // true = accessible en permanence : ni a venir, ni passee.
   is_evergreen: boolean;
-  created_at: string;
-  updated_at: string;
-};
-
-/** Fiche partagee entre les sessions d'une meme formation. */
-export type FormationTemplate = {
-  id: string;
-  slug: string;
-  title: string;
-  summary_html: string | null;
-  objectives_html: string | null;
-  program_html: string | null;
-  audience_html: string | null;
-  external_url: string | null;
-  badge: string | null;
-  category: FormationCategory;
   created_at: string;
   updated_at: string;
 };

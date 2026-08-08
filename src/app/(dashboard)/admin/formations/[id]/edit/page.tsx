@@ -25,7 +25,6 @@ const EditFormationPage = async ({ params }: Props) => {
     formationResult,
     consultantsResult,
     providersResult,
-    templatesResult,
     registrationsCount,
   ] = await Promise.all([
     supabase.from("formations").select("*").eq("id", id).single(),
@@ -34,15 +33,6 @@ const EditFormationPage = async ({ params }: Props) => {
       .select("id, profiles!consultants_id_fkey(first_name, last_name)")
       .eq("is_active", true),
     supabase.from("training_providers").select("id, name").order("name"),
-    // Le contenu des fiches accompagne la liste : le formulaire affiche
-    // l'heritage de la fiche choisie, y compris quand on en change sans
-    // recharger la page.
-    supabase
-      .from("formation_templates")
-      .select(
-        "id, title, category, summary_html, objectives_html, program_html, audience_html",
-      )
-      .order("title"),
     getFormationRegistrationsCount(id),
   ]);
 
@@ -66,7 +56,6 @@ const EditFormationPage = async ({ params }: Props) => {
       formation={formation}
       consultants={consultants}
       providers={providersResult.data ?? []}
-      templates={templatesResult.data ?? []}
       mode="edit"
       registrationsCount={registrationsCount}
     />

@@ -5,7 +5,6 @@ import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Pencil } from "lucide-react";
-import { inheritFromTemplate } from "@/lib/formations/inherit";
 import {
   FormationDetail,
   type FormationDetailConsultant,
@@ -54,14 +53,6 @@ const FormationPreviewPage = async ({ params }: Props) => {
           last_name,
           avatar_url
         )
-      ),
-      formation_templates (
-        summary_html,
-        objectives_html,
-        program_html,
-        audience_html,
-        external_url,
-        badge
       )
     `
     )
@@ -105,7 +96,7 @@ const FormationPreviewPage = async ({ params }: Props) => {
       </div>
 
       <FormationDetail
-        formation={inheritFromTemplate(formation) as FormationDetailProps["formation"]}
+        formation={formation as FormationDetailProps["formation"]}
         consultant={consultant}
         isAlreadyRegistered={false}
         isFullyBooked={false}
