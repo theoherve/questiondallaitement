@@ -15,6 +15,9 @@ const PUBLIC_ROUTES = [
   "/blog",
   "/a-propos",
   "/newsletter",
+  // Page de liens partagée en bio Instagram : non listée dans le menu et non
+  // indexée, mais publique — c'est son adresse qui circule.
+  "/liens",
 ];
 
 const AUTH_ROUTES = [

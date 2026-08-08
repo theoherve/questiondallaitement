@@ -622,3 +622,24 @@ export type Notification = {
   read_at: string | null;
   created_at: string;
 };
+
+export type BioLinkKind = "link" | "header";
+
+/**
+ * Une entrée de la page de liens (/liens), qui remplace Linktree. Les rubriques
+ * (`kind: "header"`) partagent la table : la page est une liste ordonnée unique.
+ */
+export type BioLink = {
+  id: string;
+  kind: BioLinkKind;
+  title: string;
+  subtitle: string | null;
+  url: string | null;
+  thumbnail_url: string | null;
+  is_featured: boolean;
+  is_active: boolean;
+  position: number;
+  click_count: number;
+  created_at: string;
+  updated_at: string;
+};
