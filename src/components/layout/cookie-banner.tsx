@@ -83,7 +83,7 @@ export const CookieBanner = () => {
                     Cookies analytiques
                   </p>
                   <p className="text-xs text-primary-green/60">
-                    Vercel Speed Insights — mesure anonymisée des performances
+                    Vercel Speed Insights, mesure anonymisée des performances
                     du site.
                   </p>
                 </div>

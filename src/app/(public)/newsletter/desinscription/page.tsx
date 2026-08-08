@@ -37,7 +37,7 @@ const UnsubscribePage = async ({ searchParams }: PageProps) => {
             </h1>
             <p className="mt-6 text-primary-green/70">
               Si vous receviez encore la newsletter, utilisez le lien du dernier
-              email reçu, ou écrivez-nous à contact@questiondallaitement.fr —
+              email reçu, ou écrivez-nous à contact@questiondallaitement.fr
               nous nous en occupons.
             </p>
           </>

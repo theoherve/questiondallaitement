@@ -41,12 +41,12 @@ const CampaignStatsPage = async ({
   const openRate =
     stats && stats.delivered > 0
       ? ((stats.unique_opens / stats.delivered) * 100).toFixed(1)
-      : "—";
+      : "-";
 
   const clickRate =
     stats && stats.delivered > 0
       ? ((stats.unique_clicks / stats.delivered) * 100).toFixed(1)
-      : "—";
+      : "-";
 
   return (
     <div className="space-y-6">
@@ -92,7 +92,7 @@ const CampaignStatsPage = async ({
               ? format(new Date(campaign.sent_at), "d MMM yyyy à HH:mm", {
                   locale: fr,
                 })
-              : "—"}
+              : "-"}
           </div>
           <div>
             <span className="text-muted-foreground">Créée le : </span>
@@ -192,7 +192,7 @@ const CampaignStatsPage = async ({
             <p className="text-muted-foreground">
               {campaign.brevo_campaign_id
                 ? "Cliquez sur « Rafraîchir les stats » pour récupérer les données depuis Brevo."
-                : "Aucune statistique disponible — la campagne n'a pas été envoyée via Brevo."}
+                : "Aucune statistique disponible, la campagne n'a pas été envoyée via Brevo."}
             </p>
           </CardContent>
         </Card>

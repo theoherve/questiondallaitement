@@ -41,7 +41,7 @@ export const DEFAULT_EMAIL_BRANDING: EmailBranding = {
   header_link_url: null,
   footer_enabled: true,
   footer_text:
-    "Question d'Allaitement — accompagnement en lactation par des consultantes IBCLC.",
+    "Question d'Allaitement, accompagnement en lactation par des consultantes IBCLC.",
   banner_image_url: null,
   banner_alt: "",
   banner_title: "",

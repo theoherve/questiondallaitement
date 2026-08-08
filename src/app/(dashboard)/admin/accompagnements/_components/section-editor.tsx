@@ -342,7 +342,7 @@ export const SectionEditor = ({
           </DndContext>
         ) : (
           <p className="py-4 text-center text-sm text-muted-foreground">
-            Aucun contenu — ajoutez un bloc ci-dessous
+            Aucun contenu, ajoutez un bloc ci-dessous
           </p>
         )}
 

@@ -68,7 +68,7 @@ const MentionsLegalesPage = () => (
             </a>
           </p>
           <p className="mt-2">
-            <strong>Base de données :</strong> Supabase Inc. — 970 Toa Payoh
+            <strong>Base de données :</strong> Supabase Inc., 970 Toa Payoh
             North #07-04, Singapore 318992
           </p>
         </div>

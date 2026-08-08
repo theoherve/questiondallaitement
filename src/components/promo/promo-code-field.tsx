@@ -125,7 +125,7 @@ export const PromoCodeField = ({
       <div className="flex gap-2">
         <Input
           value={value}
-          onChange={(formation) => setValue(formation.target.value.toUpperCase())}
+          onChange={(event) => setValue(event.target.value.toUpperCase())}
           placeholder="VOTRECODE"
           data-testid="promo-input"
           aria-label="Code promo"

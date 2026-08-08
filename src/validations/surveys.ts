@@ -63,7 +63,15 @@ export const validateAnswersAgainstDefinition = (
   for (const question of survey.questions) {
     if (!question.is_required) continue;
     const given = answers[question.id] ?? {};
-    const missing = question.rows.some((row) => !given[row.key]);
+
+    // Sur une question à cases à cocher, les lignes non cochées sont
+    // simplement absentes : exiger une valeur pour chacune reviendrait à
+    // obliger à tout cocher. Une seule case suffit.
+    const missing =
+      question.kind === "multi"
+        ? Object.keys(given).length === 0
+        : question.rows.some((row) => !given[row.key]);
+
     if (missing) return `Merci de compléter « ${question.label} »`;
   }
 
@@ -82,6 +90,8 @@ const choiceSchema = z.object({
       "Les clés ne contiennent que des minuscules, chiffres et tirets",
     ),
   label: z.string().trim().min(1, "Chaque option a besoin d'un libellé"),
+  /** Renvoi vers un contenu du site, proposé sur l'écran de résultat. */
+  href: z.string().trim().optional(),
 });
 
 /**
@@ -98,21 +108,43 @@ export const surveyDefinitionSchema = z.object({
     .trim()
     .regex(/^[a-z0-9-]+$/, "Le slug ne contient que minuscules, chiffres, tirets"),
   title: z.string().trim().min(1, "Le titre est obligatoire"),
+  kind: z.enum(["poll", "quiz"]).default("poll"),
   intro: z.string().trim().optional(),
   status: z.enum(["draft", "published", "closed"]),
   thank_you_message: z.string().trim().default(""),
   questions: z
     .array(
-      z.object({
-        id: z.uuid().optional(),
-        kind: z.enum(["matrix", "single"]),
-        label: z.string().trim().min(1, "Chaque question a besoin d'un intitulé"),
-        rows: z.array(choiceSchema),
-        choices: z.array(choiceSchema).min(2, "Au moins deux options par question"),
-        is_required: z.boolean(),
-        is_segment: z.boolean(),
-        is_charted: z.boolean(),
-      }),
+      z
+        .object({
+          id: z.uuid().optional(),
+          kind: z.enum(["matrix", "single", "multi"]),
+          label: z.string().trim().min(1, "Chaque question a besoin d'un intitulé"),
+          rows: z.array(choiceSchema),
+          choices: z.array(choiceSchema).min(1, "Au moins une option par question"),
+          is_required: z.boolean(),
+          is_segment: z.boolean(),
+          is_charted: z.boolean(),
+          correct_choice_key: z.string().trim().optional().nullable(),
+          explanation_html: z.string().trim().optional().nullable(),
+        })
+        // Une question à cases à cocher n'a qu'un choix, « oui » : ce sont ses
+        // lignes qui portent les options. Partout ailleurs, une seule option
+        // ne laisse rien à choisir.
+        .refine((q) => q.kind === "multi" || q.choices.length >= 2, {
+          error: "Au moins deux options par question",
+          path: ["choices"],
+        })
+        // Une bonne réponse doit désigner un choix qui existe, sinon la
+        // correction ne tomberait jamais juste.
+        .refine(
+          (q) =>
+            !q.correct_choice_key ||
+            q.choices.some((choice) => choice.key === q.correct_choice_key),
+          {
+            error: "La bonne réponse doit être l'une des options proposées",
+            path: ["correct_choice_key"],
+          },
+        ),
     )
     .min(1, "Un sondage a besoin d'au moins une question")
     .refine((questions) => questions.filter((q) => q.is_charted).length <= 1, {

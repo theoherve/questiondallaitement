@@ -117,7 +117,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       description:
         teleTypes.length === 1 && teleTypes[0].description
           ? teleTypes[0].description
-          : "La même expertise clinique, où que vous soyez — sans déplacement, sans attente.",
+          : "La même expertise clinique, où que vous soyez, sans déplacement, sans attente.",
       price: getPriceLabel(teleTypes),
       href: "/reserver",
       cta: "Réserver un créneau",
@@ -167,7 +167,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       {/* ─── HERO ─── */}
       <section
         className="relative min-h-[calc(100vh-4rem)] w-full overflow-hidden"
-        aria-label="Hero — Accueil"
+        aria-label="Hero, Accueil"
       >
         {/* Background image */}
         <div className="absolute inset-0">
@@ -289,9 +289,9 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
 
           <ul className="mt-10 divide-y divide-primary-green/10 border-y border-primary-green/10">
             {[
-              "Vous êtes enceinte, ou votre bébé vient de naître, et vous voulez que ça se passe bien — sans savoir par où commencer.",
+              "Vous êtes enceinte, ou votre bébé vient de naître, et vous voulez que ça se passe bien, sans savoir par où commencer.",
               "Vous avez déjà reçu des conseils contradictoires : à la maternité, dans votre entourage, sur internet.",
-              "Une difficulté est apparue — douleur, doute sur la lactation, sommeil, reprise du travail — et vous cherchez une réponse fiable, pas un forum de plus.",
+              "Une difficulté est apparue, douleur, doute sur la lactation, sommeil, reprise du travail, et vous cherchez une réponse fiable, pas un forum de plus.",
               "Vous voulez concilier votre allaitement avec votre vie de femme, pas y renoncer.",
             ].map((line, i) => (
               <ScrollReveal key={line} delay={i * 70}>
@@ -487,7 +487,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                   <br />à vos côtés
                 </h2>
                 <blockquote className="mt-6 border-l-2 border-primary-red/30 pl-5 font-serif text-lg italic leading-relaxed text-primary-green/80">
-                  &ldquo;Chaque parcours d&apos;allaitement est unique — je suis là pour vous accompagner avec bienveillance et rigueur scientifique.&rdquo;
+                  &ldquo;Chaque parcours d&apos;allaitement est unique, je suis là pour vous accompagner avec bienveillance et rigueur scientifique.&rdquo;
                 </blockquote>
                 <p className="mt-5 leading-relaxed text-primary-green/70 lg:text-lg">
                   Investie auprès des familles depuis plus de 20 ans, je vous
@@ -824,7 +824,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
             </h2>
             <p className="mt-4 text-primary-green/70 lg:text-lg">
               Chaque semaine, un email court sur ce qui se passe vraiment avec
-              votre allaitement — sans discours culpabilisant, sans recette
+              votre allaitement, sans discours culpabilisant, sans recette
               toute faite. Le mémo « Conservation du lait maternel » offert à
               l&apos;inscription.
             </p>

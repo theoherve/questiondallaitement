@@ -114,7 +114,7 @@ export const TabInfos = ({ user }: Props) => {
                     {ROLES[r].label}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    — {ROLES[r].description}
+                   , {ROLES[r].description}
                   </span>
                 </label>
               ))}

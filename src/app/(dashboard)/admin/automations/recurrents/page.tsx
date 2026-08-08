@@ -92,7 +92,7 @@ const AdminRecurrentsPage = async () => {
                       {def.time_of_day.slice(0, 5)}
                     </TableCell>
                     <TableCell className="text-sm">
-                      {consultantMap.get(def.consultant_id) ?? "—"}
+                      {consultantMap.get(def.consultant_id) ?? "-"}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{def.type}</Badge>

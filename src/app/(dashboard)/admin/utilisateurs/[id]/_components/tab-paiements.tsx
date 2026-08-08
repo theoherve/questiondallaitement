@@ -87,8 +87,8 @@ export const TabPaiements = ({ payments }: { payments: Payment[] }) => {
                 };
                 const consultantName = p.consultant
                   ? `${p.consultant.first_name ?? ""} ${p.consultant.last_name ?? ""}`.trim() ||
-                    "—"
-                  : "—";
+                    ","
+                  : "-";
 
                 return (
                   <TableRow key={p.id}>

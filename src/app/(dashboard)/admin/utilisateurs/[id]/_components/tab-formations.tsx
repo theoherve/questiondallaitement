@@ -72,7 +72,7 @@ export const TabFormations = ({
                 return (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">
-                      {r.formations?.title ?? "—"}
+                      {r.formations?.title ?? "-"}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       {r.formations?.starts_at
@@ -84,12 +84,12 @@ export const TabFormations = ({
                               year: "numeric",
                             },
                           )
-                        : "—"}
+                        : "-"}
                     </TableCell>
                     <TableCell>
                       {r.formations?.type
                         ? (TYPE_MAP[r.formations.type] ?? r.formations.type)
-                        : "—"}
+                        : "-"}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       {new Date(r.registered_at).toLocaleDateString("fr-FR", {

@@ -145,7 +145,7 @@ export const WorkflowLogs = ({ logs, scheduledActions }: Props) => {
                               "d MMM yyyy HH:mm",
                               { locale: fr },
                             )
-                          : "—"}
+                          : "-"}
                       </TableCell>
                       <TableCell>
                         <Badge variant={cfg.variant}>{cfg.label}</Badge>

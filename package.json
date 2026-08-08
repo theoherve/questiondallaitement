@@ -23,6 +23,7 @@
     "db:seed": "sh -c 'set -a; [ -f ./.env.development.local ] && . ./.env.development.local; [ -f ./.env.local ] && . ./.env.local; set +a; DB_URL=${POSTGRES_URL_NON_POOLING:-${DIRECT_URL:-$POSTGRES_URL}}; PSQL_BIN=${PSQL_BIN:-$(command -v psql || true)}; if [ -z \"$PSQL_BIN\" ] && command -v brew >/dev/null 2>&1; then CANDIDATE=\"$(brew --prefix libpq 2>/dev/null)/bin/psql\"; [ -x \"$CANDIDATE\" ] && PSQL_BIN=\"$CANDIDATE\"; fi; if [ -z \"$DB_URL\" ]; then echo \"No database URL found. Add POSTGRES_URL_NON_POOLING or DIRECT_URL in env.\"; exit 1; fi; if [ -z \"$PSQL_BIN\" ]; then echo \"psql not found. Install with: brew install libpq\"; exit 1; fi; \"$PSQL_BIN\" \"$DB_URL\" -f supabase/seed.sql'"
   },
   "dependencies": {
+    "@date-fns/tz": "^1.5.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",

@@ -131,7 +131,7 @@ const AccompagnementsPage = async () => {
           Le bon accompagnement, pour l&apos;étape que vous traversez maintenant
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-primary-green/70">
-          Huit parcours, un pack complet — chacun conçu pour répondre à une
+          Huit parcours, un pack complet, chacun conçu pour répondre à une
           situation précise, avec la même exigence clinique. Pas de contenu
           générique : uniquement ce dont vous avez besoin, quand vous en avez
           besoin.
@@ -161,7 +161,7 @@ const AccompagnementsPage = async () => {
           </p>
           <ul className="mt-3 space-y-1.5 text-primary-green/75">
             <li>
-              Enceinte ou en préparation —{" "}
+              Enceinte ou en préparation ,{" "}
               <Link
                 href="/accompagnements/je-me-prepare-a-allaiter"
                 className="text-primary-red hover:underline"
@@ -170,7 +170,7 @@ const AccompagnementsPage = async () => {
               </Link>
             </li>
             <li>
-              Bébé a moins d&apos;un mois —{" "}
+              Bébé a moins d&apos;un mois ,{" "}
               <Link
                 href="/accompagnements/mon-allaitement-des-premiers-jours"
                 className="text-primary-red hover:underline"
@@ -179,7 +179,7 @@ const AccompagnementsPage = async () => {
               </Link>
             </li>
             <li>
-              Une douleur ou une urgence là, maintenant —{" "}
+              Une douleur ou une urgence là, maintenant ,{" "}
               <Link
                 href="/accompagnements/les-urgences-allaitement"
                 className="text-primary-red hover:underline"
@@ -188,7 +188,7 @@ const AccompagnementsPage = async () => {
               </Link>
             </li>
             <li>
-              Toutes les étapes en une fois —{" "}
+              Toutes les étapes en une fois ,{" "}
               <Link
                 href={`/accompagnements/${PACK_SLUG}`}
                 className="text-primary-red hover:underline"

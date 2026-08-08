@@ -290,7 +290,7 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
                     TYPE_CONFIG[formation.type] ?? TYPE_CONFIG.online;
                   const consultantName = formation.consultants?.profiles
                     ? `${formation.consultants.profiles.first_name ?? ""} ${formation.consultants.profiles.last_name ?? ""}`.trim()
-                    : "—";
+                    : "-";
 
                   const regCount = regCounts.get(formation.id) ?? 0;
                   const spotsLabel = formation.max_participants

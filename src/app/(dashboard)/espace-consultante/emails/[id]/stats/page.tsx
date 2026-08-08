@@ -44,12 +44,12 @@ const ConsultantCampaignStatsPage = async ({
   const openRate =
     stats && stats.delivered > 0
       ? ((stats.unique_opens / stats.delivered) * 100).toFixed(1)
-      : "—";
+      : "-";
 
   const clickRate =
     stats && stats.delivered > 0
       ? ((stats.unique_clicks / stats.delivered) * 100).toFixed(1)
-      : "—";
+      : "-";
 
   return (
     <div className="space-y-6">
@@ -91,7 +91,7 @@ const ConsultantCampaignStatsPage = async ({
               ? format(new Date(campaign.sent_at), "d MMM yyyy à HH:mm", {
                   locale: fr,
                 })
-              : "—"}
+              : "-"}
           </div>
         </CardContent>
       </Card>

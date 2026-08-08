@@ -12,10 +12,15 @@ import { FormationContentFields } from "./formation-content-fields";
 import { FormationHighlightsField } from "./formation-highlights-field";
 import { FORMATION_HIGHLIGHT_KEYS } from "@/config/formation-highlights";
 import {
+  FORMATION_CATEGORIES,
+  FORMATION_CATEGORY_CONFIG,
+} from "@/config/formation-categories";
+import {
   createFormation,
   updateFormation,
   deleteFormation,
   toggleFormationPublish,
+  createTrainingProvider,
 } from "../actions";
 import { toast } from "sonner";
 import {
@@ -27,7 +32,7 @@ import {
   GlobeLock,
 } from "lucide-react";
 import Link from "next/link";
-import type { Formation } from "@/types";
+import type { Formation, FormationCategory } from "@/types";
 
 type ConsultantOption = {
   id: string;
@@ -39,10 +44,18 @@ type ProviderOption = {
   name: string;
 };
 
+/** Fiche partagée proposée au rattachement d'une session. */
+type TemplateOption = {
+  id: string;
+  title: string;
+  category: FormationCategory;
+};
+
 type Props = {
   formation?: Formation;
   consultants: ConsultantOption[];
   providers?: ProviderOption[];
+  templates?: TemplateOption[];
   mode: "create" | "edit";
   registrationsCount?: number;
 };
@@ -51,11 +64,19 @@ export const FormationForm = ({
   formation,
   consultants,
   providers = [],
+  templates = [],
   mode,
   registrationsCount = 0,
 }: Props) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  // Liste locale : un organisme cree depuis ce formulaire doit apparaitre dans
+  // le menu sans attendre un rechargement de la page.
+  const [providerOptions, setProviderOptions] =
+    useState<ProviderOption[]>(providers);
+  const [newProviderName, setNewProviderName] = useState("");
+  const [isCreatingProvider, setIsCreatingProvider] = useState(false);
 
   // Date et heure sont saisies separement : l'heure est facultative, et un
   // `datetime-local` ne sait pas exprimer « date connue, heure inconnue ».
@@ -102,6 +123,10 @@ export const FormationForm = ({
     external_url: formation?.external_url ?? "",
     consultant_id: formation?.consultant_id ?? "",
     is_published: formation?.is_published ?? false,
+    category: formation?.category ?? "formation",
+    badge: formation?.badge ?? "",
+    template_id: formation?.template_id ?? "",
+    is_evergreen: formation?.is_evergreen ?? false,
   });
 
   const slugify = (text: string): string =>
@@ -119,6 +144,30 @@ export const FormationForm = ({
       title,
       slug: mode === "create" ? slugify(title) : prev.slug,
     }));
+  };
+
+  const handleCreateProvider = async () => {
+    const name = newProviderName.trim();
+    if (!name || isCreatingProvider) return;
+
+    setIsCreatingProvider(true);
+    const result = await createTrainingProvider(name);
+    setIsCreatingProvider(false);
+
+    if (!result.success || !result.data) {
+      toast.error(result.error || "Erreur lors de la création de l'organisme");
+      return;
+    }
+
+    const provider = result.data;
+    setProviderOptions((prev) =>
+      prev.some((p) => p.id === provider.id)
+        ? prev
+        : [...prev, provider].sort((a, b) => a.name.localeCompare(b.name, "fr")),
+    );
+    setFormData((p) => ({ ...p, provider_id: provider.id }));
+    setNewProviderName("");
+    toast.success(`Organisme « ${provider.name} » ajouté`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -164,6 +213,8 @@ export const FormationForm = ({
       starts_at: startsAt ? startsAt.toISOString() : "",
       ends_at: endsAt ? endsAt.toISOString() : "",
       show_time: showTime,
+      badge: formData.badge.trim() || null,
+      template_id: formData.template_id || null,
     };
 
     startTransition(async () => {
@@ -477,6 +528,108 @@ export const FormationForm = ({
 
           <Card>
             <CardHeader>
+              <CardTitle>Classement et fiche partagée</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="category">Catégorie</Label>
+                <select
+                  id="category"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      category: e.target.value as FormationCategory,
+                    }))
+                  }
+                >
+                  {FORMATION_CATEGORIES.map((key) => (
+                    <option key={key} value={key}>
+                      {FORMATION_CATEGORY_CONFIG[key].filterLabel}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Pilote la pastille de la fiche et les filtres de la page
+                  publique.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="template_id">Fiche partagée</Label>
+                <select
+                  id="template_id"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={formData.template_id}
+                  onChange={(e) => {
+                    const templateId = e.target.value;
+                    const template = templates.find((t) => t.id === templateId);
+                    setFormData((p) => ({
+                      ...p,
+                      template_id: templateId,
+                      // À la création, le titre et la catégorie de la fiche
+                      // sont repris : c'est ce que l'on veut neuf fois sur
+                      // dix, et ils restent modifiables juste après.
+                      ...(template && mode === "create"
+                        ? { title: template.title, slug: slugify(template.title), category: template.category }
+                        : {}),
+                    }));
+                  }}
+                >
+                  <option value="">Aucune (contenu propre à cette session)</option>
+                  {templates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.title}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Résumé, objectifs, programme et public sont hérités de la
+                  fiche. Ce qui est saisi ci-dessous prend le dessus, section
+                  par section.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="badge">Badge (optionnel)</Label>
+                <Input
+                  id="badge"
+                  value={formData.badge}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, badge: e.target.value }))
+                  }
+                  placeholder="2.5 L-CERPs, Éligible FIFPL…"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Mention affichée sur la fiche. Vide, rien ne s&apos;affiche.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="is_evergreen"
+                  checked={formData.is_evergreen}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, is_evergreen: e.target.checked }))
+                  }
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="is_evergreen">
+                  Accessible à tout moment (e-learning, replay)
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                La formation sort du calendrier : elle n&apos;apparaît ni dans
+                les sessions à venir ni dans les sessions passées, mais dans
+                « Disponibles à tout moment ».
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Organisme de formation</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -491,12 +644,39 @@ export const FormationForm = ({
                   }
                 >
                   <option value="">Aucun (formation propre)</option>
-                  {providers.map((p) => (
+                  {providerOptions.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name}
                     </option>
                   ))}
                 </select>
+
+                {/* Le catalogue d'organismes n'a pas d'ecran dedie : la saisie
+                    libre evite d'attendre une migration pour un partenaire
+                    nouveau. L'organisme cree est aussitot selectionne. */}
+                <div className="flex gap-2 pt-1">
+                  <Input
+                    value={newProviderName}
+                    onChange={(e) => setNewProviderName(e.target.value)}
+                    onKeyDown={(e) => {
+                      // Sans cela, Entree soumettrait le formulaire entier.
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleCreateProvider();
+                      }
+                    }}
+                    placeholder="Ou saisir un nouvel organisme"
+                    aria-label="Nom d'un nouvel organisme"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCreateProvider}
+                    disabled={isCreatingProvider || !newProviderName.trim()}
+                  >
+                    {isCreatingProvider ? "Ajout..." : "Ajouter"}
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-2">

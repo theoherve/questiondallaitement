@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     locale: "fr_FR",
     url: siteUrl,
     siteName: "Question d'Allaitement",
-    title: "Question d'Allaitement — Accompagnement en lactation et parentalité",
+    title: "Question d'Allaitement : Accompagnement en lactation et parentalité",
     description:
       "Accompagnements en ligne, consultations personnalisées et formations professionnelles certifiées en allaitement et parentalité.",
     images: [

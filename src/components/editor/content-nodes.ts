@@ -31,7 +31,7 @@ export const insertVideo = (
   if (range) chain.deleteRange(range);
   const inserted = chain.setVideoEmbed(url).run();
 
-  if (!inserted) toast.error("Lien non reconnu — attendu : YouTube ou Vimeo");
+  if (!inserted) toast.error("Lien non reconnu, attendu : YouTube ou Vimeo");
   return inserted;
 };
 

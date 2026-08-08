@@ -73,8 +73,8 @@ const ConsultantInvoicesPage = async () => {
                     )}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {TYPE_LABELS[invoice.type] ?? invoice.type} —{" "}
-                    {invoice.client_name} —{" "}
+                    {TYPE_LABELS[invoice.type] ?? invoice.type} ,{" "}
+                    {invoice.client_name} ,{" "}
                     {format(new Date(invoice.issued_at), "d MMM yyyy", {
                       locale: fr,
                     })}

@@ -174,7 +174,7 @@ const describeSale = async (
     | null
     | undefined;
   const ct = Array.isArray(ctRaw) ? ctRaw[0] : ctRaw ?? null;
-  return ct?.title ? `Consultation — ${ct.title}` : "Consultation";
+  return ct?.title ? `Consultation, ${ct.title}` : "Consultation";
 };
 
 const logInvoiceIssue = async (

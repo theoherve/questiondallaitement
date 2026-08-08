@@ -41,7 +41,7 @@ const ColorField = ({
         value={/^#[0-9a-fA-F]{6}$/.test(value) ? value : "#ffffff"}
         onChange={(e) => onChange(e.target.value)}
         className="h-9 w-12 cursor-pointer rounded border bg-transparent p-1"
-        aria-label={`${label} — sélecteur de couleur`}
+        aria-label={`${label}, sélecteur de couleur`}
       />
       <Input
         id={id}
@@ -148,7 +148,7 @@ export const EmailBrandingForm = ({ branding }: Props) => {
                 aria-label="Texte alternatif du logo"
               />
               <p className="text-xs text-muted-foreground">
-                Affiché quand la messagerie bloque les images — le cas par défaut
+                Affiché quand la messagerie bloque les images, le cas par défaut
                 chez beaucoup de destinataires.
               </p>
             </div>

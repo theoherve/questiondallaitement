@@ -258,7 +258,7 @@ const LivresPage = () => {
                       de bienveillance de l&apos;allaitement maternel.&rdquo;
                     </p>
                     <footer className="mt-3 font-sans text-sm text-primary-green/50">
-                      — Carole Hervé, consultante IBCLC
+                     , Carole Hervé, consultante IBCLC
                     </footer>
                   </blockquote>
                 </div>
@@ -316,7 +316,7 @@ const LivresPage = () => {
                       <div className="relative aspect-3/4 overflow-hidden shadow-xl">
                         <Image
                           src={book.coverImage}
-                          alt={`Couverture — ${book.title}`}
+                          alt={`Couverture, ${book.title}`}
                           fill
                           className="bg-white object-contain"
                           sizes="(max-width: 1024px) 384px, 40vw"
@@ -532,7 +532,7 @@ const LivresPage = () => {
                       <div className="relative aspect-3/4 w-full overflow-hidden bg-background-beige-dark shadow-md transition-shadow group-hover:shadow-lg">
                         <Image
                           src={contrib.coverImage}
-                          alt={`Couverture — ${contrib.title}`}
+                          alt={`Couverture, ${contrib.title}`}
                           fill
                           className="object-contain"
                           sizes="(max-width: 640px) 40vw, (max-width: 1024px) 30vw, 14vw"
@@ -647,7 +647,7 @@ const LivresPage = () => {
               aria-hidden
             />
             <h2 className="mt-6 font-serif text-3xl font-bold text-background-beige lg:text-5xl">
-              Offrez-vous — ou offrez à une proche — un{" "}
+              Offrez-vous, ou offrez à une proche, un{" "}
               <em className="italic">guide de confiance</em>
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-background-beige/70">

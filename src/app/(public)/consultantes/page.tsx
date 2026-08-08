@@ -59,7 +59,7 @@ const ConsultantesPage = async () => {
           Votre consultante référente
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-primary-green/70">
-          Chaque consultante de l&apos;équipe est certifiée IBCLC — le plus haut
+          Chaque consultante de l&apos;équipe est certifiée IBCLC, le plus haut
           standard international en lactation humaine.
         </p>
       </div>

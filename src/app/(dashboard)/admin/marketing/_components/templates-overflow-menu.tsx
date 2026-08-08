@@ -42,7 +42,7 @@ export const TemplatesOverflowMenu = () => {
         const { created } = result.data;
         toast.success(
           created.length === 0
-            ? "Aucun template manquant — rien n'a été modifié."
+            ? "Aucun template manquant, rien n'a été modifié."
             : `Créé : ${created.join(", ")}. Les autres templates n'ont pas été touchés.`,
         );
         router.refresh();

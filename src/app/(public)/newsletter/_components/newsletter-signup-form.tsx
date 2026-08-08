@@ -31,8 +31,8 @@ export const NewsletterSignupForm = ({
   const [pending, setPending] = useState(false);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
 
-  const handleSubmit = async (formation: React.FormEvent) => {
-    formation.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (pending) return;
 
     const payload = {
@@ -120,7 +120,7 @@ export const NewsletterSignupForm = ({
           id={`${fieldId}-first-name`}
           name="first_name"
           value={firstName}
-          onChange={(formation) => setFirstName(formation.target.value)}
+          onChange={(event) => setFirstName(event.target.value)}
           autoComplete="given-name"
           aria-invalid={Boolean(errors.first_name)}
           aria-describedby={errors.first_name ? `${fieldId}-first-name-error` : undefined}
@@ -139,7 +139,7 @@ export const NewsletterSignupForm = ({
           type="email"
           inputMode="email"
           value={email}
-          onChange={(formation) => setEmail(formation.target.value)}
+          onChange={(event) => setEmail(event.target.value)}
           autoComplete="email"
           aria-invalid={Boolean(errors.email)}
           aria-describedby={errors.email ? `${fieldId}-email-error` : undefined}
@@ -165,7 +165,7 @@ export const NewsletterSignupForm = ({
           autoComplete="off"
           aria-hidden="true"
           value={website}
-          onChange={(formation) => setWebsite(formation.target.value)}
+          onChange={(event) => setWebsite(event.target.value)}
         />
       </div>
 
@@ -176,7 +176,7 @@ export const NewsletterSignupForm = ({
             name="consent"
             type="checkbox"
             checked={consent}
-            onChange={(formation) => setConsent(formation.target.checked)}
+            onChange={(event) => setConsent(event.target.checked)}
             aria-invalid={Boolean(errors.consent)}
             aria-describedby={errors.consent ? `${fieldId}-consent-error` : undefined}
             className="mt-1 h-5 w-5 shrink-0 accent-primary-red"

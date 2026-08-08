@@ -20,7 +20,7 @@ import { InteractionTimeline } from "../../crm/_components/interaction-timeline"
 import { ClientScore } from "../../crm/_components/client-score";
 
 export const metadata: Metadata = {
-  title: "Détail contact — CRM",
+  title: "Détail contact : CRM",
 };
 
 const ContactDetailPage = async ({

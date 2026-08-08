@@ -28,7 +28,7 @@ import { LtvTable } from "./_components/ltv-table";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Analytics — Administration",
+  title: "Analytics : Administration",
 };
 
 const formatCurrency = (cents: number): string =>

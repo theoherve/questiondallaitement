@@ -48,7 +48,7 @@ const FIELDS: Array<{
     key: "program_html",
     label: "Programme",
     hint: "Saisissez une liste numérotée : chaque élément devient une étape du fil du programme.",
-    placeholder: "Module 1 — Anatomie et physiologie de la lactation…",
+    placeholder: "Module 1, Anatomie et physiologie de la lactation…",
   },
   {
     key: "audience_html",

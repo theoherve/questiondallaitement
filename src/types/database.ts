@@ -19,6 +19,18 @@ export type BlockType = "text" | "video" | "image" | "quiz" | "download";
 
 export type FormationType = "online" | "in_person" | "hybrid";
 
+/**
+ * Famille de format d'une formation. Miroir de l'enum `formation_category`.
+ * Les libellés vivent dans `src/config/formation-categories.ts`.
+ */
+export type FormationCategory =
+  | "formation"
+  | "webinaire"
+  | "atelier_mensuel"
+  | "masterclass"
+  | "conference"
+  | "e_learning";
+
 export type PaymentStatus =
   | "pending"
   | "succeeded"
@@ -286,6 +298,31 @@ export type Formation = {
   discounted_price_cents: number | null;
   recurring_definition_id: string | null;
   occurrence_date: string | null;
+  // Famille de format : pilote la pastille et les filtres publics. Deduite du
+  // titre avant la migration 00075.
+  category: FormationCategory;
+  // Mention libre affichee sur la fiche (certification, eligibilite).
+  badge: string | null;
+  // Fiche partagee dont la session herite son contenu editorial.
+  template_id: string | null;
+  // true = accessible en permanence : ni a venir, ni passee.
+  is_evergreen: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Fiche partagee entre les sessions d'une meme formation. */
+export type FormationTemplate = {
+  id: string;
+  slug: string;
+  title: string;
+  summary_html: string | null;
+  objectives_html: string | null;
+  program_html: string | null;
+  audience_html: string | null;
+  external_url: string | null;
+  badge: string | null;
+  category: FormationCategory;
   created_at: string;
   updated_at: string;
 };

@@ -96,7 +96,7 @@ const NewsletterSubscribersPage = async () => {
         <StatCard label="Visites de la page" value={String(pageViews)} />
         <StatCard
           label="Taux de conversion"
-          value={conversionRate === null ? "—" : `${conversionRate} %`}
+          value={conversionRate === null ? "," : `${conversionRate} %`}
         />
         <StatCard
           label="À resynchroniser"
@@ -120,7 +120,7 @@ const NewsletterSubscribersPage = async () => {
               {pendingSync.length > 1 ? "ont" : "a"} pas atteint Brevo.
             </p>
             <p className="mt-1 text-muted-foreground">
-              Le consentement est bien enregistré ici — seul l&apos;ajout à la
+              Le consentement est bien enregistré ici, seul l&apos;ajout à la
               liste Brevo a échoué. Cause la plus fréquente : la liste blanche
               d&apos;adresses IP du compte Brevo, que les fonctions Vercel ne
               peuvent pas satisfaire.

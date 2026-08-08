@@ -68,7 +68,7 @@ export const PurchaseReconciler = ({
         <>
           <span>
             Votre paiement est bien reçu. L&apos;accès s&apos;ouvre dans un
-            instant —
+            instant. Si rien ne bouge, cliquez sur
           </span>
           <button
             type="button"

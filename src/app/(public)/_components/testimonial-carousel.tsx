@@ -13,7 +13,7 @@ const TESTIMONIALS = [
   {
     name: "Amina",
     context: "Maman de Lina, 21 mois",
-    text: "Sans cet accompagnement, je n'aurais jamais allaité aussi longtemps. Malgré les tempêtes — bébé qui tétait 2h, refus du biberon, grève de la tétée — aujourd'hui ma fille a 21 mois et tète encore. Je suis fière.",
+    text: "Sans cet accompagnement, je n'aurais jamais allaité aussi longtemps. Malgré les tempêtes, bébé qui tétait 2h, refus du biberon, grève de la tétée, aujourd'hui ma fille a 21 mois et tète encore. Je suis fière.",
   },
   {
     name: "Nathalie",

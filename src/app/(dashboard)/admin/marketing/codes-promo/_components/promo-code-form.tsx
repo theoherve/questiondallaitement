@@ -126,7 +126,7 @@ export const PromoCodeForm = ({
     const option = optionsFor(target.target_type).find(
       (o) => o.id === target.target_id,
     );
-    return `${TARGET_TYPE_LABELS[target.target_type]} — ${option?.title ?? target.target_id}`;
+    return `${TARGET_TYPE_LABELS[target.target_type]}, ${option?.title ?? target.target_id}`;
   };
 
   const handleAddTarget = () => {

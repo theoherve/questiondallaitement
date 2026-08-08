@@ -22,6 +22,8 @@ import {
   FORMATION_SCHOOL_PRICE_HINT,
   FORMATION_SCHOOL_PRICE_LABEL,
 } from "@/config/formations";
+import { resolveFormationCategory } from "@/config/formation-categories";
+import { PARIS } from "@/lib/formations/paris-time";
 import { RegisterButton } from "../register-button";
 import { RegistrationReconciler } from "../registration-reconciler";
 
@@ -32,6 +34,13 @@ const formatPrice = (cents: number, currency: string): string => {
     currency,
   }).format(cents / 100);
 };
+
+/** Formate une date de formation dans le fuseau des sessions. */
+const parisFormat = (isoDate: string, pattern: string): string =>
+  format(new Date(isoDate), pattern, { locale: fr, in: PARIS });
+
+const capitalize = (value: string): string =>
+  value.charAt(0).toUpperCase() + value.slice(1);
 
 const formatDuration = (startsAt: string, endsAt: string): string => {
   const start = new Date(startsAt);
@@ -44,18 +53,6 @@ const formatDuration = (startsAt: string, endsAt: string): string => {
   if (diffHours <= 8) return `${Math.round(diffHours)}h`;
   if (diffDays === 1) return "1 jour";
   return `${diffDays} jours`;
-};
-
-type FormationCategory = "accompagnement" | "masterclass" | "atelier" | "conference" | "live" | "autre";
-
-const categorizeFormation = (title: string): { category: FormationCategory; label: string; color: string } => {
-  const t = title.toLowerCase();
-  if (t.startsWith("accompagnement")) return { category: "accompagnement", label: "Formation", color: "bg-primary-red text-white" };
-  if (t.startsWith("masterclass")) return { category: "masterclass", label: "Masterclass", color: "bg-amber-600 text-white" };
-  if (t.startsWith("atelier")) return { category: "atelier", label: "Atelier", color: "bg-primary-green text-white" };
-  if (t.includes("conférence") || t.includes("conference")) return { category: "conference", label: "Conférence", color: "bg-blue-700 text-white" };
-  if (t.startsWith("live")) return { category: "live", label: "Live", color: "bg-pink-600 text-white" };
-  return { category: "autre", label: "Formation", color: "bg-primary-green/80 text-white" };
 };
 
 /**
@@ -130,6 +127,11 @@ export type FormationDetailProps = {
     currency: string;
     show_price: boolean;
     thumbnail_url: string | null;
+    category: string;
+    /** Mention libre (certification, éligibilité). Rien si vide. */
+    badge: string | null;
+    /** true = accessible en permanence, aucune date à annoncer. */
+    is_evergreen: boolean;
   };
   consultant: FormationDetailConsultant;
   isAlreadyRegistered: boolean;
@@ -174,8 +176,8 @@ export const FormationDetail = ({
         ? MapPin
         : Users;
 
-  const { label: categoryLabel, color: categoryColor } = categorizeFormation(
-    formation.title,
+  const { label: categoryLabel, color: categoryColor } = resolveFormationCategory(
+    formation.category,
   );
   const highlights = resolveFormationHighlights(formation.highlights);
   // Sans heure saisie, les bornes couvrent la journee entiere : en tirer une
@@ -184,8 +186,14 @@ export const FormationDetail = ({
     ? formatDuration(formation.starts_at, formation.ends_at)
     : null;
   const isFree = formation.price_cents === 0;
-  const isPast = new Date(formation.ends_at) < new Date();
-  const isMultiDay = new Date(formation.ends_at).getDate() !== new Date(formation.starts_at).getDate();
+  // Une formation permanente n'expire pas : ses bornes ne portent que sa date
+  // de mise en ligne, la dire « terminée » serait faux.
+  const isPast = !formation.is_evergreen && new Date(formation.ends_at) < new Date();
+  // Comparaison sur le jour civil parisien, sinon une session du soir bascule
+  // sur deux jours pour un lecteur situe a l'est.
+  const isMultiDay =
+    format(new Date(formation.ends_at), "yyyy-MM-dd", { in: PARIS }) !==
+    format(new Date(formation.starts_at), "yyyy-MM-dd", { in: PARIS });
   const spotsLeft = formation.max_participants
     ? formation.max_participants - registrationsCount
     : null;
@@ -232,6 +240,13 @@ export const FormationDetail = ({
                       Terminée
                     </Badge>
                   )}
+                  {/* Mention libre : certification, éligibilité à une prise en
+                      charge. Facultative, et le plus souvent absente. */}
+                  {formation.badge && (
+                    <Badge className="border-0 bg-accent-honey-soft text-primary-green">
+                      {formation.badge}
+                    </Badge>
+                  )}
                 </div>
 
                 {/* Title */}
@@ -271,7 +286,12 @@ export const FormationDetail = ({
                   <div className="flex items-center gap-1.5">
                     <CalendarDays className="h-4 w-4" />
                     <span>
-                      {format(new Date(formation.starts_at), "d MMMM yyyy", { locale: fr })}
+                      {formation.is_evergreen
+                        ? "Accessible à tout moment"
+                        : format(new Date(formation.starts_at), "d MMMM yyyy", {
+                            locale: fr,
+                            in: PARIS,
+                          })}
                     </span>
                   </div>
                   {duration && (
@@ -454,33 +474,45 @@ export const FormationDetail = ({
 
                   {/* Details list */}
                   <div className="space-y-3 text-sm text-primary-green/70">
-                    {/* Date */}
+                    {/* Date. Une formation permanente n'en annonce aucune :
+                        elle démarre quand la personne s'inscrit. */}
                     <div className="flex items-start gap-3">
                       <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-primary-red" />
-                      <div>
-                        <p className="font-medium text-primary-green">
-                          {isMultiDay
-                            ? `${format(new Date(formation.starts_at), "d", { locale: fr })} — ${format(new Date(formation.ends_at), "d MMMM yyyy", { locale: fr })}`
-                            : format(new Date(formation.starts_at), "EEEE d MMMM yyyy", { locale: fr })}
-                        </p>
-                        <p className="text-xs text-primary-green/50">
-                          {isMultiDay
-                            ? `${format(new Date(formation.starts_at), "EEEE", { locale: fr }).charAt(0).toUpperCase() + format(new Date(formation.starts_at), "EEEE", { locale: fr }).slice(1)} et ${format(new Date(formation.ends_at), "EEEE", { locale: fr })}`
-                            : format(new Date(formation.starts_at), "EEEE", { locale: fr }).charAt(0).toUpperCase() + format(new Date(formation.starts_at), "EEEE", { locale: fr }).slice(1)}
-                        </p>
-                      </div>
+                      {formation.is_evergreen ? (
+                        <div>
+                          <p className="font-medium text-primary-green">
+                            Accessible à tout moment
+                          </p>
+                          <p className="text-xs text-primary-green/50">
+                            À suivre à votre rythme
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="font-medium text-primary-green">
+                            {isMultiDay
+                              ? `${parisFormat(formation.starts_at, "d")} au ${parisFormat(formation.ends_at, "d MMMM yyyy")}`
+                              : parisFormat(formation.starts_at, "EEEE d MMMM yyyy")}
+                          </p>
+                          <p className="text-xs text-primary-green/50">
+                            {isMultiDay
+                              ? `${capitalize(parisFormat(formation.starts_at, "EEEE"))} et ${parisFormat(formation.ends_at, "EEEE")}`
+                              : capitalize(parisFormat(formation.starts_at, "EEEE"))}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Horaire — absent des formats sans heure (webinaire,
                         e-learning), ou seule la date fait sens. */}
-                    {formation.show_time && (
+                    {formation.show_time && !formation.is_evergreen && (
                       <div className="flex items-start gap-3">
                         <Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary-red" />
                         <div>
                           <p className="font-medium text-primary-green">
-                            {format(new Date(formation.starts_at), "HH'h'mm", { locale: fr })}
-                            {" — "}
-                            {format(new Date(formation.ends_at), "HH'h'mm", { locale: fr })}
+                            {parisFormat(formation.starts_at, "HH'h'mm")}
+                            {" à "}
+                            {parisFormat(formation.ends_at, "HH'h'mm")}
                           </p>
                           <p className="text-xs text-primary-green/50">
                             Durée : {duration}

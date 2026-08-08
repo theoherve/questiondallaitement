@@ -66,7 +66,7 @@ export const MemoUpload = ({ currentUrl }: { currentUrl: string | null }) => {
         </p>
       ) : (
         <p className="text-sm text-destructive">
-          Aucun mémo déposé — l&apos;email de bienvenue part sans lien de
+          Aucun mémo déposé, l&apos;email de bienvenue part sans lien de
           téléchargement, alors que la page le promet.
         </p>
       )}

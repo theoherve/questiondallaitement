@@ -23,7 +23,7 @@ export const toSurveyCsv = (
     question.rows.map((row) => ({
       questionId: question.id,
       rowKey: row.key,
-      header: row.label ? `${question.label} — ${row.label}` : question.label,
+      header: row.label ? `${question.label}, ${row.label}` : question.label,
       labels: new Map(question.choices.map((c) => [c.key, c.label])),
     })),
   );

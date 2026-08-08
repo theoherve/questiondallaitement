@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: NEWSLETTER_COPY.subtitle,
   alternates: { canonical: "/newsletter" },
   openGraph: {
-    title: `${NEWSLETTER_NAME} — la newsletter de Carole Hervé`,
+    title: `${NEWSLETTER_NAME} : la newsletter de Carole Hervé`,
     description: NEWSLETTER_COPY.subtitle,
   },
 };
@@ -190,7 +190,7 @@ const NewsletterPage = () => {
                     <span className="font-medium text-primary-green">
                       {testimonial.name}
                     </span>{" "}
-                    — {testimonial.context}
+                   , {testimonial.context}
                   </figcaption>
                 </figure>
               </ScrollReveal>
@@ -245,7 +245,7 @@ const NewsletterPage = () => {
             <p className="mt-6 text-primary-green/70">
               Certifiée IBCLC depuis 2011, elle accompagne plus de 1 000 mères
               par an avec une équipe de sept consultantes, et publie
-              régulièrement sur l&apos;allaitement — trois livres, un blog, des
+              régulièrement sur l&apos;allaitement, trois livres, un blog, des
               interventions dans les médias.
             </p>
             <ul className="mt-8 space-y-3">

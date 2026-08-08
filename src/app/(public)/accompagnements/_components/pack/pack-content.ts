@@ -12,7 +12,7 @@ export const PACK_CONTENT = {
     titleOverride:
       "Et si allaiter ne rimait plus avec douleur, épuisement et doutes, mais avec une évidence tranquille ?",
     subtitle:
-      "Imaginez une tétée sans boule au ventre. Un bébé apaisé, une prise de poids qui ne vous angoisse plus, des nuits qui redeviennent supportables. Ce n'est pas un idéal inaccessible — c'est ce que permettent les bons repères, au bon moment.",
+      "Imaginez une tétée sans boule au ventre. Un bébé apaisé, une prise de poids qui ne vous angoisse plus, des nuits qui redeviennent supportables. Ce n'est pas un idéal inaccessible, c'est ce que permettent les bons repères, au bon moment.",
     reassurances: [
       "Accès immédiat après paiement",
       "Accès illimité, à vie",
@@ -26,7 +26,7 @@ export const PACK_CONTENT = {
       "Vous vous êtes préparée à accueillir votre bébé. Personne ne vous a vraiment préparée à l'allaitement.",
     points: [
       "Vos seins vous font mal à chaque mise au sein, et vous redoutez la tétée suivante plutôt que de l'attendre.",
-      "On vous a donné dix conseils différents — à la maternité, par votre entourage, sur internet — et ils se contredisent tous.",
+      "On vous a donné dix conseils différents : à la maternité, par votre entourage, sur internet. Et ils se contredisent tous.",
       "Vous regardez la courbe de poids de votre bébé avec une boule au ventre, en redoutant le verdict du prochain rendez-vous.",
       "Vous êtes épuisée, seule à 3h du matin, sans personne à qui poser vos questions dans l'instant.",
       "Le retour au travail approche et vous n'avez aucun plan clair pour continuer d'allaiter.",
@@ -36,12 +36,12 @@ export const PACK_CONTENT = {
   promise: {
     title: "Pourquoi les conseils habituels ne suffisent pas",
     paragraphs: [
-      "Si vous en êtes là, ce n'est pas un manque de volonté ni d'amour pour votre bébé. Les forums, les avis contradictoires de l'entourage et les injonctions reçues à la maternité (« patientez », « ça va passer », « donnez un biberon pour voir ») ne font qu'ajouter du doute au doute. Sans repères cliniques précis, on navigue à vue — et on s'épuise plus vite qu'on ne trouve de réponses.",
-      "Mon approche s'appuie sur l'observation clinique, la physiologie réelle de la lactation et les comportements innés du nourrisson — pas sur des dogmes ni des recettes universelles. Ce pack est la version structurée de ce que je transmets en consultation individuelle depuis plus de dix ans.",
+      "Si vous en êtes là, ce n'est pas un manque de volonté ni d'amour pour votre bébé. Les forums, les avis contradictoires de l'entourage et les injonctions reçues à la maternité (« patientez », « ça va passer », « donnez un biberon pour voir ») ne font qu'ajouter du doute au doute. Sans repères cliniques précis, on navigue à vue, et on s'épuise plus vite qu'on ne trouve de réponses.",
+      "Mon approche s'appuie sur l'observation clinique, la physiologie réelle de la lactation et les comportements innés du nourrisson, pas sur des dogmes ni des recettes universelles. Ce pack est la version structurée de ce que je transmets en consultation individuelle depuis plus de dix ans.",
     ],
     bullets: [
       "Comprendre ce qui se passe dans votre corps et celui de votre bébé, et pourquoi.",
-      "Savoir quoi faire, concrètement, à chaque étape — et ce qu'il ne faut surtout pas faire.",
+      "Savoir quoi faire, concrètement, à chaque étape, et ce qu'il ne faut surtout pas faire.",
       "Distinguer ce qui est physiologiquement normal de ce qui doit être corrigé.",
     ],
   },
@@ -72,7 +72,7 @@ export const PACK_CONTENT = {
     title: "Ce qui devient possible",
     scenarios: [
       "La pesée de votre bébé n'est plus une source d'angoisse mais la confirmation que votre corps fait ce qu'il faut.",
-      "Vous savez pourquoi votre bébé pleure, et quoi faire — sans avoir à deviner.",
+      "Vous savez pourquoi votre bébé pleure, et quoi faire, sans avoir à deviner.",
       "Vos nuits redeviennent lisibles : vous comprenez les réveils au lieu de les subir.",
       "La reprise du travail est organisée, avec un plan de tirage et une lactation qui tient.",
       "La diversification puis, le jour venu, le sevrage se font à votre rythme et en sécurité.",
@@ -83,7 +83,7 @@ export const PACK_CONTENT = {
     title: "Pourquoi faire confiance à Carole",
     fallbackName: "Votre consultante IBCLC",
     fallbackBio:
-      "Consultante en lactation certifiée IBCLC depuis 2011, j'ai accompagné plus de 5 000 familles et j'aide aujourd'hui plus de 1 000 mères chaque année, avec une équipe de 7 consultantes IBCLC. Ce pack, c'est la synthèse de plus de dix ans de consultations individuelles — condensée pour être accessible à toute heure, même quand mon agenda de consultation est complet.",
+      "Consultante en lactation certifiée IBCLC depuis 2011, j'ai accompagné plus de 5 000 familles et j'aide aujourd'hui plus de 1 000 mères chaque année, avec une équipe de 7 consultantes IBCLC. Ce pack, c'est la synthèse de plus de dix ans de consultations individuelles, condensée pour être accessible à toute heure, même quand mon agenda de consultation est complet.",
     credentials: [
       "IBCLC depuis 2011",
       "5 000+ familles accompagnées",
@@ -118,7 +118,7 @@ export const PACK_CONTENT = {
   },
   pricing: {
     title:
-      "Offrez-vous — et offrez à votre bébé — le démarrage serein que vous méritez",
+      "Offrez-vous, et offrez à votre bébé, le démarrage serein que vous méritez",
     subtitle: "Un accès unique à l'ensemble des modules, à vie.",
     includes: [
       "L'intégralité des modules du pack",

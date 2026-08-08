@@ -50,7 +50,7 @@ export const TabAccompagnements = ({
               {enrollments.map((e) => (
                 <TableRow key={e.id}>
                   <TableCell className="font-medium">
-                    {e.accompagnements?.title ?? "—"}
+                    {e.accompagnements?.title ?? "-"}
                   </TableCell>
                   <TableCell>
                     {new Date(e.enrolled_at).toLocaleDateString("fr-FR", {

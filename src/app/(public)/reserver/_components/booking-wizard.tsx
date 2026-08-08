@@ -165,7 +165,7 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
       </div>
 
       <p className="text-center text-sm font-medium text-primary-green sm:hidden">
-        Étape {step + 1}/{STEPS.length} — {STEPS[step]}
+        Étape {step + 1}/{STEPS.length}, {STEPS[step]}
       </p>
 
       <Card>

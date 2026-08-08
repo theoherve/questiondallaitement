@@ -110,7 +110,7 @@ export const EmailPreviewDialog = ({
         <DialogHeader className="border-b px-6 py-4">
           <DialogTitle>Aperçu de l&apos;email</DialogTitle>
           <DialogDescription>
-            Rendu final avec des valeurs d&apos;exemple — tel qu&apos;il sera
+            Rendu final avec des valeurs d&apos;exemple, tel qu&apos;il sera
             reçu dans la boîte mail.
           </DialogDescription>
         </DialogHeader>

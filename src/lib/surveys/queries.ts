@@ -21,7 +21,7 @@ export const getSurveyBySlug = async (
   const { data, error } = await createAdminClient()
     .from("surveys")
     .select(
-      "id, slug, title, intro, status, thank_you_message, survey_questions(*)",
+      "id, slug, title, kind, intro, status, thank_you_message, survey_questions(*)",
     )
     .eq("slug", slug)
     .in("status", ["published", "closed"])
@@ -35,6 +35,7 @@ export const getSurveyBySlug = async (
     id: data.id,
     slug: data.slug,
     title: data.title,
+    kind: data.kind ?? "poll",
     intro: data.intro,
     status: data.status,
     thank_you_message: data.thank_you_message,

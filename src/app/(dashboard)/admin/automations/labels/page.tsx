@@ -80,7 +80,7 @@ const AdminLabelsPage = async () => {
                     ? rule.accompagnement_ids?.length
                       ? `À l'achat de ${rule.accompagnement_ids.length} accompagnement(s)`
                       : "À l'achat de tout accompagnement"
-                    : "—";
+                    : "-";
 
                   return (
                     <TableRow key={label.id}>

@@ -21,10 +21,18 @@ import {
   X,
   ExternalLink,
   Tag,
+  Sparkles,
 } from "lucide-react";
-import { format, isSameDay, startOfDay } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { FORMATION_SCHOOL_PRICE_LABEL } from "@/config/formations";
+import {
+  FORMATION_CATEGORIES,
+  FORMATION_CATEGORY_CONFIG,
+  resolveFormationCategory,
+  type FormationCategory,
+} from "@/config/formation-categories";
+import { PARIS } from "@/lib/formations/paris-time";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -50,9 +58,13 @@ export type FormationData = {
   external_url: string | null;
   discounted_price_cents: number | null;
   provider: { name: string; logo_url: string | null } | null;
+  category: string;
+  badge: string | null;
+  // true = accessible en permanence : la formation ne suit pas le calendrier.
+  is_evergreen: boolean;
 };
 
-type FormationCategory = "all" | "accompagnement" | "masterclass" | "atelier" | "conference" | "live" | "autre";
+type CategoryFilter = "all" | FormationCategory;
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -69,15 +81,14 @@ const formatPrice = (cents: number, currency: string): string => {
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(cents / 100);
 };
 
-const categorizeFormation = (title: string): { category: Exclude<FormationCategory, "all">; label: string; color: string } => {
-  const t = title.toLowerCase();
-  if (t.startsWith("accompagnement")) return { category: "accompagnement", label: "Formation", color: "bg-primary-red text-white" };
-  if (t.startsWith("masterclass")) return { category: "masterclass", label: "Masterclass", color: "bg-amber-600 text-white" };
-  if (t.startsWith("atelier")) return { category: "atelier", label: "Atelier", color: "bg-primary-green text-white" };
-  if (t.includes("conférence") || t.includes("conference")) return { category: "conference", label: "Conférence", color: "bg-blue-700 text-white" };
-  if (t.startsWith("live")) return { category: "live", label: "Live", color: "bg-pink-600 text-white" };
-  return { category: "autre", label: "Formation", color: "bg-primary-green/80 text-white" };
-};
+/**
+ * Jour civil parisien d'une date, sous la forme `2027-01-04`.
+ *
+ * Sert a comparer une session au jour choisi dans le calendrier : ce dernier
+ * manipule des dates civiles, sans heure ni fuseau.
+ */
+const parisDayKey = (isoDate: string): string =>
+  format(new Date(isoDate), "yyyy-MM-dd", { in: PARIS });
 
 const formatDuration = (startsAt: string, endsAt: string): string => {
   const start = new Date(startsAt);
@@ -98,13 +109,12 @@ const PAST_INITIAL_VISIBLE = 3;
 /*  Category filter config                                             */
 /* ------------------------------------------------------------------ */
 
-const CATEGORY_FILTERS: { value: FormationCategory; label: string }[] = [
+const CATEGORY_FILTERS: { value: CategoryFilter; label: string }[] = [
   { value: "all", label: "Tout" },
-  { value: "accompagnement", label: "Formations" },
-  { value: "masterclass", label: "Masterclass" },
-  { value: "atelier", label: "Ateliers" },
-  { value: "conference", label: "Conférences" },
-  { value: "live", label: "Lives" },
+  ...FORMATION_CATEGORIES.map((value) => ({
+    value,
+    label: FORMATION_CATEGORY_CONFIG[value].filterLabel,
+  })),
 ];
 
 /* ------------------------------------------------------------------ */
@@ -114,36 +124,45 @@ const CATEGORY_FILTERS: { value: FormationCategory; label: string }[] = [
 export const FormationsList = ({
   upcomingFormations,
   pastFormations,
+  evergreenFormations,
 }: {
   upcomingFormations: FormationData[];
   pastFormations: FormationData[];
+  /** Formations sans date, presentees a part du calendrier. */
+  evergreenFormations: FormationData[];
 }) => {
-  const [activeCategory, setActiveCategory] = useState<FormationCategory>("all");
+  const [activeCategory, setActiveCategory] = useState<CategoryFilter>("all");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
   const [showPast, setShowPast] = useState(false);
   const [showAllPast, setShowAllPast] = useState(false);
 
-  // Build a set of dates that have formations (for calendar highlighting)
+  // Jours pastilles dans le calendrier. La date est reconstruite a partir du
+  // jour civil parisien : `startOfDay` sur le fuseau du navigateur decalerait
+  // d'un jour toute session commencant tot pour une visiteuse hors de France.
   const formationDates = useMemo(() => {
-    return upcomingFormations.map((e) => startOfDay(new Date(e.starts_at)));
+    return upcomingFormations.map((e) => {
+      const [year, month, day] = parisDayKey(e.starts_at).split("-").map(Number);
+      return new Date(year, month - 1, day);
+    });
   }, [upcomingFormations]);
 
   // Determine which categories actually have formations
   const availableCategories = useMemo(() => {
-    const allFormations = [...upcomingFormations, ...pastFormations];
-    const cats = new Set(allFormations.map((e) => categorizeFormation(e.title).category));
+    const allFormations = [...upcomingFormations, ...pastFormations, ...evergreenFormations];
+    const cats = new Set(allFormations.map((e) => e.category));
     return CATEGORY_FILTERS.filter((f) => f.value === "all" || cats.has(f.value));
-  }, [upcomingFormations, pastFormations]);
+  }, [upcomingFormations, pastFormations, evergreenFormations]);
 
   // Filter formations by category + selected date
   const filteredUpcoming = useMemo(() => {
     let result = upcomingFormations;
     if (activeCategory !== "all") {
-      result = result.filter((e) => categorizeFormation(e.title).category === activeCategory);
+      result = result.filter((e) => e.category === activeCategory);
     }
     if (selectedDate) {
-      result = result.filter((e) => isSameDay(new Date(e.starts_at), selectedDate));
+      const day = format(selectedDate, "yyyy-MM-dd");
+      result = result.filter((e) => parisDayKey(e.starts_at) === day);
     }
     return result;
   }, [upcomingFormations, activeCategory, selectedDate]);
@@ -151,13 +170,22 @@ export const FormationsList = ({
   const filteredPast = useMemo(() => {
     let result = pastFormations;
     if (activeCategory !== "all") {
-      result = result.filter((e) => categorizeFormation(e.title).category === activeCategory);
+      result = result.filter((e) => e.category === activeCategory);
     }
     if (selectedDate) {
-      result = result.filter((e) => isSameDay(new Date(e.starts_at), selectedDate));
+      const day = format(selectedDate, "yyyy-MM-dd");
+      result = result.filter((e) => parisDayKey(e.starts_at) === day);
     }
     return result;
   }, [pastFormations, activeCategory, selectedDate]);
+
+  // Les formations sans date ignorent le filtre calendaire : elles ne tombent
+  // aucun jour en particulier, les retirer parce qu'une date est selectionnee
+  // laisserait croire qu'elles n'existent plus.
+  const filteredEvergreen = useMemo(() => {
+    if (activeCategory === "all") return evergreenFormations;
+    return evergreenFormations.filter((e) => e.category === activeCategory);
+  }, [evergreenFormations, activeCategory]);
 
   // Progressive disclosure
   const visibleUpcoming = showAllUpcoming ? filteredUpcoming : filteredUpcoming.slice(0, INITIAL_VISIBLE);
@@ -200,12 +228,15 @@ export const FormationsList = ({
             <div className="flex flex-wrap gap-2">
               {availableCategories.map((cat) => {
                 const isActive = activeCategory === cat.value;
+                const all = [
+                  ...upcomingFormations,
+                  ...pastFormations,
+                  ...evergreenFormations,
+                ];
                 const count =
                   cat.value === "all"
-                    ? upcomingFormations.length + pastFormations.length
-                    : [...upcomingFormations, ...pastFormations].filter(
-                        (e) => categorizeFormation(e.title).category === cat.value
-                      ).length;
+                    ? all.length
+                    : all.filter((e) => e.category === cat.value).length;
 
                 return (
                   <button
@@ -309,6 +340,27 @@ export const FormationsList = ({
               Tout effacer
             </button>
           </div>
+        )}
+
+        {/* Formations sans date — en tete, parce qu'elles sont accessibles
+            immediatement, contrairement a tout ce qui suit. */}
+        {filteredEvergreen.length > 0 && (
+          <section className="mb-14">
+            <div className="mb-6 flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary-green" />
+              <h2 className="font-serif text-xl font-semibold text-primary-green">
+                Disponibles à tout moment
+              </h2>
+              <span className="text-sm text-primary-green/40">
+                ({filteredEvergreen.length})
+              </span>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2">
+              {filteredEvergreen.map((formation) => (
+                <FormationCard key={formation.id} formation={formation} />
+              ))}
+            </div>
+          </section>
         )}
 
         {/* Upcoming formations */}
@@ -460,12 +512,19 @@ export const FormationsList = ({
 const FormationCard = ({ formation }: { formation: FormationData }) => {
   const typeInfo = FORMATION_TYPE_LABELS[formation.type] ?? FORMATION_TYPE_LABELS.online;
   const TypeIcon = typeInfo.icon;
-  const { label: categoryLabel, color: categoryColor } = categorizeFormation(formation.title);
+  const { label: categoryLabel, color: categoryColor } = resolveFormationCategory(
+    formation.category,
+  );
   // Sans heure saisie, les bornes couvrent la journee entiere : en tirer une
   // duree afficherait un chiffre que personne n'a renseigne.
   const duration = formation.show_time
     ? formatDuration(formation.starts_at, formation.ends_at)
     : null;
+  // Une formation permanente n'a pas de date a mettre en avant : `starts_at`
+  // n'y porte que la date de mise en ligne.
+  const dateLabel = formation.is_evergreen
+    ? "À votre rythme"
+    : format(new Date(formation.starts_at), "d MMM", { locale: fr, in: PARIS });
   const consultant = formation.consultants as {
     slug: string;
     profiles: { first_name: string | null; last_name: string | null } | null;
@@ -506,9 +565,7 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
               )}
             </div>
             <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
-              <p className="text-2xl font-bold font-serif">
-                {format(new Date(formation.starts_at), "d MMM", { locale: fr })}
-              </p>
+              <p className="text-2xl font-bold font-serif">{dateLabel}</p>
               {duration && (
                 <div className="flex items-center gap-1.5 text-sm text-white/80">
                   <Clock className="h-3.5 w-3.5" />
@@ -534,12 +591,12 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
             </div>
             <div className="mt-4 flex items-end justify-between">
               <div>
-                <p className="text-3xl font-bold font-serif">
-                  {format(new Date(formation.starts_at), "d MMM", { locale: fr })}
-                </p>
-                <p className="mt-0.5 text-sm text-white/70">
-                  {format(new Date(formation.starts_at), "yyyy", { locale: fr })}
-                </p>
+                <p className="text-3xl font-bold font-serif">{dateLabel}</p>
+                {!formation.is_evergreen && (
+                  <p className="mt-0.5 text-sm text-white/70">
+                    {format(new Date(formation.starts_at), "yyyy", { locale: fr, in: PARIS })}
+                  </p>
+                )}
               </div>
               {duration && (
                 <div className="flex items-center gap-1.5 text-sm text-white/70">
@@ -566,11 +623,13 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
             <div className="flex items-center gap-1.5">
               <CalendarDays className="h-3.5 w-3.5" />
               <span>
-                {format(
-                  new Date(formation.starts_at),
-                  formation.show_time ? "EEEE d MMMM 'à' HH'h'mm" : "EEEE d MMMM",
-                  { locale: fr },
-                )}
+                {formation.is_evergreen
+                  ? "Accessible dès votre inscription"
+                  : format(
+                      new Date(formation.starts_at),
+                      formation.show_time ? "EEEE d MMMM 'à' HH'h'mm" : "EEEE d MMMM",
+                      { locale: fr, in: PARIS },
+                    )}
               </span>
             </div>
             {formation.location && (
@@ -633,7 +692,7 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
           <Button
             variant="outline"
             size="sm"
-            className="pointer-formations-none border-primary-red text-primary-red transition-colors group-hover:bg-primary-red group-hover:text-white"
+            className="pointer-events-none border-primary-red text-primary-red transition-colors group-hover:bg-primary-red group-hover:text-white"
           >
             En savoir plus
             <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
@@ -658,7 +717,7 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
 /* ------------------------------------------------------------------ */
 
 const PastFormationCard = ({ formation }: { formation: FormationData }) => {
-  const { label: categoryLabel } = categorizeFormation(formation.title);
+  const { label: categoryLabel } = resolveFormationCategory(formation.category);
   const duration = formation.show_time
     ? formatDuration(formation.starts_at, formation.ends_at)
     : null;
@@ -688,7 +747,9 @@ const PastFormationCard = ({ formation }: { formation: FormationData }) => {
       {/* Content */}
       <CardContent className="flex flex-1 flex-col justify-center py-3 px-4">
         <div className="flex items-center gap-2 text-xs text-primary-green/40">
-          <span>{format(new Date(formation.starts_at), "d MMM yyyy", { locale: fr })}</span>
+          <span>
+            {format(new Date(formation.starts_at), "d MMM yyyy", { locale: fr, in: PARIS })}
+          </span>
           {duration && (
             <>
               <span>·</span>

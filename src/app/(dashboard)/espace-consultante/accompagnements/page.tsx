@@ -152,7 +152,7 @@ const ConsultantAccompagnementsPage = async () => {
           Mes accompagnements
         </h1>
         <p className="text-sm text-muted-foreground">
-          Lecture seule — les accompagnements sont gérés par l&apos;administration
+          Lecture seule, les accompagnements sont gérés par l&apos;administration
         </p>
       </div>
 

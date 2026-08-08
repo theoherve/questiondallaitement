@@ -98,7 +98,7 @@ export function LtvTable({ data }: Props) {
                           ? format(new Date(client.last_activity), "d MMM yyyy", {
                               locale: fr,
                             })
-                          : "—"}
+                          : "-"}
                       </td>
                     </tr>
                   );

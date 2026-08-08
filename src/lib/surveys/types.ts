@@ -1,9 +1,21 @@
 export type SurveyStatus = "draft" | "published" | "closed";
-export type SurveyQuestionKind = "matrix" | "single";
+
+/**
+ * `matrix` : une ligne par item, un choix unique par ligne.
+ * `single` : une seule ligne implicite, un choix unique.
+ * `multi`  : cases à cocher. Une ligne par option, cochée ou absente — la
+ *            forme des réponses reste celle d'une matrice, seul le rendu
+ *            change (migration 00075).
+ */
+export type SurveyQuestionKind = "matrix" | "single" | "multi";
+
+/** `poll` : sondage d'opinion. `quiz` : correction et score. */
+export type SurveyKind = "poll" | "quiz";
 
 /** Clé technique stable + libellé affiché. La clé ne change jamais : elle est
- *  stockée dans les réponses déjà collectées. */
-export type SurveyChoice = { key: string; label: string };
+ *  stockée dans les réponses déjà collectées.
+ *  `href` n'existe que sur les lignes qui renvoient vers un contenu du site. */
+export type SurveyChoice = { key: string; label: string; href?: string };
 
 export type SurveyQuestion = {
   id: string;
@@ -15,12 +27,17 @@ export type SurveyQuestion = {
   is_required: boolean;
   is_segment: boolean;
   is_charted: boolean;
+  /** Clé de `choices` qui vaut la bonne réponse. `null` hors quiz. */
+  correct_choice_key: string | null;
+  /** Explication montrée après validation, quelle que soit la réponse. */
+  explanation_html: string | null;
 };
 
 export type SurveyDefinition = {
   id: string;
   slug: string;
   title: string;
+  kind: SurveyKind;
   intro: string | null;
   status: SurveyStatus;
   thank_you_message: string;
@@ -55,6 +72,7 @@ export type SurveyRow = {
   id: string;
   slug: string;
   title: string;
+  kind: SurveyKind;
   intro: string | null;
   status: SurveyStatus;
   thank_you_message: string;
@@ -73,6 +91,8 @@ export type SurveyQuestionRow = {
   is_required: boolean;
   is_segment: boolean;
   is_charted: boolean;
+  correct_choice_key: string | null;
+  explanation_html: string | null;
   created_at: string;
 };
 

@@ -52,7 +52,7 @@ const MediasPage = () => {
                   </h1>
 
                   <p className="mt-6 max-w-lg text-lg leading-relaxed text-primary-green/70 lg:text-xl">
-                    Presse, podcasts, émissions TV et conférences — Carole
+                    Presse, podcasts, émissions TV et conférences, Carole
                     Hervé partage son expertise dans les médias français de
                     référence en parentalité et santé pour informer, rassurer
                     et accompagner les familles.
