@@ -13,6 +13,12 @@ import {
   PackSalesPage,
   fetchPackModuleRows,
 } from "../_components/pack/pack-sales-page";
+import {
+  ModuleSalesPage,
+  fetchCatalogRows,
+  hasModuleSalesPage,
+} from "../_components/module/module-sales-page";
+import type { SectionRow } from "../_components/module/module-program-data";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -91,6 +97,7 @@ const AccompagnementDetailPage = async ({ params }: Props) => {
         id,
         title,
         position,
+        sales_hook,
         accompagnement_blocks (
           id,
           type,
@@ -145,6 +152,29 @@ const AccompagnementDetailPage = async ({ params }: Props) => {
         sectionsCount={sectionsCount}
         lessonsCount={lessonsCount}
         moduleRows={moduleRows}
+        isLoggedIn={!!currentUser}
+        isEnrolled={isEnrolled}
+      />
+    );
+  }
+
+  if (hasModuleSalesPage(slug)) {
+    const catalogRows = await fetchCatalogRows();
+    return (
+      <ModuleSalesPage
+        accompagnement={{
+          id: accompagnement.id,
+          slug: accompagnement.slug,
+          title: accompagnement.title,
+          price_cents: accompagnement.price_cents,
+          currency: accompagnement.currency,
+          thumbnail_url: accompagnement.thumbnail_url,
+          consultants: accompagnement.consultants as PackSalesPageConsultant,
+        }}
+        sectionRows={
+          (accompagnement.accompagnement_sections ?? []) as SectionRow[]
+        }
+        catalogRows={catalogRows}
         isLoggedIn={!!currentUser}
         isEnrolled={isEnrolled}
       />
