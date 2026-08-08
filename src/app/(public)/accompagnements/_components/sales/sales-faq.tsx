@@ -3,11 +3,17 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PACK_CONTENT } from "./pack-content";
 
-export function PackFaq() {
+export type FaqItem = { q: string; a: string };
+
+export function SalesFaq({
+  title,
+  items,
+}: {
+  title: string;
+  items: readonly FaqItem[];
+}) {
   const [open, setOpen] = useState<number | null>(0);
-  const { title, items } = PACK_CONTENT.faq;
 
   return (
     <div className="mx-auto max-w-3xl">

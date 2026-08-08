@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { MODULE_ORDER, formatPrice } from "@/config/accompagnements";
 import { buildModuleCards, type ModuleRow } from "./pack-modules-data";
 import { PACK_CONTENT } from "./pack-content";
-import { PackFaq } from "./pack-faq";
+import { SalesFaq } from "../sales/sales-faq";
 import { PackSideCta } from "./pack-side-cta";
 import {
   PackHero,
@@ -123,7 +123,7 @@ export function PackSalesPage({
         currency={accompagnement.currency}
       />
       <section id="faq" className="scroll-mt-20 bg-background-beige px-4 py-16 sm:px-6 sm:py-20">
-        <PackFaq />
+        <SalesFaq title={PACK_CONTENT.faq.title} items={PACK_CONTENT.faq.items} />
       </section>
       <PackFinalCta />
     </>

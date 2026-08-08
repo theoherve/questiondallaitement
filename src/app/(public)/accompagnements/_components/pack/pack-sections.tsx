@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
+import { Section } from "../sales/section";
 import { PurchaseButton } from "../purchase-button";
 import { ctaLabelFor } from "@/config/accompagnement-cta";
 import { PACK_SLUG } from "@/config/accompagnements";
@@ -30,20 +31,6 @@ const MODULE_ICONS: Record<string, LucideIcon> = {
   Moon,
   ShieldPlus,
 };
-
-const Section = ({
-  id,
-  className = "",
-  children,
-}: {
-  id?: string;
-  className?: string;
-  children: React.ReactNode;
-}) => (
-  <section id={id} className={`scroll-mt-20 px-4 py-16 sm:px-6 sm:py-20 ${className}`}>
-    <div className="mx-auto max-w-6xl">{children}</div>
-  </section>
-);
 
 /* ---------------------------------------------------------------- Hero */
 export function PackHero({
