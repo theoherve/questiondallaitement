@@ -45,7 +45,7 @@ export const ReplayCard = ({ live }: ReplayCardProps) => {
           {live.thumbnailUrl ? (
             <Image
               src={live.thumbnailUrl}
-              alt={`Miniature — ${live.title}`}
+              alt={`Miniature, ${live.title}`}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               sizes="(max-width: 640px) 85vw, (max-width: 1024px) 45vw, 30vw"

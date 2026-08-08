@@ -68,8 +68,8 @@ export const TabReservations = ({ bookings }: { bookings: Booking[] }) => {
                 };
                 const consultantName = b.consultant
                   ? `${b.consultant.first_name ?? ""} ${b.consultant.last_name ?? ""}`.trim() ||
-                    "—"
-                  : "—";
+                    ","
+                  : "-";
 
                 return (
                   <TableRow key={b.id}>
@@ -83,7 +83,7 @@ export const TabReservations = ({ bookings }: { bookings: Booking[] }) => {
                       })}
                     </TableCell>
                     <TableCell>
-                      {b.consultation_types?.title ?? "—"}
+                      {b.consultation_types?.title ?? "-"}
                     </TableCell>
                     <TableCell>{consultantName}</TableCell>
                     <TableCell>

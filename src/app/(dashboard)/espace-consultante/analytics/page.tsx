@@ -207,7 +207,7 @@ const ConsultantAnalyticsPage = async ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-serif text-lg">
             <TrendingUp className="h-5 w-5" />
-            Revenus nets — {formatCurrency(periodRevenue)} sur la période
+            Revenus nets, {formatCurrency(periodRevenue)} sur la période
           </CardTitle>
         </CardHeader>
         <CardContent>

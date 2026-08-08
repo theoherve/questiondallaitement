@@ -457,7 +457,7 @@ const AdminDashboardPage = async () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-serif text-lg">
               <TrendingUp className="h-5 w-5" />
-              Commissions — 30 derniers jours
+              Commissions, 30 derniers jours
             </CardTitle>
           </CardHeader>
           <CardContent>

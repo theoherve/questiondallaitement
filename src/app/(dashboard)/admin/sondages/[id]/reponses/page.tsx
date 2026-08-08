@@ -34,6 +34,7 @@ export default async function SurveyResponsesPage({
     id: survey.id,
     slug: survey.slug,
     title: survey.title,
+    kind: survey.kind,
     intro: survey.intro,
     status: survey.status,
     thank_you_message: survey.thank_you_message,
@@ -67,7 +68,7 @@ export default async function SurveyResponsesPage({
     question.rows.map((row) => ({
       questionId: question.id,
       rowKey: row.key,
-      header: row.label ? `${question.label} — ${row.label}` : question.label,
+      header: row.label ? `${question.label}, ${row.label}` : question.label,
       labels: new Map(question.choices.map((c) => [c.key, c.label])),
     })),
   );
@@ -80,7 +81,7 @@ export default async function SurveyResponsesPage({
             {survey.title}
           </h1>
           <p className="text-sm text-primary-green/60">
-            {total ?? 0} réponse{(total ?? 0) > 1 ? "s" : ""} — {withConsent ?? 0}{" "}
+            {total ?? 0} réponse{(total ?? 0) > 1 ? "s" : ""}, {withConsent ?? 0}{" "}
             email{(withConsent ?? 0) > 1 ? "s" : ""} avec consentement
           </p>
         </div>
@@ -130,12 +131,12 @@ export default async function SurveyResponsesPage({
                   </TableCell>
                   <TableCell>
                     {response.email ?? (
-                      <span className="text-primary-green/40">—</span>
+                      <span className="text-primary-green/40">-</span>
                     )}
                   </TableCell>
-                  <TableCell>{response.segment_key ?? "—"}</TableCell>
+                  <TableCell>{response.segment_key ?? "-"}</TableCell>
                   <TableCell className="max-w-48 truncate">
-                    {response.source_path ?? "—"}
+                    {response.source_path ?? "-"}
                   </TableCell>
                   {columns.map((column) => {
                     const choiceKey =
@@ -144,7 +145,7 @@ export default async function SurveyResponsesPage({
                       <TableCell key={`${column.questionId}-${column.rowKey}`}>
                         {choiceKey
                           ? (column.labels.get(choiceKey) ?? choiceKey)
-                          : "—"}
+                          : "-"}
                       </TableCell>
                     );
                   })}

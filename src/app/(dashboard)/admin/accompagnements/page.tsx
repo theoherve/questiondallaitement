@@ -233,7 +233,7 @@ const AdminAccompagnementsPage = async ({ searchParams }: Props) => {
                 rows.map((accompagnement) => {
                   const consultantName = accompagnement.consultants?.profiles
                     ? `${accompagnement.consultants.profiles.first_name ?? ""} ${accompagnement.consultants.profiles.last_name ?? ""}`.trim()
-                    : "—";
+                    : "-";
 
                   const sectionCount = accompagnement.accompagnement_sections?.length ?? 0;
                   const blockCount =

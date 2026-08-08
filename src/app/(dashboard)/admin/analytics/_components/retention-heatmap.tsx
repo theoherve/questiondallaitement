@@ -65,7 +65,7 @@ export function RetentionHeatmap({ data }: Props) {
                       className={`rounded text-center py-1 px-2 tabular-nums font-medium ${heatColor(val)}`}
                       title={val !== null ? `${val}%` : "Non disponible"}
                     >
-                      {val !== null ? `${val}%` : "—"}
+                      {val !== null ? `${val}%` : "-"}
                     </div>
                   </td>
                 );

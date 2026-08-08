@@ -334,7 +334,7 @@ export const CATALOG: SidebarCategory[] = [
       {
         id: "cta-banner",
         label: "Bannière CTA",
-        description: "Image, accroche et bouton — image et lien modifiables",
+        description: "Image, accroche et bouton, image et lien modifiables",
         icon: <Rows3 className="h-4 w-4" />,
         keywords: ["banniere", "cta", "bouton", "encart", "promo"],
         insert: (e) => chainOf(e).setCtaBanner().run(),

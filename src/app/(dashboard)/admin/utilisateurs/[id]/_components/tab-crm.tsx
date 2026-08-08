@@ -213,7 +213,7 @@ export const TabCrm = ({ userId, tags, notes, availableTags }: Props) => {
                     <div className="flex-1">
                       <p className="text-sm">{n.content}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {authorName} —{" "}
+                        {authorName} ,{" "}
                         {new Date(n.created_at).toLocaleDateString("fr-FR", {
                           day: "numeric",
                           month: "short",

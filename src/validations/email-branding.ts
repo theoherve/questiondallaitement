@@ -20,7 +20,7 @@ const imageUrl = z
   .url("URL d'image invalide")
   .refine((u) => !/\.svg(\?|#|$)/i.test(u), {
     message:
-      "Le format SVG n'est pas affiche par Gmail et Outlook — utilisez PNG, JPG ou WebP",
+      "Le format SVG n'est pas affiche par Gmail et Outlook, utilisez PNG, JPG ou WebP",
   });
 
 /** Champ image optionnel : chaine vide du formulaire → null. */
@@ -65,7 +65,7 @@ export const emailBrandingSchema = z.object({
     .trim()
     .max(500, "500 caracteres maximum")
     .default(
-      "Question d'Allaitement — accompagnement en lactation par des consultantes IBCLC.",
+      "Question d'Allaitement, accompagnement en lactation par des consultantes IBCLC.",
     ),
 
   // ─── Banniere pre-definie (bloc insere a la demande) ───

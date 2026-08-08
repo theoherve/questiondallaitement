@@ -628,7 +628,7 @@ export const createBooking = async (
         priceInCents: chargedCents,
         currency: consultationType.currency,
         productName: consultationType.title,
-        productDescription: `Consultation avec ${consultantName} — ${durationOption.duration_minutes} min`,
+        productDescription: `Consultation avec ${consultantName}, ${durationOption.duration_minutes} min`,
         customerEmail: email,
         metadata: {
           type: "booking",

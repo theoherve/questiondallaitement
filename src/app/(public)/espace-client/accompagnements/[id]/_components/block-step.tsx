@@ -159,7 +159,7 @@ export const BlockStep = ({
               </span>
               <span className="flex-1 text-sm font-medium text-primary-green">
                 Étape {index + 1}
-                {isCompleted ? " — terminée" : ""}
+                {isCompleted ? ", terminée" : ""}
               </span>
               <span className="hidden text-xs text-muted-foreground sm:inline">
                 Cliquer pour {isCompleted ? "revoir" : "ouvrir"}

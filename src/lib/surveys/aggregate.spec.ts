@@ -18,6 +18,8 @@ const question: SurveyQuestion = {
   is_required: true,
   is_segment: false,
   is_charted: true,
+  correct_choice_key: null,
+  explanation_html: null,
 };
 
 const count = (

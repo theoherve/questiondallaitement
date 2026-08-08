@@ -41,7 +41,7 @@ const SurveyEmbedView = ({ node, updateAttributes }: NodeViewProps) => {
             value={slug}
             onChange={(event) => updateAttributes({ slug: event.target.value })}
           >
-            <option value="">— Choisir un sondage —</option>
+            <option value="">, Choisir un sondage ,</option>
             {surveys.map((survey) => (
               <option key={survey.id} value={survey.slug}>
                 {survey.title}

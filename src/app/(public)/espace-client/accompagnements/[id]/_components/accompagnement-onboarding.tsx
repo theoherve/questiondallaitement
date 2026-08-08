@@ -34,7 +34,7 @@ const STEPS = [
     icon: HandHeart,
     title: "Avancez à votre rythme",
     description:
-      "Tout est sauvegardé automatiquement — revenez quand vous en avez besoin.",
+      "Tout est sauvegardé automatiquement, revenez quand vous en avez besoin.",
   },
   {
     icon: CircleCheckBig,

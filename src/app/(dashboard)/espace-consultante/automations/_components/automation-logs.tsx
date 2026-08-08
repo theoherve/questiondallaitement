@@ -51,7 +51,7 @@ export const AutomationLogs = ({ logs }: AutomationLogsProps) => {
               const clientName =
                 (log.trigger_data?.client_name as string) ??
                 (log.trigger_data?.client_email as string) ??
-                "—";
+                ",";
               const actions = log.result?.actions ?? [];
 
               return (

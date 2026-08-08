@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { features } from "@/config/features";
 
 export const metadata: Metadata = {
-  title: "Réserver une consultation — Question d'Allaitement",
+  title: "Réserver une consultation : Question d'Allaitement",
   description:
     "Prenez rendez-vous avec une consultante en lactation, sommeil ou santé maternelle.",
 };
@@ -183,7 +183,7 @@ const ReserverPage = async () => {
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-lg text-primary-green/70">
           En cabinet à Paris ou en téléconsultation, selon ce qui vous convient.
-          Le même niveau d&apos;expertise, adapté à votre situation précise —
+          Le même niveau d&apos;expertise, adapté à votre situation précise
           freins de langue, prise de poids qui inquiète, douleur persistante, ou
           simplement l&apos;envie d&apos;un échange en direct.
         </p>

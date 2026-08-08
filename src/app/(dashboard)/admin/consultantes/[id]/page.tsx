@@ -55,7 +55,7 @@ export const generateMetadata = async ({
     ? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
     : "Consultante";
 
-  return { title: `${name} — Consultante` };
+  return { title: `${name}, Consultante` };
 };
 
 const formatPrice = (cents: number): string =>

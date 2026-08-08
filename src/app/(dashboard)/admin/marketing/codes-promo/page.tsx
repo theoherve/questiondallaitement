@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 };
 
 const formatWindow = (from: string | null, until: string | null): string => {
-  if (!from && !until) return "—";
+  if (!from && !until) return ",";
   const fmt = (iso: string) => format(new Date(iso), "d MMM yyyy", { locale: fr });
   if (from && until) return `${fmt(from)} → ${fmt(until)}`;
   return from ? `dès le ${fmt(from)}` : `jusqu'au ${fmt(until as string)}`;

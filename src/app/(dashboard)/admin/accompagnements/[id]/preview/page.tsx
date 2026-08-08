@@ -26,7 +26,7 @@ export const generateMetadata = async ({
     .single();
 
   return {
-    title: data ? `Preview — ${data.title}` : "Preview introuvable",
+    title: data ? `Preview : ${data.title}` : "Preview introuvable",
     robots: { index: false, follow: false },
   };
 };
@@ -136,7 +136,7 @@ const AccompagnementPreviewPage = async ({ params }: Props) => {
           <Eye className="h-5 w-5 text-amber-600" />
           <div>
             <p className="font-medium text-amber-800">
-              Mode preview — Non indexé
+              Mode preview, Non indexé
             </p>
             <p className="text-sm text-amber-600">
               Statut actuel :{" "}

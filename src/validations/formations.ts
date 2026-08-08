@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { FORMATION_CATEGORIES } from "@/config/formation-categories";
 
 // ─── Formation ──────────────────────────────────────────────────
 
@@ -50,6 +51,15 @@ export const formationSchema = z
       .nullable(),
     consultant_id: z.string().uuid("Consultante requise"),
     is_published: z.boolean().default(false),
+    // Famille de format. Pilote la pastille et les filtres publics, qui se
+    // deduisaient du titre avant la migration 00075.
+    category: z.enum(FORMATION_CATEGORIES).default("formation"),
+    // Mention libre affichee sur la fiche : certification, eligibilite.
+    badge: z.string().trim().optional().nullable(),
+    // Fiche partagee dont la session herite son contenu editorial.
+    template_id: z.string().uuid().optional().nullable(),
+    // Accessible en permanence : ni a venir, ni passee.
+    is_evergreen: z.boolean().default(false),
   })
   .refine(
     (data) =>

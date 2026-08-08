@@ -181,13 +181,13 @@ export const AvailabilitiesTab = ({
                     className="flex items-center gap-2 rounded-md border px-3 py-1.5"
                   >
                     <Badge variant="outline" className="text-xs">
-                      {slot.start_time.slice(0, 5)} — {slot.end_time.slice(0, 5)}
+                      {slot.start_time.slice(0, 5)}, {slot.end_time.slice(0, 5)}
                     </Badge>
                     <button
                       onClick={() => handleDelete(slot.id)}
                       disabled={isPending}
                       className="text-destructive hover:text-destructive/80"
-                      aria-label={`Supprimer créneau ${slot.start_time} — ${slot.end_time}`}
+                      aria-label={`Supprimer créneau ${slot.start_time}, ${slot.end_time}`}
                       tabIndex={0}
                     >
                       <Trash2 className="h-3.5 w-3.5" />

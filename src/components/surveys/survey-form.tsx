@@ -139,7 +139,7 @@ export const SurveyForm = ({ payload, onSubmitted }: Props) => {
       <div className="space-y-3 rounded-lg bg-background-beige-dark/50 p-4">
         <p className="text-sm text-primary-green/80">
           Envie de savoir où se situe votre bébé par rapport aux autres familles
-          de son âge&nbsp;? Laissez votre prénom et votre email — c&apos;est
+          de son âge&nbsp;? Laissez votre prénom et votre email, c&apos;est
           facultatif.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">

@@ -32,7 +32,7 @@ export const PaymentAlerts = ({ data }: { data: PaymentAlertsData }) => {
               {data.failed > 1 ? "s" : ""}
             </p>
             <p className="text-xs text-red-600">
-              Action requise — cliquez pour voir
+              Action requise, cliquez pour voir
             </p>
           </div>
         </Link>

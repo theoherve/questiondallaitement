@@ -105,7 +105,7 @@ export const cancelBookingClient = async (
       refundInfo = `Remboursement de ${(refundAmountCents / 100).toFixed(2)} € effectué.`;
     }
     if (booking.payment_method === "on_site") {
-      refundInfo = "Paiement sur place — aucun remboursement nécessaire.";
+      refundInfo = "Paiement sur place, aucun remboursement nécessaire.";
     }
 
     const { data: profile } = await adminClient

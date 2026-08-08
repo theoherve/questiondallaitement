@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export const metadata: Metadata = {
-  title: "Réservation confirmée — Question d'Allaitement",
+  title: "Réservation confirmée : Question d'Allaitement",
   robots: { index: false },
 };
 
@@ -66,7 +66,7 @@ const ConfirmationPage = async ({
           Paiement reçu
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Votre paiement a bien été enregistré. Votre rendez-vous est en cours de confirmation — vous recevrez un email dans quelques instants.
+          Votre paiement a bien été enregistré. Votre rendez-vous est en cours de confirmation, vous recevrez un email dans quelques instants.
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <Button asChild variant="outline">
@@ -128,7 +128,7 @@ const ConfirmationPage = async ({
             <div>
               <p className="text-xs text-muted-foreground">Heure</p>
               <p className="font-medium text-primary-green">
-                {format(startsAt, "HH:mm")} —{" "}
+                {format(startsAt, "HH:mm")} ,{" "}
                 {consultationType?.duration_minutes ?? 60} min
               </p>
             </div>

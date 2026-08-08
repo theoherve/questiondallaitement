@@ -9,6 +9,7 @@ const survey: SurveyDefinition = {
   id: "s1",
   slug: "reveils",
   title: "Réveils",
+  kind: "poll",
   intro: null,
   status: "published",
   thank_you_message: "",
@@ -23,6 +24,8 @@ const survey: SurveyDefinition = {
       is_required: true,
       is_segment: false,
       is_charted: true,
+      correct_choice_key: null,
+      explanation_html: null,
     },
     {
       id: "q2",
@@ -34,6 +37,8 @@ const survey: SurveyDefinition = {
       is_required: false,
       is_segment: false,
       is_charted: false,
+      correct_choice_key: null,
+      explanation_html: null,
     },
   ],
 };

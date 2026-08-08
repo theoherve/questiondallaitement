@@ -580,7 +580,7 @@ const handleBookingConfirmation = async (
         .eq("id", meta.consultation_type_id)
         .single();
       const topic = consultationType?.title
-        ? `${consultationType.title} — Téléconsultation`
+        ? `${consultationType.title}, Téléconsultation`
         : "Téléconsultation";
       const meeting = await createMeeting(
         meta.consultant_id,

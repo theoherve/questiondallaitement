@@ -5,7 +5,7 @@ import { LocationConfigsSection } from "./_components/location-configs";
 import { getLocationConfigs } from "./actions";
 
 export const metadata: Metadata = {
-  title: "Réservation — Administration",
+  title: "Réservation : Administration",
 };
 
 const ReservationAdminPage = async () => {

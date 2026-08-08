@@ -24,19 +24,23 @@ const slugify = (text: string): string =>
 
 type QuestionDraft = {
   id?: string;
-  kind: "matrix" | "single";
+  kind: "matrix" | "single" | "multi";
   label: string;
   rows: SurveyChoice[];
   choices: SurveyChoice[];
   is_required: boolean;
   is_segment: boolean;
   is_charted: boolean;
+  /** Quiz uniquement. Chaîne vide = aucune bonne réponse désignée. */
+  correct_choice_key: string;
+  explanation_html: string;
 };
 
 type Draft = {
   id?: string;
   slug: string;
   title: string;
+  kind: "poll" | "quiz";
   intro: string;
   status: "draft" | "published" | "closed";
   thank_you_message: string;
@@ -54,6 +58,8 @@ const emptyQuestion = (): QuestionDraft => ({
   is_required: false,
   is_segment: false,
   is_charted: false,
+  correct_choice_key: "",
+  explanation_html: "",
 });
 
 const toDraft = (survey: AdminSurvey | null): Draft =>
@@ -62,6 +68,7 @@ const toDraft = (survey: AdminSurvey | null): Draft =>
         id: survey.id,
         slug: survey.slug,
         title: survey.title,
+        kind: survey.kind ?? "poll",
         intro: survey.intro ?? "",
         status: survey.status,
         thank_you_message: survey.thank_you_message,
@@ -74,11 +81,17 @@ const toDraft = (survey: AdminSurvey | null): Draft =>
           is_required: question.is_required,
           is_segment: question.is_segment,
           is_charted: question.is_charted,
+          // Reprises telles quelles même hors quiz : le formulaire réécrit
+          // toute la question à l'enregistrement, les oublier ici les
+          // effacerait au premier passage en administration.
+          correct_choice_key: question.correct_choice_key ?? "",
+          explanation_html: question.explanation_html ?? "",
         })),
       }
     : {
         slug: "",
         title: "",
+        kind: "poll",
         intro: "",
         status: "draft",
         thank_you_message: "",
@@ -127,14 +140,20 @@ export const SurveyBuilder = ({ survey }: { survey: AdminSurvey | null }) => {
       intro: draft.intro || undefined,
       questions: draft.questions.map((question) => ({
         ...question,
+        // `...entry` d'abord : les lignes portent parfois un `href` vers un
+        // contenu du site, que ce remaniement ne doit pas perdre.
         rows: question.rows.map((row) => ({
+          ...row,
           key: row.key || slugify(row.label),
           label: row.label,
         })),
         choices: question.choices.map((choice) => ({
+          ...choice,
           key: choice.key || slugify(choice.label),
           label: choice.label,
         })),
+        correct_choice_key: question.correct_choice_key || null,
+        explanation_html: question.explanation_html || null,
       })),
     };
 
@@ -235,6 +254,29 @@ export const SurveyBuilder = ({ survey }: { survey: AdminSurvey | null }) => {
           </div>
 
           <div>
+            <Label htmlFor="survey-kind">Type</Label>
+            <select
+              id="survey-kind"
+              className="mt-1 block rounded border border-primary-green/20 px-2 py-1.5 text-sm"
+              value={draft.kind}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  kind: event.target.value as Draft["kind"],
+                }))
+              }
+            >
+              <option value="poll">Sondage, graphique d&apos;agrégat</option>
+              <option value="quiz">Quiz, correction et score, page dédiée</option>
+            </select>
+            {draft.kind === "quiz" && draft.slug && (
+              <p className="mt-1 text-xs text-primary-green/60">
+                Accessible sur /quiz/{draft.slug}
+              </p>
+            )}
+          </div>
+
+          <div>
             <Label htmlFor="survey-status">Statut</Label>
             <select
               id="survey-status"
@@ -247,10 +289,10 @@ export const SurveyBuilder = ({ survey }: { survey: AdminSurvey | null }) => {
                 }))
               }
             >
-              <option value="draft">Brouillon — invisible du public</option>
-              <option value="published">Publié — répond et affiche</option>
+              <option value="draft">Brouillon, invisible du public</option>
+              <option value="published">Publié, répond et affiche</option>
               <option value="closed">
-                Clôturé — graphique seul, plus de réponses
+                Clôturé, graphique seul, plus de réponses
               </option>
             </select>
           </div>
@@ -298,6 +340,7 @@ export const SurveyBuilder = ({ survey }: { survey: AdminSurvey | null }) => {
               >
                 <option value="single">Choix unique</option>
                 <option value="matrix">Matrice (une ligne par item)</option>
+                <option value="multi">Cases à cocher (une ligne par option)</option>
               </select>
 
               <label className="flex items-center gap-2 text-sm">
@@ -331,7 +374,46 @@ export const SurveyBuilder = ({ survey }: { survey: AdminSurvey | null }) => {
               </label>
             </div>
 
-            {question.kind === "matrix" && (
+            {/* Correction : n'a de sens que sur un quiz, et sur une question
+                à choix unique — une matrice ou des cases à cocher n'ont pas
+                de « bonne » réponse. */}
+            {draft.kind === "quiz" && question.kind === "single" && (
+              <div className="space-y-3 bg-background-beige-dark/50 p-3">
+                <div>
+                  <Label htmlFor={`question-${index}-correct`}>Bonne réponse</Label>
+                  <select
+                    id={`question-${index}-correct`}
+                    className="mt-1 block w-full rounded border border-primary-green/20 px-2 py-1.5 text-sm"
+                    value={question.correct_choice_key}
+                    onChange={(event) =>
+                      patchQuestion(index, { correct_choice_key: event.target.value })
+                    }
+                  >
+                    <option value="">Aucune, question hors score</option>
+                    {question.choices.map((choice) => (
+                      <option key={choice.key} value={choice.key}>
+                        {choice.label || choice.key}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor={`question-${index}-explanation`}>
+                    Explication (HTML)
+                  </Label>
+                  <Textarea
+                    id={`question-${index}-explanation`}
+                    rows={4}
+                    value={question.explanation_html}
+                    onChange={(event) =>
+                      patchQuestion(index, { explanation_html: event.target.value })
+                    }
+                  />
+                </div>
+              </div>
+            )}
+
+            {(question.kind === "matrix" || question.kind === "multi") && (
               <EntryList
                 title="Lignes"
                 entries={question.rows}

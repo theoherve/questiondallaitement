@@ -90,7 +90,7 @@ export function PackHero({
           href="#tarif"
           className="mt-8 inline-flex items-center rounded-md bg-primary-red px-8 py-3.5 text-base font-medium text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:bg-primary-red-dark"
         >
-          {ctaLabel} — {priceLabel}
+          {ctaLabel}, {priceLabel}
         </a>
         <ul
           className={`mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 ${

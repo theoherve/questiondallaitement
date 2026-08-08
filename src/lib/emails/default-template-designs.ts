@@ -135,7 +135,7 @@ const brandFooter = (): Node =>
   section(
     [
       footer([text("Accompagnement en lactation par des consultantes IBCLC.")]),
-      footer([text("© Question d'Allaitement — Tous droits réservés.")]),
+      footer([text("© Question d'Allaitement, Tous droits réservés.")]),
     ],
     { bg: "#fff8f6", padding: [16, 16], marginTop: 8, marginBottom: 0 },
   );
@@ -350,7 +350,7 @@ export const DESIGN_FORMATION_ACCESS = doc([
       paragraph([text("Bonjour "), variable("client_name"), text(",")]),
       paragraph([
         text(
-          "Nous sommes ravies de vous accueillir. Votre accès est activé — vous pouvez dès maintenant retrouver l'ensemble du contenu dans votre espace personnel.",
+          "Nous sommes ravies de vous accueillir. Votre accès est activé, vous pouvez dès maintenant retrouver l'ensemble du contenu dans votre espace personnel.",
         ),
       ]),
       spacer(8),
@@ -569,7 +569,7 @@ export const DESIGN_BOOKING_SLOT_CONFLICT = doc([
       ]),
       paragraph([
         text(
-          "Le remboursement a déjà été effectué. Il apparaîtra sur votre relevé sous 5 à 10 jours ouvrés selon votre banque — vous n'avez aucune démarche à faire.",
+          "Le remboursement a déjà été effectué. Il apparaîtra sur votre relevé sous 5 à 10 jours ouvrés selon votre banque, vous n'avez aucune démarche à faire.",
         ),
       ]),
       spacer(20),
@@ -625,7 +625,7 @@ export const DESIGN_NEWSLETTER_WELCOME = doc([
       ]),
       paragraph([
         text(
-          "« Conservation du lait maternel » — une page à imprimer et coller sur la porte du frigo, pour ne plus avoir à chercher la réponse à 3 h du matin.",
+          "« Conservation du lait maternel », une page à imprimer et coller sur la porte du frigo, pour ne plus avoir à chercher la réponse à 3 h du matin.",
         ),
       ]),
       spacer(20),
@@ -653,7 +653,7 @@ export const DESIGN_NEWSLETTER_WELCOME = doc([
         text("Vous ne souhaitez plus recevoir cette newsletter ? "),
         text("{{unsubscribe_link}}"),
       ]),
-      footer([text("© Question d'Allaitement — Tous droits réservés.")]),
+      footer([text("© Question d'Allaitement, Tous droits réservés.")]),
     ],
     { bg: "#fff8f6", padding: [16, 16], marginTop: 8, marginBottom: 0 },
   ),
@@ -681,17 +681,17 @@ export const DEFAULT_TEMPLATE_DESIGNS: Record<string, Node> = {
  * « migration_welcome ».
  */
 export const TEMPLATE_DEFAULT_SUBJECTS: Record<string, string> = {
-  booking_confirmation: "Votre réservation est confirmée — {{date}}",
+  booking_confirmation: "Votre réservation est confirmée, {{date}}",
   booking_reminder: "Rappel : votre consultation demain à {{time}}",
   booking_cancelled: "Votre réservation du {{date}} a été annulée",
   accompagnement_access:
     "Votre accompagnement « {{accompagnement_title}} » est disponible",
   welcome: "Bienvenue sur Question d'Allaitement",
-  newsletter_welcome: "Bienvenue — votre mémo est à l'intérieur",
+  newsletter_welcome: "Bienvenue, votre mémo est à l'intérieur",
   password_reset: "Réinitialisation de votre mot de passe",
   migration_welcome: "Votre espace Question d'Allaitement a migré",
   booking_slot_conflict:
-    "Votre réservation n'a pas pu être confirmée — vous êtes remboursée",
+    "Votre réservation n'a pas pu être confirmée, vous êtes remboursée",
 };
 
 export const TEMPLATE_DEFAULT_VARIABLES: Record<string, string[]> = {

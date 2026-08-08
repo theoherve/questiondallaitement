@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { formationSchema } from "@/validations/formations";
 import { normalizeRichText } from "@/lib/html/rich-text";
 import { filterFormationHighlightKeys } from "@/config/formation-highlights";
+import { slugifyProviderName } from "@/lib/formations/providers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/types";
@@ -13,6 +14,51 @@ const requireAdmin = async () => {
   const user = await getSessionUser();
   if (!user || !user.roles.includes("admin")) redirect("/connexion");
   return user;
+};
+
+// ─── Create Training Provider ───────────────────────────────────
+
+/**
+ * Cree un organisme de formation a la volee depuis le formulaire.
+ *
+ * Le catalogue d'organismes n'a pas d'ecran d'administration : sans cela, une
+ * formation portee par un nouveau partenaire attendrait une migration. La
+ * creation est idempotente sur le slug — resaisir un nom deja connu renvoie
+ * l'organisme existant plutot qu'une erreur, puisque l'intention est la meme.
+ */
+export const createTrainingProvider = async (
+  name: string,
+): Promise<ActionResult<{ id: string; name: string }>> => {
+  await requireAdmin();
+
+  const trimmed = name.trim();
+  const slug = slugifyProviderName(trimmed);
+  if (trimmed.length < 2 || !slug) {
+    return { success: false, error: "Le nom de l'organisme est requis" };
+  }
+
+  const supabase = createAdminClient();
+  const { data: provider, error } = await supabase
+    .from("training_providers")
+    .insert({ name: trimmed, slug })
+    .select("id, name")
+    .single();
+
+  if (error) {
+    if (error.code === "23505") {
+      const { data: existing } = await supabase
+        .from("training_providers")
+        .select("id, name")
+        .eq("slug", slug)
+        .single();
+      if (existing) return { success: true, data: existing };
+    }
+    console.error("Create training provider error:", error);
+    return { success: false, error: "Erreur lors de la création de l'organisme" };
+  }
+
+  revalidatePath("/admin/formations");
+  return { success: true, data: provider };
 };
 
 // ─── Create Formation ───────────────────────────────────────────
@@ -53,6 +99,10 @@ export const createFormation = async (
       external_url: parsed.data.external_url ?? null,
       consultant_id: parsed.data.consultant_id,
       is_published: parsed.data.is_published,
+      category: parsed.data.category,
+      badge: parsed.data.badge || null,
+      template_id: parsed.data.template_id ?? null,
+      is_evergreen: parsed.data.is_evergreen,
     })
     .select("id, slug")
     .single();
@@ -116,6 +166,10 @@ export const updateFormation = async (
       external_url: parsed.data.external_url ?? null,
       consultant_id: parsed.data.consultant_id,
       is_published: parsed.data.is_published,
+      category: parsed.data.category,
+      badge: parsed.data.badge || null,
+      template_id: parsed.data.template_id ?? null,
+      is_evergreen: parsed.data.is_evergreen,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);

@@ -21,16 +21,22 @@ const EditFormationPage = async ({ params }: Props) => {
   const { id } = await params;
   const supabase = createAdminClient();
 
-  const [formationResult, consultantsResult, providersResult, registrationsCount] =
-    await Promise.all([
-      supabase.from("formations").select("*").eq("id", id).single(),
-      supabase
-        .from("consultants")
-        .select("id, profiles!consultants_id_fkey(first_name, last_name)")
-        .eq("is_active", true),
-      supabase.from("training_providers").select("id, name").order("name"),
-      getFormationRegistrationsCount(id),
-    ]);
+  const [
+    formationResult,
+    consultantsResult,
+    providersResult,
+    templatesResult,
+    registrationsCount,
+  ] = await Promise.all([
+    supabase.from("formations").select("*").eq("id", id).single(),
+    supabase
+      .from("consultants")
+      .select("id, profiles!consultants_id_fkey(first_name, last_name)")
+      .eq("is_active", true),
+    supabase.from("training_providers").select("id, name").order("name"),
+    supabase.from("formation_templates").select("id, title, category").order("title"),
+    getFormationRegistrationsCount(id),
+  ]);
 
   if (formationResult.error || !formationResult.data) {
     notFound();
@@ -52,6 +58,7 @@ const EditFormationPage = async ({ params }: Props) => {
       formation={formation}
       consultants={consultants}
       providers={providersResult.data ?? []}
+      templates={templatesResult.data ?? []}
       mode="edit"
       registrationsCount={registrationsCount}
     />

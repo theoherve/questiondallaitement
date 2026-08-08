@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NewSegmentForm } from "./_form";
 
 export const metadata: Metadata = {
-  title: "Nouveau segment — CRM",
+  title: "Nouveau segment : CRM",
 };
 
 const NewSegmentPage = () => {

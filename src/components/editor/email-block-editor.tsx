@@ -279,7 +279,7 @@ export const EmailBlockEditor = ({
               title={
                 canInsertLogo || canInsertBanner
                   ? "Insérer le logo ou la bannière pré-définis"
-                  : "Aucun visuel configuré — Paramètres plateforme › Identité visuelle des emails"
+                  : "Aucun visuel configuré, Paramètres plateforme › Identité visuelle des emails"
               }
             >
               <PanelTop className="mr-2 h-4 w-4" />

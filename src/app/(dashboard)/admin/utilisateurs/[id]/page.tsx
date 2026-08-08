@@ -43,7 +43,7 @@ export const generateMetadata = async ({
     ? `${data.first_name ?? ""} ${data.last_name ?? ""}`.trim() || "Utilisateur"
     : "Utilisateur";
 
-  return { title: `${name} — Détail utilisateur` };
+  return { title: `${name}, Détail utilisateur` };
 };
 
 const UserDetailPage = async ({ params }: Props) => {

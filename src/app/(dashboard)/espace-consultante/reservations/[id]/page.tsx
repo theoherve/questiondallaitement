@@ -149,7 +149,7 @@ const BookingDetailPage = async ({ params }: Props) => {
           <div className="flex items-center gap-3 text-sm">
             <Clock className="h-4 w-4 text-primary-green/50" />
             <span>
-              {format(new Date(booking.starts_at), "HH:mm")} —{" "}
+              {format(new Date(booking.starts_at), "HH:mm")} ,{" "}
               {format(new Date(booking.ends_at), "HH:mm")} (
               {ct?.duration_minutes ?? 60} min)
             </span>

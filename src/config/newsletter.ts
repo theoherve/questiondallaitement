@@ -45,7 +45,7 @@ export const NEWSLETTER_COPY = {
   badge: "Newsletter",
   title: NEWSLETTER_NAME,
   subtitle:
-    "Chaque semaine, un email court pour comprendre ce qui se passe vraiment avec votre allaitement — sans discours culpabilisant, sans recette toute faite. Juste ce qu'il faut savoir, expliqué par une IBCLC qui a accompagné plus de 5 000 mères.",
+    "Chaque semaine, un email court pour comprendre ce qui se passe vraiment avec votre allaitement, sans discours culpabilisant, sans recette toute faite. Juste ce qu'il faut savoir, expliqué par une IBCLC qui a accompagné plus de 5 000 mères.",
   cta: "Je m'inscris",
 
   /**
@@ -85,7 +85,7 @@ export const NEWSLETTER_COPY = {
 
   rhythm: {
     title: "À quoi vous attendre",
-    body: "Un email le mardi, à lire en cinq minutes. Une question, une réponse claire, et de quoi aller plus loin si vous en avez besoin. Rien d'autre — et un lien de désinscription dans chaque envoi.",
+    body: "Un email le mardi, à lire en cinq minutes. Une question, une réponse claire, et de quoi aller plus loin si vous en avez besoin. Rien d'autre, et un lien de désinscription dans chaque envoi.",
   },
 
   form: {

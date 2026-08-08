@@ -69,7 +69,7 @@ export const RegistrationReconciler = ({
         <>
           <span>
             Votre paiement est bien reçu. Votre inscription s&apos;active dans un
-            instant —
+            instant. Si rien ne bouge, cliquez sur
           </span>
           <button
             type="button"

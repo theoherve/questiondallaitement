@@ -5,6 +5,7 @@ import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Pencil } from "lucide-react";
+import { inheritFromTemplate } from "@/lib/formations/inherit";
 import {
   FormationDetail,
   type FormationDetailConsultant,
@@ -27,7 +28,7 @@ export const generateMetadata = async ({
     .single();
 
   return {
-    title: data ? `Aperçu — ${data.title}` : "Aperçu introuvable",
+    title: data ? `Aperçu : ${data.title}` : "Aperçu introuvable",
     robots: { index: false, follow: false },
   };
 };
@@ -53,6 +54,14 @@ const FormationPreviewPage = async ({ params }: Props) => {
           last_name,
           avatar_url
         )
+      ),
+      formation_templates (
+        summary_html,
+        objectives_html,
+        program_html,
+        audience_html,
+        external_url,
+        badge
       )
     `
     )
@@ -83,7 +92,7 @@ const FormationPreviewPage = async ({ params }: Props) => {
             </Link>
           </Button>
           <p className="text-sm font-medium text-primary-green">
-            Aperçu — {formation.is_published ? "publié" : "brouillon"}. Cette page
+            Aperçu, {formation.is_published ? "publié" : "brouillon"}. Cette page
             n’est pas visible du public.
           </p>
         </div>
@@ -96,7 +105,7 @@ const FormationPreviewPage = async ({ params }: Props) => {
       </div>
 
       <FormationDetail
-        formation={formation as FormationDetailProps["formation"]}
+        formation={inheritFromTemplate(formation) as FormationDetailProps["formation"]}
         consultant={consultant}
         isAlreadyRegistered={false}
         isFullyBooked={false}

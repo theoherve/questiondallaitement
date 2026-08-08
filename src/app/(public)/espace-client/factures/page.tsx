@@ -59,8 +59,8 @@ const ClientInvoicesPage = async () => {
                   <div className="min-w-0">
                     <p className="font-medium">N° {invoice.number}</p>
                     <p className="text-sm text-muted-foreground">
-                      {TYPE_LABELS[invoice.type] ?? invoice.type} —{" "}
-                      {invoice.issuer_legal_name} —{" "}
+                      {TYPE_LABELS[invoice.type] ?? invoice.type} ,{" "}
+                      {invoice.issuer_legal_name} ,{" "}
                       {format(new Date(invoice.issued_at), "d MMM yyyy", {
                         locale: fr,
                       })}

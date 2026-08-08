@@ -118,7 +118,7 @@ export const StepConfirmation = ({
         <SummaryRow
           icon={<User className="h-4 w-4" />}
           label="Contact"
-          value={`${state.contact?.first_name} ${state.contact?.last_name} — ${state.contact?.email}`}
+          value={`${state.contact?.first_name} ${state.contact?.last_name}, ${state.contact?.email}`}
         />
         {state.contact?.reason && (
           <SummaryRow

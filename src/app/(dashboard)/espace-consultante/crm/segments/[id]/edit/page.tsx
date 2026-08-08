@@ -10,7 +10,7 @@ import { EditSegmentForm } from "./_form";
 import type { CrmSegment } from "@/types/database";
 
 export const metadata: Metadata = {
-  title: "Modifier le segment — CRM",
+  title: "Modifier le segment : CRM",
 };
 
 const EditSegmentPage = async ({

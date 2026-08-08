@@ -85,7 +85,7 @@ export const sendBookingConfirmedToConsultant = async (
 
   await sendTransactionalEmail({
     to: consultantEmail,
-    subject: `Réservation confirmée — ${variables.client_name} le ${variables.date}`,
+    subject: `Réservation confirmée : ${variables.client_name} le ${variables.date}`,
     html: `
       <h1>Réservation confirmée</h1>
       <p>Bonjour ${variables.consultant_name},</p>
@@ -251,7 +251,7 @@ export const sendGuestAccountEmail = async (
 
   await sendTransactionalEmail({
     to: clientEmail,
-    subject: "Finalisez votre compte — Question d'Allaitement",
+    subject: "Finalisez votre compte : Question d'Allaitement",
     html: `
       <h1>Bienvenue sur Question d'Allaitement</h1>
       <p>Bonjour ${variables.client_name},</p>
@@ -272,7 +272,7 @@ export const sendBookingCancelledToConsultant = async (
     reason: string;
   },
 ) => {
-  const subject = `Annulation de rendez-vous — ${variables.client_name}`;
+  const subject = `Annulation de rendez-vous, ${variables.client_name}`;
   const html = `
     <h1>Rendez-vous annulé</h1>
     <p>Bonjour ${variables.consultant_name},</p>

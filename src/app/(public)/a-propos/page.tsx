@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "À propos — Carole Hervé",
+  title: "À propos : Carole Hervé",
   description:
     "Consultante en lactation IBCLC depuis plus de 20 ans, auteure de 3 ouvrages de référence, formatrice et conférencière internationale. Découvrez mon parcours et ma vision de l'accompagnement en allaitement.",
 };
@@ -35,7 +35,7 @@ const MILESTONES = [
   },
   {
     year: "2011",
-    text: "Certification IBCLC — le diplôme dont je suis le plus fière. Diplôme en poche, j'enrichis ma formation de dizaines de spécialisations : freins de langue, sommeil, développement de l'enfant, physiologie…",
+    text: "Certification IBCLC, le diplôme dont je suis le plus fière. Diplôme en poche, j'enrichis ma formation de dizaines de spécialisations : freins de langue, sommeil, développement de l'enfant, physiologie…",
   },
   {
     year: "2012",
@@ -47,7 +47,7 @@ const MILESTONES = [
   },
   {
     year: "2019",
-    text: "\"Mon allaitement sur mesure\" sort en librairie. Conférence à GOLD Lactation. J'achète mon cabinet — je peux enfin soutenir les mères au quotidien.",
+    text: "\"Mon allaitement sur mesure\" sort en librairie. Conférence à GOLD Lactation. J'achète mon cabinet : je peux enfin soutenir les mères au quotidien.",
   },
   {
     year: "2021",
@@ -82,7 +82,7 @@ const AProposPage = () => {
                   Je suis Carole Hervé. Depuis plus de 20 ans,
                   j&apos;accompagne les familles avec une approche fondée sur la
                   science, la bienveillance et le respect de votre rythme.
-                  Parce que chaque allaitement est unique — le vôtre aussi.
+                  Parce que chaque allaitement est unique, le vôtre aussi.
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <Button
@@ -113,7 +113,7 @@ const AProposPage = () => {
               <div className="relative aspect-4/5 overflow-hidden">
                 <Image
                   src="/en_consultation.jpg"
-                  alt="Carole Hervé en consultation — accompagnement allaitement"
+                  alt="Carole Hervé en consultation, accompagnement allaitement"
                   fill
                   className="object-cover"
                   priority
@@ -152,7 +152,7 @@ const AProposPage = () => {
               <div className="relative aspect-4/5 overflow-hidden">
                 <Image
                   src="/carole_herve_portrait.jpg"
-                  alt="Carole Hervé — portrait"
+                  alt="Carole Hervé, portrait"
                   fill
                   className="object-cover"
                 />
@@ -171,7 +171,7 @@ const AProposPage = () => {
                   <p>
                     Je me suis brûlé les ailes avant de comprendre combien la
                     maternité pouvait tout bousculer. Un premier allaitement
-                    écourté, puis deux autres tentatives — avec toute la
+                    écourté, puis deux autres tentatives, avec toute la
                     détermination du monde et autant de doutes.
                   </p>
                   <p>
@@ -182,8 +182,8 @@ const AProposPage = () => {
                   <p>
                     La réponse s&apos;est imposée comme une évidence.
                     Accompagner l&apos;allaitement, c&apos;était MA voie.
-                    J&apos;étais cette jeune maman bousculée — pour ne pas dire
-                    perdue — qui naviguait d&apos;associations en lectures, de
+                    J&apos;étais cette jeune maman bousculée, pour ne pas dire
+                    perdue, qui naviguait d&apos;associations en lectures, de
                     groupes de soutien en conférences, à la recherche de
                     réponses que personne ne semblait avoir.
                   </p>
@@ -192,7 +192,7 @@ const AProposPage = () => {
                     formations, séminaires… tout y est passé, mes économies
                     avec. Une grosse année à jongler entre un travail à
                     mi-temps et des études dignes de la première année de
-                    médecine — et me voilà certifiée IBCLC.
+                    médecine, et me voilà certifiée IBCLC.
                   </p>
                   <p>
                     Mon approche est devenue ce qu&apos;elle est
@@ -221,7 +221,7 @@ const AProposPage = () => {
               </h2>
               <p className="mx-auto mt-6 max-w-2xl text-lg text-primary-green/70">
                 L&apos;allaitement n&apos;est pas une performance. C&apos;est
-                une relation, un apprentissage à deux — ou à trois. Mon rôle
+                une relation, un apprentissage à deux ou à trois. Mon rôle
                 est de vous donner les clés pour que cette expérience soit la
                 plus sereine possible.
               </p>
@@ -240,7 +240,7 @@ const AProposPage = () => {
                 </h3>
                 <p className="mt-3 flex-1 leading-relaxed text-primary-green/70">
                   Chaque famille est unique. Mon accompagnement est sans
-                  jugement ni injonction — je suis là pour vous écouter, pas
+                  jugement ni injonction : je suis là pour vous écouter, pas
                   pour vous dicter quoi faire.
                 </p>
               </div>
@@ -403,7 +403,7 @@ const AProposPage = () => {
                 </p>
                 <p className="mt-3 flex-1 text-primary-green/70">
                   Sages-femmes, orthophonistes, ostéopathes, puéricultrices,
-                  médecins — formations reconnues pour leur richesse clinique
+                  médecins : des formations reconnues pour leur richesse clinique
                   et leurs apports pratiques.
                 </p>
               </div>
@@ -422,8 +422,8 @@ const AProposPage = () => {
                   France, Europe et en ligne
                 </p>
                 <p className="mt-3 flex-1 text-primary-green/70">
-                  Interventions dans des congrès internationaux — GOLD
-                  Lactation, conférences en anglais — sur l&apos;allaitement
+                  Interventions dans des congrès internationaux comme GOLD
+                  Lactation, et conférences en anglais sur l&apos;allaitement
                   maternel et la santé périnatale.
                 </p>
               </div>
@@ -442,7 +442,7 @@ const AProposPage = () => {
             <p className="mx-auto mt-6 max-w-xl text-lg text-background-beige/70">
               Que vous soyez en train de lire ces lignes le regard rivé sur
               votre bébé qui dort enfin, ou en pleine préparation d&apos;un
-              allaitement à venir — il existe un accompagnement pour vous.
+              allaitement à venir : il existe un accompagnement pour vous.
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Button

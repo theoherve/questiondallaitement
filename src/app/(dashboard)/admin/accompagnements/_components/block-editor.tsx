@@ -419,7 +419,7 @@ const DownloadBlockEditor = ({
         placeholder="Ex : Guide de l'allaitement (PDF)"
       />
       <p className="text-xs text-muted-foreground">
-        PDF, Word, PowerPoint, Excel, audio, vidéo ou image — 50 Mo maximum. Le
+        PDF, Word, PowerPoint, Excel, audio, vidéo ou image, 50 Mo maximum. Le
         fichier apparaît dans la leçon et dans le panneau « Ressources ».
       </p>
     </div>
@@ -444,6 +444,8 @@ const NAMED_ENTITIES: Record<string, string> = {
   lsquo: "‘",
   ldquo: "“",
   rdquo: "”",
+  // Table de décodage : chaque entité doit rendre son caractère exact. La
+  // chasse aux tirets cadratins porte sur les textes, pas sur ce décodeur.
   mdash: "—",
   ndash: "–",
   eacute: "é",

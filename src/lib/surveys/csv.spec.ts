@@ -6,6 +6,7 @@ const survey: SurveyDefinition = {
   id: "s1",
   slug: "reveils",
   title: "Réveils",
+  kind: "poll",
   intro: null,
   status: "published",
   thank_you_message: "",
@@ -20,6 +21,8 @@ const survey: SurveyDefinition = {
       is_required: true,
       is_segment: false,
       is_charted: true,
+      correct_choice_key: null,
+      explanation_html: null,
     },
   ],
 };
@@ -44,7 +47,7 @@ const response = (
 describe("toSurveyCsv", () => {
   it("produit une colonne par ligne de question", () => {
     const [header] = toSurveyCsv(survey, [response()]).split("\n");
-    expect(header).toContain("Réveils — 0-2 mois");
+    expect(header).toContain("Réveils, 0-2 mois");
   });
 
   it("écrit les libellés, pas les clés techniques", () => {

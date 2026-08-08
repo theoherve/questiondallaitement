@@ -73,6 +73,7 @@ export const saveSurvey = async (
         ...(survey.id ? { id: survey.id } : {}),
         slug: survey.slug,
         title: survey.title,
+        kind: survey.kind,
         intro: survey.intro ?? null,
         status: survey.status,
         thank_you_message: survey.thank_you_message,
@@ -120,6 +121,11 @@ export const saveSurvey = async (
         is_required: question.is_required,
         is_segment: question.is_segment,
         is_charted: question.is_charted,
+        // Sans ces deux colonnes, un simple passage par le formulaire
+        // effacerait la correction d'un quiz : l'upsert réécrit la ligne
+        // entière.
+        correct_choice_key: question.correct_choice_key ?? null,
+        explanation_html: question.explanation_html ?? null,
       })),
       { onConflict: "id" },
     );

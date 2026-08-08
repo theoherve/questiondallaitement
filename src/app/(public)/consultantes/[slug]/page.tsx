@@ -38,7 +38,7 @@ export const generateMetadata = async ({
 
   const name = `${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim();
   const description = data.bio
-    ? `${name} — ${(data.bio as string).slice(0, 150)}`
+    ? `${name}, ${(data.bio as string).slice(0, 150)}`
     : `Consultante certifiée sur Question d'Allaitement`;
 
   return {

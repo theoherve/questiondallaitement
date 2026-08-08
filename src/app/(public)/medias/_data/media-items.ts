@@ -9,7 +9,7 @@ export type MediaItem = {
 export const PODCASTS: MediaItem[] = [
   {
     title: "Allaiter, pourquoi un tel moment de solitude ?",
-    show: "Galère sa Mère — Parents.fr",
+    show: "Galère sa Mère, Parents.fr",
     duration: "36 min",
     href: "https://www.parents.fr/podcast/galere-sa-mere/allaiter-pourquoi-un-tel-moment-de-solitude-432634",
     type: "podcast",
@@ -78,13 +78,13 @@ export const PODCASTS: MediaItem[] = [
   {
     title:
       "Est-ce vraiment mieux d'allaiter mon bébé ?",
-    show: "Sage-Meuf — Europe 1",
+    show: "Sage-Meuf, Europe 1",
     duration: "9 min",
     href: "https://www.youtube.com/watch?v=OIAiNjvkaME",
     type: "podcast",
   },
   {
-    title: "Allaitement et féminisme — Table ronde",
+    title: "Allaitement et féminisme : Table ronde",
     show: "TajineBanane / Papatriarcat",
     duration: "1 h 22 min",
     href: "https://www.youtube.com/watch?v=ZhSHRJpCQzg",
@@ -116,7 +116,7 @@ export const PODCASTS: MediaItem[] = [
   {
     title:
       "Carole Hervé : Allaiter bébé en toute sérénité",
-    show: "Parents Conscients — Métamorphose",
+    show: "Parents Conscients, Métamorphose",
     duration: null,
     href: "https://www.metamorphosepodcast.com/podcast/parents-conscients-carole-herve-et-si-vous-allaitiez-en-tout",
     type: "podcast",
@@ -154,7 +154,7 @@ export const VIDEOS: MediaItem[] = [
   },
   {
     title: "Allaitement & reprise du travail",
-    show: "Les RDV allaitement — Medela",
+    show: "Les RDV allaitement, Medela",
     duration: "29 min",
     href: "https://www.youtube.com/watch?v=6mADq5L_t8k",
     type: "video",
@@ -185,7 +185,7 @@ export const VIDEOS: MediaItem[] = [
   },
   {
     title:
-      "Allaitement : conseils d'une pro — Replay vidéo",
+      "Allaitement : conseils d'une pro, Replay vidéo",
     show: "Parents.fr",
     duration: "32 min",
     href: "https://www.parents.fr/videos/etre-parent/allaitement-conseils-dune-pro-un-replay-video-de-vos-questions-a-carole-herve-consultante-en-lactation-337373",
@@ -223,7 +223,7 @@ export const VIDEOS: MediaItem[] = [
   },
   {
     title: "Allaitement & sexualité",
-    show: "Les RDV allaitement — Medela",
+    show: "Les RDV allaitement, Medela",
     duration: "15 min",
     href: "https://www.youtube.com/watch?v=pqqX3C6moi0",
     type: "video",

@@ -194,7 +194,7 @@ export const ExceptionsTab = ({ exceptions }: ExceptionsTabProps) => {
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {exc.is_available && exc.start_time && exc.end_time
-                        ? `${exc.start_time.slice(0, 5)} — ${exc.end_time.slice(0, 5)}`
+                        ? `${exc.start_time.slice(0, 5)}, ${exc.end_time.slice(0, 5)}`
                         : "Toute la journée"}
                       {exc.reason && ` · ${exc.reason}`}
                     </p>

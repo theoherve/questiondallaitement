@@ -19,7 +19,7 @@ const CgvPage = () => (
     <div className="mt-8 space-y-8 text-sm text-primary-green/80">
       <section>
         <h2 className="font-serif text-xl font-semibold text-primary-green">
-          Article 1 — Objet et parties
+          Article 1 : Objet et parties
         </h2>
         <p className="mt-3">
           Les présentes conditions régissent l&apos;utilisation de la plateforme
@@ -48,7 +48,7 @@ const CgvPage = () => (
 
       <section>
         <h2 className="font-serif text-xl font-semibold text-primary-green">
-          Article 2 — Nature des prestations
+          Article 2 : Nature des prestations
         </h2>
         <ul className="mt-3 list-inside list-disc space-y-1">
           <li>
@@ -72,7 +72,7 @@ const CgvPage = () => (
 
       <section>
         <h2 className="font-serif text-xl font-semibold text-primary-green">
-          Article 3 — Compte utilisateur
+          Article 3 : Compte utilisateur
         </h2>
         <p className="mt-3">
           La création d&apos;un compte est requise pour accéder aux
@@ -85,7 +85,7 @@ const CgvPage = () => (
 
       <section>
         <h2 className="font-serif text-xl font-semibold text-primary-green">
-          Article 4 — Prix et paiement
+          Article 4 : Prix et paiement
         </h2>
         <p className="mt-3">
           Les prix sont indiqués en euros <strong>toutes taxes comprises</strong>
@@ -112,7 +112,7 @@ const CgvPage = () => (
 
       <section>
         <h2 className="font-serif text-xl font-semibold text-primary-green">
-          Article 5 — Annulation et remboursement
+          Article 5 : Annulation et remboursement
         </h2>
         <div className="mt-3 space-y-2">
           <p>
@@ -143,7 +143,7 @@ const CgvPage = () => (
 
       <section>
         <h2 className="font-serif text-xl font-semibold text-primary-green">
-          Article 6 — Droit de rétractation
+          Article 6 : Droit de rétractation
         </h2>
         <p className="mt-3">
           Conformément aux articles L221-18 et suivants du Code de la
@@ -184,7 +184,7 @@ const CgvPage = () => (
 
       <section>
         <h2 className="font-serif text-xl font-semibold text-primary-green">
-          Article 7 — Contestations de paiement
+          Article 7 : Contestations de paiement
         </h2>
         <p className="mt-3">
           En cas de contestation auprès de l&apos;établissement bancaire de la
@@ -198,7 +198,7 @@ const CgvPage = () => (
 
       <section>
         <h2 className="font-serif text-xl font-semibold text-primary-green">
-          Article 8 — Accompagnements en ligne
+          Article 8 : Accompagnements en ligne
         </h2>
         <p className="mt-3">
           L&apos;accès est personnel et incessible, sans limitation de durée,
@@ -209,7 +209,7 @@ const CgvPage = () => (
 
       <section>
         <h2 className="font-serif text-xl font-semibold text-primary-green">
-          Article 9 — Téléconsultation
+          Article 9 : Téléconsultation
         </h2>
         <p className="mt-3">
           Les téléconsultations se tiennent via Zoom. Le lien de connexion est
@@ -221,7 +221,7 @@ const CgvPage = () => (
 
       <section>
         <h2 className="font-serif text-xl font-semibold text-primary-green">
-          Article 10 — Données personnelles
+          Article 10 : Données personnelles
         </h2>
         <p className="mt-3">
           Les traitements de données personnelles sont décrits dans la{" "}
@@ -238,7 +238,7 @@ const CgvPage = () => (
 
       <section>
         <h2 className="font-serif text-xl font-semibold text-primary-green">
-          Article 11 — Litiges
+          Article 11 : Litiges
         </h2>
         <p className="mt-3">
           En cas de litige, une solution amiable sera recherchée avant toute
