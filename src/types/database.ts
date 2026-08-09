@@ -638,6 +638,30 @@ export type Notification = {
   created_at: string;
 };
 
+export type NotificationChannelName = "in_app" | "email";
+
+/**
+ * Un écart au défaut, et rien d'autre. Les défauts vivent dans
+ * `src/lib/notifications/preference-categories.ts` : les stocker en base
+ * imposerait un backfill à chaque nouvelle catégorie.
+ */
+export type NotificationPreference = {
+  user_id: string;
+  category_key: string;
+  channel: NotificationChannelName;
+  enabled: boolean;
+  updated_at: string;
+};
+
+export type NotificationBroadcast = {
+  id: string;
+  event: string;
+  rule: Record<string, unknown>;
+  recipient_count: number;
+  truncated: boolean;
+  created_at: string;
+};
+
 export type BioLinkKind = "link" | "header";
 
 /**
