@@ -13,3 +13,5 @@ export type {
   NotificationEvent,
   NotificationRecipient,
 } from "./types";
+export { resolveAudience } from "./audience";
+export type { AudienceRule } from "./audience";
