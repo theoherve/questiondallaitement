@@ -8,7 +8,15 @@ export type NotificationChannel = "in_app" | "email";
  * dès la compilation.
  */
 export type NotificationDataMap = {
-  booking_confirmed: { booking_id: string; consultation_title?: string };
+  booking_confirmed: {
+    booking_id: string;
+    consultation_title?: string;
+    client_name?: string;
+    consultant_name?: string;
+    date?: string;
+    time?: string;
+    zoom_join_url?: string;
+  };
   booking_reminder: {
     booking_id: string;
     time: string;
@@ -20,7 +28,7 @@ export type NotificationDataMap = {
   payment_received: { amount: string; label: string };
   invoice_available: { invoice_id: string; number: string; amount: string };
   accompagnement_access: {
-    accompagnement_slug: string;
+    accompagnement_id: string;
     title: string;
     client_name: string;
   };
@@ -29,7 +37,10 @@ export type NotificationDataMap = {
   consultant_new_booking: {
     booking_id: string;
     client_name: string;
+    consultant_name: string;
     date: string;
+    time: string;
+    zoom_host_url?: string;
   };
   consultant_booking_cancelled: {
     booking_id: string;

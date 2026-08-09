@@ -47,10 +47,40 @@ describe("NOTIFICATION_CATALOG", () => {
     expect(title).toContain("confirmée");
   });
 
-  it("pointe booking_confirmed vers la réservation concernée", () => {
+  // Il n'existe pas de route /espace-client/reservations/[id] : la liste est la
+  // seule cible atteignable.
+  it("pointe booking_confirmed vers la liste des réservations", () => {
     const def = NOTIFICATION_CATALOG.booking_confirmed;
     expect(def.href?.({ booking_id: "b1", consultation_title: "Bilan" })).toBe(
-      "/espace-client/reservations/b1"
+      "/espace-client/reservations"
     );
+  });
+
+  it("ne construit que des liens internes ou absolus connus", () => {
+    const sample = {
+      booking_id: "b1",
+      invoice_id: "i1",
+      accompagnement_id: "a1",
+      formation_id: "f1",
+      title: "Titre",
+      number: "2026-0142",
+      date: "14 août",
+      time: "10h30",
+      amount: "60,00 €",
+      client_name: "Camille",
+      consultant_name: "Carole",
+      label: "Consultation",
+      author: "Camille",
+      rating: 5,
+      job: "cron",
+      reason: "timeout",
+    };
+    for (const def of Object.values(NOTIFICATION_CATALOG)) {
+      const href = def.href?.(sample as never);
+      if (href) expect(href.startsWith("/")).toBe(true);
+      for (const action of def.actions?.(sample as never) ?? []) {
+        expect(action.href.startsWith("/")).toBe(true);
+      }
+    }
   });
 });

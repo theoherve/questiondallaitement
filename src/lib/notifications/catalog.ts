@@ -1,4 +1,11 @@
+import {
+  sendAccompagnementAccess,
+  sendBookingConfirmation,
+  sendBookingConfirmedToConsultant,
+} from "@/lib/emails/send";
 import type { NotificationCatalog } from "./types";
+
+const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL ?? "";
 
 /**
  * Source de vérité des événements de notification. Une entrée par événement.
@@ -20,21 +27,28 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
       d.consultation_title
         ? `Votre consultation "${d.consultation_title}" a été confirmée.`
         : "Votre consultation a été confirmée.",
-    href: (d) => `/espace-client/reservations/${d.booking_id}`,
+    // Il n'existe pas de route par réservation : la liste est la seule cible.
+    href: () => "/espace-client/reservations",
+    email: async (to, d) => {
+      // Les variables du template ne sont completes que sur le chemin checkout.
+      // Ailleurs (confirmation manuelle par la consultante), l'email est deja
+      // parti autrement : on ne renvoie rien plutot qu'un template a trous.
+      if (!d.date || !d.time) return;
+      await sendBookingConfirmation(to, {
+        client_name: d.client_name ?? "",
+        consultant_name: d.consultant_name ?? "",
+        date: d.date,
+        time: d.time,
+        zoom_join_url: d.zoom_join_url,
+      });
+    },
   },
   booking_reminder: {
     key: "booking_reminder",
     category: "transactional",
     channels: ["in_app", "email"],
     title: (d) => `Rappel : consultation demain à ${d.time}`,
-    href: (d) => `/espace-client/reservations/${d.booking_id}`,
-    actions: (d) => [
-      {
-        label: "Voir le rendez-vous",
-        href: `/espace-client/reservations/${d.booking_id}`,
-        variant: "primary",
-      },
-    ],
+    href: () => "/espace-client/reservations",
   },
   booking_cancelled: {
     key: "booking_cancelled",
@@ -50,7 +64,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
     channels: ["in_app", "email"],
     title: () => "Consultation reprogrammée",
     body: (d) => `Nouvelle date : ${d.date} à ${d.time}.`,
-    href: (d) => `/espace-client/reservations/${d.booking_id}`,
+    href: () => "/espace-client/reservations",
   },
   payment_received: {
     key: "payment_received",
@@ -69,8 +83,8 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
     href: () => "/espace-client/factures",
     actions: (d) => [
       {
-        label: "Télécharger",
-        href: `/api/invoices/${d.invoice_id}/pdf`,
+        label: "Voir la facture",
+        href: `/factures/${d.invoice_id}`,
         variant: "primary",
       },
     ],
@@ -81,14 +95,20 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
     channels: ["in_app", "email"],
     title: () => "Votre accompagnement est ouvert",
     body: (d) => d.title,
-    href: (d) => `/espace-client/accompagnements/${d.accompagnement_slug}`,
+    href: (d) => `/espace-client/accompagnements/${d.accompagnement_id}`,
     actions: (d) => [
       {
         label: "Commencer",
-        href: `/espace-client/accompagnements/${d.accompagnement_slug}`,
+        href: `/espace-client/accompagnements/${d.accompagnement_id}`,
         variant: "primary",
       },
     ],
+    email: (to, d) =>
+      sendAccompagnementAccess(to, {
+        client_name: d.client_name,
+        accompagnement_title: d.title,
+        access_url: `${siteUrl()}/espace-client/accompagnements/${d.accompagnement_id}`,
+      }),
   },
   formation_registered: {
     key: "formation_registered",
@@ -118,7 +138,15 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
     channels: ["in_app", "email"],
     title: () => "Nouvelle réservation",
     body: (d) => `${d.client_name}, le ${d.date}.`,
-    href: (d) => `/espace-consultante/reservations?booking=${d.booking_id}`,
+    href: () => "/espace-consultante/reservations",
+    email: (to, d) =>
+      sendBookingConfirmedToConsultant(to, {
+        consultant_name: d.consultant_name,
+        client_name: d.client_name,
+        date: d.date,
+        time: d.time,
+        zoom_host_url: d.zoom_host_url,
+      }),
   },
   consultant_booking_cancelled: {
     key: "consultant_booking_cancelled",
@@ -158,7 +186,9 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
     channels: ["in_app"],
     title: () => "Nouvel avis client",
     body: (d) => `${d.author}, ${d.rating} sur 5.`,
-    href: () => "/admin/avis",
+    // Pas de route dediee aux avis dans le backoffice, et aucun emetteur
+    // aujourd'hui : les avis sont des donnees statiques plus un import Google.
+    href: () => "/admin",
   },
   admin_job_failed: {
     key: "admin_job_failed",
