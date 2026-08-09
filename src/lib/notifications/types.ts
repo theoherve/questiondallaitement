@@ -23,7 +23,12 @@ export type NotificationDataMap = {
     client_name: string;
     consultant_name: string;
   };
-  booking_cancelled: { booking_id: string; date: string };
+  booking_cancelled: {
+    booking_id: string;
+    date: string;
+    client_name?: string;
+    refund_info?: string;
+  };
   booking_rescheduled: { booking_id: string; date: string; time: string };
   payment_received: { amount: string; label: string };
   invoice_available: { invoice_id: string; number: string; amount: string };
@@ -45,7 +50,9 @@ export type NotificationDataMap = {
   consultant_booking_cancelled: {
     booking_id: string;
     client_name: string;
+    consultant_name: string;
     date: string;
+    reason: string;
   };
   admin_purchase: { label: string; amount: string; client_name: string };
   admin_refund: { label: string; amount: string; client_name: string };

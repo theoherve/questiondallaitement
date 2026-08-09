@@ -1,5 +1,7 @@
 import {
   sendAccompagnementAccess,
+  sendBookingCancelled,
+  sendBookingCancelledToConsultant,
   sendBookingConfirmation,
   sendBookingConfirmedToConsultant,
 } from "@/lib/emails/send";
@@ -55,8 +57,17 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
     category: "transactional",
     channels: ["in_app", "email"],
     title: () => "Consultation annulée",
-    body: (d) => `Votre consultation du ${d.date} a été annulée.`,
+    body: (d) =>
+      d.refund_info
+        ? `Votre consultation du ${d.date} a été annulée. ${d.refund_info}`
+        : `Votre consultation du ${d.date} a été annulée.`,
     href: () => "/espace-client/reservations",
+    email: (to, d) =>
+      sendBookingCancelled(to, {
+        client_name: d.client_name ?? "",
+        date: d.date,
+        refund_info: d.refund_info ?? "Aucun remboursement.",
+      }),
   },
   booking_rescheduled: {
     key: "booking_rescheduled",
@@ -155,6 +166,13 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
     title: () => "Réservation annulée",
     body: (d) => `${d.client_name}, le ${d.date}.`,
     href: () => "/espace-consultante/reservations",
+    email: (to, d) =>
+      sendBookingCancelledToConsultant(to, {
+        consultant_name: d.consultant_name,
+        client_name: d.client_name,
+        date: d.date,
+        reason: d.reason,
+      }),
   },
   admin_purchase: {
     key: "admin_purchase",
