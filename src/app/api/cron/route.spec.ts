@@ -2,12 +2,19 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // `vi.mock` est hissé en haut du fichier : les mocks qu'il référence doivent
 // être créés par `vi.hoisted`, sinon ils n'existent pas encore à l'exécution.
-const { notify, getRoleRecipients } = vi.hoisted(() => ({
+const { notify, getRoleRecipients, resolveAudience } = vi.hoisted(() => ({
   notify: vi.fn().mockResolvedValue(undefined),
   getRoleRecipients: vi.fn().mockResolvedValue([]),
+  resolveAudience: vi
+    .fn()
+    .mockResolvedValue([{ userId: "c1", email: "c1@b.fr" }]),
 }));
 
-vi.mock("@/lib/notifications", () => ({ notify, getRoleRecipients }));
+vi.mock("@/lib/notifications", () => ({
+  notify,
+  getRoleRecipients,
+  resolveAudience,
+}));
 vi.mock("@/lib/emails/send", () => ({
   sendBlogPostPublishedNotification: vi.fn().mockResolvedValue(undefined),
 }));
@@ -138,5 +145,35 @@ describe("cron", () => {
     expect(failure).toBeDefined();
     expect(failure![2]).toMatchObject({ reason: "Supabase timeout" });
     consoleSpy.mockRestore();
+  });
+});
+
+describe("cron et les articles de blog", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.CRON_SECRET = "s3cr3t";
+    for (const key of Object.keys(tableData)) delete tableData[key];
+    resolveAudience.mockResolvedValue([{ userId: "c1", email: "c1@b.fr" }]);
+  });
+
+  it("notifie la publication d'un article programmé", async () => {
+    tableData.blog_posts = [
+      { id: "post-1", slug: "sommeil", title: "Le sommeil" },
+    ];
+
+    await GET(authorized());
+
+    const call = notify.mock.calls.find((c) => c[0] === "blog_post_published");
+    expect(call).toBeDefined();
+    expect(call![2]).toMatchObject({ post_id: "post-1", slug: "sommeil" });
+    expect(call![3]).toMatchObject({ dedupeId: "post-1" });
+  });
+
+  it("ne notifie aucun article quand rien n'est programmé", async () => {
+    await GET(authorized());
+
+    expect(
+      notify.mock.calls.find((c) => c[0] === "blog_post_published")
+    ).toBeUndefined();
   });
 });

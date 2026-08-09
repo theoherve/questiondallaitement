@@ -9,7 +9,12 @@ export type AudienceRule =
   | { kind: "role"; role: "admin" | "consultant" }
   | { kind: "segment"; segmentId: string }
   /** Toutes les clientes ayant souscrit au moins un accompagnement. */
-  | { kind: "accompagnement_holders" };
+  | { kind: "accompagnement_holders" }
+  /**
+   * Toutes les clientes ayant un compte. Le filtrage se fait ensuite par les
+   * préférences : c'est l'audience d'un contenu ouvert, comme le blog.
+   */
+  | { kind: "all_clients" };
 
 type ResolveOptions = {
   /**
@@ -43,6 +48,13 @@ export const resolveAudience = async (
 
   if (rule.kind === "role") {
     resolved = await getRoleRecipients(rule.role);
+  } else if (rule.kind === "all_clients") {
+    const stats = await loadClientStats();
+    resolved = stats.map((c) => ({
+      userId: c.id,
+      email: c.email,
+      unsubscribeToken: c.unsubscribe_token,
+    }));
   } else if (rule.kind === "accompagnement_holders") {
     const stats = await loadClientStats();
     resolved = stats

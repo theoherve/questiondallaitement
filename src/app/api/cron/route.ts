@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendBlogPostPublishedNotification } from "@/lib/emails/send";
-import { notify, getRoleRecipients } from "@/lib/notifications";
+import { notify, getRoleRecipients, resolveAudience } from "@/lib/notifications";
 import { format, addDays, startOfDay, endOfDay, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { revalidatePath } from "next/cache";
@@ -39,7 +39,7 @@ export const GET = async (request: Request) => {
   const now = new Date().toISOString();
   const { data: scheduledPosts } = await supabase
     .from("blog_posts")
-    .select("id, slug")
+    .select("id, slug, title")
     .eq("status", "scheduled")
     .lte("scheduled_at", now)
     .is("deleted_at", null);
@@ -55,6 +55,25 @@ export const GET = async (request: Request) => {
       revalidatePath("/blog");
       for (const post of scheduledPosts) {
         revalidatePath(`/blog/${post.slug}`);
+      }
+
+      // Annonce aux clientes. Le dedupeId sur l'identifiant de l'article
+      // garantit qu'un article republie ou corrige ne renotifie pas.
+      const blogRecipients = await resolveAudience("blog_post_published", {
+        kind: "all_clients",
+      });
+
+      for (const post of scheduledPosts) {
+        await notify(
+          "blog_post_published",
+          blogRecipients,
+          {
+            post_id: post.id,
+            slug: post.slug,
+            title: (post as { title?: string }).title ?? "",
+          },
+          { dedupeId: post.id },
+        );
       }
 
       // Notify admins
