@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { Menu, X, User, LogOut, Bell, Stethoscope, Shield, Megaphone } from "lucide-react";
+import { Menu, X, User, LogOut, Stethoscope, Shield, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AccompagnementsMegaMenu } from "@/components/layout/accompagnements-mega-menu";
 import type { AccompagnementsNavPreview } from "@/lib/accompagnements/nav-preview";
@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { publicNav, getClientNav, PACK_SALES_PATH } from "@/config/navigation";
 import { features } from "@/config/features";
 import { getNavIcon } from "@/config/navigation-icons";
@@ -24,7 +25,6 @@ import {
   isMarketingManagerOnly,
 } from "@/constants/roles";
 import type { SessionUser } from "@/lib/auth";
-import type { Notification } from "@/types/database";
 
 type HeaderProps = {
   user: SessionUser | null;
@@ -36,28 +36,6 @@ const ACCOMPAGNEMENTS_HREF = "/accompagnements";
 
 export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-
-  useEffect(() => {
-    if (!user) return;
-    const fetchNotifications = async () => {
-      try {
-        const res = await fetch("/api/notifications");
-        if (res.ok) {
-          const data = (await res.json()) as Notification[];
-          setNotifications(data);
-        }
-      } catch {
-        // silently fail
-      }
-    };
-    fetchNotifications();
-  }, [user]);
-
-  const markAllRead = async () => {
-    const res = await fetch("/api/notifications/read-all", { method: "PATCH" });
-    if (res.ok) setNotifications([]);
-  };
 
   // Close menu on browser back/forward navigation
   useEffect(() => {
@@ -125,7 +103,15 @@ export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
           {/* Desktop right — icon-only user + CTA */}
           <div className="hidden items-center gap-2 lg:flex">
             {user ? (
-              <DropdownMenu onOpenChange={(open) => { if (open && notifications.length > 0) markAllRead(); }}>
+              <>
+              <NotificationBell
+                historyHref={
+                  isConsultant(user.roles) || isAdmin(user.roles)
+                    ? "/espace-consultante/notifications"
+                    : "/espace-client/notifications"
+                }
+              />
+              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
@@ -134,29 +120,9 @@ export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
                     aria-label="Mon compte"
                   >
                     <User className="h-4 w-4" />
-                    {notifications.length > 0 && (
-                      <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-primary-red" />
-                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64">
-                  {notifications.length > 0 && (
-                    <>
-                      <DropdownMenuLabel className="flex items-center gap-1.5 text-xs font-medium text-primary-green">
-                        <Bell className="h-3 w-3" />
-                        Notifications
-                      </DropdownMenuLabel>
-                      {notifications.slice(0, 3).map((n) => (
-                        <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-0.5">
-                          <span className="text-xs font-medium">{n.title}</span>
-                          {n.body && (
-                            <span className="text-xs text-muted-foreground line-clamp-1">{n.body}</span>
-                          )}
-                        </DropdownMenuItem>
-                      ))}
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
                   <DropdownMenuLabel className="truncate text-xs font-normal text-muted-foreground">
                     {user.email}
                   </DropdownMenuLabel>
@@ -225,6 +191,7 @@ export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
                   </form>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </>
             ) : (
               <Button
                 asChild
@@ -330,6 +297,13 @@ export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
                     {item.title}
                   </Link>
                 ))}
+                <Link
+                  href="/espace-client/notifications"
+                  className="py-2 text-base font-medium text-primary-green/70 transition-colors hover:text-primary-red"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Mes notifications
+                </Link>
                 {isConsultant(user.roles) && (
                   <Link
                     href="/espace-consultante"
