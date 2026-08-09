@@ -8,12 +8,14 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 const sendInvoiceEmail = vi.fn();
+const sendReplayEmail = vi.fn();
 
 vi.mock("./catalog", () => ({
   NOTIFICATION_CATALOG: {
     invoice_available: {
       key: "invoice_available",
       category: "transactional",
+      preferenceKey: "paiements",
       channels: ["in_app", "email"],
       title: () => "Votre facture est disponible",
       body: (d: { number: string; amount: string }) =>
@@ -27,11 +29,33 @@ vi.mock("./catalog", () => ({
     admin_message: {
       key: "admin_message",
       category: "system",
+      preferenceKey: "systeme",
       channels: ["in_app"],
       title: () => "Message de l'équipe",
     },
+    replay_published: {
+      key: "replay_published",
+      category: "marketing",
+      preferenceKey: "replays",
+      channels: ["in_app", "email"],
+      title: () => "Nouveau replay",
+      email: (to: string, d: unknown) => sendReplayEmail(to, d),
+    },
   },
 }));
+
+// `vi.hoisted` est obligatoire : `vi.mock` est hissé en haut du fichier, un
+// `const` ordinaire n'existerait pas encore quand la fabrique s'exécute.
+const { loadPreferences } = vi.hoisted(() => ({
+  loadPreferences: vi.fn().mockResolvedValue({}),
+}));
+
+vi.mock("./preferences", async (importOriginal) => {
+  // `resolveChannels` reste le vrai : c'est lui qu'on veut voir appliquer les
+  // écarts renvoyés par le faux `loadPreferences`.
+  const actual = await importOriginal<typeof import("./preferences")>();
+  return { ...actual, loadPreferences };
+});
 
 import { notify } from "./notify";
 
@@ -150,5 +174,80 @@ describe("notify", () => {
 
     expect(mockUpsert).toHaveBeenCalledTimes(2);
     consoleSpy.mockRestore();
+  });
+});
+
+/**
+ * `replay_published` n'existe que dans le catalogue simulé ci-dessus : il
+ * rejoint le vrai catalogue, et donc `NotificationDataMap`, à la tâche 11. Cet
+ * alias laisse les tests de préférence s'appuyer dessus sans créer une entrée
+ * à moitié dans le catalogue réel.
+ */
+const notifyUntyped = notify as unknown as (
+  event: string,
+  recipients: { userId: string; email?: string | null }[],
+  data: Record<string, unknown>,
+  options?: Record<string, unknown>
+) => Promise<void>;
+
+describe("notify et les préférences", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUpsert.mockResolvedValue({ error: null });
+    sendReplayEmail.mockResolvedValue(undefined);
+    loadPreferences.mockResolvedValue({});
+  });
+
+  it("ne lit pas les préférences pour un événement transactionnel", async () => {
+    await notify("invoice_available", [{ userId: "u1", email: "a@b.fr" }], {
+      invoice_id: "i1",
+      number: "2026-0142",
+      amount: "60,00 €",
+    });
+    expect(loadPreferences).not.toHaveBeenCalled();
+  });
+
+  it("lit les préférences pour un événement marketing", async () => {
+    await notifyUntyped("replay_published", [{ userId: "u1", email: "a@b.fr" }], {});
+    expect(loadPreferences).toHaveBeenCalledWith("u1");
+  });
+
+  it("respecte une coupure du canal email sur un événement marketing", async () => {
+    loadPreferences.mockResolvedValue({ "replays:email": false });
+
+    await notifyUntyped("replay_published", [{ userId: "u1", email: "a@b.fr" }], {});
+
+    expect(mockUpsert).toHaveBeenCalledTimes(1);
+    expect(sendReplayEmail).not.toHaveBeenCalled();
+  });
+
+  it("n'insère rien quand les deux canaux sont coupés", async () => {
+    loadPreferences.mockResolvedValue({
+      "replays:email": false,
+      "replays:in_app": false,
+    });
+
+    await notifyUntyped("replay_published", [{ userId: "u1", email: "a@b.fr" }], {});
+
+    expect(mockUpsert).not.toHaveBeenCalled();
+    expect(sendReplayEmail).not.toHaveBeenCalled();
+  });
+
+  it("lit les préférences de chaque destinataire séparément", async () => {
+    loadPreferences
+      .mockResolvedValueOnce({ "replays:email": false })
+      .mockResolvedValueOnce({});
+
+    await notifyUntyped(
+      "replay_published",
+      [
+        { userId: "u1", email: "a@b.fr" },
+        { userId: "u2", email: "c@d.fr" },
+      ],
+      {}
+    );
+
+    expect(sendReplayEmail).toHaveBeenCalledTimes(1);
+    expect(sendReplayEmail).toHaveBeenCalledWith("c@d.fr", {});
   });
 });
