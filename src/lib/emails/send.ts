@@ -474,3 +474,84 @@ export const sendReplayPublished = async (
     `,
   });
 };
+
+export const sendBlogPostToClients = async (
+  clientEmail: string,
+  variables: { title: string; post_url: string; unsubscribe_url: string },
+) => {
+  await sendTransactionalEmail({
+    to: clientEmail,
+    subject: `Nouvel article : ${variables.title}`,
+    html: `
+      <h1>${variables.title}</h1>
+      <p>Un nouvel article vient de paraitre sur le blog.</p>
+      <p><a href="${variables.post_url}" style="display:inline-block;padding:12px 24px;background-color:#2F5D50;color:#fff;text-decoration:none;border-radius:6px;">Lire l'article</a></p>
+      <p style="margin-top:32px;font-size:12px;color:#888;">
+        <a href="${variables.unsubscribe_url}">Ne plus recevoir les articles du blog</a>.
+      </p>
+    `,
+  });
+};
+
+export const sendModuleReminder = async (
+  clientEmail: string,
+  variables: {
+    title: string;
+    remaining: number;
+    accompagnement_url: string;
+    unsubscribe_url: string;
+  },
+) => {
+  await sendTransactionalEmail({
+    to: clientEmail,
+    subject: `Vous avez laissé « ${variables.title} » en cours`,
+    html: `
+      <h1>Reprenez quand vous voulez</h1>
+      <p>Il vous reste ${variables.remaining} étape${variables.remaining > 1 ? "s" : ""} dans « ${variables.title} ».</p>
+      <p><a href="${variables.accompagnement_url}" style="display:inline-block;padding:12px 24px;background-color:#2F5D50;color:#fff;text-decoration:none;border-radius:6px;">Reprendre</a></p>
+      <p style="margin-top:32px;font-size:12px;color:#888;">
+        <a href="${variables.unsubscribe_url}">Ne plus recevoir ces rappels</a>.
+      </p>
+    `,
+  });
+};
+
+export const sendReviewRequest = async (
+  clientEmail: string,
+  variables: {
+    client_name: string;
+    review_url: string;
+    unsubscribe_url: string;
+  },
+) => {
+  await sendTransactionalEmail({
+    to: clientEmail,
+    subject: "Votre consultation, en quelques mots ?",
+    html: `
+      <p>Bonjour ${variables.client_name},</p>
+      <p>J'espère que notre échange vous a été utile. Si vous avez un instant,
+      votre retour aide beaucoup les futures mamans à se décider.</p>
+      <p><a href="${variables.review_url}" style="display:inline-block;padding:12px 24px;background-color:#2F5D50;color:#fff;text-decoration:none;border-radius:6px;">Laisser un avis</a></p>
+      <p style="margin-top:32px;font-size:12px;color:#888;">
+        <a href="${variables.unsubscribe_url}">Ne plus recevoir ces demandes</a>.
+      </p>
+    `,
+  });
+};
+
+export const sendWeeklyDigest = async (
+  clientEmail: string,
+  variables: { count: number; highlights: string[]; unsubscribe_url: string },
+) => {
+  await sendTransactionalEmail({
+    to: clientEmail,
+    subject: `Votre semaine : ${variables.count} nouveauté${variables.count > 1 ? "s" : ""}`,
+    html: `
+      <h1>Votre résumé de la semaine</h1>
+      <ul>${variables.highlights.map((h) => `<li>${h}</li>`).join("")}</ul>
+      <p style="margin-top:32px;font-size:12px;color:#888;">
+        <a href="${variables.unsubscribe_url}">Ne plus recevoir ce résumé</a>.
+      </p>
+    `,
+  });
+};

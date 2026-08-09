@@ -68,6 +68,29 @@ export type NotificationDataMap = {
     /** Lien de désinscription, obligatoire dans un email marketing. */
     unsubscribe_url?: string;
   };
+  blog_post_published: {
+    post_id: string;
+    slug: string;
+    title: string;
+    unsubscribe_url?: string;
+  };
+  module_reminder: {
+    accompagnement_id: string;
+    title: string;
+    remaining: number;
+    unsubscribe_url?: string;
+  };
+  review_request: {
+    booking_id: string;
+    client_name: string;
+    review_url: string;
+    unsubscribe_url?: string;
+  };
+  weekly_digest: {
+    count: number;
+    highlights: string[];
+    unsubscribe_url?: string;
+  };
 };
 
 export type NotificationEvent = keyof NotificationDataMap;
