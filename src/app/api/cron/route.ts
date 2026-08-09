@@ -9,6 +9,11 @@ import { runAutomations } from "@/lib/automations/engine";
 import { generateRecurringFormations } from "@/lib/admin-workflows/generate-formations";
 import { scheduleWorkflowActionsForUpcomingFormations } from "@/lib/admin-workflows/scheduler";
 import { executeScheduledActions } from "@/lib/admin-workflows/executor";
+import {
+  runModuleReminders,
+  runReviewRequests,
+  runWeeklyDigest,
+} from "@/lib/notifications/jobs";
 
 /**
  * Previent le backoffice qu'une etape du cron a echoue. Sans cela, l'echec
@@ -259,6 +264,23 @@ export const GET = async (request: Request) => {
     console.error("Failed to execute scheduled actions:", err);
     results.workflow_actions_executed = -1;
     await notifyJobFailure("Execution des actions planifiees", err);
+  }
+
+  // ─── Notifications periodiques ─────────────────────────────
+  // Chaque travail verifie lui-meme sa fenetre : la frequence du cron est
+  // reglee dans le tableau de bord Vercel, elle n'est pas lisible ici.
+  for (const [key, run, label] of [
+    ["module_reminders_sent", runModuleReminders, "Relances d'accompagnement"],
+    ["review_requests_sent", runReviewRequests, "Demandes d'avis"],
+    ["weekly_digests_sent", runWeeklyDigest, "Resume hebdomadaire"],
+  ] as const) {
+    try {
+      results[key] = await run();
+    } catch (err) {
+      console.error(`Failed to run ${key}:`, err);
+      results[key] = -1;
+      await notifyJobFailure(label, err);
+    }
   }
 
   const sixMonthsAgo = new Date();
