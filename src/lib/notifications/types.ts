@@ -62,6 +62,12 @@ export type NotificationDataMap = {
   admin_job_failed: { job: string; reason: string };
   admin_message: { source?: string };
   consultant_message: { source?: string };
+  replay_published: {
+    replay_id: string;
+    title: string;
+    /** Lien de désinscription, obligatoire dans un email marketing. */
+    unsubscribe_url?: string;
+  };
 };
 
 export type NotificationEvent = keyof NotificationDataMap;

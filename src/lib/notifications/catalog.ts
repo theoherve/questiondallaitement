@@ -4,6 +4,7 @@ import {
   sendBookingCancelledToConsultant,
   sendBookingConfirmation,
   sendBookingConfirmedToConsultant,
+  sendReplayPublished,
 } from "@/lib/emails/send";
 import type { NotificationCatalog } from "./types";
 
@@ -247,5 +248,23 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
     preferenceKey: "rendez_vous",
     channels: ["in_app"],
     title: () => "Message de votre consultante",
+  },
+  replay_published: {
+    key: "replay_published",
+    category: "marketing",
+    preferenceKey: "replays",
+    channels: ["in_app", "email"],
+    title: () => "Nouveau replay disponible",
+    body: (d) => d.title,
+    href: () => "/replay-lives",
+    actions: () => [
+      { label: "Regarder", href: "/replay-lives", variant: "primary" },
+    ],
+    email: (to, d) =>
+      sendReplayPublished(to, {
+        title: d.title,
+        replay_url: `${siteUrl()}/replay-lives`,
+        unsubscribe_url: d.unsubscribe_url ?? `${siteUrl()}/espace-client/profil`,
+      }),
   },
 };

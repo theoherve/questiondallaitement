@@ -448,3 +448,29 @@ export const sendNewsletterWelcome = async (
   await sendTransactionalEmail({ to: subscriberEmail, subject, html });
   return true;
 };
+
+/**
+ * Annonce d'un nouveau replay d'atelier.
+ *
+ * Email marketing, donc porteur d'un lien de desinscription : sans lui, l'envoi
+ * n'est pas conforme. En HTML en ligne plutot qu'en template edite, comme
+ * `sendBookingConfirmedToConsultant` : le contenu ne varie pas.
+ */
+export const sendReplayPublished = async (
+  clientEmail: string,
+  variables: { title: string; replay_url: string; unsubscribe_url: string },
+) => {
+  await sendTransactionalEmail({
+    to: clientEmail,
+    subject: `Nouveau replay : ${variables.title}`,
+    html: `
+      <h1>Le replay est en ligne</h1>
+      <p>${variables.title} est disponible dans votre espace.</p>
+      <p><a href="${variables.replay_url}" style="display:inline-block;padding:12px 24px;background-color:#2F5D50;color:#fff;text-decoration:none;border-radius:6px;">Regarder le replay</a></p>
+      <p style="margin-top:32px;font-size:12px;color:#888;">
+        Vous recevez cet email parce que vous avez accès aux ateliers mensuels.
+        <a href="${variables.unsubscribe_url}">Ne plus recevoir ces annonces</a>.
+      </p>
+    `,
+  });
+};
