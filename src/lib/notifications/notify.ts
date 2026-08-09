@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { NOTIFICATION_CATALOG } from "./catalog";
 import { resolveChannels } from "./preferences";
 import type {
+  NotificationChannel,
   NotificationDataMap,
   NotificationEvent,
   NotificationRecipient,
@@ -14,6 +15,14 @@ type NotifyOptions = {
    * pas de doublon.
    */
   dedupeId?: string;
+  /**
+   * Restreint les canaux pour cet appel précis. Utile quand l'email du même
+   * événement est déjà envoyé sur mesure au point d'appel (facture avec PDF,
+   * accès envoyé avec un lien de création de mot de passe) : on veut la ligne
+   * in-app sans redoubler l'email. Ne peut qu'enlever des canaux, jamais en
+   * ajouter un que le catalogue ne déclare pas.
+   */
+  channels?: NotificationChannel[];
 };
 
 /**
@@ -30,7 +39,10 @@ export const notify = async <K extends NotificationEvent>(
   options: NotifyOptions = {}
 ): Promise<void> => {
   const def = NOTIFICATION_CATALOG[event];
-  const channels = resolveChannels(def.category, def.channels);
+  const allowed = resolveChannels(def.category, def.channels);
+  const channels = options.channels
+    ? allowed.filter((c) => options.channels!.includes(c))
+    : allowed;
   const supabase = createAdminClient();
 
   for (const recipient of recipients) {

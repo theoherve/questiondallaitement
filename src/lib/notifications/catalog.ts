@@ -88,7 +88,9 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   invoice_available: {
     key: "invoice_available",
     category: "transactional",
-    channels: ["in_app", "email"],
+    // In-app seulement : l'email de facture part de `src/lib/invoicing`, avec
+    // le PDF en piece jointe. Le rapatrier ici n'apporterait rien.
+    channels: ["in_app"],
     title: () => "Votre facture est disponible",
     body: (d) => `Facture ${d.number}, ${d.amount}.`,
     href: () => "/espace-client/factures",

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildInvoiceContent } from "./build-invoice";
+import { notify } from "@/lib/notifications";
 import { getConsultantBilling } from "./consultant-billing";
 import { isBillingComplete } from "./billing-profile";
 import {
@@ -119,6 +120,25 @@ export const emitInvoiceForPayment = async (
     const invoice = created as
       | (InvoiceEmailRecord & { emailed_at: string | null })
       | null;
+    if (invoice) {
+      // Canal in-app seulement : l'email de facture est un envoi sur mesure,
+      // avec le PDF en piece jointe, juste en dessous. Le dedupeId rend la
+      // notification idempotente comme l'emission elle-meme.
+      await notify(
+        "invoice_available",
+        [{ userId: payment.client_id }],
+        {
+          invoice_id: invoice.id,
+          number: invoice.number,
+          amount: new Intl.NumberFormat("fr-FR", {
+            style: "currency",
+            currency: invoice.currency?.toUpperCase() ?? "EUR",
+          }).format(invoice.amount_ttc_cents / 100),
+        },
+        { dedupeId: invoice.id },
+      );
+    }
+
     if (invoice && !invoice.emailed_at) {
       try {
         await sendInvoiceEmail(invoice);

@@ -698,6 +698,34 @@ const handleFormationRegistration = async (
     },
     { onConflict: "formation_id,client_id" },
   );
+
+  try {
+    const { data: formation } = await getSupabase()
+      .from("formations")
+      .select("title, starts_at")
+      .eq("id", eventId)
+      .maybeSingle();
+
+    if (formation) {
+      await notify(
+        "formation_registered",
+        [{ userId: clientId }],
+        {
+          formation_id: eventId,
+          title: formation.title,
+          date: new Date(formation.starts_at).toLocaleDateString("fr-FR", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }),
+        },
+        { dedupeId: eventId },
+      );
+    }
+  } catch {
+    // Non bloquant.
+  }
 };
 
 const formatEuros = (cents: number) =>

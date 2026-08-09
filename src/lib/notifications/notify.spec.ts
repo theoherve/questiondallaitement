@@ -96,6 +96,25 @@ describe("notify", () => {
     );
   });
 
+  it("n'envoie pas l'email quand l'appel restreint les canaux à l'in-app", async () => {
+    await notify(
+      "invoice_available",
+      [{ userId: "u1", email: "a@b.fr" }],
+      invoiceData,
+      { channels: ["in_app"] }
+    );
+    expect(mockUpsert).toHaveBeenCalledTimes(1);
+    expect(sendInvoiceEmail).not.toHaveBeenCalled();
+  });
+
+  it("ne peut pas ajouter un canal que le catalogue ne déclare pas", async () => {
+    await notify("admin_message", [{ userId: "u1", email: "a@b.fr" }], {}, {
+      channels: ["in_app", "email"],
+    });
+    expect(mockUpsert).toHaveBeenCalledTimes(1);
+    expect(sendInvoiceEmail).not.toHaveBeenCalled();
+  });
+
   it("garde la notification in-app quand l'email échoue", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     sendInvoiceEmail.mockRejectedValue(new Error("Resend down"));
