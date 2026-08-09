@@ -10,6 +10,7 @@ import {
   type NewsletterSource,
 } from "@/config/newsletter";
 import { newsletterSignupSchema } from "@/validations/newsletter";
+import { siteConfig } from "@/config/site";
 
 type FieldErrors = Partial<
   Record<"first_name" | "email" | "consent" | "form", string>
@@ -74,7 +75,7 @@ export const NewsletterSignupForm = ({
         setErrors({
           form:
             data?.error ??
-            "Une erreur est survenue, réessayez ou écrivez-nous à contact@questiondallaitement.fr",
+            `Une erreur est survenue, réessayez ou écrivez-nous à ${siteConfig.contactEmail}`,
         });
         return;
       }

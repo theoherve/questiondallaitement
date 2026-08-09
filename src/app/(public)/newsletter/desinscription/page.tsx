@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { siteConfig } from "@/config/site";
 import { findSubscriberByToken } from "@/lib/newsletter/unsubscribe";
 import { UnsubscribePanel } from "./_components/unsubscribe-panel";
 
@@ -37,8 +38,8 @@ const UnsubscribePage = async ({ searchParams }: PageProps) => {
             </h1>
             <p className="mt-6 text-primary-green/70">
               Si vous receviez encore la newsletter, utilisez le lien du dernier
-              email reçu, ou écrivez-nous à contact@questiondallaitement.fr
-              nous nous en occupons.
+              email reçu, ou écrivez-nous à {siteConfig.contactEmail} nous nous
+              en occupons.
             </p>
           </>
         ) : (

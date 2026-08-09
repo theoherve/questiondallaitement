@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Politique de confidentialité",
@@ -24,7 +25,7 @@ const PolitiqueConfidentialitePage = () => (
           Le responsable du traitement des données personnelles collectées sur
           ce site est Carole HERVÉ, entrepreneur individuel (SIRET 540 075 819
           00016), dont le siège social est situé 43 rue Guy Môquet, 75017 Paris.
-          Contact : contact@questiondallaitement.fr
+          Contact : {siteConfig.contactEmail}
         </p>
       </section>
 
@@ -214,11 +215,11 @@ const PolitiqueConfidentialitePage = () => (
         <p className="mt-3 text-sm">
           Pour exercer vos droits, contactez-nous à{" "}
           <a
-            href="mailto:contact@questiondallaitement.fr"
+            href={`mailto:${siteConfig.contactEmail}`}
             className="text-primary-red hover:underline"
             tabIndex={0}
           >
-            contact@questiondallaitement.fr
+            {siteConfig.contactEmail}
           </a>
           . Nous nous engageons à vous répondre dans un délai de 30 jours.
         </p>

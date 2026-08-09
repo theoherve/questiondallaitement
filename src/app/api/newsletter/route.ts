@@ -6,6 +6,7 @@ import {
   trackNewsletterEvent,
 } from "@/lib/newsletter/subscribe";
 import { rateLimit } from "@/lib/rate-limit";
+import { siteConfig } from "@/config/site";
 
 /**
  * Trois inscriptions par adresse IP et par dix minutes. Assez large pour une
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Une erreur est survenue, réessayez ou écrivez-nous à contact@questiondallaitement.fr",
+          `Une erreur est survenue, réessayez ou écrivez-nous à ${siteConfig.contactEmail}`,
       },
       { status: 500 },
     );

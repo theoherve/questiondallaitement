@@ -5,7 +5,7 @@ import { features } from "@/config/features";
 export const dynamic = "force-dynamic";
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "https://questiondallaitement.fr";
+  process.env.NEXT_PUBLIC_APP_URL || "https://www.formation-allaitement.com";
 
 const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
   const supabase = createAdminClient();

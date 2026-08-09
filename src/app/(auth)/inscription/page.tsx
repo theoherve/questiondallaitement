@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { handleRegister } from "../actions";
 
 export const metadata: Metadata = {
@@ -42,6 +43,14 @@ const RegisterPage = async ({ searchParams }: RegisterPageProps) => {
             Compte créé ! Un email de vérification vous a été envoyé. Cliquez sur le lien dans l&apos;email pour activer votre compte.
           </div>
         )}
+        <GoogleSignInButton label="S'inscrire avec Google" />
+        <div className="my-6 flex items-center gap-3">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">
+            ou
+          </span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
         <form action={handleRegister} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

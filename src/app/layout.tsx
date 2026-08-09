@@ -17,7 +17,7 @@ const notoSerif = Noto_Serif({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://questiondallaitement.fr";
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.formation-allaitement.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

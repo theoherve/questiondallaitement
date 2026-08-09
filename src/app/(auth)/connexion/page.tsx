@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { handleLogin, handleResendVerification } from "../actions";
 
 export const metadata: Metadata = {
@@ -45,7 +46,11 @@ const LoginPage = async ({ searchParams }: Props) => {
                 ? "Lien de confirmation invalide. Utilisez le lien reçu par email ou connectez-vous."
                 : params.error === "auth_failed"
                   ? "La confirmation a échoué. Réessayez ou connectez-vous."
-                  : decodeURIComponent(params.error)}
+                  : params.error === "google_no_email"
+                    ? "Votre compte Google n'a pas partagé d'adresse email. Utilisez votre email et votre mot de passe."
+                    : params.error === "google_refused"
+                      ? "Impossible de se connecter avec ce compte Google. Contactez-nous si le problème persiste."
+                      : decodeURIComponent(params.error)}
           </div>
         )}
         {params.unverified_email && (
@@ -60,6 +65,14 @@ const LoginPage = async ({ searchParams }: Props) => {
             </Button>
           </form>
         )}
+        <GoogleSignInButton redirect={params.redirect} label="Se connecter avec Google" />
+        <div className="my-6 flex items-center gap-3">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">
+            ou
+          </span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
         <form action={handleLogin} className="space-y-4">
           {params.redirect && (
             <input type="hidden" name="redirect" value={params.redirect} />

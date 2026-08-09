@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Conditions générales de vente",
@@ -172,10 +173,10 @@ const CgvPage = () => (
           réservation ou de l&apos;achat, et conservées. Hors de ces cas, la
           rétractation s&apos;exerce par simple demande à{" "}
           <a
-            href="mailto:contact@questiondallaitement.fr"
+            href={`mailto:${siteConfig.contactEmail}`}
             className="text-primary-red hover:underline"
           >
-            contact@questiondallaitement.fr
+            {siteConfig.contactEmail}
           </a>
           , sans avoir à se justifier ; le remboursement intervient dans les
           quatorze jours suivant la demande.

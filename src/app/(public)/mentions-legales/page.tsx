@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "Mentions légales",
@@ -39,7 +40,7 @@ const MentionsLegalesPage = () => (
             <strong>Directeur de la publication :</strong> Carole HERVÉ
           </p>
           <p>
-            <strong>Contact :</strong> contact@questiondallaitement.fr
+            <strong>Contact :</strong> {siteConfig.contactEmail}
           </p>
         </div>
       </section>

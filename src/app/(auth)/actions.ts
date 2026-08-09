@@ -356,6 +356,16 @@ export const handleResetPassword = async (
   );
 };
 
+/**
+ * Connexion Google. `signIn` leve la redirection vers Google : rien a faire
+ * apres, et surtout pas de try/catch qui avalerait NEXT_REDIRECT.
+ */
+export const handleGoogleSignIn = async (formData: FormData): Promise<void> => {
+  const redirectTo =
+    (formData.get("redirect") as string | null) || "/espace-client";
+  await signIn("google", { redirectTo });
+};
+
 export const handleLogout = async (): Promise<void> => {
   await signOut({ redirectTo: "/" });
 };
