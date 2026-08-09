@@ -1,4 +1,5 @@
 import type { NotificationAction, NotificationCategory } from "@/types/database";
+import type { NotificationPreferenceKey } from "./preference-categories";
 
 export type NotificationChannel = "in_app" | "email";
 
@@ -70,6 +71,8 @@ export type NotificationRecipient = { userId: string; email?: string | null };
 export type NotificationDefinition<K extends NotificationEvent> = {
   key: K;
   category: NotificationCategory;
+  /** Catégorie visible par l'utilisatrice, qui porte ses préférences. */
+  preferenceKey: NotificationPreferenceKey;
   channels: NotificationChannel[];
   title: (data: NotificationDataMap[K]) => string;
   body?: (data: NotificationDataMap[K]) => string;

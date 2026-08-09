@@ -23,6 +23,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   booking_confirmed: {
     key: "booking_confirmed",
     category: "transactional",
+    preferenceKey: "rendez_vous",
     channels: ["in_app", "email"],
     title: () => "Consultation confirmée",
     body: (d) =>
@@ -48,6 +49,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   booking_reminder: {
     key: "booking_reminder",
     category: "transactional",
+    preferenceKey: "rendez_vous",
     channels: ["in_app", "email"],
     title: (d) => `Rappel : consultation demain à ${d.time}`,
     href: () => "/espace-client/reservations",
@@ -55,6 +57,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   booking_cancelled: {
     key: "booking_cancelled",
     category: "transactional",
+    preferenceKey: "rendez_vous",
     channels: ["in_app", "email"],
     title: () => "Consultation annulée",
     body: (d) =>
@@ -72,6 +75,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   booking_rescheduled: {
     key: "booking_rescheduled",
     category: "transactional",
+    preferenceKey: "rendez_vous",
     channels: ["in_app", "email"],
     title: () => "Consultation reprogrammée",
     body: (d) => `Nouvelle date : ${d.date} à ${d.time}.`,
@@ -80,6 +84,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   payment_received: {
     key: "payment_received",
     category: "transactional",
+    preferenceKey: "paiements",
     channels: ["in_app"],
     title: () => "Paiement reçu",
     body: (d) => `${d.label}, ${d.amount}.`,
@@ -88,6 +93,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   invoice_available: {
     key: "invoice_available",
     category: "transactional",
+    preferenceKey: "paiements",
     // In-app seulement : l'email de facture part de `src/lib/invoicing`, avec
     // le PDF en piece jointe. Le rapatrier ici n'apporterait rien.
     channels: ["in_app"],
@@ -105,6 +111,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   accompagnement_access: {
     key: "accompagnement_access",
     category: "transactional",
+    preferenceKey: "acces_contenus",
     channels: ["in_app", "email"],
     title: () => "Votre accompagnement est ouvert",
     body: (d) => d.title,
@@ -126,6 +133,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   formation_registered: {
     key: "formation_registered",
     category: "transactional",
+    preferenceKey: "acces_contenus",
     channels: ["in_app", "email"],
     title: () => "Inscription confirmée",
     body: (d) => `${d.title}, le ${d.date}.`,
@@ -134,6 +142,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   formation_reminder: {
     key: "formation_reminder",
     category: "transactional",
+    preferenceKey: "acces_contenus",
     channels: ["in_app", "email"],
     title: (d) => `Rappel : ${d.title} demain à ${d.time}`,
     href: (d) => `/espace-client/formations/${d.formation_id}`,
@@ -148,6 +157,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   consultant_new_booking: {
     key: "consultant_new_booking",
     category: "transactional",
+    preferenceKey: "rendez_vous",
     channels: ["in_app", "email"],
     title: () => "Nouvelle réservation",
     body: (d) => `${d.client_name}, le ${d.date}.`,
@@ -164,6 +174,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   consultant_booking_cancelled: {
     key: "consultant_booking_cancelled",
     category: "transactional",
+    preferenceKey: "rendez_vous",
     channels: ["in_app", "email"],
     title: () => "Réservation annulée",
     body: (d) => `${d.client_name}, le ${d.date}.`,
@@ -179,6 +190,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   admin_purchase: {
     key: "admin_purchase",
     category: "system",
+    preferenceKey: "systeme",
     channels: ["in_app"],
     title: () => "Nouvel achat",
     body: (d) => `${d.label}, ${d.amount}, par ${d.client_name}.`,
@@ -187,6 +199,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   admin_refund: {
     key: "admin_refund",
     category: "system",
+    preferenceKey: "systeme",
     channels: ["in_app"],
     title: () => "Remboursement effectué",
     body: (d) => `${d.label}, ${d.amount}, pour ${d.client_name}.`,
@@ -195,6 +208,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   admin_payment_failed: {
     key: "admin_payment_failed",
     category: "system",
+    preferenceKey: "systeme",
     channels: ["in_app", "email"],
     title: () => "Échec de paiement",
     body: (d) => `${d.label}, ${d.client_name}. Motif : ${d.reason}.`,
@@ -203,6 +217,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   admin_new_review: {
     key: "admin_new_review",
     category: "system",
+    preferenceKey: "systeme",
     channels: ["in_app"],
     title: () => "Nouvel avis client",
     body: (d) => `${d.author}, ${d.rating} sur 5.`,
@@ -213,6 +228,7 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   admin_job_failed: {
     key: "admin_job_failed",
     category: "system",
+    preferenceKey: "systeme",
     channels: ["in_app", "email"],
     title: (d) => `Échec : ${d.job}`,
     body: (d) => d.reason,
@@ -221,12 +237,14 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
   admin_message: {
     key: "admin_message",
     category: "system",
+    preferenceKey: "systeme",
     channels: ["in_app"],
     title: () => "Message de l'équipe",
   },
   consultant_message: {
     key: "consultant_message",
     category: "transactional",
+    preferenceKey: "rendez_vous",
     channels: ["in_app"],
     title: () => "Message de votre consultante",
   },
