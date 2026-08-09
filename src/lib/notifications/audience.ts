@@ -14,7 +14,13 @@ export type AudienceRule =
    * Toutes les clientes ayant un compte. Le filtrage se fait ensuite par les
    * préférences : c'est l'audience d'un contenu ouvert, comme le blog.
    */
-  | { kind: "all_clients" };
+  | { kind: "all_clients" }
+  /**
+   * Les personnes ayant explicitement **activé** une catégorie. Utile pour une
+   * catégorie en opt-in comme le digest, où l'absence de préférence vaut
+   * refus : aucune autre règle ne sait exprimer cette audience.
+   */
+  | { kind: "preference_enabled"; categoryKey: string };
 
 type ResolveOptions = {
   /**
@@ -48,6 +54,30 @@ export const resolveAudience = async (
 
   if (rule.kind === "role") {
     resolved = await getRoleRecipients(rule.role);
+  } else if (rule.kind === "preference_enabled") {
+    const client = createAdminClient();
+    const { data: rows } = await client
+      .from("notification_preferences")
+      .select("user_id")
+      .eq("category_key", rule.categoryKey)
+      .eq("enabled", true);
+
+    const userIds = [...new Set((rows ?? []).map((r) => r.user_id))];
+    if (userIds.length === 0) {
+      resolved = [];
+    } else {
+      const { data: profiles } = await client
+        .from("profiles")
+        .select("id, email, notification_unsubscribe_token")
+        .in("id", userIds)
+        .is("deleted_at", null);
+
+      resolved = (profiles ?? []).map((p) => ({
+        userId: p.id,
+        email: p.email,
+        unsubscribeToken: p.notification_unsubscribe_token,
+      }));
+    }
   } else if (rule.kind === "all_clients") {
     const stats = await loadClientStats();
     resolved = stats.map((c) => ({
