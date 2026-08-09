@@ -1,9 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { NotificationType } from "@/types/database";
 
+/** @deprecated Remplacé par `notify()` en tâche 8 du plan notifications. */
 export const createNotification = async (
   userId: string,
-  type: NotificationType,
+  type: string,
   title: string,
   body?: string,
   metadata?: Record<string, unknown>
