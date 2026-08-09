@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { EditSegmentForm } from "./_form";
+import { getTags } from "../../../actions";
 import type { CrmSegment } from "@/types/database";
 
 export const metadata: Metadata = {
@@ -33,6 +34,8 @@ const EditSegmentPage = async ({
 
   if (!segment) notFound();
 
+  const tags = await getTags();
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -52,7 +55,7 @@ const EditSegmentPage = async ({
           <CardTitle className="text-primary-green">{segment.name}</CardTitle>
         </CardHeader>
         <CardContent>
-          <EditSegmentForm segment={segment as CrmSegment} />
+          <EditSegmentForm segment={segment as CrmSegment} tags={tags} />
         </CardContent>
       </Card>
     </div>
