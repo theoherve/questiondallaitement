@@ -7,7 +7,7 @@ import { differenceInHours } from "date-fns";
 import { revalidatePath } from "next/cache";
 import { siteConfig } from "@/config/site";
 import { runAutomations } from "@/lib/automations/engine";
-import { createNotification } from "@/lib/notifications";
+import { notify } from "@/lib/notifications";
 import { computeBookingPrice } from "@/lib/booking/pricing";
 import { consultantCanSell } from "@/lib/invoicing/consultant-billing";
 import { emitInvoiceForPayment } from "@/lib/invoicing/emit";
@@ -53,12 +53,11 @@ export const confirmBooking = async (
         consultation_type_id: booking.consultation_type_id,
         consultation_type_title: ct?.title,
       });
-      await createNotification(
-        booking.client_id,
+      await notify(
         "booking_confirmed",
-        "Réservation confirmée",
-        ct?.title ? `Votre consultation "${ct.title}" a été confirmée.` : "Votre consultation a été confirmée.",
-        { booking_id: bookingId }
+        [{ userId: booking.client_id }],
+        { booking_id: bookingId, consultation_title: ct?.title },
+        { dedupeId: bookingId }
       );
     }
   } catch {

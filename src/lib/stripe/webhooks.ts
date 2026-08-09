@@ -14,7 +14,7 @@ import {
 } from "@/lib/emails/send";
 import { siteConfig } from "@/config/site";
 import { runAutomations } from "@/lib/automations/engine";
-import { createNotification } from "@/lib/notifications";
+import { notify } from "@/lib/notifications";
 import { autoAssignLabelsOnEnrollment } from "@/lib/admin-workflows/labels";
 import { sendGuestSetupEmailIfNeeded } from "@/lib/auth/password-setup";
 import { emitInvoiceForPayment } from "@/lib/invoicing/emit";
@@ -554,14 +554,12 @@ const handleBookingConfirmation = async (
       .select("title")
       .eq("id", meta.consultation_type_id)
       .single();
-    await createNotification(
-      meta.client_id,
+    // dedupeId sur la reference du booking : Stripe rejoue ses evenements.
+    await notify(
       "booking_confirmed",
-      "Réservation confirmée",
-      ct?.title
-        ? `Votre consultation "${ct.title}" a été confirmée.`
-        : "Votre consultation a été confirmée.",
-      { booking_id: meta.reference_id }
+      [{ userId: meta.client_id }],
+      { booking_id: meta.reference_id, consultation_title: ct?.title },
+      { dedupeId: meta.reference_id }
     );
   } catch {
     // Non-blocking
