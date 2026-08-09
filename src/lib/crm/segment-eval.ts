@@ -15,6 +15,7 @@ export type SegmentClientStats = {
   score: number;
   tag_ids: string[];
   has_accompagnement: boolean;
+  unsubscribe_token: string | null;
 };
 
 const NUMERIC_FIELDS = new Set([
@@ -144,7 +145,9 @@ export const loadClientStats = async (
   const [profilesRes, paymentsRes, eventsRes, tagsRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, first_name, last_name, email, created_at")
+      .select(
+        "id, first_name, last_name, email, created_at, notification_unsubscribe_token"
+      )
       .in("id", clientIds)
       .is("deleted_at", null),
     paymentsQuery,
@@ -222,6 +225,7 @@ export const loadClientStats = async (
       score: 0,
       tag_ids: tagIds.get(p.id) ?? [],
       has_accompagnement: (accompagnementCount.get(p.id) ?? 0) > 0,
+      unsubscribe_token: p.notification_unsubscribe_token ?? null,
     };
   });
 };

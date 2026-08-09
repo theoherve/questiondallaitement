@@ -72,7 +72,16 @@ export type NotificationDataMap = {
 
 export type NotificationEvent = keyof NotificationDataMap;
 
-export type NotificationRecipient = { userId: string; email?: string | null };
+export type NotificationRecipient = {
+  userId: string;
+  email?: string | null;
+  /**
+   * Jeton de desinscription du profil. Present, il permet a `notify()` de
+   * construire un lien de desinscription valable sans session dans les emails
+   * marketing.
+   */
+  unsubscribeToken?: string | null;
+};
 
 export type NotificationDefinition<K extends NotificationEvent> = {
   key: K;

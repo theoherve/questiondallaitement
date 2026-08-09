@@ -47,7 +47,11 @@ export const resolveAudience = async (
     const stats = await loadClientStats();
     resolved = stats
       .filter((c) => c.has_accompagnement)
-      .map((c) => ({ userId: c.id, email: c.email }));
+      .map((c) => ({
+        userId: c.id,
+        email: c.email,
+        unsubscribeToken: c.unsubscribe_token,
+      }));
   } else {
     const { data: segment } = await createAdminClient()
       .from("crm_segments")
@@ -63,7 +67,11 @@ export const resolveAudience = async (
     const stats = await loadClientStats();
     resolved = stats
       .filter((client) => matchesConditions(client, conditions))
-      .map((c) => ({ userId: c.id, email: c.email }));
+      .map((c) => ({
+        userId: c.id,
+        email: c.email,
+        unsubscribeToken: c.unsubscribe_token,
+      }));
   }
 
   const truncated = resolved.length > max;

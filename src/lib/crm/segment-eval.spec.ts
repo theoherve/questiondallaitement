@@ -17,6 +17,7 @@ const client = (over: Partial<SegmentClientStats> = {}): SegmentClientStats => (
   score: 50,
   tag_ids: ["tag-instagram"],
   has_accompagnement: true,
+  unsubscribe_token: "tok-1",
   ...over,
 });
 

@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { NOTIFICATION_CATALOG } from "./catalog";
 import { loadPreferences, resolveChannels } from "./preferences";
 import { PREFERENCE_CATEGORIES } from "./preference-categories";
+import { buildUnsubscribeUrl } from "./unsubscribe";
 import type {
   NotificationChannel,
   NotificationDataMap,
@@ -87,7 +88,22 @@ export const notify = async <K extends NotificationEvent>(
 
     if (channels.includes("email") && def.email && recipient.email) {
       try {
-        await def.email(recipient.email, data);
+        // Un email marketing doit porter un lien de desinscription utilisable
+        // sans session. Le jeton etant propre a chaque destinataire, le lien se
+        // construit ici et non dans le catalogue, qui ne voit que la donnee
+        // commune a l'envoi.
+        const payload =
+          !forced && recipient.unsubscribeToken
+            ? {
+                ...data,
+                unsubscribe_url: buildUnsubscribeUrl(
+                  recipient.unsubscribeToken,
+                  def.preferenceKey
+                ),
+              }
+            : data;
+
+        await def.email(recipient.email, payload);
       } catch (error) {
         console.error(
           `notify: email échoué pour ${recipient.email} (${event}):`,

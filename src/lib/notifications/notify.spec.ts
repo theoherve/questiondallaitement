@@ -185,7 +185,11 @@ describe("notify", () => {
  */
 const notifyUntyped = notify as unknown as (
   event: string,
-  recipients: { userId: string; email?: string | null }[],
+  recipients: {
+    userId: string;
+    email?: string | null;
+    unsubscribeToken?: string | null;
+  }[],
   data: Record<string, unknown>,
   options?: Record<string, unknown>
 ) => Promise<void>;
@@ -249,5 +253,47 @@ describe("notify et les préférences", () => {
 
     expect(sendReplayEmail).toHaveBeenCalledTimes(1);
     expect(sendReplayEmail).toHaveBeenCalledWith("c@d.fr", {});
+  });
+});
+
+describe("notify et le lien de désinscription", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUpsert.mockResolvedValue({ error: null });
+    sendReplayEmail.mockResolvedValue(undefined);
+    sendInvoiceEmail.mockResolvedValue(undefined);
+    loadPreferences.mockResolvedValue({});
+  });
+
+  it("ajoute un lien de désinscription porteur du jeton sur un email marketing", async () => {
+    await notifyUntyped(
+      "replay_published",
+      [{ userId: "u1", email: "a@b.fr", unsubscribeToken: "tok-1" }],
+      { title: "Atelier de juillet" }
+    );
+
+    const [, payload] = sendReplayEmail.mock.calls[0];
+    expect(payload.unsubscribe_url).toContain("token=tok-1");
+    expect(payload.unsubscribe_url).toContain("categorie=replays");
+  });
+
+  it("n'ajoute pas de lien de désinscription sur un email transactionnel", async () => {
+    await notify(
+      "invoice_available",
+      [{ userId: "u1", email: "a@b.fr", unsubscribeToken: "tok-1" }],
+      invoiceData
+    );
+
+    const [, payload] = sendInvoiceEmail.mock.calls[0];
+    expect(payload.unsubscribe_url).toBeUndefined();
+  });
+
+  it("se passe du lien quand le destinataire n'a pas de jeton", async () => {
+    await notifyUntyped("replay_published", [{ userId: "u1", email: "a@b.fr" }], {
+      title: "Atelier de juillet",
+    });
+
+    const [, payload] = sendReplayEmail.mock.calls[0];
+    expect(payload.unsubscribe_url).toBeUndefined();
   });
 });
