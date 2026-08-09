@@ -15,6 +15,7 @@ import { Search, Users, Layers } from "lucide-react";
 import Link from "next/link";
 import { getContacts, getTags } from "./actions";
 import { TagsManager } from "./_components/tags-manager";
+import { getSessionUser } from "@/lib/auth";
 import { ClientScore } from "./_components/client-score";
 
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ const CrmPage = async ({
   searchParams: Promise<{ q?: string; tag_id?: string }>;
 }) => {
   const params = await searchParams;
+  const user = await getSessionUser();
   const [contacts, tags] = await Promise.all([
     getContacts({ q: params.q, tag_id: params.tag_id }),
     getTags(),
@@ -45,7 +47,10 @@ const CrmPage = async ({
               Segments
             </Link>
           </Button>
-          <TagsManager tags={tags} />
+          <TagsManager
+            tags={tags}
+            canCreateGlobal={user?.roles.includes("admin") ?? false}
+          />
         </div>
       </div>
 
