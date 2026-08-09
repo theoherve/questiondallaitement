@@ -58,3 +58,6 @@ next-env.d.ts
 # Ne doivent jamais etre versionnes. Les .json deja suivis sont des sauvegardes
 # de contenu editorial, sans donnees clientes.
 /backups/*.sql
+
+# Maquettes de brainstorming (Superpowers), regenerees a la demande
+/.superpowers/
