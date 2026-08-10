@@ -610,15 +610,30 @@ export type LocationConfig = {
   updated_at: string;
 };
 
-export type NotificationType = "booking_confirmed" | "consultant_message" | "admin";
+/**
+ * Le type d'une notification est une clé du catalogue
+ * (`src/lib/notifications/catalog.ts`), pas une liste figée en base : ajouter un
+ * événement ne doit pas demander de migration.
+ */
+export type NotificationCategory = "transactional" | "marketing" | "system";
+
+export type NotificationAction = {
+  label: string;
+  href: string;
+  variant?: "primary" | "secondary";
+};
 
 export type Notification = {
   id: string;
   user_id: string;
-  type: NotificationType;
+  type: string;
+  category: NotificationCategory;
   title: string;
   body: string | null;
+  href: string | null;
+  actions: NotificationAction[] | null;
   metadata: Record<string, unknown> | null;
+  dedupe_key: string | null;
   read_at: string | null;
   created_at: string;
 };

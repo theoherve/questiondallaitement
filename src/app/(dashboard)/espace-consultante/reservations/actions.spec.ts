@@ -105,7 +105,8 @@ vi.mock("@/lib/automations/engine", () => ({
 }));
 
 vi.mock("@/lib/notifications", () => ({
-  createNotification: vi.fn().mockResolvedValue(undefined),
+  notify: vi.fn().mockResolvedValue(undefined),
+  getRoleRecipients: vi.fn().mockResolvedValue([{ userId: "admin-1" }]),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -270,6 +271,55 @@ describe("cancelBooking (espace consultante)", () => {
 
     expect(result.success).toBe(false);
     expect(mockCreateRefund).not.toHaveBeenCalled();
+  });
+
+  it("notifie la cliente et la consultante de l'annulation", async () => {
+    db.bookings = makeBooking("2024-01-20T10:00:00.000Z");
+    const { notify } = await import("@/lib/notifications");
+
+    await cancelBooking(BOOKING_ID, "Empechement", "consultant");
+
+    const toClient = vi
+      .mocked(notify)
+      .mock.calls.find((c) => c[0] === "booking_cancelled");
+    expect(toClient![1]).toEqual([
+      expect.objectContaining({ userId: "client-uuid-001" }),
+    ]);
+    expect(toClient![3]).toMatchObject({ dedupeId: BOOKING_ID });
+
+    const toConsultant = vi
+      .mocked(notify)
+      .mock.calls.find((c) => c[0] === "consultant_booking_cancelled");
+    expect(toConsultant![1]).toEqual([
+      expect.objectContaining({ userId: CONSULTANT_ID }),
+    ]);
+    expect(toConsultant![2]).toMatchObject({ reason: "Empechement" });
+  });
+
+  it("previent le backoffice du remboursement", async () => {
+    db.bookings = makeBooking("2024-01-20T10:00:00.000Z");
+    const { notify } = await import("@/lib/notifications");
+
+    await cancelBooking(BOOKING_ID, "Empechement", "consultant");
+
+    const toAdmin = vi
+      .mocked(notify)
+      .mock.calls.find((c) => c[0] === "admin_refund");
+    expect(toAdmin![2]).toMatchObject({ amount: expect.stringContaining("50") });
+  });
+
+  it("ne previent pas le backoffice sans remboursement", async () => {
+    db.bookings = makeBooking("2024-01-20T10:00:00.000Z", {
+      payment_method: "on_site",
+      payments: [],
+    });
+    const { notify } = await import("@/lib/notifications");
+
+    await cancelBooking(BOOKING_ID, "Empechement", "consultant");
+
+    expect(
+      vi.mocked(notify).mock.calls.find((c) => c[0] === "admin_refund")
+    ).toBeUndefined();
   });
 
   it("trace l'annulation dans les journaux d'audit", async () => {

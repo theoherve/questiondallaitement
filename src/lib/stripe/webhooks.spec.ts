@@ -100,7 +100,7 @@ vi.mock("@/lib/automations/engine", () => ({
 }));
 
 vi.mock("@/lib/notifications", () => ({
-  createNotification: vi.fn().mockResolvedValue(undefined),
+  notify: vi.fn().mockResolvedValue(undefined),
 }));
 
 const mockConfirmRedemption = vi.fn().mockResolvedValue(undefined);

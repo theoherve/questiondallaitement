@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendBookingReminder, sendBlogPostPublishedNotification } from "@/lib/emails/send";
+import { sendBlogPostPublishedNotification } from "@/lib/emails/send";
+import { notify, getRoleRecipients } from "@/lib/notifications";
 import { format, addDays, startOfDay, endOfDay, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { revalidatePath } from "next/cache";
@@ -8,6 +9,22 @@ import { runAutomations } from "@/lib/automations/engine";
 import { generateRecurringFormations } from "@/lib/admin-workflows/generate-formations";
 import { scheduleWorkflowActionsForUpcomingFormations } from "@/lib/admin-workflows/scheduler";
 import { executeScheduledActions } from "@/lib/admin-workflows/executor";
+
+/**
+ * Previent le backoffice qu'une etape du cron a echoue. Sans cela, l'echec
+ * n'existe que dans les logs de la plateforme : personne ne le voit passer.
+ *
+ * Deduplique par jour et par etape, pour qu'un cron horaire en echec ne remplisse
+ * pas la cloche.
+ */
+const notifyJobFailure = async (job: string, err: unknown) => {
+  await notify(
+    "admin_job_failed",
+    await getRoleRecipients("admin"),
+    { job, reason: err instanceof Error ? err.message : String(err) },
+    { dedupeId: `${job}:${format(new Date(), "yyyy-MM-dd")}` },
+  );
+};
 
 export const GET = async (request: Request) => {
   const authHeader = request.headers.get("authorization");
@@ -77,6 +94,7 @@ export const GET = async (request: Request) => {
     .select(
       `
       id,
+      client_id,
       starts_at,
       status,
       profiles!bookings_client_id_fkey(email, first_name, last_name),
@@ -105,17 +123,27 @@ export const GET = async (request: Request) => {
 
     if (client?.email) {
       try {
-        await sendBookingReminder(client.email, {
-          client_name:
-            `${client.first_name ?? ""} ${client.last_name ?? ""}`.trim() ||
-            "Client",
-          consultant_name:
-            `${consultantData?.profiles?.first_name ?? ""} ${consultantData?.profiles?.last_name ?? ""}`.trim() ||
-            "Consultante",
-          time: format(new Date(booking.starts_at), "HH'h'mm", {
-            locale: fr,
-          }),
-        });
+        await notify(
+          "booking_reminder",
+          [{ userId: booking.client_id, email: client.email }],
+          {
+            booking_id: booking.id,
+            client_name:
+              `${client.first_name ?? ""} ${client.last_name ?? ""}`.trim() ||
+              "Client",
+            consultant_name:
+              `${consultantData?.profiles?.first_name ?? ""} ${consultantData?.profiles?.last_name ?? ""}`.trim() ||
+              "Consultante",
+            time: format(new Date(booking.starts_at), "HH'h'mm", {
+              locale: fr,
+            }),
+          },
+          // La date rend la cle unique par jour : un cron relance le meme jour
+          // ne renotifie pas, une relance le lendemain le ferait.
+          {
+            dedupeId: `${booking.id}:${format(new Date(), "yyyy-MM-dd")}`,
+          },
+        );
         remindersSent++;
       } catch (err) {
         console.error(
@@ -190,6 +218,7 @@ export const GET = async (request: Request) => {
   } catch (err) {
     console.error("Failed to generate recurring formations:", err);
     results.recurring_formations_generated = -1;
+    await notifyJobFailure("Generation des ateliers recurrents", err);
   }
 
   // ─── Schedule Workflow Actions ─────────────────────────────
@@ -199,6 +228,7 @@ export const GET = async (request: Request) => {
   } catch (err) {
     console.error("Failed to schedule workflow actions:", err);
     results.workflow_actions_scheduled = -1;
+    await notifyJobFailure("Planification des actions d'atelier", err);
   }
 
   // ─── Execute Scheduled Workflow Actions ────────────────────
@@ -209,6 +239,7 @@ export const GET = async (request: Request) => {
   } catch (err) {
     console.error("Failed to execute scheduled actions:", err);
     results.workflow_actions_executed = -1;
+    await notifyJobFailure("Execution des actions planifiees", err);
   }
 
   const sixMonthsAgo = new Date();

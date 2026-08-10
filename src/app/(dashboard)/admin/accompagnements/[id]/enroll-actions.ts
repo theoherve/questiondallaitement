@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendAccompagnementAccess } from "@/lib/emails/send";
+import { notify } from "@/lib/notifications";
 import { baseUrl } from "@/lib/url";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -161,6 +162,20 @@ const insertEnrollmentAndNotify = async (args: {
       .eq("id", args.clientId);
     accessUrl = `${root}/reset-password?token=${token}`;
   }
+
+  // Canal in-app seulement : l'email d'acces part juste apres avec, pour un
+  // compte tout neuf, un lien de creation de mot de passe que le canal email du
+  // catalogue ne sait pas construire.
+  await notify(
+    "accompagnement_access",
+    [{ userId: args.clientId }],
+    {
+      accompagnement_id: args.accompagnementId,
+      title: args.accompagnementTitle,
+      client_name: args.clientFirstName ?? "",
+    },
+    { dedupeId: args.accompagnementId, channels: ["in_app"] },
+  );
 
   try {
     await sendAccompagnementAccess(args.clientEmail, {

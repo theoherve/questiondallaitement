@@ -17,14 +17,12 @@ import { recordWithdrawalWaiver } from "@/lib/legal/record-waiver";
 import { computeAvailableSlots } from "@/lib/booking/slots";
 import { computeBookingPrice } from "@/lib/booking/pricing";
 import { contactSchema } from "@/validations/bookings";
-import {
-  sendBookingConfirmation,
-  sendNewBookingNotification,
-} from "@/lib/emails/send";
+import { sendNewBookingNotification } from "@/lib/emails/send";
 import { sendGuestSetupEmailIfNeeded } from "@/lib/auth/password-setup";
 import { addMinutes, format, startOfDay, endOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { siteConfig } from "@/config/site";
+import { notify } from "@/lib/notifications";
 import type { ActionResult } from "@/types";
 import type { ConsultationLocation, BookingPaymentMethod, ConsultationTypeDuration } from "@/types/database";
 
@@ -706,14 +704,36 @@ export const createBooking = async (
   const timeFormatted = format(startsAt, "HH:mm");
 
   try {
-    await sendBookingConfirmation(email, {
-      client_name: first_name,
-      consultant_name: consultantName,
-      date: dateFormatted,
-      time: timeFormatted,
-    });
+    await notify(
+      "booking_confirmed",
+      [{ userId: clientId, email }],
+      {
+        booking_id: booking.id,
+        client_name: first_name,
+        consultant_name: consultantName,
+        date: dateFormatted,
+        time: timeFormatted,
+      },
+      { dedupeId: booking.id }
+    );
 
     if (consultantProfile?.email) {
+      // L'email de la consultante reste envoye ici : `sendNewBookingNotification`
+      // porte le motif et le mode de paiement, que le canal email du catalogue
+      // ne transporte pas. Seule la ligne in-app passe par notify().
+      await notify(
+        "consultant_new_booking",
+        [{ userId: formData.consultant_id }],
+        {
+          booking_id: booking.id,
+          client_name: `${first_name} ${last_name}`,
+          consultant_name: consultantName,
+          date: dateFormatted,
+          time: timeFormatted,
+        },
+        { dedupeId: booking.id, channels: ["in_app"] }
+      );
+
       await sendNewBookingNotification(consultantProfile.email, {
         consultant_name: consultantName,
         client_name: `${first_name} ${last_name}`,

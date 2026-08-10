@@ -3,7 +3,7 @@
 import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createRefund } from "@/lib/stripe/connect";
-import { sendBookingCancelled } from "@/lib/emails/send";
+import { notify } from "@/lib/notifications";
 import { differenceInHours, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { siteConfig } from "@/config/site";
@@ -114,13 +114,17 @@ export const cancelBookingClient = async (
       .eq("id", user.id)
       .single();
 
-    if (profile?.email) {
-      await sendBookingCancelled(profile.email, {
-        client_name: profile.first_name ?? "",
+    await notify(
+      "booking_cancelled",
+      [{ userId: user.id, email: profile?.email }],
+      {
+        booking_id: bookingId,
         date: dateStr,
+        client_name: profile?.first_name ?? "",
         refund_info: refundInfo,
-      });
-    }
+      },
+      { dedupeId: bookingId }
+    );
   } catch {
     // Non-blocking
   }

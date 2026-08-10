@@ -6,15 +6,14 @@ import {
   splitAccompagnementRevenue,
   type Collaborator,
 } from "@/lib/stripe/revenue-split";
-import {
-  sendAccompagnementAccess,
-  sendBookingConfirmation,
-  sendBookingConfirmedToConsultant,
-  sendBookingSlotConflict,
-} from "@/lib/emails/send";
+// Les emails de confirmation et d'acces passent desormais par le catalogue de
+// notifications : seul le conflit de creneau reste envoye directement, il n'a
+// pas de notification in-app (la cliente n'a pas de compte a consulter, elle a
+// ete remboursee).
+import { sendBookingSlotConflict } from "@/lib/emails/send";
 import { siteConfig } from "@/config/site";
 import { runAutomations } from "@/lib/automations/engine";
-import { createNotification } from "@/lib/notifications";
+import { notify, getRoleRecipients } from "@/lib/notifications";
 import { autoAssignLabelsOnEnrollment } from "@/lib/admin-workflows/labels";
 import { sendGuestSetupEmailIfNeeded } from "@/lib/auth/password-setup";
 import { emitInvoiceForPayment } from "@/lib/invoicing/emit";
@@ -122,6 +121,12 @@ export const handleCheckoutCompleted = async (
     { amount: session.amount_total, payment_intent: paymentIntentId },
   );
 
+  // Creneau vendu deux fois : la cliente est remboursee, il n'y a pas de vente
+  // a annoncer, ni a elle ni au backoffice.
+  if (!slotConflict) {
+    await notifyPurchase(session, type, client_id, reference_id);
+  }
+
   // Confirmer une reservation qui n'existe pas serait pire que de ne rien
   // envoyer. Idem pour une redelivery : les emails sont deja partis.
   if (bookingOutcome === "created") {
@@ -161,6 +166,37 @@ export const handleChargeRefunded = async (charge: Stripe.Charge) => {
     .eq("stripe_payment_intent_id", paymentIntentId);
 
   await syncBookingAfterRefund(paymentIntentId, refundedAmount, isFullRefund);
+
+  // Un remboursement emis depuis le dashboard Stripe ne passe par aucune action
+  // de l'application : cet evenement est le seul a pouvoir en informer le
+  // backoffice.
+  try {
+    const { data: payment } = await supabase
+      .from("payments")
+      .select("type, client_id, profiles!payments_client_id_fkey(first_name, last_name)")
+      .eq("stripe_payment_intent_id", paymentIntentId)
+      .maybeSingle();
+
+    const profile = payment?.profiles as unknown as {
+      first_name: string | null;
+      last_name: string | null;
+    } | null;
+
+    await notify(
+      "admin_refund",
+      await getRoleRecipients("admin"),
+      {
+        label: PURCHASE_LABELS[payment?.type ?? ""] ?? "Achat",
+        amount: formatEuros(refundedAmount),
+        client_name: profile
+          ? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
+          : "",
+      },
+      { dedupeId: `${paymentIntentId}:${refundedAmount}` },
+    );
+  } catch {
+    // Non bloquant.
+  }
 };
 
 /** Reservations que le remboursement peut encore annuler. */
@@ -554,14 +590,12 @@ const handleBookingConfirmation = async (
       .select("title")
       .eq("id", meta.consultation_type_id)
       .single();
-    await createNotification(
-      meta.client_id,
+    // dedupeId sur la reference du booking : Stripe rejoue ses evenements.
+    await notify(
       "booking_confirmed",
-      "Réservation confirmée",
-      ct?.title
-        ? `Votre consultation "${ct.title}" a été confirmée.`
-        : "Votre consultation a été confirmée.",
-      { booking_id: meta.reference_id }
+      [{ userId: meta.client_id }],
+      { booking_id: meta.reference_id, consultation_title: ct?.title },
+      { dedupeId: meta.reference_id }
     );
   } catch {
     // Non-blocking
@@ -664,6 +698,88 @@ const handleFormationRegistration = async (
     },
     { onConflict: "formation_id,client_id" },
   );
+
+  try {
+    const { data: formation } = await getSupabase()
+      .from("formations")
+      .select("title, starts_at")
+      .eq("id", eventId)
+      .maybeSingle();
+
+    if (formation) {
+      await notify(
+        "formation_registered",
+        [{ userId: clientId }],
+        {
+          formation_id: eventId,
+          title: formation.title,
+          date: new Date(formation.starts_at).toLocaleDateString("fr-FR", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }),
+        },
+        { dedupeId: eventId },
+      );
+    }
+  } catch {
+    // Non bloquant.
+  }
+};
+
+const formatEuros = (cents: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
+    cents / 100,
+  );
+
+const PURCHASE_LABELS: Record<string, string> = {
+  accompagnement: "Accompagnement",
+  booking: "Consultation",
+  formation: "Atelier",
+};
+
+/**
+ * Accuse reception du paiement cote cliente, et previent le backoffice de la
+ * vente. Ne leve jamais : une notification perdue ne doit pas faire echouer un
+ * webhook deja traite.
+ */
+const notifyPurchase = async (
+  session: Stripe.Checkout.Session,
+  type: string,
+  clientId: string,
+  referenceId: string,
+) => {
+  try {
+    const amount = formatEuros(session.amount_total ?? 0);
+    const label = PURCHASE_LABELS[type] ?? "Achat";
+
+    await notify(
+      "payment_received",
+      [{ userId: clientId }],
+      { amount, label },
+      { dedupeId: referenceId },
+    );
+
+    const { data: client } = await getSupabase()
+      .from("profiles")
+      .select("first_name, last_name")
+      .eq("id", clientId)
+      .single();
+
+    const clientName = client
+      ? `${client.first_name ?? ""} ${client.last_name ?? ""}`.trim()
+      : "";
+
+    await notify(
+      "admin_purchase",
+      await getRoleRecipients("admin"),
+      { label, amount, client_name: clientName },
+      { dedupeId: referenceId },
+    );
+  } catch {
+    // Non bloquant.
+  }
 };
 
 const sendCheckoutEmails = async (
@@ -705,10 +821,16 @@ const sendCheckoutEmails = async (
         .single();
 
       if (formation) {
-        await sendAccompagnementAccess(clientProfile.email, {
-          client_name: clientName,
-          accompagnement_title: formation.title,
-        });
+        await notify(
+          "accompagnement_access",
+          [{ userId: clientId, email: clientProfile.email }],
+          {
+            accompagnement_id: referenceId,
+            title: formation.title,
+            client_name: clientName,
+          },
+          { dedupeId: referenceId }
+        );
       }
     }
 
@@ -745,23 +867,36 @@ const sendCheckoutEmails = async (
           minute: "2-digit",
         });
 
-        await sendBookingConfirmation(clientProfile.email, {
-          client_name: clientName,
-          consultant_name: consultantName,
-          date,
-          time,
-          zoom_join_url: booking.zoom_join_url ?? undefined,
-        });
-
-        if (consultantProfile?.email) {
-          await sendBookingConfirmedToConsultant(consultantProfile.email, {
-            consultant_name: consultantName,
+        // Meme dedupeId que la notification posee a l'insertion du booking :
+        // une seule ligne in-app, et l'email ne part que d'ici, ou les
+        // variables du template sont completes.
+        await notify(
+          "booking_confirmed",
+          [{ userId: clientId, email: clientProfile.email }],
+          {
+            booking_id: referenceId,
             client_name: clientName,
+            consultant_name: consultantName,
+            date,
+            time,
+            zoom_join_url: booking.zoom_join_url ?? undefined,
+          },
+          { dedupeId: referenceId }
+        );
+
+        await notify(
+          "consultant_new_booking",
+          [{ userId: consultantId, email: consultantProfile?.email }],
+          {
+            booking_id: referenceId,
+            client_name: clientName,
+            consultant_name: consultantName,
             date,
             time,
             zoom_host_url: booking.zoom_host_url ?? undefined,
-          });
-        }
+          },
+          { dedupeId: referenceId }
+        );
       }
     }
   } catch {
