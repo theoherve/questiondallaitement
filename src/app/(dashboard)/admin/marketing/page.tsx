@@ -15,7 +15,16 @@ import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Plus, Eye, Pencil, Mail, FileText, RefreshCw, Tag } from "lucide-react";
+import {
+  Plus,
+  Eye,
+  Pencil,
+  Mail,
+  FileText,
+  RefreshCw,
+  Tag,
+  Megaphone,
+} from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { SyncButton } from "./_components/sync-button";
@@ -71,12 +80,19 @@ const MarketingPage = async () => {
             Marketing
           </h1>
           <p className="text-sm text-muted-foreground">
-            Gère tes campagnes marketing et les templates transactionnels envoyés
-            automatiquement.
+            Campagnes newsletter, envoyées aux abonnées via Brevo, et templates
+            transactionnels. Pour écrire aux utilisatrices ayant un compte, voir
+            « Messages aux utilisatrices ».
           </p>
         </div>
         <div className="flex items-center gap-2">
           <SyncButton />
+          <Button asChild variant="outline">
+            <Link href="/admin/marketing/messages">
+              <Megaphone className="mr-2 h-4 w-4" />
+              Messages aux utilisatrices
+            </Link>
+          </Button>
           <Button asChild variant="outline">
             <Link href="/admin/marketing/codes-promo">
               <Tag className="mr-2 h-4 w-4" />
@@ -96,7 +112,7 @@ const MarketingPage = async () => {
         <TabsList>
           <TabsTrigger value="campaigns">
             <Mail className="mr-2 h-4 w-4" />
-            Campagnes ({campaigns.length})
+            Campagnes newsletter ({campaigns.length})
           </TabsTrigger>
           <TabsTrigger value="templates">
             <FileText className="mr-2 h-4 w-4" />
