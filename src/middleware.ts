@@ -106,8 +106,14 @@ export const config = {
    *
    * Exclus du matcher plutot qu'ajoutes aux routes publiques : ces deux fichiers
    * n'ont aucune logique d'authentification a traverser.
+   *
+   * `sw.js` et `manifest.webmanifest` sont exclus pour la meme raison, et c'est
+   * vital pour le push : le navigateur refuse d'enregistrer un service worker
+   * qui repond une redirection, et un manifeste renvoye vers /connexion rend
+   * l'installation sur l'ecran d'accueil impossible. Tous deux sont demandes
+   * hors session, avant meme que l'utilisatrice se connecte.
    */
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots\\.txt|sitemap\\.xml|sw\\.js|manifest\\.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

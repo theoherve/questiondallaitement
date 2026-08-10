@@ -88,6 +88,19 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        // Un service worker mis en cache est un service worker qu'on ne peut
+        // plus corriger : le navigateur garderait l'ancienne version pendant
+        // des heures. Le fichier est minuscule, le revalider a chaque fois ne
+        // coute rien.
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate",
+          },
+        ],
+      },
     ];
   },
   async redirects() {
