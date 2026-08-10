@@ -3,6 +3,7 @@ import { NOTIFICATION_CATALOG } from "./catalog";
 import { loadPreferences, resolveChannels } from "./preferences";
 import { PREFERENCE_CATEGORIES } from "./preference-categories";
 import { buildUnsubscribeUrl } from "./unsubscribe";
+import { sendPushToUser } from "./push/send";
 import type {
   NotificationChannel,
   NotificationDataMap,
@@ -109,6 +110,25 @@ export const notify = async <K extends NotificationEvent>(
           `notify: email échoué pour ${recipient.email} (${event}):`,
           error
         );
+      }
+    }
+
+    if (channels.includes("push")) {
+      try {
+        // Le push n'a pas d'adaptateur par evenement : il n'a qu'un titre, un
+        // corps et une cible, exactement ce que le catalogue calcule deja pour
+        // la ligne in-app. Declarer "push" dans les canaux suffit donc.
+        await sendPushToUser(recipient.userId, {
+          title: def.title(data),
+          body: def.body?.(data) ?? null,
+          href: def.href?.(data) ?? null,
+          // Meme tag qu'une notification deja affichee : la nouvelle remplace
+          // l'ancienne au lieu de s'empiler. Sans dedupeId, le nom de
+          // l'evenement suffit a grouper.
+          tag: options.dedupeId ? `${event}:${options.dedupeId}` : event,
+        });
+      } catch (error) {
+        console.error(`notify: push levé (${event}):`, error);
       }
     }
   }
