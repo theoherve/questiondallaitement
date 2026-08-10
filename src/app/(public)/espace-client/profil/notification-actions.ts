@@ -10,7 +10,7 @@ import type { NotificationChannel } from "@/lib/notifications/types";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/types";
 
-const CHANNELS: NotificationChannel[] = ["in_app", "email"];
+const CHANNELS: NotificationChannel[] = ["in_app", "email", "push"];
 
 export const getNotificationPreferences =
   async (): Promise<ChannelOverrides> => {
@@ -40,6 +40,11 @@ export const setNotificationPreference = async (
   }
   if (!CHANNELS.includes(channel)) {
     return { success: false, error: "Canal inconnu" };
+  }
+  // Le garde-fou vaut aussi ici : une server action est appelable directement,
+  // et l'interface qui masque la bascule ne protege rien.
+  if (channel === "push" && category.pushForbidden) {
+    return { success: false, error: "Le push n'est pas disponible ici" };
   }
 
   const { error } = await createAdminClient()

@@ -1,4 +1,6 @@
 export { notify } from "./notify";
+export { sendPushToUser } from "./push/send";
+export type { PushPayload } from "./push/send";
 export { getRoleRecipients } from "./recipients";
 export { NOTIFICATION_CATALOG } from "./catalog";
 export { resolveChannels, loadPreferences } from "./preferences";

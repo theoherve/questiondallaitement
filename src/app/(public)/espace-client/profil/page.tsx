@@ -8,6 +8,8 @@ import { updateClientProfile } from "./actions";
 import { ChangePasswordForm } from "./_components/change-password-form";
 import { NotificationPreferences } from "./_components/notification-preferences";
 import { getNotificationPreferences } from "./notification-actions";
+import { listPushDevices, refreshProfilePage } from "./push-actions";
+import { PushActivation } from "./_components/push-activation";
 import { DeleteAccountDialog } from "./_components/delete-account-dialog";
 
 export const metadata: Metadata = {
@@ -18,6 +20,8 @@ const ProfilePage = async () => {
   const { supabase, user } = await getSupabaseAndUser();
 
   const notificationPreferences = await getNotificationPreferences();
+  const pushDevices = await listPushDevices();
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -105,7 +109,25 @@ const ProfilePage = async () => {
             Vous gardez la main sur tout ce qui n&apos;est pas lié à un achat ou
             à un rendez-vous.
           </p>
-          <NotificationPreferences overrides={notificationPreferences} />
+          <NotificationPreferences
+            overrides={notificationPreferences}
+            pushEnabled={pushDevices.length > 0}
+          />
+
+          {vapidPublicKey && (
+            <div className="mt-6 border-t border-border pt-4">
+              <p className="mb-1 text-sm font-medium">Sur le téléphone</p>
+              <p className="mb-3 text-xs text-muted-foreground">
+                Les notifications s&apos;affichent sur l&apos;appareil, même
+                quand le site est fermé. À activer sur chaque appareil.
+              </p>
+              <PushActivation
+                devices={pushDevices}
+                publicKey={vapidPublicKey}
+                onSubscribed={refreshProfilePage}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 

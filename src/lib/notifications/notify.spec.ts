@@ -37,9 +37,17 @@ vi.mock("./catalog", () => ({
       key: "replay_published",
       category: "marketing",
       preferenceKey: "replays",
-      channels: ["in_app", "email"],
+      channels: ["in_app", "email", "push"],
       title: () => "Nouveau replay",
       email: (to: string, d: unknown) => sendReplayEmail(to, d),
+    },
+    booking_reminder: {
+      key: "booking_reminder",
+      category: "transactional",
+      preferenceKey: "rendez_vous",
+      channels: ["in_app", "email", "push"],
+      title: (d: { time: string }) => `Rappel : consultation demain à ${d.time}`,
+      href: () => "/espace-client/reservations",
     },
   },
 }));
@@ -56,6 +64,12 @@ vi.mock("./preferences", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./preferences")>();
   return { ...actual, loadPreferences };
 });
+
+const { sendPushToUser } = vi.hoisted(() => ({
+  sendPushToUser: vi.fn().mockResolvedValue(1),
+}));
+
+vi.mock("./push/send", () => ({ sendPushToUser }));
 
 import { notify } from "./notify";
 
@@ -295,5 +309,83 @@ describe("notify et le lien de désinscription", () => {
 
     const [, payload] = sendReplayEmail.mock.calls[0];
     expect(payload.unsubscribe_url).toBeUndefined();
+  });
+});
+
+describe("notify et le canal push", () => {
+  const reminderData = {
+    booking_id: "b1",
+    time: "10h",
+    client_name: "Léa",
+    consultant_name: "Carole",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUpsert.mockResolvedValue({ error: null });
+    sendPushToUser.mockResolvedValue(1);
+    loadPreferences.mockResolvedValue({});
+  });
+
+  it("pousse un événement imposé qui déclare le canal", async () => {
+    await notify("booking_reminder", [{ userId: "u1" }], reminderData);
+
+    expect(sendPushToUser).toHaveBeenCalledWith(
+      "u1",
+      expect.objectContaining({
+        title: "Rappel : consultation demain à 10h",
+        href: "/espace-client/reservations",
+      })
+    );
+  });
+
+  it("ne pousse pas un événement qui ne déclare pas le canal", async () => {
+    await notify("admin_message", [{ userId: "u1" }], {});
+    expect(sendPushToUser).not.toHaveBeenCalled();
+  });
+
+  it("respecte le défaut coupé d'une catégorie optionnelle", async () => {
+    await notifyUntyped("replay_published", [{ userId: "u1" }], {});
+    expect(sendPushToUser).not.toHaveBeenCalled();
+  });
+
+  it("pousse une catégorie optionnelle quand la préférence l'autorise", async () => {
+    loadPreferences.mockResolvedValue({ "replays:push": true });
+
+    await notifyUntyped("replay_published", [{ userId: "u1" }], {});
+
+    expect(sendPushToUser).toHaveBeenCalledTimes(1);
+  });
+
+  it("reprend l'identifiant de déduplication dans le tag", async () => {
+    await notify("booking_reminder", [{ userId: "u1" }], reminderData, {
+      dedupeId: "b1",
+    });
+
+    expect(sendPushToUser).toHaveBeenCalledWith(
+      "u1",
+      expect.objectContaining({ tag: "booking_reminder:b1" })
+    );
+  });
+
+  it("garde la notification in-app quand le push échoue", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    sendPushToUser.mockRejectedValue(new Error("web-push down"));
+
+    await expect(
+      notify("booking_reminder", [{ userId: "u1" }], reminderData)
+    ).resolves.toBeUndefined();
+
+    expect(mockUpsert).toHaveBeenCalledTimes(1);
+    expect(consoleSpy).toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
+  it("n'ajoute pas le push quand l'appel restreint les canaux", async () => {
+    await notify("booking_reminder", [{ userId: "u1" }], reminderData, {
+      channels: ["in_app"],
+    });
+
+    expect(sendPushToUser).not.toHaveBeenCalled();
   });
 });
