@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { NOTIFICATION_CATALOG } from "./catalog";
+import { PREFERENCE_CATEGORIES } from "./preference-categories";
 
 describe("NOTIFICATION_CATALOG", () => {
   it("indexe chaque définition sous sa propre clé", () => {
@@ -128,5 +129,49 @@ describe("les messages libres", () => {
     const data = { title: "Fermeture estivale", body: "Du 1er au 15 août." };
     expect(def.title(data)).toBe("Fermeture estivale");
     expect(def.body?.(data)).toBe("Du 1er au 15 août.");
+  });
+});
+
+describe("NOTIFICATION_CATALOG et le canal push", () => {
+  it("ne déclare jamais le push sur une catégorie qui l'interdit", () => {
+    for (const definition of Object.values(NOTIFICATION_CATALOG)) {
+      if (!definition.channels.includes("push")) continue;
+      expect(
+        PREFERENCE_CATEGORIES[definition.preferenceKey].pushForbidden ?? false
+      ).toBe(false);
+    }
+  });
+
+  it("déclare le push exactement sur les événements décidés", () => {
+    const pushed = Object.values(NOTIFICATION_CATALOG)
+      .filter((d) => d.channels.includes("push"))
+      .map((d) => d.key)
+      .sort();
+
+    expect(pushed).toEqual(
+      [
+        "accompagnement_access",
+        "admin_job_failed",
+        "admin_payment_failed",
+        "booking_cancelled",
+        "booking_rescheduled",
+        "booking_reminder",
+        "broadcast_message",
+        "consultant_booking_cancelled",
+        "consultant_new_booking",
+        "formation_reminder",
+        "module_reminder",
+        "replay_published",
+      ].sort()
+    );
+  });
+
+  it("tout événement qui pousse a une cible utilisable", () => {
+    // Un push sans cible ouvrirait la racine du site : la notification serait
+    // vue, et l'utilisatrice ne saurait pas quoi en faire.
+    for (const definition of Object.values(NOTIFICATION_CATALOG)) {
+      if (!definition.channels.includes("push")) continue;
+      expect(definition.href).toBeTypeOf("function");
+    }
   });
 });
