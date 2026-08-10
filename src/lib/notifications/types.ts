@@ -61,6 +61,11 @@ export type NotificationDataMap = {
   admin_new_review: { author: string; rating: number };
   admin_job_failed: { job: string; reason: string };
   admin_message: { source?: string };
+  contact_message_received: {
+    contactMessageId: string;
+    name: string;
+    subject: string;
+  };
   consultant_message: { source?: string };
   replay_published: {
     replay_id: string;

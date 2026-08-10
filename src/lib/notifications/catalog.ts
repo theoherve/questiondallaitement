@@ -248,6 +248,15 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
     channels: ["in_app"],
     title: () => "Message de l'équipe",
   },
+  contact_message_received: {
+    key: "contact_message_received",
+    category: "system",
+    preferenceKey: "systeme",
+    channels: ["in_app"],
+    title: (d) => `Nouveau message de contact : ${d.name}`,
+    body: (d) => d.subject,
+    href: (d) => `/admin/contact/${d.contactMessageId}`,
+  },
   consultant_message: {
     key: "consultant_message",
     category: "transactional",
