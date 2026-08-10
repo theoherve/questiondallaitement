@@ -98,6 +98,7 @@ export type NotificationDataMap = {
     href?: string;
     unsubscribe_url?: string;
   };
+  admin_digest: { count: number; highlights: string[] };
   weekly_digest: {
     count: number;
     highlights: string[];

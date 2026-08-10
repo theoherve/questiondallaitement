@@ -597,3 +597,18 @@ export const sendFreeformMessage = async (
     `,
   });
 };
+
+/** Recapitulatif interne. Pas de lien de desinscription : categorie systeme. */
+export const sendAdminDigest = async (
+  adminEmail: string,
+  variables: { count: number; highlights: string[]; date: string },
+) => {
+  await sendTransactionalEmail({
+    to: adminEmail,
+    subject: `Récapitulatif du ${variables.date} : ${variables.count} événement${variables.count > 1 ? "s" : ""}`,
+    html: `
+      <h1>Récapitulatif du ${variables.date}</h1>
+      <ul>${variables.highlights.map((h) => `<li>${h}</li>`).join("")}</ul>
+    `,
+  });
+};

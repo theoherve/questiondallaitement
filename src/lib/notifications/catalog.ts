@@ -1,5 +1,6 @@
 import {
   sendAccompagnementAccess,
+  sendAdminDigest,
   sendBookingCancelled,
   sendBookingCancelledToConsultant,
   sendBookingConfirmation,
@@ -377,6 +378,24 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
         body: d.body,
         href: d.href ? `${siteUrl()}${d.href}` : undefined,
         unsubscribe_url: d.unsubscribe_url ?? `${siteUrl()}/espace-client/profil`,
+      }),
+  },
+  admin_digest: {
+    key: "admin_digest",
+    category: "system",
+    preferenceKey: "systeme",
+    // Email seul : l'administration voit deja chaque evenement dans sa cloche,
+    // un recapitulatif in-app ferait doublon avec la liste qu'il resume.
+    channels: ["email"],
+    title: (d) => `Récapitulatif : ${d.count} événement${d.count > 1 ? "s" : ""}`,
+    email: (to, d) =>
+      sendAdminDigest(to, {
+        count: d.count,
+        highlights: d.highlights,
+        date: new Date().toLocaleDateString("fr-FR", {
+          day: "numeric",
+          month: "long",
+        }),
       }),
   },
 };
