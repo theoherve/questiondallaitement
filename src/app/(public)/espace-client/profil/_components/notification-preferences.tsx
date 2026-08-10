@@ -10,15 +10,20 @@ import { setNotificationPreference } from "../notification-actions";
 const CHANNELS: { key: NotificationChannel; label: string }[] = [
   { key: "in_app", label: "Sur le site" },
   { key: "email", label: "Par email" },
+  { key: "push", label: "Sur le téléphone" },
 ];
 
-type Props = { overrides: Record<string, boolean> };
+type Props = {
+  overrides: Record<string, boolean>;
+  /** Faux tant qu'aucun navigateur n'est abonné : la colonne reste grisée. */
+  pushEnabled: boolean;
+};
 
 /**
  * Les catégories imposées restent affichées, en lecture seule : les cacher
  * ferait croire qu'on envoie des choses non déclarées.
  */
-export const NotificationPreferences = ({ overrides }: Props) => {
+export const NotificationPreferences = ({ overrides, pushEnabled }: Props) => {
   const [state, setState] = useState(overrides);
   const [, startTransition] = useTransition();
 
@@ -86,24 +91,48 @@ export const NotificationPreferences = ({ overrides }: Props) => {
                   <p className="text-xs text-muted-foreground">{cat.hint}</p>
                 )}
               </div>
-              <div className="flex items-center gap-6">
-                {CHANNELS.map((channel) => (
-                  <label key={channel.key} className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {channel.label}
-                    </span>
-                    <Switch
-                      checked={isOn(
-                        cat.key,
-                        channel.key,
-                        cat.defaults[channel.key],
-                      )}
-                      onCheckedChange={(next) =>
-                        toggle(cat.key, channel.key, next)
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+                {CHANNELS.map((channel) => {
+                  // Une categorie qui interdit le push n'affiche pas la
+                  // bascule : la griser laisserait croire qu'un reglage la
+                  // rendrait possible.
+                  if (channel.key === "push" && cat.pushForbidden) return null;
+
+                  const disabled = channel.key === "push" && !pushEnabled;
+
+                  return (
+                    <label
+                      key={channel.key}
+                      className="flex items-center gap-2"
+                      title={
+                        disabled
+                          ? "Activez les notifications sur cet appareil pour utiliser ce canal"
+                          : undefined
                       }
-                    />
-                  </label>
-                ))}
+                    >
+                      <span
+                        className={
+                          disabled
+                            ? "text-xs text-muted-foreground/50"
+                            : "text-xs text-muted-foreground"
+                        }
+                      >
+                        {channel.label}
+                      </span>
+                      <Switch
+                        checked={isOn(
+                          cat.key,
+                          channel.key,
+                          cat.defaults[channel.key],
+                        )}
+                        disabled={disabled}
+                        onCheckedChange={(next) =>
+                          toggle(cat.key, channel.key, next)
+                        }
+                      />
+                    </label>
+                  );
+                })}
               </div>
             </li>
           ))}
