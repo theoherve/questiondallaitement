@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { blogPostSchema, blogCategorySchema } from "@/validations/blog";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { notify, resolveAudience } from "@/lib/notifications";
 import type { ActionResult } from "@/types";
 
 const requireAdmin = async () => {
@@ -258,6 +259,27 @@ export const updateBlogPost = async (
     revalidatePath(`/blog/${currentPost.slug}`);
   }
   revalidatePath("/blog");
+
+  // Annonce aux clientes, uniquement sur la TRANSITION vers « publie ».
+  // Enregistrer a nouveau un article deja publie ne doit rien renvoyer : le
+  // dedupeId protege la ligne in-app, pas l'email, qui repartirait a chaque
+  // sauvegarde.
+  if (
+    parsed.data.status === "published" &&
+    currentPost?.status !== "published"
+  ) {
+    const recipients = await resolveAudience("blog_post_published", {
+      kind: "all_clients",
+    });
+
+    await notify(
+      "blog_post_published",
+      recipients,
+      { post_id: id, slug: newSlug, title: parsed.data.title },
+      { dedupeId: id },
+    );
+  }
+
   return { success: true };
 };
 

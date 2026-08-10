@@ -33,6 +33,7 @@ describe("NOTIFICATION_CATALOG", () => {
       date: "14 août",
       time: "10h30",
       amount: "60,00 €",
+      review_url: "https://search.google.com/local/writereview?placeid=x",
     };
     for (const def of Object.values(NOTIFICATION_CATALOG)) {
       if (!def.actions) continue;
@@ -77,10 +78,39 @@ describe("NOTIFICATION_CATALOG", () => {
     };
     for (const def of Object.values(NOTIFICATION_CATALOG)) {
       const href = def.href?.(sample as never);
-      if (href) expect(href.startsWith("/")).toBe(true);
+      // `review_request` pointe vers la fiche Google : c'est le seul lien
+      // sortant du catalogue, et il est voulu.
+      if (href && def.key !== "review_request") {
+        expect(href.startsWith("/")).toBe(true);
+      }
       for (const action of def.actions?.(sample as never) ?? []) {
+        if (def.key === "review_request") continue;
         expect(action.href.startsWith("/")).toBe(true);
       }
+    }
+  });
+});
+
+describe("les événements marketing", () => {
+  it("classe les quatre événements marketing dans des catégories désactivables", () => {
+    const marketing = [
+      "blog_post_published",
+      "module_reminder",
+      "review_request",
+      "weekly_digest",
+    ] as const;
+
+    for (const key of marketing) {
+      const def = NOTIFICATION_CATALOG[key];
+      expect(def).toBeDefined();
+      expect(def.category).toBe("marketing");
+    }
+  });
+
+  it("déclare un adaptateur email sur chaque événement marketing", () => {
+    for (const def of Object.values(NOTIFICATION_CATALOG)) {
+      if (def.category !== "marketing") continue;
+      expect(def.email).toBeTypeOf("function");
     }
   });
 });

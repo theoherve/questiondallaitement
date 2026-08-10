@@ -4,7 +4,11 @@ import {
   sendBookingCancelledToConsultant,
   sendBookingConfirmation,
   sendBookingConfirmedToConsultant,
+  sendBlogPostToClients,
+  sendModuleReminder,
   sendReplayPublished,
+  sendReviewRequest,
+  sendWeeklyDigest,
 } from "@/lib/emails/send";
 import type { NotificationCatalog } from "./types";
 
@@ -264,6 +268,81 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
       sendReplayPublished(to, {
         title: d.title,
         replay_url: `${siteUrl()}/replay-lives`,
+        unsubscribe_url: d.unsubscribe_url ?? `${siteUrl()}/espace-client/profil`,
+      }),
+  },
+  blog_post_published: {
+    key: "blog_post_published",
+    category: "marketing",
+    preferenceKey: "articles",
+    channels: ["in_app", "email"],
+    title: (d) => `Nouvel article : ${d.title}`,
+    href: (d) => `/blog/${d.slug}`,
+    actions: (d) => [
+      { label: "Lire", href: `/blog/${d.slug}`, variant: "primary" },
+    ],
+    email: (to, d) =>
+      sendBlogPostToClients(to, {
+        title: d.title,
+        post_url: `${siteUrl()}/blog/${d.slug}`,
+        unsubscribe_url: d.unsubscribe_url ?? `${siteUrl()}/espace-client/profil`,
+      }),
+  },
+  module_reminder: {
+    key: "module_reminder",
+    category: "marketing",
+    preferenceKey: "rappels_suivi",
+    channels: ["in_app", "email"],
+    title: (d) => `Vous avez laissé « ${d.title} » en cours`,
+    body: (d) =>
+      `Il vous reste ${d.remaining} étape${d.remaining > 1 ? "s" : ""}.`,
+    href: (d) => `/espace-client/accompagnements/${d.accompagnement_id}`,
+    actions: (d) => [
+      {
+        label: "Reprendre",
+        href: `/espace-client/accompagnements/${d.accompagnement_id}`,
+        variant: "primary",
+      },
+    ],
+    email: (to, d) =>
+      sendModuleReminder(to, {
+        title: d.title,
+        remaining: d.remaining,
+        accompagnement_url: `${siteUrl()}/espace-client/accompagnements/${d.accompagnement_id}`,
+        unsubscribe_url: d.unsubscribe_url ?? `${siteUrl()}/espace-client/profil`,
+      }),
+  },
+  review_request: {
+    key: "review_request",
+    category: "marketing",
+    preferenceKey: "rappels_suivi",
+    channels: ["in_app", "email"],
+    title: () => "Votre consultation, en quelques mots ?",
+    body: () => "Votre retour aide les futures mamans à se décider.",
+    // Seul lien sortant du catalogue : la fiche Google, ou l'avis se depose.
+    href: (d) => d.review_url,
+    actions: (d) => [
+      { label: "Laisser un avis", href: d.review_url, variant: "primary" },
+    ],
+    email: (to, d) =>
+      sendReviewRequest(to, {
+        client_name: d.client_name,
+        review_url: d.review_url,
+        unsubscribe_url: d.unsubscribe_url ?? `${siteUrl()}/espace-client/profil`,
+      }),
+  },
+  weekly_digest: {
+    key: "weekly_digest",
+    category: "marketing",
+    preferenceKey: "digest",
+    // Email seul : un resume in-app des notifications in-app ferait doublon
+    // avec la liste qu'il resume.
+    channels: ["email"],
+    title: (d) => `Votre semaine : ${d.count} nouveauté${d.count > 1 ? "s" : ""}`,
+    email: (to, d) =>
+      sendWeeklyDigest(to, {
+        count: d.count,
+        highlights: d.highlights,
         unsubscribe_url: d.unsubscribe_url ?? `${siteUrl()}/espace-client/profil`,
       }),
   },

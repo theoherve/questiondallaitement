@@ -2,12 +2,19 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // `vi.mock` est hissé en haut du fichier : les mocks qu'il référence doivent
 // être créés par `vi.hoisted`, sinon ils n'existent pas encore à l'exécution.
-const { notify, getRoleRecipients } = vi.hoisted(() => ({
+const { notify, getRoleRecipients, resolveAudience } = vi.hoisted(() => ({
   notify: vi.fn().mockResolvedValue(undefined),
   getRoleRecipients: vi.fn().mockResolvedValue([]),
+  resolveAudience: vi
+    .fn()
+    .mockResolvedValue([{ userId: "c1", email: "c1@b.fr" }]),
 }));
 
-vi.mock("@/lib/notifications", () => ({ notify, getRoleRecipients }));
+vi.mock("@/lib/notifications", () => ({
+  notify,
+  getRoleRecipients,
+  resolveAudience,
+}));
 vi.mock("@/lib/emails/send", () => ({
   sendBlogPostPublishedNotification: vi.fn().mockResolvedValue(undefined),
 }));
@@ -25,6 +32,20 @@ vi.mock("@/lib/admin-workflows/scheduler", () => ({
 }));
 vi.mock("@/lib/admin-workflows/executor", () => ({
   executeScheduledActions: vi.fn().mockResolvedValue({ executed: 0, failed: 0 }),
+}));
+
+const { runModuleReminders, runReviewRequests, runWeeklyDigest } = vi.hoisted(
+  () => ({
+    runModuleReminders: vi.fn().mockResolvedValue(2),
+    runReviewRequests: vi.fn().mockResolvedValue(1),
+    runWeeklyDigest: vi.fn().mockResolvedValue(0),
+  })
+);
+
+vi.mock("@/lib/notifications/jobs", () => ({
+  runModuleReminders,
+  runReviewRequests,
+  runWeeklyDigest,
 }));
 
 /** Résultat renvoyé par table. Toute table non listée renvoie une liste vide. */
@@ -137,6 +158,76 @@ describe("cron", () => {
     const failure = notify.mock.calls.find((c) => c[0] === "admin_job_failed");
     expect(failure).toBeDefined();
     expect(failure![2]).toMatchObject({ reason: "Supabase timeout" });
+    consoleSpy.mockRestore();
+  });
+});
+
+describe("cron et les articles de blog", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.CRON_SECRET = "s3cr3t";
+    for (const key of Object.keys(tableData)) delete tableData[key];
+    resolveAudience.mockResolvedValue([{ userId: "c1", email: "c1@b.fr" }]);
+  });
+
+  it("notifie la publication d'un article programmé", async () => {
+    tableData.blog_posts = [
+      { id: "post-1", slug: "sommeil", title: "Le sommeil" },
+    ];
+
+    await GET(authorized());
+
+    const call = notify.mock.calls.find((c) => c[0] === "blog_post_published");
+    expect(call).toBeDefined();
+    expect(call![2]).toMatchObject({ post_id: "post-1", slug: "sommeil" });
+    expect(call![3]).toMatchObject({ dedupeId: "post-1" });
+  });
+
+  it("ne notifie aucun article quand rien n'est programmé", async () => {
+    await GET(authorized());
+
+    expect(
+      notify.mock.calls.find((c) => c[0] === "blog_post_published")
+    ).toBeUndefined();
+  });
+});
+
+describe("cron et les travaux de notification", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.CRON_SECRET = "s3cr3t";
+    for (const key of Object.keys(tableData)) delete tableData[key];
+    runModuleReminders.mockResolvedValue(2);
+    runReviewRequests.mockResolvedValue(1);
+    runWeeklyDigest.mockResolvedValue(0);
+  });
+
+  it("exécute les trois travaux et rend leur compte", async () => {
+    const res = await GET(authorized());
+    const json = await res.json();
+
+    expect(runModuleReminders).toHaveBeenCalled();
+    expect(runReviewRequests).toHaveBeenCalled();
+    expect(runWeeklyDigest).toHaveBeenCalled();
+    expect(json.results).toMatchObject({
+      module_reminders_sent: 2,
+      review_requests_sent: 1,
+      weekly_digests_sent: 0,
+    });
+  });
+
+  it("poursuit les travaux suivants quand l'un échoue", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    runModuleReminders.mockRejectedValueOnce(new Error("Supabase timeout"));
+
+    const res = await GET(authorized());
+    const json = await res.json();
+
+    expect(json.results.module_reminders_sent).toBe(-1);
+    expect(runReviewRequests).toHaveBeenCalled();
+    expect(
+      notify.mock.calls.find((c) => c[0] === "admin_job_failed")
+    ).toBeDefined();
     consoleSpy.mockRestore();
   });
 });
