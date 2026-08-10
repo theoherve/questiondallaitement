@@ -3,6 +3,7 @@ import { InstagramIcon, LinkedinIcon } from "lucide-react";
 import { publicNav, socialLinks } from "@/config/navigation";
 
 const LEGAL_LINKS = [
+  { href: "/contact", label: "Contact" },
   { href: "/mentions-legales", label: "Mentions légales" },
   { href: "/politique-de-confidentialite", label: "Confidentialité" },
   { href: "/cgv", label: "CGV" },
@@ -59,10 +60,10 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Legal */}
+          {/* Legal + contact */}
           <div>
             <h3 className="font-sans text-xs font-medium uppercase tracking-widest text-background-beige/40">
-              Légal
+              Informations
             </h3>
             <ul className="mt-3 space-y-1.5">
               {LEGAL_LINKS.map((link) => (
