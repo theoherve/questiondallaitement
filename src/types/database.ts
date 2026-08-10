@@ -653,7 +653,33 @@ export type Notification = {
   created_at: string;
 };
 
-export type NotificationChannelName = "in_app" | "email";
+export type NotificationChannelName = "in_app" | "email" | "push";
+
+/**
+ * Un abonnement au push navigateur, une ligne par navigateur. `endpoint` est
+ * l'identifiant fourni par le navigateur : il est unique, et il sert de clé de
+ * conflit à l'enregistrement.
+ *
+ * Suffixe `Row` volontaire : `PushSubscription` est déjà un type global du DOM,
+ * et deux sens pour un même nom dans un composant client se paie cher.
+ */
+export type PushSubscriptionRow = {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  user_agent: string | null;
+  last_success_at: string | null;
+  failure_count: number;
+  created_at: string;
+};
+
+/** Ce que l'écran de préférences montre d'un appareil abonné. */
+export type PushDevice = Pick<
+  PushSubscriptionRow,
+  "endpoint" | "user_agent" | "created_at"
+>;
 
 /**
  * Un écart au défaut, et rien d'autre. Les défauts vivent dans
