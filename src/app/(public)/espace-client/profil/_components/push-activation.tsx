@@ -7,6 +7,7 @@ import {
   subscribeThisDevice,
 } from "@/lib/notifications/push/client";
 import { registerPushSubscription, removePushDevice } from "../push-actions";
+import { IosInstallHint } from "./ios-install-hint";
 import type { PushDevice } from "@/types/database";
 
 type Props = {
@@ -77,14 +78,18 @@ export const PushActivation = ({ devices, publicKey, onSubscribed }: Props) => {
 
   if (permission === "unsupported") {
     return (
-      <p className="text-xs text-muted-foreground">
-        Ce navigateur ne gère pas les notifications sur l&apos;appareil.
-      </p>
+      <div className="space-y-3">
+        <p className="text-xs text-muted-foreground">
+          Ce navigateur ne gère pas les notifications sur l&apos;appareil.
+        </p>
+        <IosInstallHint />
+      </div>
     );
   }
 
   return (
     <div className="space-y-3">
+      <IosInstallHint />
       {permission === "denied" ? (
         <p className="text-xs text-muted-foreground">
           Les notifications sont bloquées pour ce site. Le blocage se lève dans
