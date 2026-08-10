@@ -29,17 +29,26 @@ const TAG_COLORS = [
   "#6b7280",
 ];
 
-export const TagsManager = ({ tags }: { tags: Tag[] }) => {
+export const TagsManager = ({
+  tags,
+  canCreateGlobal = false,
+}: {
+  tags: Tag[];
+  /** Seule l'administration peut créer un libellé partagé par toute l'équipe. */
+  canCreateGlobal?: boolean;
+}) => {
   const [open, setOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [name, setName] = useState("");
   const [color, setColor] = useState<string | null>(null);
+  const [isGlobal, setIsGlobal] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const resetForm = () => {
     setEditingTag(null);
     setName("");
     setColor(null);
+    setIsGlobal(false);
   };
 
   const handleEdit = (tag: Tag) => {
@@ -63,7 +72,7 @@ export const TagsManager = ({ tags }: { tags: Tag[] }) => {
           toast.error(result.error);
         }
       } else {
-        const result = await createTag(payload);
+        const result = await createTag(payload, isGlobal ? "global" : "personal");
         if (result.success) {
           toast.success("Tag créé");
           resetForm();
@@ -177,6 +186,17 @@ export const TagsManager = ({ tags }: { tags: Tag[] }) => {
                 />
               ))}
             </div>
+            {canCreateGlobal && !editingTag && (
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={isGlobal}
+                  onChange={(e) => setIsGlobal(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                Libellé global, visible par toute l&apos;équipe
+              </label>
+            )}
             <div className="flex gap-2">
               <Button
                 size="sm"

@@ -473,11 +473,21 @@ export const getTags = async (): Promise<
 
 export const createTag = async (
   data: unknown,
+  scope: "personal" | "global" = "personal",
 ): Promise<ActionResult<{ id: string }>> => {
   const user = await requireConsultant();
   const parsed = crmTagSchema.safeParse(data);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message };
+  }
+
+  // Un libelle global sert au ciblage de toute la base : le creer engage plus
+  // qu'un libelle personnel, il reste donc reserve a l'administration.
+  if (scope === "global" && !user.roles.includes("admin")) {
+    return {
+      success: false,
+      error: "Seule l'administration peut créer un libellé global",
+    };
   }
 
   const supabase = createAdminClient();
@@ -486,7 +496,7 @@ export const createTag = async (
     .insert({
       name: parsed.data.name,
       color: parsed.data.color ?? null,
-      consultant_id: user.id,
+      consultant_id: scope === "global" ? null : user.id,
     })
     .select("id")
     .single();

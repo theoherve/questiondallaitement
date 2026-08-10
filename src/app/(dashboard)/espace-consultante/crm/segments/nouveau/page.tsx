@@ -3,12 +3,15 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NewSegmentForm } from "./_form";
+import { getTags } from "../../actions";
 
 export const metadata: Metadata = {
   title: "Nouveau segment : CRM",
 };
 
-const NewSegmentPage = () => {
+const NewSegmentPage = async () => {
+  const tags = await getTags();
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -28,7 +31,7 @@ const NewSegmentPage = () => {
           <CardTitle className="text-primary-green">Définir le segment</CardTitle>
         </CardHeader>
         <CardContent>
-          <NewSegmentForm />
+          <NewSegmentForm tags={tags} />
         </CardContent>
       </Card>
     </div>

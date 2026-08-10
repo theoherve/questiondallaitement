@@ -430,7 +430,7 @@ export type CrmContactTag = {
   consultant_id: string;
 };
 
-export type SegmentConditionField =
+export type NumericSegmentField =
   | "booking_count"
   | "total_spent_cents"
   | "accompagnement_count"
@@ -438,13 +438,23 @@ export type SegmentConditionField =
   | "inactive_days"
   | "days_since_registration";
 
+export type SegmentConditionField =
+  | NumericSegmentField
+  | "has_tag"
+  | "has_accompagnement";
+
 export type SegmentConditionOp = ">=" | "<=" | "=" | "!=";
 
-export type SegmentCondition = {
-  field: SegmentConditionField;
-  op: SegmentConditionOp;
-  value: number;
-};
+/**
+ * Union discriminée : `has_tag` porte un identifiant de tag et
+ * `has_accompagnement` un booléen, là où les autres champs comparent des
+ * nombres. Le stockage est en jsonb, les conditions numériques déjà
+ * enregistrées restent donc valides telles quelles.
+ */
+export type SegmentCondition =
+  | { field: NumericSegmentField; op: SegmentConditionOp; value: number }
+  | { field: "has_tag"; op: "=" | "!="; value: string }
+  | { field: "has_accompagnement"; op: "=" | "!="; value: boolean };
 
 export type CrmSegment = {
   id: string;
@@ -635,6 +645,30 @@ export type Notification = {
   metadata: Record<string, unknown> | null;
   dedupe_key: string | null;
   read_at: string | null;
+  created_at: string;
+};
+
+export type NotificationChannelName = "in_app" | "email";
+
+/**
+ * Un écart au défaut, et rien d'autre. Les défauts vivent dans
+ * `src/lib/notifications/preference-categories.ts` : les stocker en base
+ * imposerait un backfill à chaque nouvelle catégorie.
+ */
+export type NotificationPreference = {
+  user_id: string;
+  category_key: string;
+  channel: NotificationChannelName;
+  enabled: boolean;
+  updated_at: string;
+};
+
+export type NotificationBroadcast = {
+  id: string;
+  event: string;
+  rule: Record<string, unknown>;
+  recipient_count: number;
+  truncated: boolean;
   created_at: string;
 };
 

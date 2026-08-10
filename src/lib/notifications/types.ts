@@ -1,4 +1,5 @@
 import type { NotificationAction, NotificationCategory } from "@/types/database";
+import type { NotificationPreferenceKey } from "./preference-categories";
 
 export type NotificationChannel = "in_app" | "email";
 
@@ -61,15 +62,32 @@ export type NotificationDataMap = {
   admin_job_failed: { job: string; reason: string };
   admin_message: { source?: string };
   consultant_message: { source?: string };
+  replay_published: {
+    replay_id: string;
+    title: string;
+    /** Lien de désinscription, obligatoire dans un email marketing. */
+    unsubscribe_url?: string;
+  };
 };
 
 export type NotificationEvent = keyof NotificationDataMap;
 
-export type NotificationRecipient = { userId: string; email?: string | null };
+export type NotificationRecipient = {
+  userId: string;
+  email?: string | null;
+  /**
+   * Jeton de desinscription du profil. Present, il permet a `notify()` de
+   * construire un lien de desinscription valable sans session dans les emails
+   * marketing.
+   */
+  unsubscribeToken?: string | null;
+};
 
 export type NotificationDefinition<K extends NotificationEvent> = {
   key: K;
   category: NotificationCategory;
+  /** Catégorie visible par l'utilisatrice, qui porte ses préférences. */
+  preferenceKey: NotificationPreferenceKey;
   channels: NotificationChannel[];
   title: (data: NotificationDataMap[K]) => string;
   body?: (data: NotificationDataMap[K]) => string;

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notify, resolveAudience } from "@/lib/notifications";
 import type { ActionResult } from "@/types";
 
 const requireAdmin = async () => {
@@ -31,6 +32,7 @@ export type ReplayLiveFormData = z.infer<typeof replayLiveSchema>;
 
 export const createReplayLive = async (
   data: unknown,
+  options: { notifyHolders?: boolean } = {},
 ): Promise<ActionResult<{ id: string }>> => {
   await requireAdmin();
 
@@ -52,6 +54,21 @@ export const createReplayLive = async (
 
   revalidatePath("/replay-lives");
   revalidatePath("/admin/replay-lives");
+
+  // Desactive par defaut : republier un replay corrige ne doit pas renotifier
+  // tout le monde. Le dedupeId protege en plus d'un double envoi.
+  if (options.notifyHolders) {
+    const recipients = await resolveAudience("replay_published", {
+      kind: "accompagnement_holders",
+    });
+
+    await notify(
+      "replay_published",
+      recipients,
+      { replay_id: created.id, title: parsed.data.title },
+      { dedupeId: created.id },
+    );
+  }
 
   return { success: true, data: created };
 };

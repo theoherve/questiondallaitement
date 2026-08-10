@@ -4,7 +4,11 @@ import { useRouter } from "next/navigation";
 import { SegmentForm } from "../_components/segment-form";
 import { createSegment } from "../actions";
 
-export function NewSegmentForm() {
+export function NewSegmentForm({
+  tags = [],
+}: {
+  tags?: { id: string; name: string }[];
+}) {
   const router = useRouter();
 
   const handleSubmit = async (data: Parameters<typeof createSegment>[0]) => {
@@ -17,5 +21,11 @@ export function NewSegmentForm() {
     }
   };
 
-  return <SegmentForm onSubmit={handleSubmit} submitLabel="Créer le segment" />;
+  return (
+    <SegmentForm
+      onSubmit={handleSubmit}
+      tags={tags}
+      submitLabel="Créer le segment"
+    />
+  );
 }

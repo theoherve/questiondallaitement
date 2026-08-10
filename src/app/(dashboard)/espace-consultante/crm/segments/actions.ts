@@ -7,6 +7,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/types";
 import type { CrmSegment, SegmentCondition } from "@/types/database";
+import { loadClientStats, matchesConditions } from "@/lib/crm/segment-eval";
+import type { SegmentClientStats } from "@/lib/crm/segment-eval";
 
 const requireConsultant = async () => {
   const user = await getSessionUser();
@@ -110,18 +112,30 @@ export const deleteSegment = async (segmentId: string): Promise<ActionResult> =>
 
 // ─── Segment Evaluation ──────────────────────────────────────
 
-export type SegmentClientStats = {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  email: string;
-  booking_count: number;
-  total_spent_cents: number;
-  accompagnement_count: number;
-  formation_count: number;
-  inactive_days: number;
-  days_since_registration: number;
-  score: number;
+export type { SegmentClientStats } from "@/lib/crm/segment-eval";
+
+/**
+ * Recalcule le score de chaque cliente, que l'evaluateur partage laisse a 0 :
+ * la RPC `calculate_client_score` prend le couple cliente-consultante, notion
+ * qui n'existe pas hors du CRM.
+ */
+const withScores = async (
+  consultantId: string,
+  clients: SegmentClientStats[],
+): Promise<SegmentClientStats[]> => {
+  const supabase = createAdminClient();
+  const scores = await Promise.all(
+    clients.map((c) =>
+      supabase.rpc("calculate_client_score", {
+        p_client_id: c.id,
+        p_consultant_id: consultantId,
+      }),
+    ),
+  );
+  return clients.map((c, i) => ({
+    ...c,
+    score: (scores[i]?.data as number | null) ?? 0,
+  }));
 };
 
 export const evaluateSegment = async (
@@ -130,7 +144,6 @@ export const evaluateSegment = async (
   const user = await requireConsultant();
   const supabase = createAdminClient();
 
-  // Load segment conditions
   const { data: segment } = await supabase
     .from("crm_segments")
     .select("conditions")
@@ -141,176 +154,32 @@ export const evaluateSegment = async (
   if (!segment) return [];
 
   const conditions = segment.conditions as SegmentCondition[];
-  const stats = await getConsultantClientStats(user.id);
-  return stats.filter((client) => matchesConditions(client, conditions));
+  const stats = await loadClientStats({ consultantId: user.id });
+  const matched = stats.filter((client) => matchesConditions(client, conditions));
+  return withScores(user.id, matched);
 };
 
 /**
- * Évalue tous les segments d'une consultante en un seul chargement de stats.
- * À utiliser à la place de Promise.all(segments.map(evaluateSegment)) pour
- * éviter le pattern N+1 (une requête getConsultantClientStats par segment).
+ * Evalue tous les segments d'une consultante en un seul chargement de stats.
+ * A utiliser a la place de Promise.all(segments.map(evaluateSegment)) pour
+ * eviter le pattern N+1.
  */
 export const evaluateAllSegments = async (
   segments: { id: string; conditions: SegmentCondition[] }[],
 ): Promise<Map<string, number>> => {
-  await requireConsultant();
-  const user = await (async () => {
-    const u = await getSessionUser();
-    return u!;
-  })();
+  const user = await requireConsultant();
 
   if (segments.length === 0) return new Map();
 
-  // Stats chargées une seule fois pour tous les segments
-  const stats = await getConsultantClientStats(user.id);
+  const stats = await loadClientStats({ consultantId: user.id });
 
   const counts = new Map<string, number>();
   for (const segment of segments) {
-    const matched = stats.filter((client) =>
-      matchesConditions(client, segment.conditions),
+    counts.set(
+      segment.id,
+      stats.filter((client) => matchesConditions(client, segment.conditions))
+        .length,
     );
-    counts.set(segment.id, matched.length);
   }
   return counts;
-};
-
-const matchesConditions = (
-  client: SegmentClientStats,
-  conditions: SegmentCondition[],
-): boolean => {
-  return conditions.every((cond) => {
-    const val = client[cond.field as keyof SegmentClientStats] as number;
-    switch (cond.op) {
-      case ">=": return val >= cond.value;
-      case "<=": return val <= cond.value;
-      case "=":  return val === cond.value;
-      case "!=": return val !== cond.value;
-      default:   return false;
-    }
-  });
-};
-
-const getConsultantClientStats = async (
-  consultantId: string,
-): Promise<SegmentClientStats[]> => {
-  const supabase = createAdminClient();
-
-  // Get all client IDs for this consultant
-  const [bookingsRes, formationIdsRes] = await Promise.all([
-    supabase
-      .from("bookings")
-      .select("client_id, starts_at, status")
-      .eq("consultant_id", consultantId)
-      .not("status", "eq", "cancelled"),
-    supabase
-      .from("accompagnements")
-      .select("id")
-      .eq("consultant_id", consultantId),
-  ]);
-
-  const consultantFormationIds =
-    (formationIdsRes.data ?? []).map((f) => f.id);
-
-  const enrollmentsRes =
-    consultantFormationIds.length > 0
-      ? await supabase
-          .from("accompagnement_enrollments")
-          .select("client_id, enrolled_at")
-          .in("accompagnement_id", consultantFormationIds)
-      : { data: [] };
-
-  const allClientIds = [
-    ...new Set([
-      ...(bookingsRes.data ?? []).map((b) => b.client_id),
-      ...(enrollmentsRes.data ?? []).map((e) => e.client_id),
-    ]),
-  ];
-
-  if (allClientIds.length === 0) return [];
-
-  const [profilesRes, paymentsRes, eventsRes, scoresArr] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, first_name, last_name, email, created_at")
-      .in("id", allClientIds),
-    supabase
-      .from("payments")
-      .select("client_id, amount_cents")
-      .eq("consultant_id", consultantId)
-      .eq("status", "succeeded")
-      .in("client_id", allClientIds),
-    supabase
-      .from("formation_registrations")
-      .select("client_id")
-      .eq("status", "confirmed")
-      .in("client_id", allClientIds),
-    Promise.all(
-      allClientIds.map((id) =>
-        supabase.rpc("calculate_client_score", {
-          p_client_id: id,
-          p_consultant_id: consultantId,
-        }),
-      ),
-    ),
-  ]);
-
-  const scoreMap = new Map<string, number>();
-  allClientIds.forEach((id, i) => {
-    scoreMap.set(id, (scoresArr[i]?.data as number | null) ?? 0);
-  });
-
-  const bookingCountMap = new Map<string, number>();
-  const lastActivityMap = new Map<string, Date>();
-  for (const b of bookingsRes.data ?? []) {
-    bookingCountMap.set(b.client_id, (bookingCountMap.get(b.client_id) ?? 0) + 1);
-    const d = new Date(b.starts_at);
-    if (!lastActivityMap.has(b.client_id) || d > lastActivityMap.get(b.client_id)!) {
-      lastActivityMap.set(b.client_id, d);
-    }
-  }
-
-  const totalSpentMap = new Map<string, number>();
-  for (const p of paymentsRes.data ?? []) {
-    totalSpentMap.set(p.client_id, (totalSpentMap.get(p.client_id) ?? 0) + p.amount_cents);
-  }
-
-  const formationCountMap = new Map<string, number>();
-  for (const e of enrollmentsRes.data ?? []) {
-    formationCountMap.set(e.client_id, (formationCountMap.get(e.client_id) ?? 0) + 1);
-    const d = new Date(e.enrolled_at);
-    if (!lastActivityMap.has(e.client_id) || d > lastActivityMap.get(e.client_id)!) {
-      lastActivityMap.set(e.client_id, d);
-    }
-  }
-
-  const eventCountMap = new Map<string, number>();
-  for (const e of eventsRes.data ?? []) {
-    eventCountMap.set(e.client_id, (eventCountMap.get(e.client_id) ?? 0) + 1);
-  }
-
-  const now = new Date();
-
-  return (profilesRes.data ?? []).map((p) => {
-    const lastActivity = lastActivityMap.get(p.id);
-    const inactiveDays = lastActivity
-      ? Math.floor((now.getTime() - lastActivity.getTime()) / 86400000)
-      : 9999;
-    const daysSinceReg = Math.floor(
-      (now.getTime() - new Date(p.created_at).getTime()) / 86400000,
-    );
-
-    return {
-      id: p.id,
-      first_name: p.first_name,
-      last_name: p.last_name,
-      email: p.email,
-      booking_count: bookingCountMap.get(p.id) ?? 0,
-      total_spent_cents: totalSpentMap.get(p.id) ?? 0,
-      accompagnement_count: formationCountMap.get(p.id) ?? 0,
-      formation_count: eventCountMap.get(p.id) ?? 0,
-      inactive_days: inactiveDays,
-      days_since_registration: daysSinceReg,
-      score: scoreMap.get(p.id) ?? 0,
-    };
-  });
 };

@@ -7,9 +7,10 @@ import type { CrmSegment } from "@/types/database";
 
 interface Props {
   segment: CrmSegment;
+  tags?: { id: string; name: string }[];
 }
 
-export function EditSegmentForm({ segment }: Props) {
+export function EditSegmentForm({ segment, tags = [] }: Props) {
   const router = useRouter();
 
   const handleSubmit = async (data: Parameters<typeof updateSegment>[1]) => {
@@ -26,6 +27,7 @@ export function EditSegmentForm({ segment }: Props) {
     <SegmentForm
       initial={segment}
       onSubmit={handleSubmit}
+      tags={tags}
       submitLabel="Enregistrer les modifications"
     />
   );

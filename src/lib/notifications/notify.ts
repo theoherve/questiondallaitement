@@ -1,6 +1,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NOTIFICATION_CATALOG } from "./catalog";
-import { resolveChannels } from "./preferences";
+import { loadPreferences, resolveChannels } from "./preferences";
+import { PREFERENCE_CATEGORIES } from "./preference-categories";
+import { buildUnsubscribeUrl } from "./unsubscribe";
 import type {
   NotificationChannel,
   NotificationDataMap,
@@ -39,13 +41,19 @@ export const notify = async <K extends NotificationEvent>(
   options: NotifyOptions = {}
 ): Promise<void> => {
   const def = NOTIFICATION_CATALOG[event];
-  const allowed = resolveChannels(def.category, def.channels);
-  const channels = options.channels
-    ? allowed.filter((c) => options.channels!.includes(c))
-    : allowed;
   const supabase = createAdminClient();
+  const forced = PREFERENCE_CATEGORIES[def.preferenceKey].forced;
 
   for (const recipient of recipients) {
+    // Une lecture par destinataire, et seulement quand elle peut changer
+    // quelque chose : le transactionnel et le systeme ignorent les preferences,
+    // les interroger serait une requete par notification pour rien.
+    const overrides = forced ? {} : await loadPreferences(recipient.userId);
+    const allowed = resolveChannels(def.preferenceKey, def.channels, overrides);
+    const channels = options.channels
+      ? allowed.filter((c) => options.channels!.includes(c))
+      : allowed;
+
     if (channels.includes("in_app")) {
       try {
         const dedupeKey = options.dedupeId
@@ -80,7 +88,22 @@ export const notify = async <K extends NotificationEvent>(
 
     if (channels.includes("email") && def.email && recipient.email) {
       try {
-        await def.email(recipient.email, data);
+        // Un email marketing doit porter un lien de desinscription utilisable
+        // sans session. Le jeton etant propre a chaque destinataire, le lien se
+        // construit ici et non dans le catalogue, qui ne voit que la donnee
+        // commune a l'envoi.
+        const payload =
+          !forced && recipient.unsubscribeToken
+            ? {
+                ...data,
+                unsubscribe_url: buildUnsubscribeUrl(
+                  recipient.unsubscribeToken,
+                  def.preferenceKey
+                ),
+              }
+            : data;
+
+        await def.email(recipient.email, payload);
       } catch (error) {
         console.error(
           `notify: email échoué pour ${recipient.email} (${event}):`,

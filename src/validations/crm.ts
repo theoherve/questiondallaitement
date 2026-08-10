@@ -27,7 +27,7 @@ export type CrmTagInput = z.infer<typeof crmTagSchema>;
 
 // ─── CRM Segments ───────────────────────────────────────────
 
-const SEGMENT_FIELDS = [
+const NUMERIC_SEGMENT_FIELDS = [
   "booking_count",
   "total_spent_cents",
   "accompagnement_count",
@@ -37,12 +37,26 @@ const SEGMENT_FIELDS = [
 ] as const;
 
 const SEGMENT_OPS = [">=", "<=", "=", "!="] as const;
+/** Un libellé et une souscription se comparent, ils ne s'ordonnent pas. */
+const EQUALITY_OPS = ["=", "!="] as const;
 
-export const segmentConditionSchema = z.object({
-  field: z.enum(SEGMENT_FIELDS),
-  op: z.enum(SEGMENT_OPS),
-  value: z.number().min(0),
-});
+export const segmentConditionSchema = z.discriminatedUnion("field", [
+  z.object({
+    field: z.enum(NUMERIC_SEGMENT_FIELDS),
+    op: z.enum(SEGMENT_OPS),
+    value: z.number().min(0),
+  }),
+  z.object({
+    field: z.literal("has_tag"),
+    op: z.enum(EQUALITY_OPS),
+    value: z.uuid("Libellé invalide"),
+  }),
+  z.object({
+    field: z.literal("has_accompagnement"),
+    op: z.enum(EQUALITY_OPS),
+    value: z.boolean(),
+  }),
+]);
 
 export const crmSegmentSchema = z.object({
   name: z

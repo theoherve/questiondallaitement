@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { updateClientProfile } from "./actions";
 import { ChangePasswordForm } from "./_components/change-password-form";
+import { NotificationPreferences } from "./_components/notification-preferences";
+import { getNotificationPreferences } from "./notification-actions";
 import { DeleteAccountDialog } from "./_components/delete-account-dialog";
 
 export const metadata: Metadata = {
@@ -14,6 +16,8 @@ export const metadata: Metadata = {
 
 const ProfilePage = async () => {
   const { supabase, user } = await getSupabaseAndUser();
+
+  const notificationPreferences = await getNotificationPreferences();
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -87,6 +91,21 @@ const ProfilePage = async () => {
               Enregistrer
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card className="max-w-3xl">
+        <CardHeader>
+          <CardTitle className="font-serif text-lg">
+            Mes notifications
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Vous gardez la main sur tout ce qui n&apos;est pas lié à un achat ou
+            à un rendez-vous.
+          </p>
+          <NotificationPreferences overrides={notificationPreferences} />
         </CardContent>
       </Card>
 

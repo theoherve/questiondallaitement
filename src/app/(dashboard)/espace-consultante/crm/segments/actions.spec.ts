@@ -74,13 +74,14 @@ const setupClientStats = ({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       not: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
       in: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
       single: mockSingle,
     } as Record<string, ReturnType<typeof vi.fn>>;
 
     // Chaque méthode chaînable doit aussi être awaitable
-    for (const key of ["select", "eq", "not", "in", "order"] as const) {
+    for (const key of ["select", "eq", "not", "is", "in", "order"] as const) {
       (c[key] as ReturnType<typeof vi.fn>).mockReturnValue({
         ...c,
         then: (_resolve: (v: unknown) => unknown) =>
@@ -91,6 +92,7 @@ const setupClientStats = ({
             table === "profiles" ? { data: profiles } :
             table === "payments" ? { data: payments } :
             table === "formation_registrations" ? { data: formations } :
+            table === "crm_contact_tags" ? { data: [] } :
             { data: [] },
           ),
       });

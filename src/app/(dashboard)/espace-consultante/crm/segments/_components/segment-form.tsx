@@ -23,7 +23,14 @@ const FIELD_LABELS: Record<string, string> = {
   formation_count: "Nombre de formations",
   inactive_days: "Jours d'inactivité",
   days_since_registration: "Jours depuis l'inscription",
+  has_tag: "Porte le libellé",
+  has_accompagnement: "A souscrit un accompagnement",
 };
+
+/** Champs qui se comparent sans s'ordonner : un libellé, une souscription. */
+const EQUALITY_FIELDS = new Set(["has_tag", "has_accompagnement"]);
+
+const EQUALITY_OP_LABELS: Record<string, string> = { "=": "=", "!=": "≠" };
 
 const OP_LABELS: Record<string, string> = {
   ">=": "≥",
@@ -53,10 +60,19 @@ const PRESET_SEGMENTS = [
     color: "#16a34a",
     conditions: [{ field: "days_since_registration", op: "<=", value: 30 }] as SegmentCondition[],
   },
+  {
+    label: "Ayants droit d'un accompagnement",
+    color: "#2F5D50",
+    conditions: [
+      { field: "has_accompagnement", op: "=", value: true },
+    ] as SegmentCondition[],
+  },
 ];
 
 interface Props {
   initial?: CrmSegment;
+  /** Libellés disponibles, personnels et globaux, pour la condition `has_tag`. */
+  tags?: { id: string; name: string }[];
   onSubmit: (data: {
     name: string;
     description?: string;
@@ -66,7 +82,12 @@ interface Props {
   submitLabel?: string;
 }
 
-export function SegmentForm({ initial, onSubmit, submitLabel = "Créer" }: Props) {
+export function SegmentForm({
+  initial,
+  onSubmit,
+  tags = [],
+  submitLabel = "Créer",
+}: Props) {
   const router = useRouter();
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -88,16 +109,41 @@ export function SegmentForm({ initial, onSubmit, submitLabel = "Créer" }: Props
     setConditions((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const updateCondition = (
-    index: number,
-    key: keyof SegmentCondition,
-    value: string | number,
-  ) => {
+  const patchCondition = (index: number, patch: Partial<SegmentCondition>) => {
     setConditions((prev) =>
       prev.map((c, i) =>
-        i === index ? { ...c, [key]: key === "value" ? Number(value) : value } : c,
+        i === index ? ({ ...c, ...patch } as SegmentCondition) : c,
       ),
     );
+  };
+
+  /**
+   * Changer de champ change le type de la valeur. Sans réinitialisation, un
+   * identifiant de libellé resterait dans une condition numérique et la
+   * validation échouerait à l'enregistrement, avec un message peu parlant.
+   */
+  const changeField = (index: number, field: string) => {
+    if (field === "has_tag") {
+      patchCondition(index, {
+        field: "has_tag",
+        op: "=",
+        value: tags[0]?.id ?? "",
+      } as SegmentCondition);
+      return;
+    }
+    if (field === "has_accompagnement") {
+      patchCondition(index, {
+        field: "has_accompagnement",
+        op: "=",
+        value: true,
+      } as SegmentCondition);
+      return;
+    }
+    patchCondition(index, {
+      field,
+      op: ">=",
+      value: 0,
+    } as unknown as SegmentCondition);
   };
 
   const applyPreset = (preset: (typeof PRESET_SEGMENTS)[0]) => {
@@ -197,7 +243,7 @@ export function SegmentForm({ initial, onSubmit, submitLabel = "Créer" }: Props
           <div key={i} className="flex items-center gap-2">
             <Select
               value={cond.field}
-              onValueChange={(v) => updateCondition(i, "field", v)}
+              onValueChange={(v) => changeField(i, v)}
             >
               <SelectTrigger className="flex-1">
                 <SelectValue />
@@ -213,13 +259,17 @@ export function SegmentForm({ initial, onSubmit, submitLabel = "Créer" }: Props
 
             <Select
               value={cond.op}
-              onValueChange={(v) => updateCondition(i, "op", v)}
+              onValueChange={(v) =>
+                patchCondition(i, { op: v } as Partial<SegmentCondition>)
+              }
             >
               <SelectTrigger className="w-16">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(OP_LABELS).map(([val, label]) => (
+                {Object.entries(
+                  EQUALITY_FIELDS.has(cond.field) ? EQUALITY_OP_LABELS : OP_LABELS,
+                ).map(([val, label]) => (
                   <SelectItem key={val} value={val}>
                     {label}
                   </SelectItem>
@@ -227,13 +277,54 @@ export function SegmentForm({ initial, onSubmit, submitLabel = "Créer" }: Props
               </SelectContent>
             </Select>
 
-            <Input
-              type="number"
-              min={0}
-              value={cond.value}
-              onChange={(e) => updateCondition(i, "value", e.target.value)}
-              className="w-24"
-            />
+            {cond.field === "has_tag" ? (
+              <Select
+                value={String(cond.value)}
+                onValueChange={(v) =>
+                  patchCondition(i, { value: v } as Partial<SegmentCondition>)
+                }
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Choisir un libellé" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tags.map((tag) => (
+                    <SelectItem key={tag.id} value={tag.id}>
+                      {tag.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : cond.field === "has_accompagnement" ? (
+              <Select
+                value={cond.value ? "true" : "false"}
+                onValueChange={(v) =>
+                  patchCondition(i, {
+                    value: v === "true",
+                  } as Partial<SegmentCondition>)
+                }
+              >
+                <SelectTrigger className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">Oui</SelectItem>
+                  <SelectItem value="false">Non</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                type="number"
+                min={0}
+                value={Number(cond.value)}
+                onChange={(e) =>
+                  patchCondition(i, {
+                    value: Number(e.target.value),
+                  } as Partial<SegmentCondition>)
+                }
+                className="w-24"
+              />
+            )}
 
             <Button
               type="button"

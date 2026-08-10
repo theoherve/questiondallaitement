@@ -29,6 +29,10 @@ export const ReplayLiveForm = ({ live, mode }: Props) => {
     live_date: live?.live_date ?? "",
   });
 
+  // Decoche par defaut : republier un replay corrige ne doit pas renotifier
+  // tout le monde.
+  const [notifyHolders, setNotifyHolders] = useState(false);
+
   const handleChange =
     (field: "title" | "vimeo_url" | "live_date") =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,7 +50,7 @@ export const ReplayLiveForm = ({ live, mode }: Props) => {
 
       const result =
         mode === "create"
-          ? await createReplayLive(payload)
+          ? await createReplayLive(payload, { notifyHolders })
           : await updateReplayLive(live!.id, payload);
 
       if (!result.success) {
@@ -169,6 +173,18 @@ export const ReplayLiveForm = ({ live, mode }: Props) => {
                 placeholder="Sujets abordés : listes à puces, mise en forme..."
               />
             </div>
+
+            {mode === "create" && (
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={notifyHolders}
+                  onChange={(e) => setNotifyHolders(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                Prévenir les personnes ayant accès aux ateliers
+              </label>
+            )}
 
             {/* Submit */}
             <div className="flex justify-end">
