@@ -18,10 +18,24 @@ const webhookActionSchema = z.object({
   method: z.enum(["GET", "POST", "PUT"]).optional(),
 });
 
+const sendNotificationActionSchema = z.object({
+  type: z.literal("send_notification"),
+  title: z.string().min(1, "Titre requis").max(120, "Titre trop long"),
+  body: z.string().min(1, "Message requis").max(2000, "Message trop long"),
+  // Lien interne seulement : une automatisation ne doit pas pouvoir envoyer les
+  // clientes vers un domaine tiers.
+  href: z
+    .string()
+    .startsWith("/", "Le lien doit être interne")
+    .optional()
+    .or(z.literal("")),
+});
+
 export const automationActionSchema = z.discriminatedUnion("type", [
   sendEmailActionSchema,
   addCrmTagActionSchema,
   webhookActionSchema,
+  sendNotificationActionSchema,
 ]);
 
 export const automationSchema = z

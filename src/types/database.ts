@@ -94,6 +94,11 @@ export type Profile = {
   phone: string | null;
   avatar_url: string | null;
   gdpr_consent_at: string | null;
+  /**
+   * Provenance de l'inscription, lue dans l'URL. Nulle pour les comptes créés
+   * avant la colonne, et pour ceux venus de « connexion avec Google ».
+   */
+  acquisition_source: string | null;
   created_at: string;
   updated_at: string;
 };

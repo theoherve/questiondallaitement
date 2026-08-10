@@ -7,6 +7,7 @@ export type NotificationPreferenceKey =
   | "systeme"
   | "replays"
   | "articles"
+  | "annonces"
   | "rappels_suivi"
   | "digest";
 
@@ -73,6 +74,13 @@ export const PREFERENCE_CATEGORIES: Record<
   articles: {
     key: "articles",
     label: "Articles du blog",
+    forced: false,
+    defaults: { in_app: true, email: true },
+  },
+  annonces: {
+    key: "annonces",
+    label: "Annonces de l'équipe",
+    hint: "Informations ponctuelles, fermeture, nouveauté",
     forced: false,
     defaults: { in_app: true, email: true },
   },

@@ -86,6 +86,19 @@ export type NotificationDataMap = {
     review_url: string;
     unsubscribe_url?: string;
   };
+  automation_message: {
+    title: string;
+    body: string;
+    href?: string;
+    unsubscribe_url?: string;
+  };
+  broadcast_message: {
+    title: string;
+    body: string;
+    href?: string;
+    unsubscribe_url?: string;
+  };
+  admin_digest: { count: number; highlights: string[] };
   weekly_digest: {
     count: number;
     highlights: string[];

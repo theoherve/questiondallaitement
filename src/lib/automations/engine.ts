@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/resend/client";
+import { notify } from "@/lib/notifications";
 import type { AutomationTriggerType, TriggerData } from "./types";
 
 const renderVariables = (template: string, data: TriggerData): string => {
@@ -69,6 +70,37 @@ const executeWebhook = async (
     if (!res.ok) {
       return { success: false, error: `HTTP ${res.status}` };
     }
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Unknown error",
+    };
+  }
+};
+
+const executeSendNotification = async (
+  action: { title: string; body: string; href?: string },
+  automationId: string,
+  data: TriggerData,
+): Promise<{ success: boolean; error?: string }> => {
+  const clientId = data.client_id;
+  if (!clientId) return { success: false, error: "No client_id" };
+
+  try {
+    // Deduplication par automatisation et par cliente : une automatisation ne
+    // doit dire sa phrase qu'une fois a la meme personne, meme si son
+    // declencheur se represente.
+    await notify(
+      "automation_message",
+      [{ userId: clientId, email: data.client_email }],
+      {
+        title: renderVariables(action.title, data),
+        body: renderVariables(action.body, data),
+        href: action.href || undefined,
+      },
+      { dedupeId: `${automationId}:${clientId}` },
+    );
     return { success: true };
   } catch (err) {
     return {
@@ -159,6 +191,16 @@ export const runAutomations = async (
           url: action.url as string,
           method: action.method as "GET" | "POST" | "PUT" | undefined,
         });
+      } else if (action.type === "send_notification") {
+        result = await executeSendNotification(
+          {
+            title: action.title as string,
+            body: action.body as string,
+            href: action.href as string | undefined,
+          },
+          automation.id,
+          triggerData,
+        );
       } else {
         result = { success: false, error: "Unknown action type" };
       }

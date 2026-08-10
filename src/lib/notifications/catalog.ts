@@ -1,10 +1,12 @@
 import {
   sendAccompagnementAccess,
+  sendAdminDigest,
   sendBookingCancelled,
   sendBookingCancelledToConsultant,
   sendBookingConfirmation,
   sendBookingConfirmedToConsultant,
   sendBlogPostToClients,
+  sendFreeformMessage,
   sendModuleReminder,
   sendReplayPublished,
   sendReviewRequest,
@@ -344,6 +346,56 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
         count: d.count,
         highlights: d.highlights,
         unsubscribe_url: d.unsubscribe_url ?? `${siteUrl()}/espace-client/profil`,
+      }),
+  },
+  automation_message: {
+    key: "automation_message",
+    category: "marketing",
+    preferenceKey: "rappels_suivi",
+    channels: ["in_app", "email"],
+    title: (d) => d.title,
+    body: (d) => d.body,
+    href: (d) => d.href ?? "/espace-client",
+    email: (to, d) =>
+      sendFreeformMessage(to, {
+        title: d.title,
+        body: d.body,
+        href: d.href ? `${siteUrl()}${d.href}` : undefined,
+        unsubscribe_url: d.unsubscribe_url ?? `${siteUrl()}/espace-client/profil`,
+      }),
+  },
+  broadcast_message: {
+    key: "broadcast_message",
+    category: "marketing",
+    preferenceKey: "annonces",
+    channels: ["in_app", "email"],
+    title: (d) => d.title,
+    body: (d) => d.body,
+    href: (d) => d.href ?? "/espace-client",
+    email: (to, d) =>
+      sendFreeformMessage(to, {
+        title: d.title,
+        body: d.body,
+        href: d.href ? `${siteUrl()}${d.href}` : undefined,
+        unsubscribe_url: d.unsubscribe_url ?? `${siteUrl()}/espace-client/profil`,
+      }),
+  },
+  admin_digest: {
+    key: "admin_digest",
+    category: "system",
+    preferenceKey: "systeme",
+    // Email seul : l'administration voit deja chaque evenement dans sa cloche,
+    // un recapitulatif in-app ferait doublon avec la liste qu'il resume.
+    channels: ["email"],
+    title: (d) => `Récapitulatif : ${d.count} événement${d.count > 1 ? "s" : ""}`,
+    email: (to, d) =>
+      sendAdminDigest(to, {
+        count: d.count,
+        highlights: d.highlights,
+        date: new Date().toLocaleDateString("fr-FR", {
+          day: "numeric",
+          month: "long",
+        }),
       }),
   },
 };

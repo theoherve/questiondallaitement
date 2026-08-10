@@ -13,6 +13,7 @@ import {
   runModuleReminders,
   runReviewRequests,
   runWeeklyDigest,
+  runAdminDigest,
 } from "@/lib/notifications/jobs";
 
 /**
@@ -273,6 +274,7 @@ export const GET = async (request: Request) => {
     ["module_reminders_sent", runModuleReminders, "Relances d'accompagnement"],
     ["review_requests_sent", runReviewRequests, "Demandes d'avis"],
     ["weekly_digests_sent", runWeeklyDigest, "Resume hebdomadaire"],
+    ["admin_digests_sent", runAdminDigest, "Recapitulatif administration"],
   ] as const) {
     try {
       results[key] = await run();

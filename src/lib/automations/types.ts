@@ -11,6 +11,7 @@ export const AUTOMATION_ACTION_TYPES = [
   "send_email",
   "add_crm_tag",
   "webhook",
+  "send_notification",
 ] as const;
 
 export type AutomationActionType = (typeof AUTOMATION_ACTION_TYPES)[number];
@@ -32,10 +33,19 @@ export type WebhookAction = {
   method?: "GET" | "POST" | "PUT";
 };
 
+export type SendNotificationAction = {
+  type: "send_notification";
+  title: string;
+  body: string;
+  /** Lien interne facultatif, vers l'espace client. */
+  href?: string;
+};
+
 export type AutomationAction =
   | SendEmailAction
   | AddCrmTagAction
-  | WebhookAction;
+  | WebhookAction
+  | SendNotificationAction;
 
 export type AccompagnementPurchasedConfig = {
   accompagnement_ids?: string[];

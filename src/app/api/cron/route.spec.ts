@@ -34,18 +34,23 @@ vi.mock("@/lib/admin-workflows/executor", () => ({
   executeScheduledActions: vi.fn().mockResolvedValue({ executed: 0, failed: 0 }),
 }));
 
-const { runModuleReminders, runReviewRequests, runWeeklyDigest } = vi.hoisted(
-  () => ({
-    runModuleReminders: vi.fn().mockResolvedValue(2),
-    runReviewRequests: vi.fn().mockResolvedValue(1),
-    runWeeklyDigest: vi.fn().mockResolvedValue(0),
-  })
-);
+const {
+  runModuleReminders,
+  runReviewRequests,
+  runWeeklyDigest,
+  runAdminDigest,
+} = vi.hoisted(() => ({
+  runModuleReminders: vi.fn().mockResolvedValue(2),
+  runReviewRequests: vi.fn().mockResolvedValue(1),
+  runWeeklyDigest: vi.fn().mockResolvedValue(0),
+  runAdminDigest: vi.fn().mockResolvedValue(1),
+}));
 
 vi.mock("@/lib/notifications/jobs", () => ({
   runModuleReminders,
   runReviewRequests,
   runWeeklyDigest,
+  runAdminDigest,
 }));
 
 /** Résultat renvoyé par table. Toute table non listée renvoie une liste vide. */
@@ -200,19 +205,22 @@ describe("cron et les travaux de notification", () => {
     runModuleReminders.mockResolvedValue(2);
     runReviewRequests.mockResolvedValue(1);
     runWeeklyDigest.mockResolvedValue(0);
+    runAdminDigest.mockResolvedValue(1);
   });
 
-  it("exécute les trois travaux et rend leur compte", async () => {
+  it("exécute les quatre travaux et rend leur compte", async () => {
     const res = await GET(authorized());
     const json = await res.json();
 
     expect(runModuleReminders).toHaveBeenCalled();
     expect(runReviewRequests).toHaveBeenCalled();
     expect(runWeeklyDigest).toHaveBeenCalled();
+    expect(runAdminDigest).toHaveBeenCalled();
     expect(json.results).toMatchObject({
       module_reminders_sent: 2,
       review_requests_sent: 1,
       weekly_digests_sent: 0,
+      admin_digests_sent: 1,
     });
   });
 

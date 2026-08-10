@@ -114,3 +114,19 @@ describe("les événements marketing", () => {
     }
   });
 });
+
+describe("les messages libres", () => {
+  it("porte les messages libres sur des catégories désactivables", () => {
+    expect(NOTIFICATION_CATALOG.automation_message.preferenceKey).toBe(
+      "rappels_suivi"
+    );
+    expect(NOTIFICATION_CATALOG.broadcast_message.preferenceKey).toBe("annonces");
+  });
+
+  it("reprend le titre et le corps fournis à l'appel", () => {
+    const def = NOTIFICATION_CATALOG.broadcast_message;
+    const data = { title: "Fermeture estivale", body: "Du 1er au 15 août." };
+    expect(def.title(data)).toBe("Fermeture estivale");
+    expect(def.body?.(data)).toBe("Du 1er au 15 août.");
+  });
+});

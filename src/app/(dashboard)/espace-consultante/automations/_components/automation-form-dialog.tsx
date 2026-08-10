@@ -100,11 +100,15 @@ export const AutomationFormDialog = ({
     }
   }, [open, automation]);
 
-  const addAction = (type: "send_email" | "add_crm_tag" | "webhook") => {
+  const addAction = (
+    type: "send_email" | "add_crm_tag" | "webhook" | "send_notification",
+  ) => {
     if (type === "send_email") {
       setActions([...actions, { type, subject: "", body_html: "" }]);
     } else if (type === "add_crm_tag") {
       setActions([...actions, { type, tag_id: formOptions.tags[0]?.id ?? "" }]);
+    } else if (type === "send_notification") {
+      setActions([...actions, { type, title: "", body: "", href: "" }]);
     } else {
       setActions([...actions, { type, url: "", method: "POST" }]);
     }
@@ -319,7 +323,9 @@ export const AutomationFormDialog = ({
                           ? "Envoyer un email"
                           : a.type === "add_crm_tag"
                             ? "Ajouter un tag CRM"
-                            : "Webhook"}
+                            : a.type === "send_notification"
+                              ? "Notifier la cliente"
+                              : "Webhook"}
                       </span>
                       <Button
                         type="button"
@@ -330,6 +336,28 @@ export const AutomationFormDialog = ({
                         Supprimer
                       </Button>
                     </div>
+                    {a.type === "send_notification" && (
+                      <>
+                        <Input
+                          placeholder="Titre"
+                          value={(a.title as string) ?? ""}
+                          onChange={(e) => updateAction(i, "title", e.target.value)}
+                          maxLength={120}
+                        />
+                        <Textarea
+                          placeholder="Message. Variables : {{client_name}}, {{accompagnement_title}}, {{formation_title}}"
+                          value={(a.body as string) ?? ""}
+                          onChange={(e) => updateAction(i, "body", e.target.value)}
+                          rows={4}
+                          maxLength={2000}
+                        />
+                        <Input
+                          placeholder="Lien interne facultatif, par exemple /espace-client/accompagnements"
+                          value={(a.href as string) ?? ""}
+                          onChange={(e) => updateAction(i, "href", e.target.value)}
+                        />
+                      </>
+                    )}
                     {a.type === "send_email" && (
                       <>
                         <Input
@@ -404,6 +432,14 @@ export const AutomationFormDialog = ({
                   disabled={formOptions.tags.length === 0}
                 >
                   + Tag CRM
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addAction("send_notification")}
+                >
+                  + Notifier
                 </Button>
                 <Button
                   type="button"
