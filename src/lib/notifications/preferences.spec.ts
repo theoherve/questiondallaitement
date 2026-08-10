@@ -54,6 +54,45 @@ describe("resolveChannels", () => {
       resolveChannels("replays", ["in_app"], { "replays:email": true })
     ).toEqual(["in_app"]);
   });
+
+  it("laisse passer le push sur une catégorie imposée qui l'autorise", () => {
+    expect(resolveChannels("rendez_vous", ["in_app", "email", "push"])).toEqual([
+      "in_app",
+      "email",
+      "push",
+    ]);
+  });
+
+  it("coupe le push sur une catégorie optionnelle sans préférence, car il est en opt-in", () => {
+    expect(resolveChannels("replays", ["in_app", "email", "push"])).toEqual([
+      "in_app",
+      "email",
+    ]);
+  });
+
+  it("active le push d'une catégorie optionnelle quand la préférence l'autorise", () => {
+    expect(
+      resolveChannels("replays", ["in_app", "email", "push"], {
+        "replays:push": true,
+      })
+    ).toEqual(["in_app", "email", "push"]);
+  });
+
+  it("refuse le push sur une catégorie interdite, même déclaré par l'événement", () => {
+    expect(resolveChannels("paiements", ["in_app", "email", "push"])).toEqual([
+      "in_app",
+      "email",
+    ]);
+  });
+
+  it("refuse le push sur une catégorie interdite, même demandé par une préférence", () => {
+    expect(
+      resolveChannels("digest", ["in_app", "email", "push"], {
+        "digest:push": true,
+        "digest:email": true,
+      })
+    ).toEqual(["email"]);
+  });
 });
 
 describe("loadPreferences", () => {

@@ -20,9 +20,19 @@ export type PreferenceCategory = {
   defaults: Record<NotificationChannel, boolean>;
   /** Masquée de l'écran client : concerne la consultante et l'administration. */
   internal?: boolean;
+  /**
+   * Le push est interdit pour cette catégorie, quoi qu'en dise une préférence
+   * ou un événement. Garde-fou et non simple défaut : on ne veut pas qu'un
+   * réglage ou un ajout de canal au catalogue permette un jour de pousser une
+   * facture ou un article de blog sur le téléphone d'une cliente.
+   */
+  pushForbidden?: boolean;
 };
 
-const FORCED = { in_app: true, email: true };
+const FORCED = { in_app: true, email: true, push: true };
+
+/** Défauts d'une catégorie optionnelle : les deux canaux calmes, pas le push. */
+const OPT_OUT = { in_app: true, email: true, push: false };
 
 /**
  * Les catégories telles que l'utilisatrice les voit. Plus fines que la
@@ -48,7 +58,8 @@ export const PREFERENCE_CATEGORIES: Record<
     label: "Paiements et factures",
     hint: "Obligation légale",
     forced: true,
-    defaults: FORCED,
+    defaults: { in_app: true, email: true, push: false },
+    pushForbidden: true,
   },
   acces_contenus: {
     key: "acces_contenus",
@@ -69,34 +80,36 @@ export const PREFERENCE_CATEGORIES: Record<
     key: "replays",
     label: "Nouveaux replays",
     forced: false,
-    defaults: { in_app: true, email: true },
+    defaults: OPT_OUT,
   },
   articles: {
     key: "articles",
     label: "Articles du blog",
     forced: false,
-    defaults: { in_app: true, email: true },
+    defaults: { in_app: true, email: true, push: false },
+    pushForbidden: true,
   },
   annonces: {
     key: "annonces",
     label: "Annonces de l'équipe",
     hint: "Informations ponctuelles, fermeture, nouveauté",
     forced: false,
-    defaults: { in_app: true, email: true },
+    defaults: OPT_OUT,
   },
   rappels_suivi: {
     key: "rappels_suivi",
     label: "Rappels et suivi",
     hint: "Module en cours, demande d'avis",
     forced: false,
-    defaults: { in_app: true, email: true },
+    defaults: OPT_OUT,
   },
   digest: {
     key: "digest",
     label: "Résumé hebdomadaire",
     hint: "Désactivé par défaut",
     forced: false,
-    defaults: { in_app: false, email: false },
+    defaults: { in_app: false, email: false, push: false },
+    pushForbidden: true,
   },
 };
 

@@ -1,7 +1,7 @@
 import type { NotificationAction, NotificationCategory } from "@/types/database";
 import type { NotificationPreferenceKey } from "./preference-categories";
 
-export type NotificationChannel = "in_app" | "email";
+export type NotificationChannel = "in_app" | "email" | "push";
 
 /**
  * Données attendues par chaque événement. Le typage part d'ici : ajouter une

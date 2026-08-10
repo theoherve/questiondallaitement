@@ -22,18 +22,20 @@ describe("PREFERENCE_CATEGORIES", () => {
     ]);
   });
 
-  it("démarre le digest désactivé sur les deux canaux", () => {
+  it("démarre le digest désactivé sur tous les canaux", () => {
     expect(PREFERENCE_CATEGORIES.digest.defaults).toEqual({
       in_app: false,
       email: false,
+      push: false,
     });
   });
 
-  it("démarre les autres catégories optionnelles activées", () => {
+  it("démarre les autres catégories optionnelles activées, sauf le push", () => {
     for (const key of ["replays", "articles", "rappels_suivi"] as const) {
       expect(PREFERENCE_CATEGORIES[key].defaults).toEqual({
         in_app: true,
         email: true,
+        push: false,
       });
     }
   });
@@ -61,10 +63,38 @@ describe("PREFERENCE_CATEGORIES", () => {
     const annonces = PREFERENCE_CATEGORIES.annonces;
     expect(annonces).toBeDefined();
     expect(annonces.forced).toBe(false);
-    expect(annonces.defaults).toEqual({ in_app: true, email: true });
+    expect(annonces.defaults).toEqual({
+      in_app: true,
+      email: true,
+      push: false,
+    });
   });
 
   it("affiche les annonces dans l'écran client", () => {
     expect(CLIENT_PREFERENCE_CATEGORIES.map((c) => c.key)).toContain("annonces");
+  });
+
+  it("interdit le push exactement sur les trois catégories décidées", () => {
+    const forbidden = Object.values(PREFERENCE_CATEGORIES)
+      .filter((c) => c.pushForbidden)
+      .map((c) => c.key)
+      .sort();
+
+    expect(forbidden).toEqual(["articles", "digest", "paiements"]);
+  });
+
+  it("n'active le push par défaut que sur les catégories imposées", () => {
+    const on = Object.values(PREFERENCE_CATEGORIES)
+      .filter((c) => c.defaults.push)
+      .map((c) => c.key)
+      .sort();
+
+    expect(on).toEqual(["acces_contenus", "rendez_vous", "systeme"]);
+  });
+
+  it("n'autorise jamais un défaut de push sur une catégorie qui l'interdit", () => {
+    for (const category of Object.values(PREFERENCE_CATEGORIES)) {
+      if (category.pushForbidden) expect(category.defaults.push).toBe(false);
+    }
   });
 });

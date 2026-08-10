@@ -49,9 +49,16 @@ export const resolveChannels = (
   overrides: ChannelOverrides = {}
 ): NotificationChannel[] => {
   const category = PREFERENCE_CATEGORIES[preferenceKey];
-  if (category.forced) return declared;
 
-  return declared.filter((channel) => {
+  // Le push interdit tombe avant tout le reste : ni une categorie imposee ni un
+  // ecart enregistre ne doit pouvoir le faire revenir.
+  const candidates = category.pushForbidden
+    ? declared.filter((channel) => channel !== "push")
+    : declared;
+
+  if (category.forced) return candidates;
+
+  return candidates.filter((channel) => {
     const override = overrides[overrideKey(preferenceKey, channel)];
     return override ?? category.defaults[channel];
   });
