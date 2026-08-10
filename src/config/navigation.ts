@@ -81,7 +81,6 @@ export const publicNav: PublicNavItem[] = [
   { title: "Médias", href: "/medias" },
   { title: "Blog", href: "/blog" },
   { title: "À propos", href: "/a-propos" },
-  { title: "Contact", href: "/contact" },
 ];
 
 /**
