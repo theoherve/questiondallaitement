@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 type RegisterPageProps = {
-  searchParams: Promise<{ error?: string; success?: string }>;
+  searchParams: Promise<{ error?: string; success?: string; ref?: string }>;
 };
 
 const RegisterPage = async ({ searchParams }: RegisterPageProps) => {
@@ -52,6 +52,13 @@ const RegisterPage = async ({ searchParams }: RegisterPageProps) => {
           <span className="h-px flex-1 bg-border" />
         </div>
         <form action={handleRegister} className="space-y-4">
+              {/* Provenance, lue dans l'URL : /inscription?ref=instagram. Le
+                  nettoyage se fait cote serveur, la valeur est forgeable. */}
+              <input
+                type="hidden"
+                name="acquisition_source"
+                value={params.ref ?? ""}
+              />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="first_name">Prénom</Label>

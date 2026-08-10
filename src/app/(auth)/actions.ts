@@ -4,6 +4,7 @@ import { hash } from "bcryptjs";
 import { AuthError } from "next-auth";
 import { signIn, signOut } from "@/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { resolveAcquisitionSource } from "@/lib/auth/acquisition";
 import {
   loginSchema,
   registerSchema,
@@ -153,6 +154,10 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
     gdpr_consent: formData.get("gdpr_consent") === "on",
   };
 
+  const acquisitionSource = resolveAcquisitionSource(
+    formData.get("acquisition_source") as string | null,
+  );
+
   const parsed = registerSchema.safeParse(raw);
   if (!parsed.success) {
     redirect(
@@ -193,6 +198,7 @@ export const handleRegister = async (formData: FormData): Promise<void> => {
     email_verified: false,
     email_verification_token: verificationToken,
     email_verification_expires: verificationExpires,
+    acquisition_source: acquisitionSource,
   });
 
   if (error) {
