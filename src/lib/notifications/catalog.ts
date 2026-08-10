@@ -5,6 +5,7 @@ import {
   sendBookingConfirmation,
   sendBookingConfirmedToConsultant,
   sendBlogPostToClients,
+  sendFreeformMessage,
   sendModuleReminder,
   sendReplayPublished,
   sendReviewRequest,
@@ -343,6 +344,38 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
       sendWeeklyDigest(to, {
         count: d.count,
         highlights: d.highlights,
+        unsubscribe_url: d.unsubscribe_url ?? `${siteUrl()}/espace-client/profil`,
+      }),
+  },
+  automation_message: {
+    key: "automation_message",
+    category: "marketing",
+    preferenceKey: "rappels_suivi",
+    channels: ["in_app", "email"],
+    title: (d) => d.title,
+    body: (d) => d.body,
+    href: (d) => d.href ?? "/espace-client",
+    email: (to, d) =>
+      sendFreeformMessage(to, {
+        title: d.title,
+        body: d.body,
+        href: d.href ? `${siteUrl()}${d.href}` : undefined,
+        unsubscribe_url: d.unsubscribe_url ?? `${siteUrl()}/espace-client/profil`,
+      }),
+  },
+  broadcast_message: {
+    key: "broadcast_message",
+    category: "marketing",
+    preferenceKey: "annonces",
+    channels: ["in_app", "email"],
+    title: (d) => d.title,
+    body: (d) => d.body,
+    href: (d) => d.href ?? "/espace-client",
+    email: (to, d) =>
+      sendFreeformMessage(to, {
+        title: d.title,
+        body: d.body,
+        href: d.href ? `${siteUrl()}${d.href}` : undefined,
         unsubscribe_url: d.unsubscribe_url ?? `${siteUrl()}/espace-client/profil`,
       }),
   },

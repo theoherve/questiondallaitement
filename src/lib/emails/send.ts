@@ -555,3 +555,45 @@ export const sendWeeklyDigest = async (
     `,
   });
 };
+
+/**
+ * Message libre, ecrit dans le backoffice ou dans une automatisation.
+ *
+ * Le corps arrive en texte simple et non en HTML : il est saisi dans un
+ * `textarea`, et l'injecter tel quel ouvrirait une porte a du balisage
+ * arbitraire dans un email envoye en notre nom.
+ */
+export const sendFreeformMessage = async (
+  clientEmail: string,
+  variables: {
+    title: string;
+    body: string;
+    href?: string;
+    unsubscribe_url: string;
+  },
+) => {
+  const escape = (value: string) =>
+    value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  const paragraphs = escape(variables.body)
+    .split(/\n{2,}/)
+    .map((block) => `<p>${block.replace(/\n/g, "<br />")}</p>`)
+    .join("");
+
+  const button = variables.href
+    ? `<p><a href="${variables.href}" style="display:inline-block;padding:12px 24px;background-color:#2F5D50;color:#fff;text-decoration:none;border-radius:6px;">En savoir plus</a></p>`
+    : "";
+
+  await sendTransactionalEmail({
+    to: clientEmail,
+    subject: variables.title,
+    html: `
+      <h1>${escape(variables.title)}</h1>
+      ${paragraphs}
+      ${button}
+      <p style="margin-top:32px;font-size:12px;color:#888;">
+        <a href="${variables.unsubscribe_url}">Ne plus recevoir ces messages</a>.
+      </p>
+    `,
+  });
+};

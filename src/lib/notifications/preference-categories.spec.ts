@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { PREFERENCE_CATEGORIES } from "./preference-categories";
+import {
+  PREFERENCE_CATEGORIES,
+  CLIENT_PREFERENCE_CATEGORIES,
+} from "./preference-categories";
 import { NOTIFICATION_CATALOG } from "./catalog";
 
 describe("PREFERENCE_CATEGORIES", () => {
@@ -52,5 +55,16 @@ describe("PREFERENCE_CATEGORIES", () => {
       if (def.category !== "marketing") continue;
       expect(PREFERENCE_CATEGORIES[def.preferenceKey].forced).toBe(false);
     }
+  });
+
+  it("expose une catégorie d'annonces, désactivable et active par défaut", () => {
+    const annonces = PREFERENCE_CATEGORIES.annonces;
+    expect(annonces).toBeDefined();
+    expect(annonces.forced).toBe(false);
+    expect(annonces.defaults).toEqual({ in_app: true, email: true });
+  });
+
+  it("affiche les annonces dans l'écran client", () => {
+    expect(CLIENT_PREFERENCE_CATEGORIES.map((c) => c.key)).toContain("annonces");
   });
 });
