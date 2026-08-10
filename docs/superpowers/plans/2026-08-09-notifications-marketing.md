@@ -11,8 +11,10 @@
 ## Global Constraints
 
 - Ce plan suppose les tranches 1 et 2 en place : catalogue, `notify()`, `resolveAudience()`, préférences, désinscription par jeton. Voir les deux plans précédents dans `docs/superpowers/plans/`.
-- **La planification du cron ne vit pas dans le dépôt.** `vercel.json` vaut `{}` et aucun workflow GitHub ne l'appelle : la fréquence est réglée dans le tableau de bord Vercel. **Tout nouveau travail périodique entre dans `src/app/api/cron/route.ts`**, la seule porte d'entrée déjà planifiée. Créer un nouvel endpoint reviendrait à écrire du code qui ne s'exécuterait jamais.
-- **La fréquence réelle du cron est inconnue depuis le dépôt.** Chaque travail se protège donc lui-même : il vérifie sa propre fenêtre et porte une clé de déduplication qui rend un second passage inoffensif. Aucun ne doit supposer « une fois par jour ».
+- **La planification du cron vit dans `vercel.json`, et nulle part ailleurs.** Le tableau de bord Vercel affiche les crons, il ne permet pas d'en créer. Une première version de ce plan affirmait le contraire : c'était faux.
+  **La vérification a montré qu'aucun cron ne tournait plus** : la déclaration avait été retirée le 23 mars 2026 (`120ddd7`) à cause des limites du plan Hobby. Elle a été restaurée à sa valeur d'origine, `0 * * * *`, le plan étant passé en Pro.
+- **Tout nouveau travail périodique entre dans `src/app/api/cron/route.ts`**, la seule porte d'entrée planifiée. Créer un nouvel endpoint sans l'ajouter à `vercel.json` reviendrait à écrire du code qui ne s'exécuterait jamais.
+- **Le cron tourne toutes les heures.** Chaque travail se protège donc lui-même : il vérifie sa propre fenêtre et porte une clé de déduplication qui rend les vingt-trois autres passages de la journée inoffensifs. Aucun ne doit supposer « une fois par jour ».
 - `notify()` reste **strictement serveur** et **ne lève jamais**. Un travail en échec ne doit pas empêcher les suivants.
 - Tout événement de ce plan est de catégorie `marketing` : les préférences s'appliquent, et l'email porte un lien de désinscription (construit automatiquement par `notify()` dès que le destinataire porte son jeton).
 - Textes visibles par les visiteurs : **aucun tiret cadratin** (`—`).
@@ -1320,10 +1322,12 @@ Expected: PASS. Le test « ne rattache un événement marketing qu'à une catég
 Run: `grep -n "dedupeId" src/lib/notifications/jobs/*.ts`
 Expected: chacun des trois modules porte une clé. Sans clé, un cron horaire enverrait le même message vingt-quatre fois par jour.
 
-- [ ] **Step 4: Vérifier la fréquence réelle du cron**
+- [ ] **Step 4: Vérifier que le cron est bien déclaré**
 
-Ouvrir le tableau de bord Vercel, projet `question-d-allaitement`, section Cron Jobs, et noter la fréquence de `/api/cron`.
-Expected: au moins une exécution quotidienne. **Si le cron tourne moins souvent qu'une fois par jour, la demande d'avis ne partira jamais** : sa fenêtre est d'une seule journée. Dans ce cas, élargir `DAYS_AFTER` en fourchette (par exemple, entre deux et quatre jours) plutôt que de compter sur une exécution quotidienne.
+Run: `cat vercel.json`
+Expected: une entrée `crons` pointant sur `/api/cron`. Sans elle, **rien de ce plan ne s'exécute**, et les rappels de consultation, la publication des articles programmés et la purge RGPD ne s'exécutent pas non plus.
+
+Après déploiement, vérifier dans le tableau de bord Vercel, section Cron Jobs, que la tâche apparaît et qu'elle s'exécute. Le tableau de bord ne fait que refléter `vercel.json` : s'il est vide, c'est que le fichier ne déclare rien.
 
 - [ ] **Step 5: Vérifier le parcours à la main**
 
