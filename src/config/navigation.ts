@@ -199,6 +199,12 @@ export const adminNav: NavItem[] = [
     iconKey: "UserCog",
     section: "personnes",
   },
+  {
+    title: "Contact",
+    href: "/admin/contact",
+    iconKey: "Mail",
+    section: "personnes",
+  },
   // Offre
   {
     title: "Accompagnements",
