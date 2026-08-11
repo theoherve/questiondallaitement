@@ -249,6 +249,29 @@ const ClientDashboardPage = async () => {
         })}
       </section>
 
+      {/* CTA agenda maman : point d'entree direct vers /formations filtree,
+          pour une cliente qui ne sait pas que l'agenda la concerne aussi. */}
+      <section className="flex flex-col items-start gap-3 rounded-3xl border border-border/50 bg-accent-sage-soft p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-sage/30 text-primary-green">
+            <CalendarDays className="h-5 w-5" aria-hidden />
+          </div>
+          <div>
+            <p className="font-serif text-base font-semibold text-primary-green">
+              Prochains ateliers et webinaires
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Consultez l&apos;agenda des sessions ouvertes aux mamans.
+            </p>
+          </div>
+        </div>
+        <Button asChild size="sm" className="rounded-xl">
+          <Link href="/formations?audience=maman" tabIndex={0}>
+            Voir l&apos;agenda
+          </Link>
+        </Button>
+      </section>
+
       {/* Bento — accompagnements + réservations */}
       <section className="grid gap-6 lg:grid-cols-5">
         <Card className="rounded-3xl border-border/50 shadow-sm lg:col-span-3">
