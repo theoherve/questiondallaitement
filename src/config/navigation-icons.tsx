@@ -18,6 +18,7 @@ import {
   FileText,
   Video,
   Link2,
+  Baby,
   type LucideIcon,
 } from "lucide-react";
 
@@ -39,6 +40,7 @@ export const navIconMap: Record<string, LucideIcon> = {
   FileText,
   Video,
   Link: Link2,
+  Baby,
 };
 
 export const getNavIcon = (iconKey: string): LucideIcon =>

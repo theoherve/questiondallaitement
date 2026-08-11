@@ -120,6 +120,11 @@ export const clientNav: NavItem[] = [
     iconKey: "BookOpen",
   },
   {
+    title: "Mes enfants",
+    href: "/espace-client/enfants",
+    iconKey: "Baby",
+  },
+  {
     title: "Mes réservations",
     href: "/espace-client/reservations",
     iconKey: "CalendarDays",
