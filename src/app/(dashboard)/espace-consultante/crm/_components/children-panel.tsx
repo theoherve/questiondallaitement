@@ -1,30 +1,49 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { differenceInMonths } from "date-fns";
+import { Trash2 } from "lucide-react";
+import { differenceInMonths, format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { WeightChart } from "@/components/growth-charts/weight-chart";
-import { addWeightMeasurementAsConsultant } from "../actions";
+import {
+  addWeightMeasurementAsConsultant,
+  deleteChildAsConsultant,
+  deleteWeightMeasurementAsConsultant,
+} from "../actions";
 import type { Child, WeightMeasurement } from "@/types/database";
 
 export const ChildrenPanel = ({
-  children,
+  childrenList,
   measurementsByChild,
 }: {
-  children: Child[];
+  childrenList: Child[];
   measurementsByChild: Record<string, WeightMeasurement[]>;
 }) => {
+  const router = useRouter();
   const [selectedChildId, setSelectedChildId] = useState<string | null>(
-    children[0]?.id ?? null,
+    childrenList[0]?.id ?? null,
   );
   const [weightKg, setWeightKg] = useState("");
   const [measuredAt, setMeasuredAt] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  if (children.length === 0) {
+  if (childrenList.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
         Ce client n&apos;a renseigné aucun enfant.
@@ -32,7 +51,10 @@ export const ChildrenPanel = ({
     );
   }
 
-  const selectedChild = children.find((c) => c.id === selectedChildId);
+  const selectedChild = childrenList.find((c) => c.id === selectedChildId);
+  const selectedMeasurements = selectedChild
+    ? (measurementsByChild[selectedChild.id] ?? [])
+    : [];
 
   const handleAddMeasurement = () => {
     if (!selectedChildId) return;
@@ -47,8 +69,38 @@ export const ChildrenPanel = ({
         toast.success("Pesée ajoutée");
         setWeightKg("");
         setMeasuredAt("");
+        router.refresh();
       } else {
-        toast.error(result.error);
+        toast.error(result.error ?? "Une erreur est survenue");
+      }
+    });
+  };
+
+  const handleDeleteChild = (childId: string) => {
+    startTransition(async () => {
+      const result = await deleteChildAsConsultant(childId);
+      if (result.success) {
+        toast.success("Enfant supprimé");
+        if (selectedChildId === childId) {
+          setSelectedChildId(
+            childrenList.find((c) => c.id !== childId)?.id ?? null,
+          );
+        }
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "Une erreur est survenue");
+      }
+    });
+  };
+
+  const handleDeleteMeasurement = (measurementId: string) => {
+    startTransition(async () => {
+      const result = await deleteWeightMeasurementAsConsultant(measurementId);
+      if (result.success) {
+        toast.success("Pesée supprimée");
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "Une erreur est survenue");
       }
     });
   };
@@ -56,23 +108,55 @@ export const ChildrenPanel = ({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        {children.map((child) => (
-          <Button
-            key={child.id}
-            variant={child.id === selectedChildId ? "default" : "outline"}
-            size="sm"
-            onClick={() => setSelectedChildId(child.id)}
-          >
-            {child.first_name} ·{" "}
-            {differenceInMonths(new Date(), new Date(child.birth_date))} mois
-          </Button>
+        {childrenList.map((child) => (
+          <div key={child.id} className="flex items-center gap-1">
+            <Button
+              variant={child.id === selectedChildId ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedChildId(child.id)}
+            >
+              {child.first_name} ·{" "}
+              {differenceInMonths(new Date(), new Date(child.birth_date))} mois
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={isPending}
+                  aria-label={`Supprimer ${child.first_name}`}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Supprimer {child.first_name} ?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Toutes les pesées enregistrées pour cet enfant seront
+                    définitivement supprimées. Cette action est irréversible.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleDeleteChild(child.id)}
+                  >
+                    Supprimer
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         ))}
       </div>
 
       {selectedChild && (
         <>
           <WeightChart
-            measurements={measurementsByChild[selectedChild.id] ?? []}
+            measurements={selectedMeasurements}
             birthDate={selectedChild.birth_date}
             sex={selectedChild.sex}
           />
@@ -100,6 +184,69 @@ export const ChildrenPanel = ({
               Ajouter la pesée
             </Button>
           </div>
+
+          {selectedMeasurements.length > 0 && (
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium">Pesées enregistrées</h3>
+              <ul className="divide-y rounded-md border">
+                {[...selectedMeasurements]
+                  .sort((a, b) => b.measured_at.localeCompare(a.measured_at))
+                  .map((measurement) => (
+                    <li
+                      key={measurement.id}
+                      className="flex items-center justify-between gap-2 px-3 py-2 text-sm"
+                    >
+                      <span>
+                        {format(
+                          new Date(measurement.measured_at),
+                          "d MMM yyyy",
+                          { locale: fr },
+                        )}{" "}
+                        · {(measurement.weight_grams / 1000).toFixed(2)} kg
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {measurement.source === "consultation"
+                            ? "consultation"
+                            : "domicile"}
+                        </span>
+                      </span>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={isPending}
+                            aria-label="Supprimer cette pesée"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Supprimer cette pesée ?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Cette pesée sera définitivement retirée du suivi de
+                              l&apos;enfant.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() =>
+                                handleDeleteMeasurement(measurement.id)
+                              }
+                            >
+                              Supprimer
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          )}
         </>
       )}
     </div>

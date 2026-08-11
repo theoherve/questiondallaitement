@@ -7,7 +7,7 @@ import { weightMeasurementSchema } from "@/validations/children";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/types";
-import type { Child } from "@/types/database";
+import type { Child, WeightMeasurement } from "@/types/database";
 
 const requireConsultant = async () => {
   const user = await getSessionUser();
@@ -386,20 +386,51 @@ export const getContactDetail = async (
 
 // ─── Dossier famille (enfants) ──────────────────────────────
 
+/**
+ * Une consultante n'accède au dossier de santé d'un client que si une vraie
+ * relation existe : un rendez-vous non annulé, ou une inscription à l'un de ses
+ * accompagnements. Même périmètre que `getContactDetail`, et un rendez-vous
+ * annulé ne donne aucun droit d'accès.
+ */
+const hasClientRelationship = async (
+  supabase: ReturnType<typeof createAdminClient>,
+  consultantId: string,
+  clientId: string,
+): Promise<boolean> => {
+  const { data: bookingLink } = await supabase
+    .from("bookings")
+    .select("id")
+    .eq("client_id", clientId)
+    .eq("consultant_id", consultantId)
+    .not("status", "eq", "cancelled")
+    .limit(1);
+  if (bookingLink && bookingLink.length > 0) return true;
+
+  const { data: accompagnements } = await supabase
+    .from("accompagnements")
+    .select("id")
+    .eq("consultant_id", consultantId);
+
+  const accompagnementIds = (accompagnements ?? []).map((a) => a.id);
+  if (accompagnementIds.length === 0) return false;
+
+  const { data: enrollmentLink } = await supabase
+    .from("accompagnement_enrollments")
+    .select("client_id")
+    .eq("client_id", clientId)
+    .in("accompagnement_id", accompagnementIds)
+    .limit(1);
+
+  return !!enrollmentLink && enrollmentLink.length > 0;
+};
+
 export const getChildrenForContact = async (
   clientId: string,
 ): Promise<Child[]> => {
   const user = await requireConsultant();
   const supabase = createAdminClient();
 
-  const { data: bookingLink } = await supabase
-    .from("bookings")
-    .select("id")
-    .eq("client_id", clientId)
-    .eq("consultant_id", user.id)
-    .limit(1);
-
-  if (!bookingLink || bookingLink.length === 0) {
+  if (!(await hasClientRelationship(supabase, user.id, clientId))) {
     return [];
   }
 
@@ -410,6 +441,116 @@ export const getChildrenForContact = async (
     .order("birth_date", { ascending: false });
 
   return data ?? [];
+};
+
+/**
+ * Lit les pesées des enfants d'un client, en revérifiant elle-même la relation
+ * consultante/client et en re-dérivant la liste des enfants depuis la base :
+ * aucun identifiant d'enfant fourni par l'appelant n'est utilisé tel quel.
+ */
+export const getWeightMeasurementsForContact = async (
+  clientId: string,
+): Promise<Record<string, WeightMeasurement[]>> => {
+  const user = await requireConsultant();
+  const supabase = createAdminClient();
+
+  if (!(await hasClientRelationship(supabase, user.id, clientId))) {
+    return {};
+  }
+
+  const { data: children } = await supabase
+    .from("children")
+    .select("id")
+    .eq("client_id", clientId);
+
+  const childIds = (children ?? []).map((c) => c.id);
+  if (childIds.length === 0) return {};
+
+  const { data: measurements } = await supabase
+    .from("weight_measurements")
+    .select("*")
+    .in("child_id", childIds)
+    .order("measured_at", { ascending: true });
+
+  const byChild: Record<string, WeightMeasurement[]> = {};
+  for (const childId of childIds) {
+    byChild[childId] = [];
+  }
+  for (const measurement of (measurements ?? []) as WeightMeasurement[]) {
+    byChild[measurement.child_id]?.push(measurement);
+  }
+
+  return byChild;
+};
+
+export const deleteChildAsConsultant = async (
+  childId: string,
+): Promise<ActionResult> => {
+  const user = await requireConsultant();
+  const supabase = createAdminClient();
+
+  const { data: child } = await supabase
+    .from("children")
+    .select("id, client_id")
+    .eq("id", childId)
+    .single();
+  if (!child) {
+    return { success: false, error: "Enfant introuvable" };
+  }
+
+  if (!(await hasClientRelationship(supabase, user.id, child.client_id))) {
+    return { success: false, error: "Aucune relation avec ce client" };
+  }
+
+  const { error } = await supabase.from("children").delete().eq("id", childId);
+  if (error) {
+    return { success: false, error: "Erreur lors de la suppression" };
+  }
+
+  revalidatePath(`/espace-consultante/crm/${child.client_id}`);
+  return { success: true };
+};
+
+export const deleteWeightMeasurementAsConsultant = async (
+  measurementId: string,
+): Promise<ActionResult> => {
+  const user = await requireConsultant();
+  const supabase = createAdminClient();
+
+  const { data: measurement } = await supabase
+    .from("weight_measurements")
+    .select("id, child_id")
+    .eq("id", measurementId)
+    .single();
+  if (!measurement) {
+    return { success: false, error: "Pesée introuvable" };
+  }
+
+  const { data: child } = await supabase
+    .from("children")
+    .select("id, client_id")
+    .eq("id", measurement.child_id)
+    .single();
+  if (!child) {
+    return { success: false, error: "Pesée introuvable" };
+  }
+
+  if (!(await hasClientRelationship(supabase, user.id, child.client_id))) {
+    return { success: false, error: "Aucune relation avec ce client" };
+  }
+
+  // La consultante gère le dossier : elle n'est pas soumise à la fenêtre de 24h
+  // ni au `recorded_by` qui encadrent les suppressions côté client.
+  const { error } = await supabase
+    .from("weight_measurements")
+    .delete()
+    .eq("id", measurementId);
+  if (error) {
+    return { success: false, error: "Erreur lors de la suppression" };
+  }
+
+  revalidatePath(`/espace-consultante/crm/${child.client_id}`);
+  return { success: true };
 };
 
 export const addWeightMeasurementAsConsultant = async (
@@ -424,21 +565,23 @@ export const addWeightMeasurementAsConsultant = async (
   const supabase = createAdminClient();
   const { data: child } = await supabase
     .from("children")
-    .select("id, client_id")
+    .select("id, client_id, birth_date")
     .eq("id", parsed.data.child_id)
     .single();
   if (!child) {
     return { success: false, error: "Enfant introuvable" };
   }
 
-  const { data: bookingLink } = await supabase
-    .from("bookings")
-    .select("id")
-    .eq("client_id", child.client_id)
-    .eq("consultant_id", user.id)
-    .limit(1);
-  if (!bookingLink || bookingLink.length === 0) {
+  if (!(await hasClientRelationship(supabase, user.id, child.client_id))) {
     return { success: false, error: "Aucune relation avec ce client" };
+  }
+
+  // Une pesée antérieure à la naissance est forcément une erreur de saisie.
+  if (child.birth_date && parsed.data.measured_at < child.birth_date) {
+    return {
+      success: false,
+      error: "La date de la pesée ne peut pas précéder la date de naissance.",
+    };
   }
 
   const { data: measurement, error } = await supabase

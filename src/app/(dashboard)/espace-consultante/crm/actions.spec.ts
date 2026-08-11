@@ -13,14 +13,37 @@ vi.mock("next/navigation", () => ({
   },
 }));
 
-const { mockBookingsData, mockChildrenData, mockChildSingleData } =
-  vi.hoisted(() => ({
-    mockBookingsData: { data: [] as unknown[] },
-    mockChildrenData: { data: [] as unknown[] },
-    mockChildSingleData: {
-      data: null as { id: string; client_id: string } | null,
-    },
-  }));
+const {
+  mockBookingsData,
+  mockAccompagnementsData,
+  mockEnrollmentsData,
+  mockChildrenData,
+  mockChildSingleData,
+  mockMeasurementSingleData,
+  mockMeasurementsData,
+  mockDeleteResult,
+  deleteCalls,
+} = vi.hoisted(() => ({
+  mockBookingsData: { data: [] as unknown[] },
+  mockAccompagnementsData: { data: [] as { id: string }[] },
+  mockEnrollmentsData: { data: [] as unknown[] },
+  mockChildrenData: { data: [] as unknown[] },
+  mockChildSingleData: {
+    data: null as { id: string; client_id: string; birth_date?: string } | null,
+  },
+  mockMeasurementSingleData: {
+    data: null as { id: string; child_id: string } | null,
+  },
+  mockMeasurementsData: { data: [] as unknown[] },
+  mockDeleteResult: { error: null as unknown },
+  deleteCalls: [] as { table: string }[],
+}));
+
+/** Objet à la fois attendable (await) et chaînable, comme un query builder. */
+const thenableWith = <T>(value: T, extra: Record<string, unknown>) => ({
+  ...extra,
+  then: (resolve: (v: T) => unknown) => Promise.resolve(value).then(resolve),
+});
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
@@ -30,7 +53,27 @@ vi.mock("@/lib/supabase/admin", () => ({
           select: () => ({
             eq: () => ({
               eq: () => ({
-                limit: () => Promise.resolve(mockBookingsData),
+                not: () => ({
+                  limit: () => Promise.resolve(mockBookingsData),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "accompagnements") {
+        return {
+          select: () => ({
+            eq: () => Promise.resolve(mockAccompagnementsData),
+          }),
+        };
+      }
+      if (table === "accompagnement_enrollments") {
+        return {
+          select: () => ({
+            eq: () => ({
+              in: () => ({
+                limit: () => Promise.resolve(mockEnrollmentsData),
               }),
             }),
           }),
@@ -39,11 +82,44 @@ vi.mock("@/lib/supabase/admin", () => ({
       if (table === "children") {
         return {
           select: () => ({
+            eq: () =>
+              thenableWith(mockChildrenData, {
+                order: () => Promise.resolve(mockChildrenData),
+                single: () => Promise.resolve(mockChildSingleData),
+              }),
+          }),
+          delete: () => {
+            deleteCalls.push({ table });
+            return { eq: () => Promise.resolve(mockDeleteResult) };
+          },
+        };
+      }
+      if (table === "weight_measurements") {
+        return {
+          select: () => ({
             eq: () => ({
-              order: () => Promise.resolve(mockChildrenData),
-              single: () => Promise.resolve(mockChildSingleData),
+              single: () => Promise.resolve(mockMeasurementSingleData),
+            }),
+            in: () => ({
+              order: () => Promise.resolve(mockMeasurementsData),
             }),
           }),
+          insert: (data: unknown) => {
+            insertCalls.push({ table, data });
+            return {
+              select: () => ({
+                single: () =>
+                  Promise.resolve({
+                    data: { id: "measurement-1" },
+                    error: null,
+                  }),
+              }),
+            };
+          },
+          delete: () => {
+            deleteCalls.push({ table });
+            return { eq: () => Promise.resolve(mockDeleteResult) };
+          },
         };
       }
       return {
@@ -64,8 +140,33 @@ vi.mock("@/lib/supabase/admin", () => ({
 import {
   createTag,
   getChildrenForContact,
+  getWeightMeasurementsForContact,
   addWeightMeasurementAsConsultant,
+  deleteChildAsConsultant,
+  deleteWeightMeasurementAsConsultant,
 } from "./actions";
+
+/** Remet à zéro l'ensemble des réponses simulées entre deux tests. */
+const resetMocks = () => {
+  vi.clearAllMocks();
+  insertCalls.length = 0;
+  deleteCalls.length = 0;
+  mockBookingsData.data = [];
+  mockAccompagnementsData.data = [];
+  mockEnrollmentsData.data = [];
+  mockChildrenData.data = [];
+  mockChildSingleData.data = null;
+  mockMeasurementSingleData.data = null;
+  mockMeasurementsData.data = [];
+  mockDeleteResult.error = null;
+};
+
+const asConsultant = () =>
+  mockGetSessionUser.mockResolvedValue({
+    id: "consultant-1",
+    email: "c@b.fr",
+    roles: ["consultant"],
+  });
 
 describe("createTag", () => {
   beforeEach(() => {
@@ -123,19 +224,10 @@ describe("createTag", () => {
 });
 
 describe("getChildrenForContact", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockBookingsData.data = [];
-    mockChildrenData.data = [];
-  });
+  beforeEach(resetMocks);
 
-  it("retourne un tableau vide si le consultant n'a aucun rendez-vous avec ce client", async () => {
-    mockGetSessionUser.mockResolvedValue({
-      id: "consultant-1",
-      email: "c@b.fr",
-      roles: ["consultant"],
-    });
-    mockBookingsData.data = [];
+  it("retourne un tableau vide si le consultant n'a aucune relation avec ce client", async () => {
+    asConsultant();
 
     const result = await getChildrenForContact("client-1");
 
@@ -143,17 +235,59 @@ describe("getChildrenForContact", () => {
   });
 
   it("retourne les enfants du client quand une relation de rendez-vous existe", async () => {
-    mockGetSessionUser.mockResolvedValue({
-      id: "consultant-1",
-      email: "c@b.fr",
-      roles: ["consultant"],
-    });
+    asConsultant();
     mockBookingsData.data = [{ id: "booking-1" }];
     mockChildrenData.data = [{ id: "child-1", first_name: "Léa" }];
 
     const result = await getChildrenForContact("client-1");
 
     expect(result).toEqual([{ id: "child-1", first_name: "Léa" }]);
+  });
+
+  it("accepte aussi une relation via une inscription à un accompagnement", async () => {
+    asConsultant();
+    mockBookingsData.data = [];
+    mockAccompagnementsData.data = [{ id: "accompagnement-1" }];
+    mockEnrollmentsData.data = [{ client_id: "client-1" }];
+    mockChildrenData.data = [{ id: "child-1", first_name: "Léa" }];
+
+    const result = await getChildrenForContact("client-1");
+
+    expect(result).toEqual([{ id: "child-1", first_name: "Léa" }]);
+  });
+});
+
+describe("getWeightMeasurementsForContact", () => {
+  beforeEach(resetMocks);
+
+  it("ne renvoie rien sans relation avec le client", async () => {
+    asConsultant();
+    mockChildrenData.data = [{ id: "child-1" }];
+    mockMeasurementsData.data = [{ id: "m1", child_id: "child-1" }];
+
+    const result = await getWeightMeasurementsForContact("client-1");
+
+    expect(result).toEqual({});
+  });
+
+  it("regroupe les pesées par enfant quand la relation existe", async () => {
+    asConsultant();
+    mockBookingsData.data = [{ id: "booking-1" }];
+    mockChildrenData.data = [{ id: "child-1" }, { id: "child-2" }];
+    mockMeasurementsData.data = [
+      { id: "m1", child_id: "child-1" },
+      { id: "m2", child_id: "child-1" },
+    ];
+
+    const result = await getWeightMeasurementsForContact("client-1");
+
+    expect(result).toEqual({
+      "child-1": [
+        { id: "m1", child_id: "child-1" },
+        { id: "m2", child_id: "child-1" },
+      ],
+      "child-2": [],
+    });
   });
 });
 
@@ -166,16 +300,8 @@ describe("addWeightMeasurementAsConsultant", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    insertCalls.length = 0;
-    mockBookingsData.data = [];
-    mockChildrenData.data = [];
-    mockChildSingleData.data = null;
-    mockGetSessionUser.mockResolvedValue({
-      id: "consultant-1",
-      email: "c@b.fr",
-      roles: ["consultant"],
-    });
+    resetMocks();
+    asConsultant();
   });
 
   it("refuse si l'enfant n'existe pas", async () => {
@@ -187,10 +313,11 @@ describe("addWeightMeasurementAsConsultant", () => {
     expect(insertCalls).toHaveLength(0);
   });
 
-  it("refuse si aucune relation de rendez-vous n'existe avec le client de l'enfant", async () => {
+  it("refuse si aucune relation n'existe avec le client de l'enfant", async () => {
     mockChildSingleData.data = {
       id: validInput.child_id,
       client_id: "client-9",
+      birth_date: "2025-01-01",
     };
     mockBookingsData.data = [];
 
@@ -203,10 +330,43 @@ describe("addWeightMeasurementAsConsultant", () => {
     expect(insertCalls).toHaveLength(0);
   });
 
+  it("refuse un rendez-vous annulé comme seule relation", async () => {
+    mockChildSingleData.data = {
+      id: validInput.child_id,
+      client_id: "client-9",
+      birth_date: "2025-01-01",
+    };
+    // Le mock bookings applique déjà .not("status", "eq", "cancelled") :
+    // un rendez-vous annulé ne remonte donc pas dans la requête.
+    mockBookingsData.data = [];
+    mockAccompagnementsData.data = [];
+
+    const result = await addWeightMeasurementAsConsultant(validInput);
+
+    expect(result.success).toBe(false);
+    expect(insertCalls).toHaveLength(0);
+  });
+
+  it("refuse une pesée antérieure à la date de naissance", async () => {
+    mockChildSingleData.data = {
+      id: validInput.child_id,
+      client_id: "client-9",
+      birth_date: "2026-08-05",
+    };
+    mockBookingsData.data = [{ id: "booking-1" }];
+
+    const result = await addWeightMeasurementAsConsultant(validInput);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/naissance/);
+    expect(insertCalls).toHaveLength(0);
+  });
+
   it("ajoute la pesée avec la source, le recorded_by et le consultant_id corrects", async () => {
     mockChildSingleData.data = {
       id: validInput.child_id,
       client_id: "client-9",
+      birth_date: "2025-01-01",
     };
     mockBookingsData.data = [{ id: "booking-1" }];
 
@@ -226,5 +386,85 @@ describe("addWeightMeasurementAsConsultant", () => {
         consultant_id: "consultant-1",
       },
     });
+  });
+});
+
+describe("deleteChildAsConsultant", () => {
+  beforeEach(() => {
+    resetMocks();
+    asConsultant();
+  });
+
+  it("refuse si l'enfant n'existe pas", async () => {
+    mockChildSingleData.data = null;
+
+    const result = await deleteChildAsConsultant("child-1");
+
+    expect(result).toEqual({ success: false, error: "Enfant introuvable" });
+    expect(deleteCalls).toHaveLength(0);
+  });
+
+  it("refuse si aucune relation n'existe avec le client de l'enfant", async () => {
+    mockChildSingleData.data = { id: "child-1", client_id: "client-9" };
+    mockBookingsData.data = [];
+
+    const result = await deleteChildAsConsultant("child-1");
+
+    expect(result).toEqual({
+      success: false,
+      error: "Aucune relation avec ce client",
+    });
+    expect(deleteCalls).toHaveLength(0);
+  });
+
+  it("supprime l'enfant quand la relation existe", async () => {
+    mockChildSingleData.data = { id: "child-1", client_id: "client-9" };
+    mockBookingsData.data = [{ id: "booking-1" }];
+
+    const result = await deleteChildAsConsultant("child-1");
+
+    expect(result.success).toBe(true);
+    expect(deleteCalls).toEqual([{ table: "children" }]);
+  });
+});
+
+describe("deleteWeightMeasurementAsConsultant", () => {
+  beforeEach(() => {
+    resetMocks();
+    asConsultant();
+  });
+
+  it("refuse si la pesée n'existe pas", async () => {
+    mockMeasurementSingleData.data = null;
+
+    const result = await deleteWeightMeasurementAsConsultant("m1");
+
+    expect(result).toEqual({ success: false, error: "Pesée introuvable" });
+    expect(deleteCalls).toHaveLength(0);
+  });
+
+  it("refuse si aucune relation n'existe avec le client de l'enfant", async () => {
+    mockMeasurementSingleData.data = { id: "m1", child_id: "child-1" };
+    mockChildSingleData.data = { id: "child-1", client_id: "client-9" };
+    mockBookingsData.data = [];
+
+    const result = await deleteWeightMeasurementAsConsultant("m1");
+
+    expect(result).toEqual({
+      success: false,
+      error: "Aucune relation avec ce client",
+    });
+    expect(deleteCalls).toHaveLength(0);
+  });
+
+  it("supprime la pesée quand la relation existe, sans fenêtre de 24h", async () => {
+    mockMeasurementSingleData.data = { id: "m1", child_id: "child-1" };
+    mockChildSingleData.data = { id: "child-1", client_id: "client-9" };
+    mockBookingsData.data = [{ id: "booking-1" }];
+
+    const result = await deleteWeightMeasurementAsConsultant("m1");
+
+    expect(result.success).toBe(true);
+    expect(deleteCalls).toEqual([{ table: "weight_measurements" }]);
   });
 });

@@ -122,12 +122,20 @@ export const addWeightMeasurement = async (
   const supabase = createAdminClient();
   const { data: child } = await supabase
     .from("children")
-    .select("id")
+    .select("id, birth_date")
     .eq("id", parsed.data.child_id)
     .eq("client_id", user.id)
     .single();
   if (!child) {
     return { success: false, error: "Enfant introuvable" };
+  }
+
+  // Une pesée antérieure à la naissance est forcément une erreur de saisie.
+  if (child.birth_date && parsed.data.measured_at < child.birth_date) {
+    return {
+      success: false,
+      error: "La date de la pesée ne peut pas précéder la date de naissance.",
+    };
   }
 
   const { data: measurement, error } = await supabase

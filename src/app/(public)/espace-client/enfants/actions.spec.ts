@@ -31,6 +31,17 @@ const { mockGetSupabaseAndUser, insertCalls, deleteCalls, responses } =
         error: unknown;
       },
       weightDelete: { error: null } as { error: unknown },
+      childOwnershipSingle: {
+        data: { id: "child-1", birth_date: "2025-01-10" },
+        error: null,
+      } as {
+        data: { id: string; birth_date: string } | null;
+        error: unknown;
+      },
+      weightInsertSingle: {
+        data: { id: "measure-1" },
+        error: null,
+      } as { data: { id: string } | null; error: unknown },
     },
   }));
 
@@ -73,12 +84,25 @@ vi.mock("@/lib/supabase/admin", () => ({
           select: () => ({
             eq: () => ({
               order: () => Promise.resolve({ data: [], error: null }),
+              // Chaîne de vérification de propriété :
+              // .eq("id", …).eq("client_id", …).single()
+              eq: () => ({
+                single: () => Promise.resolve(responses.childOwnershipSingle),
+              }),
             }),
           }),
         };
       }
       if (table === "weight_measurements") {
         return {
+          insert: (data: unknown) => {
+            insertCalls.push({ table, data });
+            return {
+              select: () => ({
+                single: () => Promise.resolve(responses.weightInsertSingle),
+              }),
+            };
+          },
           select: () => ({
             eq: () => ({
               single: () => Promise.resolve(responses.weightMeasurementSingle),
@@ -97,7 +121,12 @@ vi.mock("@/lib/supabase/admin", () => ({
   }),
 }));
 
-import { createChild, deleteChild, deleteWeightMeasurement } from "./actions";
+import {
+  createChild,
+  deleteChild,
+  addWeightMeasurement,
+  deleteWeightMeasurement,
+} from "./actions";
 
 describe("createChild", () => {
   beforeEach(() => {
@@ -208,6 +237,67 @@ describe("deleteChild", () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toBe("Enfant introuvable");
+  });
+});
+
+describe("addWeightMeasurement", () => {
+  const validInput = {
+    child_id: "550e8400-e29b-41d4-a716-446655440000",
+    weight_grams: 4200,
+    measured_at: "2025-02-01",
+    source: "home",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    insertCalls.length = 0;
+    deleteCalls.length = 0;
+    responses.childOwnershipSingle = {
+      data: { id: "child-1", birth_date: "2025-01-10" },
+      error: null,
+    };
+    responses.weightInsertSingle = { data: { id: "measure-1" }, error: null };
+    mockGetSupabaseAndUser.mockResolvedValue({
+      user: { id: "client-1" },
+      supabase: {},
+    });
+  });
+
+  it("enregistre la pesée à domicile de l'enfant du client", async () => {
+    const result = await addWeightMeasurement(validInput);
+
+    expect(result.success).toBe(true);
+    expect(insertCalls.at(-1)).toMatchObject({
+      table: "weight_measurements",
+      data: { source: "home", recorded_by: "client-1" },
+    });
+  });
+
+  it("refuse une pesée antérieure à la date de naissance de l'enfant", async () => {
+    responses.childOwnershipSingle = {
+      data: { id: "child-1", birth_date: "2025-03-01" },
+      error: null,
+    };
+
+    const result = await addWeightMeasurement(validInput);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/naissance/);
+    expect(insertCalls).toHaveLength(0);
+  });
+
+  it("refuse une pesée datée dans le futur", async () => {
+    const inTwoDays = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+
+    const result = await addWeightMeasurement({
+      ...validInput,
+      measured_at: inTwoDays,
+    });
+
+    expect(result.success).toBe(false);
+    expect(insertCalls).toHaveLength(0);
   });
 });
 

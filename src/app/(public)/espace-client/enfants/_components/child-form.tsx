@@ -37,7 +37,7 @@ export const ChildForm = () => {
         setGestationalWeeks("");
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.error(result.error ?? "Une erreur est survenue");
       }
     });
   };

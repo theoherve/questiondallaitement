@@ -5,6 +5,7 @@ import { Baby } from "lucide-react";
 import { differenceInMonths } from "date-fns";
 import { listMyChildren } from "./actions";
 import { ChildForm } from "./_components/child-form";
+import { DeleteChildButton } from "./_components/delete-child-button";
 
 export const metadata: Metadata = {
   title: "Mes enfants",
@@ -24,9 +25,12 @@ const MyChildrenPage = async () => {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         {children.map((child) => (
-          <Link key={child.id} href={`/espace-client/enfants/${child.id}`}>
-            <Card className="transition-shadow hover:shadow-md">
-              <CardContent className="flex items-center gap-3 py-4">
+          <Card key={child.id} className="transition-shadow hover:shadow-md">
+            <CardContent className="flex items-center gap-3 py-4">
+              <Link
+                href={`/espace-client/enfants/${child.id}`}
+                className="flex flex-1 items-center gap-3"
+              >
                 <Baby className="h-8 w-8 text-primary-green" />
                 <div>
                   <p className="font-medium">{child.first_name}</p>
@@ -36,9 +40,13 @@ const MyChildrenPage = async () => {
                     {child.is_premature ? " · né prématurément" : ""}
                   </p>
                 </div>
-              </CardContent>
-            </Card>
-          </Link>
+              </Link>
+              <DeleteChildButton
+                childId={child.id}
+                firstName={child.first_name}
+              />
+            </CardContent>
+          </Card>
         ))}
       </div>
 

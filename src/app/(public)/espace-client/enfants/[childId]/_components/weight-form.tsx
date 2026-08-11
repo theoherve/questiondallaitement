@@ -28,7 +28,7 @@ export const WeightForm = ({ childId }: { childId: string }) => {
         setMeasuredAt("");
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.error(result.error ?? "Une erreur est survenue");
       }
     });
   };

@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { WeightChart } from "@/components/growth-charts/weight-chart";
 import { listMyChildren, listWeightMeasurements } from "../actions";
 import { WeightForm } from "./_components/weight-form";
+import { MeasurementList } from "./_components/measurement-list";
 
 export const metadata: Metadata = {
   title: "Suivi de poids",
@@ -42,6 +43,12 @@ const ChildDetailPage = async ({
       <Card className="mt-6">
         <CardContent className="pt-6">
           <WeightForm childId={child.id} />
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardContent className="pt-6">
+          <MeasurementList measurements={measurements} />
         </CardContent>
       </Card>
     </div>
