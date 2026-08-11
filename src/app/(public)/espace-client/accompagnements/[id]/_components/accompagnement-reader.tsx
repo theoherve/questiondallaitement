@@ -48,6 +48,7 @@ type AccompagnementReaderProps = {
   completedCount?: number;
   readOnly?: boolean;
   backHref?: string;
+  bookingEnabled: boolean;
 };
 
 const ENCOURAGEMENTS = [
@@ -68,6 +69,7 @@ export const AccompagnementReader = ({
   totalBlocks,
   readOnly = false,
   backHref = "/espace-client/accompagnements",
+  bookingEnabled,
 }: AccompagnementReaderProps) => {
   const [activeSection, setActiveSection] = useState(0);
   const [completedIds, setCompletedIds] = useState(
@@ -384,6 +386,7 @@ export const AccompagnementReader = ({
         open={celebrationOpen}
         onOpenChange={setCelebrationOpen}
         accompagnementTitle={accompagnement.title}
+        bookingEnabled={bookingEnabled}
       />
 
       <AccompagnementOnboarding

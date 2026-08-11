@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
+import { isBookingEnabled } from "@/lib/settings/feature-flags/store";
 import { AccompagnementReader } from "./_components/accompagnement-reader";
 
 type Props = {
@@ -59,6 +60,8 @@ const AccompagnementReaderPage = async ({ params }: Props) => {
     .single();
 
   if (!accompagnement) notFound();
+
+  const bookingEnabled = await isBookingEnabled();
 
   const [progressResult, bookmarksResult] = await Promise.all([
     supabase
@@ -142,6 +145,7 @@ const AccompagnementReaderPage = async ({ params }: Props) => {
         resources={resources}
         totalBlocks={totalBlocks}
         completedCount={completedCount}
+        bookingEnabled={bookingEnabled}
       />
     </div>
   );

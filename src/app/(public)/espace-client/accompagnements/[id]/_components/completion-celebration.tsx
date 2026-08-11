@@ -13,12 +13,12 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { features } from "@/config/features";
 
 type CompletionCelebrationProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   accompagnementTitle: string;
+  bookingEnabled: boolean;
 };
 
 const BRAND_COLORS = ["#a0283e", "#c4566a", "#f0b8a8", "#a8c4a0", "#e8c98a"];
@@ -58,6 +58,7 @@ export const CompletionCelebration = ({
   open,
   onOpenChange,
   accompagnementTitle,
+  bookingEnabled,
 }: CompletionCelebrationProps) => {
   const reduce = useReducedMotion();
 
@@ -121,7 +122,7 @@ export const CompletionCelebration = ({
           </div>
 
           <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-            {features.bookingEnabled && (
+            {bookingEnabled && (
               <Button
                 asChild
                 className="flex-1 rounded-2xl bg-primary-red hover:bg-primary-red-dark"
