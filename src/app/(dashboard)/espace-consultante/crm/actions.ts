@@ -3,9 +3,11 @@
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { crmNoteSchema, crmTagSchema } from "@/validations/crm";
+import { weightMeasurementSchema } from "@/validations/children";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/types";
+import type { Child } from "@/types/database";
 
 const requireConsultant = async () => {
   const user = await getSessionUser();
@@ -380,6 +382,84 @@ export const getContactDetail = async (
     notes: notesRes.data ?? [],
     tags,
   };
+};
+
+// ─── Dossier famille (enfants) ──────────────────────────────
+
+export const getChildrenForContact = async (
+  clientId: string,
+): Promise<Child[]> => {
+  const user = await requireConsultant();
+  const supabase = createAdminClient();
+
+  const { data: bookingLink } = await supabase
+    .from("bookings")
+    .select("id")
+    .eq("client_id", clientId)
+    .eq("consultant_id", user.id)
+    .limit(1);
+
+  if (!bookingLink || bookingLink.length === 0) {
+    return [];
+  }
+
+  const { data } = await supabase
+    .from("children")
+    .select("*")
+    .eq("client_id", clientId)
+    .order("birth_date", { ascending: false });
+
+  return data ?? [];
+};
+
+export const addWeightMeasurementAsConsultant = async (
+  input: unknown,
+): Promise<ActionResult<{ id: string }>> => {
+  const user = await requireConsultant();
+  const parsed = weightMeasurementSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message };
+  }
+
+  const supabase = createAdminClient();
+  const { data: child } = await supabase
+    .from("children")
+    .select("id, client_id")
+    .eq("id", parsed.data.child_id)
+    .single();
+  if (!child) {
+    return { success: false, error: "Enfant introuvable" };
+  }
+
+  const { data: bookingLink } = await supabase
+    .from("bookings")
+    .select("id")
+    .eq("client_id", child.client_id)
+    .eq("consultant_id", user.id)
+    .limit(1);
+  if (!bookingLink || bookingLink.length === 0) {
+    return { success: false, error: "Aucune relation avec ce client" };
+  }
+
+  const { data: measurement, error } = await supabase
+    .from("weight_measurements")
+    .insert({
+      child_id: parsed.data.child_id,
+      weight_grams: parsed.data.weight_grams,
+      measured_at: parsed.data.measured_at,
+      source: "consultation",
+      recorded_by: user.id,
+      consultant_id: user.id,
+    })
+    .select("id")
+    .single();
+
+  if (error || !measurement) {
+    return { success: false, error: "Erreur lors de l'ajout de la pesée" };
+  }
+
+  revalidatePath(`/espace-consultante/crm/${child.client_id}`);
+  return { success: true, data: measurement };
 };
 
 // ─── Notes CRUD ─────────────────────────────────────────────

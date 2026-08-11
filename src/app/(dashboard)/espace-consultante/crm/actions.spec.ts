@@ -13,23 +13,50 @@ vi.mock("next/navigation", () => ({
   },
 }));
 
+const { mockBookingsData, mockChildrenData } = vi.hoisted(() => ({
+  mockBookingsData: { data: [] as unknown[] },
+  mockChildrenData: { data: [] as unknown[] },
+}));
+
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
-    from: (table: string) => ({
-      insert: (data: unknown) => {
-        insertCalls.push({ table, data });
+    from: (table: string) => {
+      if (table === "bookings") {
         return {
           select: () => ({
-            single: () =>
-              Promise.resolve({ data: { id: "tag-1" }, error: null }),
+            eq: () => ({
+              eq: () => ({
+                limit: () => Promise.resolve(mockBookingsData),
+              }),
+            }),
           }),
         };
-      },
-    }),
+      }
+      if (table === "children") {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: () => Promise.resolve(mockChildrenData),
+            }),
+          }),
+        };
+      }
+      return {
+        insert: (data: unknown) => {
+          insertCalls.push({ table, data });
+          return {
+            select: () => ({
+              single: () =>
+                Promise.resolve({ data: { id: "tag-1" }, error: null }),
+            }),
+          };
+        },
+      };
+    },
   }),
 }));
 
-import { createTag } from "./actions";
+import { createTag, getChildrenForContact } from "./actions";
 
 describe("createTag", () => {
   beforeEach(() => {
@@ -83,5 +110,40 @@ describe("createTag", () => {
 
     expect(result.success).toBe(false);
     expect(insertCalls).toHaveLength(0);
+  });
+});
+
+describe("getChildrenForContact", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockBookingsData.data = [];
+    mockChildrenData.data = [];
+  });
+
+  it("retourne un tableau vide si le consultant n'a aucun rendez-vous avec ce client", async () => {
+    mockGetSessionUser.mockResolvedValue({
+      id: "consultant-1",
+      email: "c@b.fr",
+      roles: ["consultant"],
+    });
+    mockBookingsData.data = [];
+
+    const result = await getChildrenForContact("client-1");
+
+    expect(result).toEqual([]);
+  });
+
+  it("retourne les enfants du client quand une relation de rendez-vous existe", async () => {
+    mockGetSessionUser.mockResolvedValue({
+      id: "consultant-1",
+      email: "c@b.fr",
+      roles: ["consultant"],
+    });
+    mockBookingsData.data = [{ id: "booking-1" }];
+    mockChildrenData.data = [{ id: "child-1", first_name: "Léa" }];
+
+    const result = await getChildrenForContact("client-1");
+
+    expect(result).toEqual([{ id: "child-1", first_name: "Léa" }]);
   });
 });
