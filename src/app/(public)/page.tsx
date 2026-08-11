@@ -845,14 +845,13 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
         <div className="mx-auto max-w-4xl text-center">
           <ScrollReveal>
             <h2 className="font-serif text-3xl font-bold text-background-beige lg:text-5xl">
-              Chaque allaitement{" "}
-              <em className="italic">mérite</em>{" "}
-              d&apos;être accompagné.
+              Un accompagnement de <em className="italic">qualité</em> peut
+              faire toute la différence.
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-background-beige/70">
               {bookingEnabled
                 ? "Prenez rendez-vous pour une consultation personnalisée, ou explorez nos accompagnements à votre rythme."
-                : "Explorez nos accompagnements et formations en ligne, à votre rythme."}
+                : "Découvrez mes accompagnements et formations en ligne pour avancer à votre rythme, avec des repères fiables et un soutien bienveillant."}
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Button
