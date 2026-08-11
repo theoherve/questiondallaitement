@@ -58,6 +58,14 @@ const PolitiqueConfidentialitePage = async () => {
             (communiqué volontairement lors de la réservation)
           </li>
           <li>
+            <strong>Données de santé sur les enfants :</strong> si vous
+            renseignez un ou plusieurs enfants dans votre espace client
+            (prénom, date de naissance, sexe, pesées), ces données sont
+            utilisées exclusivement pour le suivi de l&apos;allaitement avec
+            votre consultante. Elles ne sont jamais partagées avec un tiers et
+            vous pouvez les supprimer à tout moment depuis votre espace client.
+          </li>
+          <li>
             <strong>Données de progression :</strong> avancement dans les
             formations en ligne
           </li>
