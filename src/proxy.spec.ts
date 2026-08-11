@@ -5,7 +5,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // vi.hoisted() est évalué avant les vi.mock() hoistés — évite le TDZ
 const { mockNext, mockRedirect } = vi.hoisted(() => ({
   mockNext: vi.fn(() => ({ type: "next" })),
-  mockRedirect: vi.fn((url: { pathname: string }) => ({ type: "redirect", url })),
+  mockRedirect: vi.fn((url: { pathname: string }) => ({
+    type: "redirect",
+    url,
+  })),
 }));
 
 vi.mock("next/server", () => ({
@@ -20,7 +23,7 @@ vi.mock("@/auth", () => ({
   auth: vi.fn((handler: (req: unknown) => unknown) => handler),
 }));
 
-import middleware from "@/middleware";
+import middleware from "@/proxy";
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -47,14 +50,18 @@ describe("middleware — protection des routes", () => {
 
   // ─── Routes publiques ──────────────────────────────────────
   describe("routes publiques (sans auth)", () => {
-    it.each(["/", "/formations", "/consultantes", "/blog", "/reserver", "/contact"])(
-      "laisse passer %s sans authentification",
-      (path) => {
-        middleware(makeReq(path));
-        expect(mockNext).toHaveBeenCalled();
-        expect(mockRedirect).not.toHaveBeenCalled();
-      },
-    );
+    it.each([
+      "/",
+      "/formations",
+      "/consultantes",
+      "/blog",
+      "/reserver",
+      "/contact",
+    ])("laisse passer %s sans authentification", (path) => {
+      middleware(makeReq(path));
+      expect(mockNext).toHaveBeenCalled();
+      expect(mockRedirect).not.toHaveBeenCalled();
+    });
 
     it("laisse passer /formations/mon-module (sous-route publique)", () => {
       middleware(makeReq("/formations/mon-module"));
@@ -106,7 +113,10 @@ describe("middleware — protection des routes", () => {
       middleware(makeReq("/espace-client", null));
       const url = mockRedirect.mock.calls[0][0];
       expect(url.pathname).toBe("/connexion");
-      expect(url.searchParams.set).toHaveBeenCalledWith("redirect", "/espace-client");
+      expect(url.searchParams.set).toHaveBeenCalledWith(
+        "redirect",
+        "/espace-client",
+      );
     });
   });
 
@@ -148,7 +158,9 @@ describe("middleware — protection des routes", () => {
     });
 
     it("laisse passer consultant_limited sur /espace-consultante", () => {
-      middleware(makeReq("/espace-consultante", { roles: ["consultant_limited"] }));
+      middleware(
+        makeReq("/espace-consultante", { roles: ["consultant_limited"] }),
+      );
       expect(mockNext).toHaveBeenCalled();
     });
 
@@ -169,7 +181,9 @@ describe("middleware — protection des routes", () => {
     });
 
     it("redirige vers / si marketing_manager sur /espace-consultante", () => {
-      middleware(makeReq("/espace-consultante", { roles: ["marketing_manager"] }));
+      middleware(
+        makeReq("/espace-consultante", { roles: ["marketing_manager"] }),
+      );
       const url = mockRedirect.mock.calls[0][0];
       expect(url.pathname).toBe("/");
     });
@@ -224,7 +238,9 @@ describe("middleware — protection des routes", () => {
     });
 
     it("redirige marketing_manager vers / sur /espace-consultante", () => {
-      middleware(makeReq("/espace-consultante", { roles: ["marketing_manager"] }));
+      middleware(
+        makeReq("/espace-consultante", { roles: ["marketing_manager"] }),
+      );
       const url = mockRedirect.mock.calls[0][0];
       expect(url.pathname).toBe("/");
     });
@@ -233,7 +249,9 @@ describe("middleware — protection des routes", () => {
   // ─── Support rôle legacy (string unique) ──────────────────
   describe("support du rôle legacy (string unique dans JWT)", () => {
     it("accepte role: 'client' (ancien JWT) sur /espace-client", () => {
-      middleware(makeReq("/espace-client", { role: "client" } as { role: string }));
+      middleware(
+        makeReq("/espace-client", { role: "client" } as { role: string }),
+      );
       expect(mockNext).toHaveBeenCalled();
     });
 
