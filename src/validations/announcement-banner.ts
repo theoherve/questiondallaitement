@@ -4,7 +4,7 @@ export const announcementBannerSchema = z
   .object({
     enabled: z.boolean(),
     message: z.string(),
-    link_url: z.union([z.literal(""), z.string().url("Lien invalide")]),
+    link_url: z.union([z.literal(""), z.string().url("Lien invalide")]).nullable(),
     link_label: z.string(),
     start_date: z.string().nullable(),
     end_date: z.string().nullable(),

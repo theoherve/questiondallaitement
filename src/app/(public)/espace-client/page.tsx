@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { getSupabaseAndUser } from "@/lib/supabase/server-auth";
-import { features } from "@/config/features";
+import { isBookingEnabled } from "@/lib/settings/feature-flags/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ type EnrollmentRow = {
 
 const ClientDashboardPage = async () => {
   const { supabase, user } = await getSupabaseAndUser();
+  const bookingEnabled = await isBookingEnabled();
 
   const [enrollmentsResult, bookingsResult, profileResult] = await Promise.all([
     supabase
@@ -439,7 +440,7 @@ const ClientDashboardPage = async () => {
                 <p className="text-sm text-muted-foreground">
                   Aucun rendez-vous à venir.
                 </p>
-                {features.bookingEnabled && (
+                {bookingEnabled && (
                   <Button
                     asChild
                     variant="outline"

@@ -12,7 +12,7 @@ import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { NEWSLETTER_NAME } from "@/config/newsletter";
 import { NewsletterSignupForm } from "./newsletter/_components/newsletter-signup-form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { features } from "@/config/features";
+import { isBookingEnabled } from "@/lib/settings/feature-flags/store";
 import { PACK_SALES_PATH } from "@/config/navigation";
 import { PACK_SLUG, sortByModuleOrder } from "@/config/accompagnements";
 
@@ -32,6 +32,7 @@ type HomePageProps = {
 const HomePage = async ({ searchParams }: HomePageProps) => {
   await searchParams; // consume the promise
   const supabase = await createClient();
+  const bookingEnabled = await isBookingEnabled();
 
   const [formationsRes, blogRes, consultantsRes, consultationTypesRes] = await Promise.all([
     supabase
@@ -146,7 +147,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
       cta: "En savoir plus",
     },
   ];
-  const visibleServices = features.bookingEnabled
+  const visibleServices = bookingEnabled
     ? SERVICES
     : SERVICES.filter((s) => s.href !== "/reserver");
   // Grille adaptée au nombre de services : 4 colonnes pleines, sinon centrée
@@ -233,7 +234,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                 variant="outline"
                 className="border-2 border-white bg-transparent text-white hover:bg-white/10 hover:text-white"
               >
-                {features.bookingEnabled ? (
+                {bookingEnabled ? (
                   <Link href="/reserver">Prendre rendez-vous</Link>
                 ) : (
                   <Link href={PACK_SALES_PATH}>Découvrir le Pack</Link>
@@ -844,14 +845,13 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
         <div className="mx-auto max-w-4xl text-center">
           <ScrollReveal>
             <h2 className="font-serif text-3xl font-bold text-background-beige lg:text-5xl">
-              Chaque allaitement{" "}
-              <em className="italic">mérite</em>{" "}
-              d&apos;être accompagné.
+              Un accompagnement de <em className="italic">qualité</em> peut
+              faire toute la différence.
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-background-beige/70">
-              {features.bookingEnabled
+              {bookingEnabled
                 ? "Prenez rendez-vous pour une consultation personnalisée, ou explorez nos accompagnements à votre rythme."
-                : "Explorez nos accompagnements et formations en ligne, à votre rythme."}
+                : "Découvrez mes accompagnements et formations en ligne pour avancer à votre rythme, avec des repères fiables et un soutien bienveillant."}
             </p>
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Button
@@ -859,7 +859,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                 size="lg"
                 className="bg-primary-red px-8 hover:bg-primary-red-dark"
               >
-                {features.bookingEnabled ? (
+                {bookingEnabled ? (
                   <Link href="/reserver">Prendre rendez-vous</Link>
                 ) : (
                   <Link href={PACK_SALES_PATH}>Découvrir le Pack</Link>

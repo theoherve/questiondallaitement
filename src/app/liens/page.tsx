@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { InstagramIcon, LinkedinIcon } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { socialLinks } from "@/config/navigation";
+import { getSocialLinks } from "@/lib/settings/social-links/store";
 import type { BioLink } from "@/types/database";
 import { BioLinkCard } from "./_components/bio-link-card";
 import { BioFeaturedCard } from "./_components/bio-featured-card";
@@ -44,6 +44,18 @@ const LiensPage = async () => {
     .order("position", { ascending: true });
 
   const items = (data ?? []) as BioLink[];
+
+  const links = await getSocialLinks();
+  const socialLinks = (
+    [
+      { title: "Instagram", href: links.instagram_url, iconKey: "Instagram" as const },
+      { title: "TikTok", href: links.tiktok_url, iconKey: "TikTok" as const },
+      { title: "LinkedIn", href: links.linkedin_url, iconKey: "Linkedin" as const },
+    ] satisfies { title: string; href: string | null; iconKey: "Instagram" | "TikTok" | "Linkedin" }[]
+  ).filter(
+    (l): l is { title: string; href: string; iconKey: "Instagram" | "TikTok" | "Linkedin" } =>
+      Boolean(l.href),
+  );
 
   return (
     <div className="min-h-dvh bg-background-beige">

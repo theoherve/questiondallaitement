@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ArrowLeft, BookOpen, Clock, Eye, Pencil, User } from "lucide-react";
 import { AccompagnementReader } from "@/app/(public)/espace-client/accompagnements/[id]/_components/accompagnement-reader";
+import { isBookingEnabled } from "@/lib/settings/feature-flags/store";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -49,6 +50,7 @@ const AccompagnementPreviewPage = async ({ params }: Props) => {
 
   const { id } = await params;
   const supabase = createAdminClient();
+  const bookingEnabled = await isBookingEnabled();
 
   const { data: accompagnement } = await supabase
     .from("accompagnements")
@@ -200,6 +202,7 @@ const AccompagnementPreviewPage = async ({ params }: Props) => {
                 completedCount={0}
                 readOnly
                 backHref={`/admin/accompagnements/${id}/edit`}
+                bookingEnabled={bookingEnabled}
               />
             </div>
           )}

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { TestimonialCarousel } from "@/components/public/testimonials/testimonial-carousel";
 import { GoogleRatingBadge } from "@/components/public/testimonials/google-rating-badge";
 import { getFeaturedTestimonials } from "@/lib/testimonials";
-import { features } from "@/config/features";
+import { isBookingEnabled } from "@/lib/settings/feature-flags/store";
 import {
   ArrowRight,
   Heart,
@@ -65,8 +65,9 @@ const MILESTONES = [
   },
 ];
 
-const AProposPage = () => {
+const AProposPage = async () => {
   const featuredTestimonials = getFeaturedTestimonials();
+  const bookingEnabled = await isBookingEnabled();
 
   return (
     <>
@@ -99,7 +100,7 @@ const AProposPage = () => {
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
-                  {features.bookingEnabled && (
+                  {bookingEnabled && (
                     <Button
                       asChild
                       size="lg"
@@ -464,7 +465,7 @@ const AProposPage = () => {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              {features.bookingEnabled && (
+              {bookingEnabled && (
                 <Button
                   asChild
                   size="lg"

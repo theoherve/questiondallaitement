@@ -5,17 +5,19 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { getClientNav } from "@/config/navigation";
 import { getNavIcon } from "@/config/navigation-icons";
-import { features } from "@/config/features";
-
-const nav = getClientNav(features.bookingEnabled);
 
 const getIsActive = (pathname: string, href: string, isFirst: boolean) => {
   if (isFirst) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 };
 
-export const ClientSpaceTabs = () => {
+type ClientSpaceTabsProps = {
+  bookingEnabled: boolean;
+};
+
+export const ClientSpaceTabs = ({ bookingEnabled }: ClientSpaceTabsProps) => {
   const pathname = usePathname();
+  const nav = getClientNav(bookingEnabled);
 
   return (
     <nav

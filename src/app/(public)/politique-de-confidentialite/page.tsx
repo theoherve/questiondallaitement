@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { siteConfig } from "@/config/site";
+import { getContactEmail } from "@/lib/settings/seo-defaults/store";
 
 export const metadata: Metadata = {
   title: "Politique de confidentialité",
@@ -7,7 +7,10 @@ export const metadata: Metadata = {
     "Politique de confidentialité et protection des données personnelles de Question d'Allaitement.",
 };
 
-const PolitiqueConfidentialitePage = () => (
+const PolitiqueConfidentialitePage = async () => {
+  const contactEmail = await getContactEmail();
+
+  return (
   <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
     <h1 className="font-serif text-3xl font-bold text-primary-green">
       Politique de confidentialité
@@ -25,7 +28,7 @@ const PolitiqueConfidentialitePage = () => (
           Le responsable du traitement des données personnelles collectées sur
           ce site est Carole HERVÉ, entrepreneur individuel (SIRET 540 075 819
           00016), dont le siège social est situé 43 rue Guy Môquet, 75017 Paris.
-          Contact : {siteConfig.contactEmail}
+          Contact : {contactEmail}
         </p>
       </section>
 
@@ -215,11 +218,11 @@ const PolitiqueConfidentialitePage = () => (
         <p className="mt-3 text-sm">
           Pour exercer vos droits, contactez-nous à{" "}
           <a
-            href={`mailto:${siteConfig.contactEmail}`}
+            href={`mailto:${contactEmail}`}
             className="text-primary-red hover:underline"
             tabIndex={0}
           >
-            {siteConfig.contactEmail}
+            {contactEmail}
           </a>
           . Nous nous engageons à vous répondre dans un délai de 30 jours.
         </p>
@@ -275,6 +278,7 @@ const PolitiqueConfidentialitePage = () => (
       </section>
     </div>
   </div>
-);
+  );
+};
 
 export default PolitiqueConfidentialitePage;

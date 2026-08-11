@@ -10,13 +10,15 @@ import {
   getAnnouncementBanner,
   isAnnouncementBannerActive,
 } from "@/lib/announcement-banner/store";
+import { isBookingEnabled } from "@/lib/settings/feature-flags/store";
 
 const PublicLayout = async ({ children }: { children: React.ReactNode }) => {
-  const [user, maintenance, accompagnements, banner] = await Promise.all([
+  const [user, maintenance, accompagnements, banner, bookingEnabled] = await Promise.all([
     getSessionUser(),
     isMaintenanceMode(),
     getAccompagnementsNavPreview(),
     getAnnouncementBanner(),
+    isBookingEnabled(),
   ]);
 
   if (maintenance && !user?.roles.includes("admin")) {
@@ -36,6 +38,7 @@ const PublicLayout = async ({ children }: { children: React.ReactNode }) => {
         user={user}
         onLogout={handleLogout}
         accompagnements={accompagnements}
+        bookingEnabled={bookingEnabled}
       />
       <main className="flex-1">{children}</main>
       <Footer />

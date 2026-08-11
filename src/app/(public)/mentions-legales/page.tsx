@@ -1,12 +1,15 @@
 import { Metadata } from "next";
-import { siteConfig } from "@/config/site";
+import { getContactEmail } from "@/lib/settings/seo-defaults/store";
 
 export const metadata: Metadata = {
   title: "Mentions légales",
   description: "Mentions légales de la plateforme Question d'Allaitement.",
 };
 
-const MentionsLegalesPage = () => (
+const MentionsLegalesPage = async () => {
+  const contactEmail = await getContactEmail();
+
+  return (
   <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
     <h1 className="font-serif text-3xl font-bold text-primary-green">
       Mentions légales
@@ -40,7 +43,7 @@ const MentionsLegalesPage = () => (
             <strong>Directeur de la publication :</strong> Carole HERVÉ
           </p>
           <p>
-            <strong>Contact :</strong> {siteConfig.contactEmail}
+            <strong>Contact :</strong> {contactEmail}
           </p>
         </div>
       </section>
@@ -147,6 +150,7 @@ const MentionsLegalesPage = () => (
       </section>
     </div>
   </div>
-);
+  );
+};
 
 export default MentionsLegalesPage;

@@ -25,7 +25,7 @@ export const AnnouncementBanner = ({ message, linkUrl, linkLabel }: Props) => {
   };
 
   return (
-    <div className="flex items-center justify-center gap-3 bg-primary-green px-4 py-2 text-center text-sm text-white">
+    <div className="flex items-center justify-center gap-3 bg-primary-rose px-4 py-2 text-center text-sm text-white">
       <span>
         {message}
         {linkUrl && (
