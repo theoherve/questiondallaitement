@@ -22,8 +22,15 @@ export const createChild = async (
   input: unknown,
 ): Promise<ActionResult<{ id: string }>> => {
   const { user } = await getSupabaseAndUser();
+  const supabase = createAdminClient();
 
-  if (!user.gdpr_consent_at) {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("gdpr_consent_at")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.gdpr_consent_at) {
     return {
       success: false,
       error:
@@ -36,7 +43,6 @@ export const createChild = async (
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const supabase = createAdminClient();
   const { data: child, error } = await supabase
     .from("children")
     .insert({
@@ -62,14 +68,19 @@ export const deleteChild = async (childId: string): Promise<ActionResult> => {
   const { user } = await getSupabaseAndUser();
   const supabase = createAdminClient();
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("children")
     .delete()
     .eq("id", childId)
-    .eq("client_id", user.id);
+    .eq("client_id", user.id)
+    .select("id");
 
   if (error) {
     return { success: false, error: "Erreur lors de la suppression" };
+  }
+
+  if (!data || data.length === 0) {
+    return { success: false, error: "Enfant introuvable" };
   }
 
   revalidatePath("/espace-client/enfants");
@@ -147,7 +158,7 @@ export const deleteWeightMeasurement = async (
 
   const { data: measurement } = await supabase
     .from("weight_measurements")
-    .select("id, child_id, recorded_by, created_at, children(client_id)")
+    .select("id, child_id, recorded_by, created_at")
     .eq("id", measurementId)
     .single();
 
