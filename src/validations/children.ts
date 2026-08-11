@@ -1,9 +1,34 @@
 import { z } from "zod/v4";
 
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Vérifie que la chaîne est bien une date calendaire réelle au format AAAA-MM-JJ. */
+export const isRealCalendarDate = (value: string): boolean => {
+  if (!ISO_DATE_PATTERN.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) return false;
+  // Rejette les dates « débordantes » type 2025-02-31 que Date normalise.
+  return parsed.toISOString().slice(0, 10) === value;
+};
+
+/** Une date de naissance ou de pesée ne peut pas être postérieure à aujourd'hui. */
+export const isNotInFuture = (value: string): boolean => {
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) return false;
+  return parsed.getTime() <= Date.now();
+};
+
 export const childSchema = z
   .object({
     first_name: z.string().min(1, "Le prénom est requis").max(80, "Maximum 80 caractères"),
-    birth_date: z.string().min(1, "La date de naissance est requise"),
+    birth_date: z
+      .string()
+      .min(1, "La date de naissance est requise")
+      .refine(isRealCalendarDate, "Date de naissance invalide")
+      .refine(
+        isNotInFuture,
+        "La date de naissance ne peut pas être dans le futur",
+      ),
     sex: z.enum(["female", "male"], { message: "Le sexe est requis" }),
     is_premature: z.boolean(),
     gestational_age_weeks: z
@@ -29,7 +54,11 @@ export const weightMeasurementSchema = z.object({
     .number()
     .min(1, "Le poids doit être positif")
     .lt(50000, "Poids incohérent"),
-  measured_at: z.string().min(1, "La date de la pesée est requise"),
+  measured_at: z
+    .string()
+    .min(1, "La date de la pesée est requise")
+    .refine(isRealCalendarDate, "Date de pesée invalide")
+    .refine(isNotInFuture, "La date de la pesée ne peut pas être dans le futur"),
   source: z.enum(["home", "consultation"]),
 });
 

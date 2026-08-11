@@ -31,6 +31,29 @@ describe("childSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("rejette une date de naissance dans le futur", () => {
+    const tomorrow = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    const result = childSchema.safeParse({
+      first_name: "Léa",
+      birth_date: tomorrow,
+      sex: "female",
+      is_premature: false,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejette une date de naissance qui n'existe pas au calendrier", () => {
+    const result = childSchema.safeParse({
+      first_name: "Léa",
+      birth_date: "2025-02-31",
+      sex: "female",
+      is_premature: false,
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("weightMeasurementSchema", () => {
@@ -59,6 +82,29 @@ describe("weightMeasurementSchema", () => {
       child_id: "550e8400-e29b-41d4-a716-446655440000",
       weight_grams: 60000,
       measured_at: "2025-02-01",
+      source: "home",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejette une pesée datée dans le futur", () => {
+    const inTwoDays = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    const result = weightMeasurementSchema.safeParse({
+      child_id: "550e8400-e29b-41d4-a716-446655440000",
+      weight_grams: 4200,
+      measured_at: inTwoDays,
+      source: "home",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejette une date de pesée qui n'existe pas au calendrier", () => {
+    const result = weightMeasurementSchema.safeParse({
+      child_id: "550e8400-e29b-41d4-a716-446655440000",
+      weight_grams: 4200,
+      measured_at: "2025-13-05",
       source: "home",
     });
     expect(result.success).toBe(false);
