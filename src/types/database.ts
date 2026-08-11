@@ -1,3 +1,5 @@
+import type { FormationAudienceGroup } from "@/config/formation-audience";
+
 export type UserRole =
   | "visitor"
   | "client"
@@ -306,6 +308,9 @@ export type Formation = {
   // Famille de format : pilote la pastille et les filtres publics. Deduite du
   // titre avant la migration 00075.
   category: FormationCategory;
+  // Public vise (maman, pro, ou les deux). Pilote le toggle sur
+  // /formations. Migration 00091.
+  audience_group: FormationAudienceGroup;
   // Mention libre affichee sur la fiche (certification, eligibilite).
   badge: string | null;
   // Codes de reduction de l'organisme partenaire, annonces au public. Sans
