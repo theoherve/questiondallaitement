@@ -17,6 +17,10 @@ import {
   FORMATION_CATEGORY_CONFIG,
 } from "@/config/formation-categories";
 import {
+  FORMATION_AUDIENCE_GROUPS,
+  FORMATION_AUDIENCE_GROUP_LABELS,
+} from "@/config/formation-audience";
+import {
   createFormation,
   updateFormation,
   deleteFormation,
@@ -33,7 +37,7 @@ import {
   GlobeLock,
 } from "lucide-react";
 import Link from "next/link";
-import type { Formation, FormationCategory } from "@/types";
+import type { Formation, FormationCategory, FormationAudienceGroup } from "@/types";
 
 type ConsultantOption = {
   id: string;
@@ -137,6 +141,7 @@ export const FormationForm = ({
     consultant_id: formation?.consultant_id ?? "",
     is_published: formation?.is_published ?? false,
     category: formation?.category ?? "formation",
+    audience_group: formation?.audience_group ?? "both",
     badge: formation?.badge ?? "",
     partner_promo_codes: formation?.partner_promo_codes ?? [],
     is_evergreen: formation?.is_evergreen ?? false,
@@ -604,6 +609,31 @@ export const FormationForm = ({
                 <p className="text-xs text-muted-foreground">
                   Pilote la pastille de la fiche et les filtres de la page
                   publique.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="audience_group">Public</Label>
+                <select
+                  id="audience_group"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={formData.audience_group}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      audience_group: e.target.value as FormationAudienceGroup,
+                    }))
+                  }
+                >
+                  {FORMATION_AUDIENCE_GROUPS.map((key) => (
+                    <option key={key} value={key}>
+                      {FORMATION_AUDIENCE_GROUP_LABELS[key]}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Pilote le toggle « Pour les mamans / Pour les pros » de la
+                  page publique.
                 </p>
               </div>
 

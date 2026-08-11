@@ -1,3 +1,4 @@
+export type { FormationAudienceGroup } from "@/config/formation-audience";
 import type { FormationAudienceGroup } from "@/config/formation-audience";
 
 export type UserRole =
