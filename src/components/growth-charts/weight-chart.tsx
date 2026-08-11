@@ -111,10 +111,12 @@ export const WeightChart = ({
             width={70}
           />
           <Tooltip
-            labelFormatter={(days: number) => `${Math.round(days / 30)} mois`}
-            formatter={(value: number, name: string) => [
-              `${(value / 1000).toFixed(2)} kg`,
-              name,
+            labelFormatter={(label) =>
+              `${Math.round(Number(label) / 30)} mois`
+            }
+            formatter={(value, name) => [
+              `${(Number(value) / 1000).toFixed(2)} kg`,
+              String(name),
             ]}
             contentStyle={{
               backgroundColor: "hsl(var(--card))",
