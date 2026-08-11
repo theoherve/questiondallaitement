@@ -503,7 +503,7 @@ const LivresPage = () => {
                     <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
                       {[
                         { value: "20+", label: "ans d'expérience" },
-                        { value: "5 000+", label: "consultations" },
+                        { value: "70 k+", label: "consultations" },
                         { value: "3", label: "livres publiés" },
                         { value: "100+", label: "publications presse" },
                       ].map((stat) => (

@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 
 const KEY_FIGURES = [
   { value: "20+", label: "années d'expérience" },
-  { value: "5 000+", label: "familles accompagnées" },
+  { value: "70 k+", label: "familles accompagnées" },
   { value: "3", label: "ouvrages publiés" },
   { value: "7", label: "IBCLC dans l'équipe" },
 ];

@@ -22,6 +22,7 @@ import {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { BookingActions } from "../_components/booking-actions";
+import { AddToCalendarButton } from "@/components/add-to-calendar-button";
 import type { BookingStatus } from "@/types/database";
 
 export const metadata: Metadata = {
@@ -178,6 +179,20 @@ const BookingDetailPage = async ({ params }: Props) => {
               <p className="mt-1 text-sm font-medium">
                 {formatPrice(ct.price_cents)}
               </p>
+            </div>
+          )}
+          {!isPast && booking.status !== "cancelled" && (
+            <div className="border-t pt-3">
+              <AddToCalendarButton
+                event={{
+                  uid: booking.id,
+                  title: ct?.title ?? "Consultation d'allaitement",
+                  description: clientName ? `Rendez-vous avec ${clientName}` : undefined,
+                  location: LOCATION_LABELS[booking.location] ?? booking.location,
+                  startsAt: booking.starts_at,
+                  endsAt: booking.ends_at,
+                }}
+              />
             </div>
           )}
         </CardContent>

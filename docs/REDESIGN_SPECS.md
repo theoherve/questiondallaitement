@@ -9,12 +9,14 @@
 ## 1. Positionnement & objectifs
 
 ### Positionnement
+
 - **Premium mais accessible** — Haut de gamme sans etre elitiste
 - **Editorial** — Feel magazine, pas landing page SaaS
 - **Autorite personnelle** — Carole Herve est la marque, le site est son extension
 - **Mobile-first** — Conception pensee mobile d'abord, adaptee desktop ensuite
 
 ### Objectifs de conversion (par priorite)
+
 1. **Vente d'accompagnements en ligne** (ex-formations) — CTA primaire
 2. **Prise de rendez-vous** — CTA secondaire, toujours visible
 3. **Inscription newsletter / compte** — Conversion douce
@@ -22,6 +24,7 @@
 5. **Conversion B2B** — Formations pro pour professionnels
 
 ### Audiences cibles
+
 - **B2C (primaire)** : Parents cherchant accompagnement allaitement/lactation
 - **B2B light (secondaire)** : Professionnels de sante (formations, ateliers, evenements)
 
@@ -29,12 +32,12 @@
 
 ## 2. Renommage & taxonomie
 
-| Ancien terme       | Nouveau terme               | Cible | Route                  |
-| ------------------- | --------------------------- | ----- | ---------------------- |
-| Formations          | Accompagnements en ligne    | B2C   | `/accompagnements`     |
-| Evenements (pro)    | Formations                  | B2B   | `/formations`          |
-| Consultantes        | (supprime de la nav)        | —     | `/a-propos` ou footer  |
-| Evenements (mixte)  | Sous-types : Formation / Atelier / Webinaire | B2B | `/formations` |
+| Ancien terme       | Nouveau terme                                | Cible | Route                 |
+| ------------------ | -------------------------------------------- | ----- | --------------------- |
+| Formations         | Accompagnements en ligne                     | B2C   | `/accompagnements`    |
+| Evenements (pro)   | Formations                                   | B2B   | `/formations`         |
+| Consultantes       | (supprime de la nav)                         | —     | `/a-propos` ou footer |
+| Evenements (mixte) | Sous-types : Formation / Atelier / Webinaire | B2B   | `/formations`         |
 
 ---
 
@@ -106,28 +109,28 @@ LOGO | Accompagnements en ligne | Formations | Livres | Medias | Blog | A propos
 
 ### 4.1 Couleurs (INCHANGEES)
 
-| Token                  | Valeur    | Usage                          |
-| ---------------------- | --------- | ------------------------------ |
-| `primary-red`          | `#a0283e` | CTAs, accents, liens actifs    |
-| `primary-red-dark`     | `#7a1e2f` | Hover states                   |
-| `primary-red-light`    | `#c4566a` | Badges, backgrounds legers     |
-| `primary-green`        | `#203634` | Texte principal, headers, fond premium |
-| `primary-green-light`  | `#2d4a47` | Texte secondaire               |
-| `background-beige`     | `#fff8f6` | Background principal           |
-| `background-beige-dark`| `#f5ebe8` | Background alternatif          |
+| Token                   | Valeur    | Usage                                  |
+| ----------------------- | --------- | -------------------------------------- |
+| `primary-red`           | `#a0283e` | CTAs, accents, liens actifs            |
+| `primary-red-dark`      | `#7a1e2f` | Hover states                           |
+| `primary-red-light`     | `#c4566a` | Badges, backgrounds legers             |
+| `primary-green`         | `#203634` | Texte principal, headers, fond premium |
+| `primary-green-light`   | `#2d4a47` | Texte secondaire                       |
+| `background-beige`      | `#fff8f6` | Background principal                   |
+| `background-beige-dark` | `#f5ebe8` | Background alternatif                  |
 
 ### 4.2 Typographie
 
-| Element          | Police      | Taille mobile   | Taille desktop  | Weight    |
-| ---------------- | ----------- | --------------- | --------------- | --------- |
-| H1 (hero)        | Noto Serif  | 36px / 2.25rem  | 72px / 4.5rem   | 700       |
-| H2 (sections)    | Noto Serif  | 28px / 1.75rem  | 48px / 3rem     | 700       |
-| H3 (sous-titres) | Noto Serif  | 22px / 1.375rem | 30px / 1.875rem | 600       |
-| Body             | DM Sans     | 16px / 1rem     | 18px / 1.125rem | 400       |
-| Body small       | DM Sans     | 14px / 0.875rem | 16px / 1rem     | 400       |
-| Label / meta     | DM Sans     | 12px / 0.75rem  | 14px / 0.875rem | 500 caps  |
-| CTA button       | DM Sans     | 16px            | 16px            | 600       |
-| Nav links        | DM Sans     | 15px            | 15px            | 500       |
+| Element          | Police     | Taille mobile   | Taille desktop  | Weight   |
+| ---------------- | ---------- | --------------- | --------------- | -------- |
+| H1 (hero)        | Noto Serif | 36px / 2.25rem  | 72px / 4.5rem   | 700      |
+| H2 (sections)    | Noto Serif | 28px / 1.75rem  | 48px / 3rem     | 700      |
+| H3 (sous-titres) | Noto Serif | 22px / 1.375rem | 30px / 1.875rem | 600      |
+| Body             | DM Sans    | 16px / 1rem     | 18px / 1.125rem | 400      |
+| Body small       | DM Sans    | 14px / 0.875rem | 16px / 1rem     | 400      |
+| Label / meta     | DM Sans    | 12px / 0.75rem  | 14px / 0.875rem | 500 caps |
+| CTA button       | DM Sans    | 16px            | 16px            | 600      |
+| Nav links        | DM Sans    | 15px            | 15px            | 500      |
 
 ### 4.3 Espacement
 
@@ -219,7 +222,7 @@ Mobile :
 
 ```
 ┌────────────────────────────────────────────────────┐
-│  20+ ans        5 000+           3 livres          │
+│  20+ ans        70 k+           3 livres          │
 │  d'experience   consultations    publies           │
 │                                                    │
 │  IBCLC          Formatrice       Conferences       │
@@ -396,45 +399,53 @@ Desktop :
 ## 6. Pages secondaires — Direction
 
 ### /accompagnements (ex /formations)
+
 - Hero simple avec titre + sous-titre
 - Grille d'accompagnements (2 colonnes desktop, 1 mobile)
 - Filtres possibles par thematique
 - Cards avec image, titre, prix, CTA
 
 ### /accompagnements/[slug]
+
 - Layout editorial : grande image hero, contenu structure
 - Sidebar sticky avec prix + CTA achat
 - Sections : description, programme, temoignages, FAQ
 
 ### /formations (ex /evenements - B2B)
+
 - Listing des evenements pro (formations, ateliers, webinaires)
 - Filtres par type
 - Cards avec date, lieu, places restantes, prix
 
 ### /livres
+
 - Page vitrine avec les livres publies
 - Pour chaque livre : couverture, resume, liens d'achat (Amazon, Fnac, etc.)
 - Pas de vente directe sur le site
 
 ### /medias
+
 - Portfolio : apparitions TV, podcasts, presse, conferences
 - Layout grille ou timeline
 - Liens vers les medias externes
 - Renforce la credibilite
 
 ### /blog
+
 - Layout magazine : article featured + grille
 - Filtres par categorie
 - Pagination ou infinite scroll
 - Chaque article : image, titre, date, categorie, extrait
 
 ### /a-propos
+
 - Page longue editorial sur Carole
 - Bio, parcours, certifications, valeurs
 - Photos professionnelles
 - Chiffres cles
 
 ### /reserver
+
 - Wizard de reservation (deja existant)
 - Adapter le style au nouveau design system (radius 0, etc.)
 
@@ -442,12 +453,12 @@ Desktop :
 
 ## 7. Responsive breakpoints
 
-| Breakpoint | Largeur | Usage                        |
-| ---------- | ------- | ---------------------------- |
-| Mobile     | < 640px | Design principal (mobile-first) |
-| Tablet     | 640-1024px | Adaptations intermediaires  |
-| Desktop    | > 1024px | Layout complet              |
-| Wide       | > 1280px | Max-width conteneur         |
+| Breakpoint | Largeur    | Usage                           |
+| ---------- | ---------- | ------------------------------- |
+| Mobile     | < 640px    | Design principal (mobile-first) |
+| Tablet     | 640-1024px | Adaptations intermediaires      |
+| Desktop    | > 1024px   | Layout complet                  |
+| Wide       | > 1280px   | Max-width conteneur             |
 
 ---
 
@@ -477,19 +488,19 @@ Desktop :
 
 ## 10. Ce qui change vs l'existant
 
-| Aspect              | Avant                          | Apres                            |
-| ------------------- | ------------------------------ | -------------------------------- |
-| Radius              | 0.625rem (arrondi)             | 0px (angles droits)              |
-| Hero                | Centre, generique              | Asymetrique, photo portrait      |
-| Typo H1             | 3rem-3.75rem                   | 4.5rem+ desktop                  |
-| Espacement sections | py-20 (80px)                   | py-24 a py-32 (96-128px)         |
-| Navigation          | 3 liens                        | 7 liens + CTA sticky             |
-| Blog                | Absent de la nav               | Dans la nav + section homepage   |
-| Temoignages         | Section basique                | Carousel 6-8 temoignages         |
-| Personal branding   | Absent                         | Hero + section dediee + trust bar|
-| B2B                 | Melange avec B2C               | Section et nav separees          |
-| Nommage             | Formations / Evenements        | Accompagnements / Formations     |
-| Livres              | Inexistant                     | Nouvelle page                    |
-| Medias              | Inexistant                     | Nouvelle page                    |
-| Ombres cards        | shadow-sm par defaut           | Pas d'ombre, border subtile      |
-| Grilles             | 3-colonnes symetriques         | Asymetriques, magazine-like      |
+| Aspect              | Avant                   | Apres                             |
+| ------------------- | ----------------------- | --------------------------------- |
+| Radius              | 0.625rem (arrondi)      | 0px (angles droits)               |
+| Hero                | Centre, generique       | Asymetrique, photo portrait       |
+| Typo H1             | 3rem-3.75rem            | 4.5rem+ desktop                   |
+| Espacement sections | py-20 (80px)            | py-24 a py-32 (96-128px)          |
+| Navigation          | 3 liens                 | 7 liens + CTA sticky              |
+| Blog                | Absent de la nav        | Dans la nav + section homepage    |
+| Temoignages         | Section basique         | Carousel 6-8 temoignages          |
+| Personal branding   | Absent                  | Hero + section dediee + trust bar |
+| B2B                 | Melange avec B2C        | Section et nav separees           |
+| Nommage             | Formations / Evenements | Accompagnements / Formations      |
+| Livres              | Inexistant              | Nouvelle page                     |
+| Medias              | Inexistant              | Nouvelle page                     |
+| Ombres cards        | shadow-sm par defaut    | Pas d'ombre, border subtile       |
+| Grilles             | 3-colonnes symetriques  | Asymetriques, magazine-like       |

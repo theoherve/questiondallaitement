@@ -27,6 +27,7 @@ import { PARIS } from "@/lib/formations/paris-time";
 import { promoCodeLabel } from "@/lib/formations/external-url";
 import { RegisterButton } from "../register-button";
 import { RegistrationReconciler } from "../registration-reconciler";
+import { AddToCalendarButton } from "@/components/add-to-calendar-button";
 
 const formatPrice = (cents: number, currency: string): string => {
   if (cents === 0) return FORMATION_SCHOOL_PRICE_LABEL;
@@ -309,6 +310,26 @@ export const FormationDetail = ({
                     <span>{consultantName}</span>
                   </div>
                 </div>
+
+                {!formation.is_evergreen && !isPast && (
+                  <div className="mt-4">
+                    <AddToCalendarButton
+                      variant="outline"
+                      className="rounded-full border-primary-red/30 bg-white text-primary-green shadow-sm hover:border-primary-red hover:bg-primary-red hover:text-white"
+                      event={{
+                        uid: formation.id,
+                        title: formation.title,
+                        description: formation.description ?? undefined,
+                        location:
+                          formation.type === "online"
+                            ? "En ligne"
+                            : (formation.location ?? undefined),
+                        startsAt: formation.starts_at,
+                        endsAt: formation.ends_at,
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Price highlight (desktop) */}
@@ -354,7 +375,7 @@ export const FormationDetail = ({
               {highlights.map(({ key, label, icon: Icon }) => (
                 <div
                   key={key}
-                  className="flex min-w-32 flex-1 flex-col items-center justify-start gap-2 bg-white p-4 text-center"
+                  className="flex min-w-32 flex-1 flex-col items-center justify-center gap-2 bg-white p-4 text-center"
                 >
                   <Icon className="h-5 w-5 shrink-0 text-primary-red" />
                   <span className="text-xs font-medium text-primary-green">

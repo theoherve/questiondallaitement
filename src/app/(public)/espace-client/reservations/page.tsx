@@ -7,6 +7,7 @@ import { CalendarDays, Clock, MapPin, Video } from "lucide-react";
 import { format, differenceInHours } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CancelBookingButton } from "./_components/cancel-booking-button";
+import { AddToCalendarButton } from "@/components/add-to-calendar-button";
 import { features } from "@/config/features";
 import { redirect } from "next/navigation";
 
@@ -140,12 +141,28 @@ const ClientReservationsPage = async () => {
             </a>
           )}
 
-          {canCancel && (
-            <div className="mt-3">
-              <CancelBookingButton
-                bookingId={booking.id}
-                hoursUntil={hoursUntil}
+          {isFuture && !["cancelled", "completed", "no_show"].includes(booking.status) && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <AddToCalendarButton
+                event={{
+                  uid: booking.id,
+                  title: ct?.title ?? "Consultation d'allaitement",
+                  description: consultant?.profiles
+                    ? `Rendez-vous avec ${`${consultant.profiles.first_name ?? ""} ${consultant.profiles.last_name ?? ""}`.trim()}`
+                    : undefined,
+                  location: booking.location
+                    ? (LOCATION_LABELS[booking.location] ?? booking.location)
+                    : undefined,
+                  startsAt: booking.starts_at,
+                  endsAt: booking.ends_at,
+                }}
               />
+              {canCancel && (
+                <CancelBookingButton
+                  bookingId={booking.id}
+                  hoursUntil={hoursUntil}
+                />
+              )}
             </div>
           )}
         </CardContent>

@@ -197,7 +197,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-primary-red" aria-hidden />
               <p className="font-sans text-xs font-medium uppercase tracking-widest text-white/90">
-                Consultante IBCLC depuis 2011 &middot; 5 000+ familles accompagnées
+                Consultante IBCLC depuis 2011 &middot; 70 k+ familles accompagnées
               </p>
             </div>
 

@@ -86,7 +86,7 @@ export const PACK_CONTENT = {
       "Consultante en lactation certifiée IBCLC depuis 2011, j'ai accompagné plus de 5 000 familles et j'aide aujourd'hui plus de 1 000 mères chaque année, avec une équipe de 7 consultantes IBCLC. Ce pack, c'est la synthèse de plus de dix ans de consultations individuelles, condensée pour être accessible à toute heure, même quand mon agenda de consultation est complet.",
     credentials: [
       "IBCLC depuis 2011",
-      "5 000+ familles accompagnées",
+      "70 k+ familles accompagnées",
       "1 000+ mères accompagnées chaque année",
       "Une équipe de 7 consultantes IBCLC",
       "Autrice de 3 livres sur l'allaitement",

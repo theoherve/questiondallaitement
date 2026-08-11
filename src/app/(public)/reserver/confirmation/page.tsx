@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, CalendarDays, Clock, MapPin, User } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { AddToCalendarButton } from "@/components/add-to-calendar-button";
 
 export const metadata: Metadata = {
   title: "Réservation confirmée : Question d'Allaitement",
@@ -156,6 +157,19 @@ const ConfirmationPage = async ({
           )}
         </CardContent>
       </Card>
+
+      <div className="mt-6 flex justify-center">
+        <AddToCalendarButton
+          event={{
+            uid: booking.id,
+            title: consultationType?.title ?? "Consultation d'allaitement",
+            description: `Rendez-vous avec ${consultantName}`,
+            location: LOCATION_LABELS[booking.location] ?? booking.location,
+            startsAt: booking.starts_at,
+            endsAt: booking.ends_at,
+          }}
+        />
+      </div>
 
       <p className="mt-6 text-sm text-muted-foreground">
         Un email de confirmation vous a été envoyé. Vérifiez vos spams si vous ne le voyez pas.
