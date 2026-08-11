@@ -13,10 +13,14 @@ vi.mock("next/navigation", () => ({
   },
 }));
 
-const { mockBookingsData, mockChildrenData } = vi.hoisted(() => ({
-  mockBookingsData: { data: [] as unknown[] },
-  mockChildrenData: { data: [] as unknown[] },
-}));
+const { mockBookingsData, mockChildrenData, mockChildSingleData } =
+  vi.hoisted(() => ({
+    mockBookingsData: { data: [] as unknown[] },
+    mockChildrenData: { data: [] as unknown[] },
+    mockChildSingleData: {
+      data: null as { id: string; client_id: string } | null,
+    },
+  }));
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
@@ -37,6 +41,7 @@ vi.mock("@/lib/supabase/admin", () => ({
           select: () => ({
             eq: () => ({
               order: () => Promise.resolve(mockChildrenData),
+              single: () => Promise.resolve(mockChildSingleData),
             }),
           }),
         };
@@ -56,7 +61,11 @@ vi.mock("@/lib/supabase/admin", () => ({
   }),
 }));
 
-import { createTag, getChildrenForContact } from "./actions";
+import {
+  createTag,
+  getChildrenForContact,
+  addWeightMeasurementAsConsultant,
+} from "./actions";
 
 describe("createTag", () => {
   beforeEach(() => {
@@ -145,5 +154,77 @@ describe("getChildrenForContact", () => {
     const result = await getChildrenForContact("client-1");
 
     expect(result).toEqual([{ id: "child-1", first_name: "Léa" }]);
+  });
+});
+
+describe("addWeightMeasurementAsConsultant", () => {
+  const validInput = {
+    child_id: "123e4567-e89b-12d3-a456-426614174000",
+    weight_grams: 3500,
+    measured_at: "2026-08-01",
+    source: "home",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    insertCalls.length = 0;
+    mockBookingsData.data = [];
+    mockChildrenData.data = [];
+    mockChildSingleData.data = null;
+    mockGetSessionUser.mockResolvedValue({
+      id: "consultant-1",
+      email: "c@b.fr",
+      roles: ["consultant"],
+    });
+  });
+
+  it("refuse si l'enfant n'existe pas", async () => {
+    mockChildSingleData.data = null;
+
+    const result = await addWeightMeasurementAsConsultant(validInput);
+
+    expect(result).toEqual({ success: false, error: "Enfant introuvable" });
+    expect(insertCalls).toHaveLength(0);
+  });
+
+  it("refuse si aucune relation de rendez-vous n'existe avec le client de l'enfant", async () => {
+    mockChildSingleData.data = {
+      id: validInput.child_id,
+      client_id: "client-9",
+    };
+    mockBookingsData.data = [];
+
+    const result = await addWeightMeasurementAsConsultant(validInput);
+
+    expect(result).toEqual({
+      success: false,
+      error: "Aucune relation avec ce client",
+    });
+    expect(insertCalls).toHaveLength(0);
+  });
+
+  it("ajoute la pesée avec la source, le recorded_by et le consultant_id corrects", async () => {
+    mockChildSingleData.data = {
+      id: validInput.child_id,
+      client_id: "client-9",
+    };
+    mockBookingsData.data = [{ id: "booking-1" }];
+
+    const result = await addWeightMeasurementAsConsultant(validInput);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toBeTruthy();
+    }
+    expect(insertCalls).toHaveLength(1);
+    expect(insertCalls[0]).toMatchObject({
+      table: "weight_measurements",
+      data: {
+        child_id: validInput.child_id,
+        source: "consultation",
+        recorded_by: "consultant-1",
+        consultant_id: "consultant-1",
+      },
+    });
   });
 });
