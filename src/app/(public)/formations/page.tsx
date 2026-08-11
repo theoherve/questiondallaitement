@@ -23,9 +23,9 @@ const LEGEND_CATEGORIES: FormationCategory[] = [
 ];
 
 export const metadata: Metadata = {
-  title: "Formations professionnelles",
+  title: "Formations, ateliers et webinaires",
   description:
-    "Formations, ateliers et webinaires pour professionnels de santé en lactation et allaitement. Avec Carole Hervé, consultante IBCLC.",
+    "L'agenda des ateliers et webinaires pour les mamans, et des formations pour les professionnels de la périnatalité, avec Carole Hervé, consultante IBCLC.",
 };
 
 export const dynamic = "force-dynamic";
@@ -108,20 +108,21 @@ const FormationsProPage = async () => {
       <section className="bg-primary-green px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14">
         <div className="mx-auto max-w-7xl text-center">
           <h1 className="font-serif text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
-            Formez-vous en aiguisant votre regard clinique
+            Ateliers, webinaires et formations
           </h1>
           <p className="mx-auto mt-3 max-w-3xl text-base leading-relaxed text-white/80">
-            Professionnels de la périnatalité, thérapeutes manuels, thérapeutes
-            psychologiques
-            <sup className="ml-0.5">*</sup> : des formations construites sur
-            l&apos;observation clinique et les données probantes, pour
-            accompagner les familles avec rigueur et humanité.
+            Des sessions animées par Carole Hervé et son équipe de
+            consultantes IBCLC : ateliers et webinaires pour les mamans,
+            formations approfondies pour les professionnels de la
+            périnatalité
+            <sup className="ml-0.5">*</sup>.
           </p>
           {/* L'astérisque renvoie au détail de chaque session : la liste des
               métiers concernés varie d'un organisme à l'autre, l'écrire ici
               serait faux pour une partie du catalogue. */}
           <p className="mx-auto mt-2 max-w-3xl text-xs text-white/60">
             * liste des métiers spécifiée dans le détail des sessions
+            professionnelles
           </p>
 
           {/* Quick stats */}
