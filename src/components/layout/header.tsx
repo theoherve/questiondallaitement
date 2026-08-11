@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Menu, X, User, LogOut, Stethoscope, Shield, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AccompagnementsMegaMenu } from "@/components/layout/accompagnements-mega-menu";
+import { BooksMegaMenu } from "@/components/layout/books-mega-menu";
 import type { AccompagnementsNavPreview } from "@/lib/accompagnements/nav-preview";
 import {
   DropdownMenu,
@@ -33,6 +34,7 @@ type HeaderProps = {
 };
 
 const ACCOMPAGNEMENTS_HREF = "/accompagnements";
+const LIVRES_HREF = "/livres";
 
 export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -86,6 +88,11 @@ export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
                 <AccompagnementsMegaMenu
                   key={link.href}
                   data={accompagnements}
+                  triggerClassName="nav-link text-[15px] font-medium text-primary-green transition-colors hover:text-primary-red"
+                />
+              ) : link.href === LIVRES_HREF ? (
+                <BooksMegaMenu
+                  key={link.href}
                   triggerClassName="nav-link text-[15px] font-medium text-primary-green transition-colors hover:text-primary-red"
                 />
               ) : (
