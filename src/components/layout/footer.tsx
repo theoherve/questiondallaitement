@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { InstagramIcon, LinkedinIcon } from "lucide-react";
-import { publicNav, socialLinks } from "@/config/navigation";
+import { publicNav } from "@/config/navigation";
+import { getSocialLinks } from "@/lib/settings/social-links/store";
 
 const LEGAL_LINKS = [
   { href: "/contact", label: "Contact" },
@@ -21,7 +22,19 @@ const SOCIAL_ICONS: Record<string, React.ComponentType<React.SVGProps<SVGSVGElem
   Linkedin: LinkedinIcon,
 };
 
-export const Footer = () => {
+export const Footer = async () => {
+  const links = await getSocialLinks();
+  const socialLinks = (
+    [
+      { title: "Instagram", href: links.instagram_url, iconKey: "Instagram" as const },
+      { title: "TikTok", href: links.tiktok_url, iconKey: "TikTok" as const },
+      { title: "LinkedIn", href: links.linkedin_url, iconKey: "Linkedin" as const },
+    ] satisfies { title: string; href: string | null; iconKey: "Instagram" | "TikTok" | "Linkedin" }[]
+  ).filter(
+    (l): l is { title: string; href: string; iconKey: "Instagram" | "TikTok" | "Linkedin" } =>
+      Boolean(l.href),
+  );
+
   return (
     <footer className="border-t border-background-beige/10 bg-primary-green text-background-beige">
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-16">
