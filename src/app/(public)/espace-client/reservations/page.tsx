@@ -8,7 +8,7 @@ import { format, differenceInHours } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CancelBookingButton } from "./_components/cancel-booking-button";
 import { AddToCalendarButton } from "@/components/add-to-calendar-button";
-import { features } from "@/config/features";
+import { isBookingEnabled } from "@/lib/settings/feature-flags/store";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -33,7 +33,7 @@ const LOCATION_LABELS: Record<string, string> = {
 };
 
 const ClientReservationsPage = async () => {
-  if (!features.bookingEnabled) {
+  if (!(await isBookingEnabled())) {
     redirect("/espace-client");
   }
 

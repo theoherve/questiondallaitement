@@ -5,7 +5,7 @@ import Image from "next/image";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { createClient } from "@/lib/supabase/server";
-import { features } from "@/config/features";
+import { isBookingEnabled } from "@/lib/settings/feature-flags/store";
 import { resolveFormationCategory } from "@/config/formation-categories";
 import { PARIS } from "@/lib/formations/paris-time";
 import { BOOKS } from "@/config/books";
@@ -80,6 +80,7 @@ const BOOKS_PREVIEW_COUNT = 4;
 const ConsultantDetailPage = async ({ params }: Props) => {
   const { slug } = await params;
   const supabase = await createClient();
+  const bookingEnabled = await isBookingEnabled();
 
   const { data: consultant } = await supabase
     .from("consultants")
@@ -305,7 +306,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
 
       <Separator className="my-8" />
 
-      {features.bookingEnabled && consultationTypes.length > 0 && (
+      {bookingEnabled && consultationTypes.length > 0 && (
         <section>
           <h2 className="font-serif text-2xl font-semibold text-primary-green">
             <CalendarDays className="mr-2 inline h-6 w-6" />

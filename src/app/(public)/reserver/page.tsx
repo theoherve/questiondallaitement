@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { BookingWizard } from "./_components/booking-wizard";
 import { getLocationConfigs } from "@/app/(dashboard)/admin/reservation/actions";
 import { redirect } from "next/navigation";
-import { features } from "@/config/features";
+import { isBookingEnabled } from "@/lib/settings/feature-flags/store";
 
 export const metadata: Metadata = {
   title: "Réserver une consultation : Question d'Allaitement",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const ReserverPage = async () => {
-  if (!features.bookingEnabled) {
+  if (!(await isBookingEnabled())) {
     redirect("/accompagnements");
   }
 
