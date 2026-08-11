@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { siteConfig } from "@/config/site";
+import { getContactEmail } from "@/lib/settings/seo-defaults/store";
 import { findSubscriberByToken } from "@/lib/newsletter/unsubscribe";
 import { UnsubscribePanel } from "./_components/unsubscribe-panel";
 
@@ -27,6 +27,7 @@ const UnsubscribePage = async ({ searchParams }: PageProps) => {
   const lookup = token
     ? await findSubscriberByToken(token)
     : ({ status: "unknown_token" } as const);
+  const contactEmail = await getContactEmail();
 
   return (
     <section className="section-padding">
@@ -38,7 +39,7 @@ const UnsubscribePage = async ({ searchParams }: PageProps) => {
             </h1>
             <p className="mt-6 text-primary-green/70">
               Si vous receviez encore la newsletter, utilisez le lien du dernier
-              email reçu, ou écrivez-nous à {siteConfig.contactEmail} nous nous
+              email reçu, ou écrivez-nous à {contactEmail} nous nous
               en occupons.
             </p>
           </>

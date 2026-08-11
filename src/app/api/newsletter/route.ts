@@ -6,7 +6,7 @@ import {
   trackNewsletterEvent,
 } from "@/lib/newsletter/subscribe";
 import { rateLimit } from "@/lib/rate-limit";
-import { siteConfig } from "@/config/site";
+import { getContactEmail } from "@/lib/settings/seo-defaults/store";
 
 /**
  * Trois inscriptions par adresse IP et par dix minutes. Assez large pour une
@@ -64,10 +64,11 @@ export async function POST(request: Request) {
   );
 
   if (outcome.status === "error") {
+    const contactEmail = await getContactEmail();
     return NextResponse.json(
       {
         error:
-          `Une erreur est survenue, réessayez ou écrivez-nous à ${siteConfig.contactEmail}`,
+          `Une erreur est survenue, réessayez ou écrivez-nous à ${contactEmail}`,
       },
       { status: 500 },
     );

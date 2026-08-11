@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { siteConfig } from "@/config/site";
+import { getContactEmail } from "@/lib/settings/seo-defaults/store";
 
 export const metadata: Metadata = {
   title: "Conditions générales de vente",
@@ -8,7 +8,10 @@ export const metadata: Metadata = {
     "Conditions générales de vente de la plateforme Question d'Allaitement.",
 };
 
-const CgvPage = () => (
+const CgvPage = async () => {
+  const contactEmail = await getContactEmail();
+
+  return (
   <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
     <h1 className="font-serif text-3xl font-bold text-primary-green">
       Conditions générales de vente
@@ -173,10 +176,10 @@ const CgvPage = () => (
           réservation ou de l&apos;achat, et conservées. Hors de ces cas, la
           rétractation s&apos;exerce par simple demande à{" "}
           <a
-            href={`mailto:${siteConfig.contactEmail}`}
+            href={`mailto:${contactEmail}`}
             className="text-primary-red hover:underline"
           >
-            {siteConfig.contactEmail}
+            {contactEmail}
           </a>
           , sans avoir à se justifier ; le remboursement intervient dans les
           quatorze jours suivant la demande.
@@ -250,6 +253,7 @@ const CgvPage = () => (
       </section>
     </div>
   </div>
-);
+  );
+};
 
 export default CgvPage;

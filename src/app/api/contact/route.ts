@@ -3,7 +3,7 @@ import { contactMessageSchema } from "@/validations/contact";
 import { submitContactMessage } from "@/lib/contact/submit";
 import { rateLimit } from "@/lib/rate-limit";
 import { getSessionUser } from "@/lib/auth";
-import { siteConfig } from "@/config/site";
+import { getContactEmail } from "@/lib/settings/seo-defaults/store";
 
 /**
  * Cinq envois par IP et par dix minutes : assez large pour une personne qui
@@ -44,9 +44,10 @@ export async function POST(request: Request) {
   const outcome = await submitContactMessage(input, user?.id ?? null);
 
   if (outcome.status === "error") {
+    const contactEmail = await getContactEmail();
     return NextResponse.json(
       {
-        error: `Une erreur est survenue, réessayez ou écrivez-nous à ${siteConfig.contactEmail}`,
+        error: `Une erreur est survenue, réessayez ou écrivez-nous à ${contactEmail}`,
       },
       { status: 500 },
     );
