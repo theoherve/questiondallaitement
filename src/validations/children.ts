@@ -28,7 +28,7 @@ export const weightMeasurementSchema = z.object({
   weight_grams: z
     .number()
     .min(1, "Le poids doit être positif")
-    .max(50000, "Poids incohérent"),
+    .lt(50000, "Poids incohérent"),
   measured_at: z.string().min(1, "La date de la pesée est requise"),
   source: z.enum(["home", "consultation"]),
 });
