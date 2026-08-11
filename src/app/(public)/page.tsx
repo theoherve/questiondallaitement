@@ -10,6 +10,7 @@ import { GoogleRatingBadge } from "@/components/public/testimonials/google-ratin
 import { getFeaturedTestimonials } from "@/lib/testimonials";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { NEWSLETTER_NAME } from "@/config/newsletter";
+import { NewsletterSignupForm } from "./newsletter/_components/newsletter-signup-form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { features } from "@/config/features";
 import { PACK_SALES_PATH } from "@/config/navigation";
@@ -815,39 +816,25 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
         </div>
       </section>
 
-      {/* ─── NEWSLETTER — Teaser ─── */}
-      <section className="section-padding">
-        <div className="mx-auto max-w-2xl text-center">
+      {/* ─── NEWSLETTER — Inscription ─── */}
+      <section className="py-16 lg:py-20">
+        <div className="mx-auto max-w-xl text-center">
           <ScrollReveal>
             <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
               Newsletter
             </p>
-            <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-5xl">
+            <h2 className="mt-2 font-serif text-2xl font-bold text-primary-green lg:text-4xl">
               {NEWSLETTER_NAME}
             </h2>
-            <p className="mt-4 text-primary-green/70 lg:text-lg">
-              Chaque semaine, un email court sur ce qui se passe vraiment avec
-              votre allaitement, sans discours culpabilisant, sans recette
-              toute faite. Le mémo « Conservation du lait maternel » offert à
-              l&apos;inscription.
+            <p className="mt-3 text-primary-green/70">
+              Des conseils concrets, sans discours culpabilisant. 🎁 Le mémo «
+              Conservation du lait maternel » offert à l&apos;inscription.
             </p>
-            {/*
-              Teaser, pas formulaire. Le champ qui vivait ici ne collectait ni
-              prenom ni consentement et n'envoyait rien nulle part : il faisait
-              croire a une inscription qui n'existait pas. Le parcours complet
-              est desormais sur /newsletter, ce qui laisse aussi une page a
-              partager depuis le blog ou les reseaux.
-            */}
-            <Button
-              asChild
-              size="lg"
-              className="mt-8 h-14 bg-primary-red px-10 text-base hover:bg-primary-red-dark"
-            >
-              <Link href="/newsletter">
-                Je m&apos;inscris
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-            </Button>
+          </ScrollReveal>
+          <ScrollReveal delay={80}>
+            <div className="mx-auto mt-6">
+              <NewsletterSignupForm source="homepage_teaser" theme="light" compact />
+            </div>
           </ScrollReveal>
         </div>
       </section>

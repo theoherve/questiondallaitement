@@ -6,27 +6,41 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  NEWSLETTER_CONSENT_TEXT,
+  NEWSLETTER_CONSENT_SHORT_TEXT,
   type NewsletterSource,
 } from "@/config/newsletter";
 import { newsletterSignupSchema } from "@/validations/newsletter";
 import { siteConfig } from "@/config/site";
+import { cn } from "@/lib/utils";
 
-type FieldErrors = Partial<
-  Record<"first_name" | "email" | "consent" | "form", string>
->;
+type FieldErrors = Partial<Record<"first_name" | "email" | "form", string>>;
 
 type Outcome = { status: "subscribed" | "already_subscribed"; firstName: string };
 
+/**
+ * `dark` reprend le fond vert de la page /newsletter (labels et bordures
+ * clairs). `light` s'appuie sur les styles par defaut d'Input/Label, pour une
+ * section a fond clair comme le teaser de l'accueil.
+ */
+type Theme = "dark" | "light";
+
 export const NewsletterSignupForm = ({
   source,
+  theme = "dark",
+  compact = false,
 }: {
   source: NewsletterSource;
+  theme?: Theme;
+  /**
+   * Prenom et email sur une meme ligne, labels remplaces par des placeholders
+   * (toujours annonces aux lecteurs d'ecran via `sr-only`) : pense pour un
+   * teaser qui n'a pas la hauteur d'une page dediee.
+   */
+  compact?: boolean;
 }) => {
   const fieldId = useId();
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
-  const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [pending, setPending] = useState(false);
@@ -39,7 +53,10 @@ export const NewsletterSignupForm = ({
     const payload = {
       first_name: firstName,
       email,
-      consent,
+      // Pas de case a cocher : le formulaire ne sert qu'a l'inscription
+      // newsletter, le clic sur le bouton vaut consentement explicite (voir
+      // NEWSLETTER_CONSENT_SHORT_TEXT affiche sous le bouton).
+      consent: true as const,
       source,
       website,
     };
@@ -52,7 +69,6 @@ export const NewsletterSignupForm = ({
       setErrors({
         first_name: fieldErrors.first_name?.[0],
         email: fieldErrors.email?.[0],
-        consent: fieldErrors.consent?.[0],
       });
       return;
     }
@@ -90,6 +106,8 @@ export const NewsletterSignupForm = ({
     }
   };
 
+  const isDark = theme === "dark";
+
   if (outcome) {
     return (
       <div
@@ -111,42 +129,59 @@ export const NewsletterSignupForm = ({
     );
   }
 
-  return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-5 text-left">
-      <div className="space-y-2">
-        <Label htmlFor={`${fieldId}-first-name`} className="text-background-beige">
-          Prénom
-        </Label>
-        <Input
-          id={`${fieldId}-first-name`}
-          name="first_name"
-          value={firstName}
-          onChange={(event) => setFirstName(event.target.value)}
-          autoComplete="given-name"
-          aria-invalid={Boolean(errors.first_name)}
-          aria-describedby={errors.first_name ? `${fieldId}-first-name-error` : undefined}
-          className="h-12 border-background-beige/30 bg-background-beige text-primary-green"
-        />
-        <FieldError id={`${fieldId}-first-name-error`} message={errors.first_name} />
-      </div>
+  const inputClassName = cn(
+    "h-12",
+    isDark && "border-background-beige/30 bg-background-beige text-primary-green",
+  );
+  const labelClassName = cn(
+    compact ? "sr-only" : undefined,
+    isDark && "text-background-beige",
+  );
 
-      <div className="space-y-2">
-        <Label htmlFor={`${fieldId}-email`} className="text-background-beige">
-          Email
-        </Label>
-        <Input
-          id={`${fieldId}-email`}
-          name="email"
-          type="email"
-          inputMode="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          autoComplete="email"
-          aria-invalid={Boolean(errors.email)}
-          aria-describedby={errors.email ? `${fieldId}-email-error` : undefined}
-          className="h-12 border-background-beige/30 bg-background-beige text-primary-green"
-        />
-        <FieldError id={`${fieldId}-email-error`} message={errors.email} />
+  return (
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      className={cn("text-left", compact ? "space-y-3" : "space-y-5")}
+    >
+      <div className={cn(compact && "grid gap-3 sm:grid-cols-2")}>
+        <div className="space-y-2">
+          <Label htmlFor={`${fieldId}-first-name`} className={labelClassName}>
+            Prénom
+          </Label>
+          <Input
+            id={`${fieldId}-first-name`}
+            name="first_name"
+            placeholder={compact ? "Prénom" : undefined}
+            value={firstName}
+            onChange={(event) => setFirstName(event.target.value)}
+            autoComplete="given-name"
+            aria-invalid={Boolean(errors.first_name)}
+            aria-describedby={errors.first_name ? `${fieldId}-first-name-error` : undefined}
+            className={inputClassName}
+          />
+          <FieldError id={`${fieldId}-first-name-error`} message={errors.first_name} />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={`${fieldId}-email`} className={labelClassName}>
+            Email
+          </Label>
+          <Input
+            id={`${fieldId}-email`}
+            name="email"
+            type="email"
+            inputMode="email"
+            placeholder={compact ? "Email" : undefined}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            autoComplete="email"
+            aria-invalid={Boolean(errors.email)}
+            aria-describedby={errors.email ? `${fieldId}-email-error` : undefined}
+            className={inputClassName}
+          />
+          <FieldError id={`${fieldId}-email-error`} message={errors.email} />
+        </div>
       </div>
 
       {/*
@@ -170,33 +205,14 @@ export const NewsletterSignupForm = ({
         />
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-start gap-3">
-          <input
-            id={`${fieldId}-consent`}
-            name="consent"
-            type="checkbox"
-            checked={consent}
-            onChange={(event) => setConsent(event.target.checked)}
-            aria-invalid={Boolean(errors.consent)}
-            aria-describedby={errors.consent ? `${fieldId}-consent-error` : undefined}
-            className="mt-1 h-5 w-5 shrink-0 accent-primary-red"
-          />
-          <Label
-            htmlFor={`${fieldId}-consent`}
-            className="text-sm leading-relaxed font-normal text-background-beige/80"
-          >
-            {NEWSLETTER_CONSENT_TEXT}
-          </Label>
-        </div>
-        <FieldError id={`${fieldId}-consent-error`} message={errors.consent} />
-      </div>
-
       <Button
         type="submit"
         size="lg"
         disabled={pending}
-        className="h-14 w-full bg-primary-red text-base hover:bg-primary-red-dark"
+        className={cn(
+          "w-full bg-primary-red text-base hover:bg-primary-red-dark",
+          compact ? "h-12" : "h-14",
+        )}
       >
         {pending ? (
           <>
@@ -210,16 +226,40 @@ export const NewsletterSignupForm = ({
 
       <FieldError id={`${fieldId}-form-error`} message={errors.form} />
 
-      <p className="text-xs leading-relaxed text-background-beige/60">
-        Vos données servent uniquement à vous envoyer cette newsletter. Elles
-        sont hébergées chez Brevo, notre outil d&apos;emailing, et ne sont
-        jamais cédées. Désinscription en un clic dans chaque email.{" "}
-        <a
-          href="/politique-de-confidentialite"
-          className="underline underline-offset-2 hover:text-background-beige"
-        >
-          Politique de confidentialité
-        </a>
+      <p
+        className={cn(
+          "text-xs leading-relaxed",
+          isDark ? "text-background-beige/60" : "text-primary-green/60",
+        )}
+      >
+        {compact ? (
+          <>
+            {NEWSLETTER_CONSENT_SHORT_TEXT}{" "}
+            <a
+              href="/politique-de-confidentialite"
+              className={cn(
+                "underline underline-offset-2",
+                isDark ? "hover:text-background-beige" : "hover:text-primary-green",
+              )}
+            >
+              Politique de confidentialité
+            </a>
+          </>
+        ) : (
+          <>
+            {NEWSLETTER_CONSENT_SHORT_TEXT} Vos données sont hébergées chez Brevo,
+            notre outil d&apos;emailing, et ne sont jamais cédées.{" "}
+            <a
+              href="/politique-de-confidentialite"
+              className={cn(
+                "underline underline-offset-2",
+                isDark ? "hover:text-background-beige" : "hover:text-primary-green",
+              )}
+            >
+              Politique de confidentialité
+            </a>
+          </>
+        )}
       </p>
     </form>
   );

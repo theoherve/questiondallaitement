@@ -41,6 +41,15 @@ export type NewsletterSource = (typeof NEWSLETTER_SOURCES)[number];
 export const NEWSLETTER_CONSENT_TEXT =
   "J'accepte de recevoir la newsletter de Question d'Allaitement ainsi que les emails liés (mémo offert, informations sur les accompagnements et formations). Je peux me désinscrire à tout moment en un clic.";
 
+/**
+ * Mention courte affichee sous le bouton, a la place d'une case a cocher.
+ * L'inscription ne sert qu'a la newsletter (email + prenom, aucun autre
+ * usage) : le clic sur "Je m'inscris" vaut consentement explicite, le texte
+ * long ci-dessus reste la formulation de preuve enregistree en base.
+ */
+export const NEWSLETTER_CONSENT_SHORT_TEXT =
+  "En vous inscrivant, vous acceptez de recevoir cette newsletter. Désinscription en un clic à tout moment.";
+
 export const NEWSLETTER_COPY = {
   badge: "Newsletter",
   title: NEWSLETTER_NAME,
