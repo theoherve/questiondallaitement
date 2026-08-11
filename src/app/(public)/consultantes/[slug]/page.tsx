@@ -1,14 +1,32 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { createClient } from "@/lib/supabase/server";
 import { features } from "@/config/features";
+import { resolveFormationCategory } from "@/config/formation-categories";
+import { PARIS } from "@/lib/formations/paris-time";
+import { BOOKS } from "@/config/books";
+import { PRESS_ARTICLES } from "@/app/(public)/medias/_data/press-articles";
+import { PODCASTS, VIDEOS } from "@/app/(public)/medias/_data/media-items";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CalendarDays, BookOpen, Clock } from "lucide-react";
+import {
+  CalendarDays,
+  BookOpen,
+  Clock,
+  ShieldCheck,
+  MapPin,
+  Languages,
+  ArrowRight,
+  GraduationCap,
+  Newspaper,
+} from "lucide-react";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -55,6 +73,10 @@ export const generateMetadata = async ({
   };
 };
 
+const ACCOMPAGNEMENTS_PREVIEW_COUNT = 3;
+const FORMATIONS_PREVIEW_COUNT = 3;
+const BOOKS_PREVIEW_COUNT = 4;
+
 const ConsultantDetailPage = async ({ params }: Props) => {
   const { slug } = await params;
   const supabase = await createClient();
@@ -67,6 +89,11 @@ const ConsultantDetailPage = async ({ params }: Props) => {
       slug,
       bio,
       specialties,
+      certifications,
+      languages,
+      career_start_year,
+      service_area,
+      is_platform_owner,
       profiles!consultants_id_fkey (
         first_name,
         last_name,
@@ -82,14 +109,25 @@ const ConsultantDetailPage = async ({ params }: Props) => {
         is_online,
         is_active
       ),
-      accompagnements (
+      accompagnements!accompagnements_consultant_id_fkey (
         id,
         title,
         slug,
         short_description,
+        thumbnail_url,
         price_cents,
         currency,
         status
+      ),
+      formations!events_consultant_id_fkey (
+        id,
+        title,
+        slug,
+        starts_at,
+        category,
+        thumbnail_url,
+        is_evergreen,
+        is_published
       )
     `
     )
@@ -113,6 +151,25 @@ const ConsultantDetailPage = async ({ params }: Props) => {
     ? `${(profile.first_name ?? "")[0] ?? ""}${(profile.last_name ?? "")[0] ?? ""}`
     : "C";
 
+  const certifications = (consultant.certifications as string[]) ?? [];
+  const languages = (consultant.languages as string[]) ?? [];
+  const careerStartYear = consultant.career_start_year as number | null;
+  const yearsExperience =
+    careerStartYear != null
+      ? new Date().getFullYear() - careerStartYear
+      : null;
+  const serviceArea = consultant.service_area as string | null;
+
+  const credibilityItems = [
+    yearsExperience != null &&
+      yearsExperience > 0 && {
+        icon: Clock,
+        label: `${yearsExperience} an${yearsExperience > 1 ? "s" : ""} d'expérience`,
+      },
+    serviceArea && { icon: MapPin, label: serviceArea },
+    languages.length > 0 && { icon: Languages, label: languages.join(" · ") },
+  ].filter(Boolean) as { icon: typeof Clock; label: string }[];
+
   const consultationTypes = (
     consultant.consultation_types as unknown as {
       id: string;
@@ -126,17 +183,46 @@ const ConsultantDetailPage = async ({ params }: Props) => {
     }[]
   ).filter((ct) => ct.is_active);
 
-  const formations = (
+  const accompagnements = (
     consultant.accompagnements as unknown as {
       id: string;
       title: string;
       slug: string;
       short_description: string | null;
+      thumbnail_url: string | null;
       price_cents: number;
       currency: string;
       status: string;
     }[]
   ).filter((f) => f.status === "published");
+
+  const totalAccompagnementsCount = accompagnements.length;
+  const hasMoreAccompagnements =
+    totalAccompagnementsCount > ACCOMPAGNEMENTS_PREVIEW_COUNT;
+
+  const now = new Date().toISOString();
+  const upcomingFormations = (
+    consultant.formations as unknown as {
+      id: string;
+      title: string;
+      slug: string;
+      starts_at: string;
+      category: string;
+      thumbnail_url: string | null;
+      is_evergreen: boolean;
+      is_published: boolean;
+    }[]
+  )
+    .filter((f) => f.is_published && !f.is_evergreen && f.starts_at >= now)
+    .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+
+  const totalUpcomingFormationsCount = upcomingFormations.length;
+  const hasMoreFormations =
+    totalUpcomingFormationsCount > FORMATIONS_PREVIEW_COUNT;
+
+  const isPlatformOwner = consultant.is_platform_owner === true;
+  const totalMediaCount = PRESS_ARTICLES.length + PODCASTS.length + VIDEOS.length;
+  const hasMoreBooks = BOOKS.length > BOOKS_PREVIEW_COUNT;
 
   const formatPrice = (cents: number, currency: string): string =>
     new Intl.NumberFormat("fr-FR", {
@@ -156,12 +242,47 @@ const ConsultantDetailPage = async ({ params }: Props) => {
             {initials}
           </AvatarFallback>
         </Avatar>
-        <div>
+        <div className="text-center sm:text-left">
           <h1 className="font-serif text-3xl font-bold text-primary-green">
             {fullName}
           </h1>
+
+          {certifications.length > 0 && (
+            <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+              {certifications.map((cert) => (
+                <Badge
+                  key={cert}
+                  variant="outline"
+                  className="gap-1 border-primary-green/25 text-primary-green"
+                >
+                  <ShieldCheck className="h-3 w-3" />
+                  {cert}
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          {credibilityItems.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-primary-green/70 sm:justify-start">
+              {credibilityItems.map((item, index) => (
+                <span key={item.label} className="flex items-center gap-3">
+                  {index > 0 && (
+                    <span
+                      aria-hidden="true"
+                      className="hidden h-3 w-px bg-primary-green/15 sm:block"
+                    />
+                  )}
+                  <span className="flex items-center gap-1.5">
+                    <item.icon className="h-3.5 w-3.5" />
+                    {item.label}
+                  </span>
+                </span>
+              ))}
+            </div>
+          )}
+
           {consultant.specialties.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
               {consultant.specialties.map((specialty: string) => (
                 <Badge
                   key={specialty}
@@ -173,6 +294,7 @@ const ConsultantDetailPage = async ({ params }: Props) => {
               ))}
             </div>
           )}
+
           {consultant.bio && (
             <p className="mt-4 max-w-2xl text-primary-green/80">
               {consultant.bio}
@@ -234,37 +356,199 @@ const ConsultantDetailPage = async ({ params }: Props) => {
         </section>
       )}
 
-      {formations.length > 0 && (
+      {upcomingFormations.length > 0 && (
         <section className="mt-12">
-          <h2 className="font-serif text-2xl font-semibold text-primary-green">
-            <BookOpen className="mr-2 inline h-6 w-6" />
-            Accompagnements
-          </h2>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {formations.map((formation) => (
-              <Card key={formation.id}>
-                <CardContent className="pt-4">
-                  <div className="flex items-start justify-between">
-                    <h3 className="font-semibold text-primary-green">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="font-serif text-2xl font-semibold text-primary-green">
+              <GraduationCap className="mr-2 inline h-6 w-6" />
+              Prochaines formations
+            </h2>
+            <Link
+              href="/formations"
+              tabIndex={0}
+              className="group flex shrink-0 items-center gap-1 text-sm font-medium text-primary-red"
+            >
+              {hasMoreFormations
+                ? `Voir les ${totalUpcomingFormationsCount} formations`
+                : "Voir toutes les formations"}
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {upcomingFormations.slice(0, FORMATIONS_PREVIEW_COUNT).map((f) => {
+              const { label: categoryLabel, color: categoryColor } =
+                resolveFormationCategory(f.category);
+              return (
+                <Link
+                  key={f.id}
+                  href={`/formations/${f.slug}`}
+                  tabIndex={0}
+                  className="group block"
+                >
+                  <Card className="overflow-hidden transition-shadow duration-200 hover:shadow-md">
+                    <div className="relative aspect-video overflow-hidden bg-background-beige-dark">
+                      {f.thumbnail_url ? (
+                        <Image
+                          src={f.thumbnail_url}
+                          alt={f.title}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <GraduationCap className="h-8 w-8 text-primary-green/20" />
+                        </div>
+                      )}
+                      <Badge
+                        className={`absolute left-2 top-2 text-xs ${categoryColor}`}
+                      >
+                        {categoryLabel}
+                      </Badge>
+                    </div>
+                    <CardContent className="py-3">
+                      <p className="text-xs text-primary-green/50">
+                        {format(new Date(f.starts_at), "d MMM yyyy", {
+                          locale: fr,
+                          in: PARIS,
+                        })}
+                      </p>
+                      <h3 className="mt-1 line-clamp-1 text-sm font-semibold text-primary-green">
+                        {f.title}
+                      </h3>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {accompagnements.length > 0 && (
+        <section className="mt-12">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="font-serif text-2xl font-semibold text-primary-green">
+              <BookOpen className="mr-2 inline h-6 w-6" />
+              Accompagnements
+            </h2>
+            <Link
+              href="/accompagnements"
+              tabIndex={0}
+              className="group flex shrink-0 items-center gap-1 text-sm font-medium text-primary-red"
+            >
+              {hasMoreAccompagnements
+                ? `Voir les ${totalAccompagnementsCount} accompagnements`
+                : "Voir tous les accompagnements"}
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {accompagnements.slice(0, ACCOMPAGNEMENTS_PREVIEW_COUNT).map((formation) => (
+              <Link
+                key={formation.id}
+                href={`/accompagnements/${formation.slug}`}
+                tabIndex={0}
+                className="group block"
+              >
+                <Card className="overflow-hidden transition-shadow duration-200 hover:shadow-md">
+                  <div className="relative aspect-video overflow-hidden bg-background-beige-dark">
+                    {formation.thumbnail_url ? (
+                      <Image
+                        src={formation.thumbnail_url}
+                        alt={formation.title}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <BookOpen className="h-8 w-8 text-primary-green/20" />
+                      </div>
+                    )}
+                  </div>
+                  <CardContent className="flex items-center justify-between gap-2 py-3">
+                    <h3 className="line-clamp-1 text-sm font-semibold text-primary-green">
                       {formation.title}
                     </h3>
-                    <span className="font-semibold text-primary-red">
+                    <span className="shrink-0 text-sm font-semibold text-primary-red">
                       {formatPrice(formation.price_cents, formation.currency)}
                     </span>
-                  </div>
-                  {formation.short_description && (
-                    <p className="mt-2 text-sm text-primary-green/70">
-                      {formation.short_description}
-                    </p>
-                  )}
-                  <Button asChild variant="outline" className="mt-4 w-full">
-                    <Link href={`/accompagnements/${formation.slug}`} tabIndex={0}>
-                      Voir l&apos;accompagnement
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
+          </div>
+        </section>
+      )}
+
+      {isPlatformOwner && BOOKS.length > 0 && (
+        <section className="mt-12">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="font-serif text-2xl font-semibold text-primary-green">
+              <BookOpen className="mr-2 inline h-6 w-6" />
+              Livres
+            </h2>
+            <Link
+              href="/livres"
+              tabIndex={0}
+              className="group flex shrink-0 items-center gap-1 text-sm font-medium text-primary-red"
+            >
+              {hasMoreBooks ? `Voir les ${BOOKS.length} livres` : "Voir les livres"}
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+          <div className="mt-6 grid max-w-md grid-cols-3 gap-4 sm:grid-cols-4">
+            {BOOKS.slice(0, BOOKS_PREVIEW_COUNT).map((book) => (
+              <Link
+                key={book.id}
+                href={`/livres#${book.id}`}
+                tabIndex={0}
+                className="group block"
+              >
+                <div className="relative aspect-3/4 overflow-hidden bg-white shadow-md transition-shadow duration-200 group-hover:shadow-lg">
+                  <Image
+                    src={book.coverImage}
+                    alt={`Couverture, ${book.title}`}
+                    fill
+                    className="object-contain"
+                    sizes="120px"
+                  />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {isPlatformOwner && (
+        <section className="mt-12">
+          <h2 className="font-serif text-2xl font-semibold text-primary-green">
+            <Newspaper className="mr-2 inline h-6 w-6" />
+            Presse & blog
+          </h2>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-primary-green/70">
+              {totalMediaCount}+ contributions presse, podcasts et vidéos
+            </p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              <Link
+                href="/medias"
+                tabIndex={0}
+                className="group flex items-center gap-1 text-sm font-medium text-primary-red"
+              >
+                Voir les médias
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+              <Link
+                href="/blog"
+                tabIndex={0}
+                className="group flex items-center gap-1 text-sm font-medium text-primary-red"
+              >
+                Lire le blog
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </div>
           </div>
         </section>
       )}

@@ -45,6 +45,10 @@ const EditConsultantPage = async ({ params }: Props) => {
       slug,
       bio,
       specialties,
+      certifications,
+      languages,
+      career_start_year,
+      service_area,
       commission_rate,
       is_active,
       profiles!consultants_id_fkey (
@@ -81,6 +85,10 @@ const EditConsultantPage = async ({ params }: Props) => {
           slug: consultant.slug,
           bio: consultant.bio ?? "",
           specialties: (consultant.specialties as string[]) ?? [],
+          certifications: (consultant.certifications as string[]) ?? [],
+          languages: (consultant.languages as string[]) ?? [],
+          career_start_year: consultant.career_start_year,
+          service_area: consultant.service_area,
           commission_rate: consultant.commission_rate,
           is_active: consultant.is_active ?? false,
         }}

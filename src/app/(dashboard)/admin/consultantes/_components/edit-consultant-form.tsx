@@ -18,9 +18,91 @@ type EditConsultantFormProps = {
     slug: string;
     bio: string;
     specialties: string[];
+    certifications: string[];
+    languages: string[];
+    career_start_year: number | null;
+    service_area: string | null;
     commission_rate: number;
     is_active: boolean;
   };
+};
+
+type TagListInputProps = {
+  id: string;
+  label: string;
+  placeholder: string;
+  items: string[];
+  onChange: (items: string[]) => void;
+};
+
+const TagListInput = ({
+  id,
+  label,
+  placeholder,
+  items,
+  onChange,
+}: TagListInputProps) => {
+  const [inputValue, setInputValue] = useState("");
+
+  const handleAdd = () => {
+    const trimmed = inputValue.trim();
+    if (!trimmed || items.includes(trimmed)) return;
+    onChange([...items, trimmed]);
+    setInputValue("");
+  };
+
+  const handleRemove = (item: string) => {
+    onChange(items.filter((i) => i !== item));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAdd();
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="flex gap-2">
+        <Input
+          id={id}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          aria-label={`Ajouter : ${label}`}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleAdd}
+          disabled={!inputValue.trim()}
+        >
+          Ajouter
+        </Button>
+      </div>
+      {items.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-2">
+          {items.map((item) => (
+            <Badge key={item} variant="secondary" className="gap-1 pr-1">
+              {item}
+              <button
+                type="button"
+                onClick={() => handleRemove(item)}
+                className="ml-1 rounded-full p-0.5 hover:bg-muted"
+                aria-label={`Retirer ${item}`}
+                tabIndex={0}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 export const EditConsultantForm = ({
@@ -31,33 +113,24 @@ export const EditConsultantForm = ({
 
   const [slug, setSlug] = useState(consultant.slug);
   const [bio, setBio] = useState(consultant.bio);
-  const [specialtiesInput, setSpecialtiesInput] = useState("");
   const [specialties, setSpecialties] = useState<string[]>(
     consultant.specialties
+  );
+  const [certifications, setCertifications] = useState<string[]>(
+    consultant.certifications
+  );
+  const [languages, setLanguages] = useState<string[]>(consultant.languages);
+  const [careerStartYear, setCareerStartYear] = useState<string>(
+    consultant.career_start_year?.toString() ?? ""
+  );
+  const [serviceArea, setServiceArea] = useState(
+    consultant.service_area ?? ""
   );
   const [commissionRate, setCommissionRate] = useState(
     consultant.commission_rate
   );
   const [isActive, setIsActive] = useState(consultant.is_active);
   const [error, setError] = useState<string | null>(null);
-
-  const handleAddSpecialty = () => {
-    const trimmed = specialtiesInput.trim();
-    if (!trimmed || specialties.includes(trimmed)) return;
-    setSpecialties([...specialties, trimmed]);
-    setSpecialtiesInput("");
-  };
-
-  const handleRemoveSpecialty = (spec: string) => {
-    setSpecialties(specialties.filter((s) => s !== spec));
-  };
-
-  const handleSpecialtyKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddSpecialty();
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +141,12 @@ export const EditConsultantForm = ({
         slug,
         bio: bio || undefined,
         specialties,
+        certifications,
+        languages,
+        career_start_year: careerStartYear
+          ? Number(careerStartYear)
+          : undefined,
+        service_area: serviceArea || undefined,
         commission_rate: commissionRate,
         is_active: isActive,
       });
@@ -117,45 +196,61 @@ export const EditConsultantForm = ({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="specialties">Spécialités</Label>
-            <div className="flex gap-2">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="career-start-year">
+                Année de début de carrière
+              </Label>
               <Input
-                id="specialties"
-                value={specialtiesInput}
-                onChange={(e) => setSpecialtiesInput(e.target.value)}
-                onKeyDown={handleSpecialtyKeyDown}
-                placeholder="Ex: Allaitement maternel"
-                aria-label="Ajouter une spécialité"
+                id="career-start-year"
+                type="number"
+                min={1950}
+                max={new Date().getFullYear()}
+                value={careerStartYear}
+                onChange={(e) => setCareerStartYear(e.target.value)}
+                placeholder="Ex: 2016"
+                aria-label="Année de début de carrière"
               />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleAddSpecialty}
-                disabled={!specialtiesInput.trim()}
-              >
-                Ajouter
-              </Button>
+              <p className="text-xs text-muted-foreground">
+                Sert à calculer l&apos;ancienneté affichée sur le profil
+                public
+              </p>
             </div>
-            {specialties.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-2">
-                {specialties.map((spec) => (
-                  <Badge key={spec} variant="secondary" className="gap-1 pr-1">
-                    {spec}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveSpecialty(spec)}
-                      className="ml-1 rounded-full p-0.5 hover:bg-muted"
-                      aria-label={`Retirer ${spec}`}
-                      tabIndex={0}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="service-area">Zone d&apos;intervention</Label>
+              <Input
+                id="service-area"
+                value={serviceArea}
+                onChange={(e) => setServiceArea(e.target.value)}
+                placeholder="Ex: Île-de-France, 100% visio…"
+                aria-label="Zone d'intervention"
+              />
+            </div>
           </div>
+
+          <TagListInput
+            id="specialties"
+            label="Spécialités"
+            placeholder="Ex: Allaitement maternel"
+            items={specialties}
+            onChange={setSpecialties}
+          />
+
+          <TagListInput
+            id="certifications"
+            label="Certifications / diplômes"
+            placeholder="Ex: IBCLC, DE"
+            items={certifications}
+            onChange={setCertifications}
+          />
+
+          <TagListInput
+            id="languages"
+            label="Langues parlées"
+            placeholder="Ex: Français"
+            items={languages}
+            onChange={setLanguages}
+          />
         </CardContent>
       </Card>
 

@@ -79,6 +79,10 @@ const ConsultantDetailPage = async ({ params }: Props) => {
       slug,
       bio,
       specialties,
+      certifications,
+      languages,
+      career_start_year,
+      service_area,
       commission_rate,
       is_active,
       stripe_account_id,
@@ -247,6 +251,60 @@ const ConsultantDetailPage = async ({ params }: Props) => {
                   </p>
                 )}
               </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Certifications
+              </p>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {(consultant.certifications as string[] ?? []).length > 0 ? (
+                  (consultant.certifications as string[]).map((cert) => (
+                    <Badge key={cert} variant="secondary">
+                      {cert}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Aucune certification
+                  </p>
+                )}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Langues
+              </p>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {(consultant.languages as string[] ?? []).length > 0 ? (
+                  (consultant.languages as string[]).map((lang) => (
+                    <Badge key={lang} variant="secondary">
+                      {lang}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Non renseignées
+                  </p>
+                )}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Début de carrière
+              </p>
+              <p className="text-sm">
+                {consultant.career_start_year != null
+                  ? `${consultant.career_start_year} (${new Date().getFullYear() - consultant.career_start_year} ans d'expérience)`
+                  : "Non renseigné"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Zone d&apos;intervention
+              </p>
+              <p className="text-sm">
+                {consultant.service_area || "Non renseignée"}
+              </p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">

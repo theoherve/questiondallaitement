@@ -171,6 +171,13 @@ export const updateConsultant = async (
   const updateData: Record<string, unknown> = {};
   if (parsed.data.bio !== undefined) updateData.bio = parsed.data.bio;
   if (parsed.data.specialties) updateData.specialties = parsed.data.specialties;
+  if (parsed.data.certifications)
+    updateData.certifications = parsed.data.certifications;
+  if (parsed.data.languages) updateData.languages = parsed.data.languages;
+  if (parsed.data.career_start_year !== undefined)
+    updateData.career_start_year = parsed.data.career_start_year;
+  if (parsed.data.service_area !== undefined)
+    updateData.service_area = parsed.data.service_area;
   if (parsed.data.commission_rate !== undefined)
     updateData.commission_rate = parsed.data.commission_rate;
   if (parsed.data.is_active !== undefined)

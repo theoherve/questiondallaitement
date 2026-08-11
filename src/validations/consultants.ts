@@ -21,6 +21,15 @@ export const promoteToConsultantSchema = z.object({
 export const updateConsultantSchema = z.object({
   bio: z.string().optional(),
   specialties: z.array(z.string()).default([]),
+  certifications: z.array(z.string()).default([]),
+  languages: z.array(z.string()).default([]),
+  career_start_year: z
+    .number()
+    .int()
+    .min(1950)
+    .max(new Date().getFullYear())
+    .optional(),
+  service_area: z.string().max(120).optional(),
   commission_rate: z
     .number()
     .min(0, "La commission ne peut pas être négative")
