@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { publicNav, getClientNav, PACK_SALES_PATH } from "@/config/navigation";
-import { features } from "@/config/features";
 import { getNavIcon } from "@/config/navigation-icons";
 import {
   isConsultant,
@@ -31,12 +30,13 @@ type HeaderProps = {
   user: SessionUser | null;
   onLogout: (formData: FormData) => void | Promise<void>;
   accompagnements: AccompagnementsNavPreview;
+  bookingEnabled: boolean;
 };
 
 const ACCOMPAGNEMENTS_HREF = "/accompagnements";
 const LIVRES_HREF = "/livres";
 
-export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
+export const Header = ({ user, onLogout, accompagnements, bookingEnabled }: HeaderProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Close menu on browser back/forward navigation
@@ -134,7 +134,7 @@ export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
                     {user.email}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {getClientNav(features.bookingEnabled).map((item) => {
+                  {getClientNav(bookingEnabled).map((item) => {
                     const Icon = getNavIcon(item.iconKey);
                     return (
                       <DropdownMenuItem key={item.href} asChild>
@@ -216,7 +216,7 @@ export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
               asChild
               className="bg-primary-red px-6 hover:bg-primary-red-dark"
             >
-              {features.bookingEnabled ? (
+              {bookingEnabled ? (
                 <Link href="/reserver">Prendre RDV</Link>
               ) : (
                 <Link href={PACK_SALES_PATH}>Découvrir le Pack</Link>
@@ -231,7 +231,7 @@ export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
               size="sm"
               className="bg-primary-red hover:bg-primary-red-dark"
             >
-              {features.bookingEnabled ? (
+              {bookingEnabled ? (
                 <Link href="/reserver">RDV</Link>
               ) : (
                 <Link href={PACK_SALES_PATH}>Le pack</Link>
@@ -294,7 +294,7 @@ export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
             {/* Auth section */}
             {user ? (
               <>
-                {getClientNav(features.bookingEnabled).map((item) => (
+                {getClientNav(bookingEnabled).map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
@@ -366,7 +366,7 @@ export const Header = ({ user, onLogout, accompagnements }: HeaderProps) => {
                     asChild
                     className="w-full bg-primary-red hover:bg-primary-red-dark"
                   >
-                    {features.bookingEnabled ? (
+                    {bookingEnabled ? (
                       <Link href="/reserver" onClick={() => setMenuOpen(false)}>
                         Prendre rendez-vous
                       </Link>
