@@ -105,7 +105,7 @@ export const BooksMegaMenu = ({ triggerClassName }: Props) => {
           aria-label="Aperçu des livres"
           aria-hidden={!open}
           className={cn(
-            "absolute left-0 top-full z-50 mt-3 w-[min(52rem,calc(100vw-2rem))] origin-top overflow-hidden rounded-2xl border border-border bg-background-beige shadow-[0_24px_60px_-20px_rgba(32,54,52,0.32),0_4px_14px_-6px_rgba(32,54,52,0.18)]",
+            "absolute left-1/2 top-full z-50 mt-3 w-[min(52rem,calc(100vw-2rem))] origin-top -translate-x-1/2 overflow-hidden rounded-2xl border border-border bg-background-beige shadow-[0_24px_60px_-20px_rgba(32,54,52,0.32),0_4px_14px_-6px_rgba(32,54,52,0.18)]",
             "transition-[opacity,transform] duration-200 ease-out will-change-[opacity,transform] motion-reduce:transition-none",
             open
               ? "translate-y-0 opacity-100"
