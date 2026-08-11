@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,6 +35,12 @@ import {
 } from "@/config/formation-categories";
 import { PARIS } from "@/lib/formations/paris-time";
 import { promoCodeLabel } from "@/lib/formations/external-url";
+import {
+  AUDIENCE_FILTERS,
+  type AudienceFilter,
+  type FormationAudienceGroup,
+} from "@/config/formation-audience";
+import { matchesAudienceFilter } from "@/lib/formations/audience";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -62,6 +69,7 @@ export type FormationData = {
   discounted_price_cents: number | null;
   provider: { name: string; logo_url: string | null } | null;
   category: string;
+  audience_group: FormationAudienceGroup;
   badge: string | null;
   // true = accessible en permanence : la formation ne suit pas le calendrier.
   is_evergreen: boolean;
@@ -140,6 +148,25 @@ export const FormationsList = ({
   const [showPast, setShowPast] = useState(false);
   const [showAllPast, setShowAllPast] = useState(false);
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const audienceParam = searchParams.get("audience");
+  const audienceFilter: AudienceFilter =
+    audienceParam === "maman" || audienceParam === "pro" ? audienceParam : "all";
+
+  // Piloter le toggle par l'URL permet un lien profond depuis le tableau de
+  // bord espace-client (/formations?audience=maman).
+  const handleAudienceChange = useCallback(
+    (value: AudienceFilter) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value === "all") params.delete("audience");
+      else params.set("audience", value);
+      const query = params.toString();
+      router.replace(query ? `/formations?${query}` : "/formations", { scroll: false });
+    },
+    [router, searchParams],
+  );
+
   // Jours pastilles dans le calendrier. La date est reconstruite a partir du
   // jour civil parisien : `startOfDay` sur le fuseau du navigateur decalerait
   // d'un jour toute session commencant tot pour une visiteuse hors de France.
@@ -163,32 +190,37 @@ export const FormationsList = ({
     if (activeCategory !== "all") {
       result = result.filter((e) => e.category === activeCategory);
     }
+    result = result.filter((e) => matchesAudienceFilter(e.audience_group, audienceFilter));
     if (selectedDate) {
       const day = format(selectedDate, "yyyy-MM-dd");
       result = result.filter((e) => parisDayKey(e.starts_at) === day);
     }
     return result;
-  }, [upcomingFormations, activeCategory, selectedDate]);
+  }, [upcomingFormations, activeCategory, audienceFilter, selectedDate]);
 
   const filteredPast = useMemo(() => {
     let result = pastFormations;
     if (activeCategory !== "all") {
       result = result.filter((e) => e.category === activeCategory);
     }
+    result = result.filter((e) => matchesAudienceFilter(e.audience_group, audienceFilter));
     if (selectedDate) {
       const day = format(selectedDate, "yyyy-MM-dd");
       result = result.filter((e) => parisDayKey(e.starts_at) === day);
     }
     return result;
-  }, [pastFormations, activeCategory, selectedDate]);
+  }, [pastFormations, activeCategory, audienceFilter, selectedDate]);
 
   // Les formations sans date ignorent le filtre calendaire : elles ne tombent
   // aucun jour en particulier, les retirer parce qu'une date est selectionnee
   // laisserait croire qu'elles n'existent plus.
   const filteredEvergreen = useMemo(() => {
-    if (activeCategory === "all") return evergreenFormations;
-    return evergreenFormations.filter((e) => e.category === activeCategory);
-  }, [evergreenFormations, activeCategory]);
+    let result = evergreenFormations;
+    if (activeCategory !== "all") {
+      result = result.filter((e) => e.category === activeCategory);
+    }
+    return result.filter((e) => matchesAudienceFilter(e.audience_group, audienceFilter));
+  }, [evergreenFormations, activeCategory, audienceFilter]);
 
   // Progressive disclosure
   const visibleUpcoming = showAllUpcoming ? filteredUpcoming : filteredUpcoming.slice(0, INITIAL_VISIBLE);
@@ -221,6 +253,30 @@ export const FormationsList = ({
       {/* Left sidebar: Calendar + Filters (sticky on desktop)         */}
       {/* ============================================================ */}
       <aside className="w-full shrink-0 lg:sticky lg:top-24 lg:w-70 lg:self-start">
+        {/* Toggle audience : dimension separee de la categorie (public vise
+            vs format). Pilote par l'URL pour permettre un lien profond
+            depuis le tableau de bord espace-client. */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            {AUDIENCE_FILTERS.map((filter) => {
+              const isActive = audienceFilter === filter.value;
+              return (
+                <button
+                  key={filter.value}
+                  onClick={() => handleAudienceChange(filter.value)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? "bg-primary-red text-white shadow-sm"
+                      : "bg-background-beige-dark text-primary-green/70 hover:bg-primary-green/10 hover:text-primary-green"
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Category filter pills */}
         {availableCategories.length > 2 && (
           <div className="mb-6">

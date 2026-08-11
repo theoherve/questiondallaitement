@@ -55,6 +55,7 @@ const FormationsProPage = async () => {
       partner_promo_codes,
       discounted_price_cents,
       category,
+      audience_group,
       badge,
       is_evergreen,
       training_providers!provider_id (
