@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getPlatformSettings } from "./actions";
 import { getEmailBranding } from "@/lib/emails/branding-store";
+import { getAnnouncementBanner } from "@/lib/announcement-banner/store";
 import { SettingsForm } from "./_components/settings-form";
 import { EmailBrandingForm } from "./_components/email-branding-form";
+import { AnnouncementBannerForm } from "./_components/announcement-banner-form";
 
 export const metadata: Metadata = {
   title: "Paramètres plateforme",
@@ -14,9 +16,10 @@ const ParametresPage = async () => {
   const user = await getSessionUser();
   if (!user || !user.roles.includes("admin")) redirect("/admin");
 
-  const [settings, branding] = await Promise.all([
+  const [settings, branding, banner] = await Promise.all([
     getPlatformSettings(),
     getEmailBranding(),
+    getAnnouncementBanner(),
   ]);
 
   return (
@@ -42,6 +45,17 @@ const ParametresPage = async () => {
         </p>
       </div>
       <EmailBrandingForm branding={branding} />
+
+      <div className="border-t pt-8">
+        <h2 className="font-serif text-xl font-bold text-primary-green">
+          Bandeau d&apos;annonce
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Message temporaire affiché en haut de toutes les pages publiques
+          (nouveau site, promotion, événement...).
+        </p>
+      </div>
+      <AnnouncementBannerForm banner={banner} />
     </div>
   );
 };
