@@ -7,7 +7,7 @@ import type { ModuleContent } from "./types";
  */
 export const JE_ME_PREPARE_A_ALLAITER: ModuleContent = {
   hero: {
-    eyebrow: "Consultante IBCLC depuis 2011 · 5 000+ familles accompagnées",
+    eyebrow: "CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES",
     titleOverride:
       "Le meilleur moment pour apprendre à allaiter, c'est avant que votre bébé soit là.",
     subtitle:
@@ -73,7 +73,8 @@ export const JE_ME_PREPARE_A_ALLAITER: ModuleContent = {
   },
   moment: {
     title: "À quel moment de votre allaitement ?",
-    intro: "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
+    intro:
+      "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
   // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
   pricing: {
@@ -96,7 +97,8 @@ export const JE_ME_PREPARE_A_ALLAITER: ModuleContent = {
   ],
   finalCta: {
     title: "Arrivez préparée, pas inquiète",
-    subtitle: "Quelques heures maintenant valent mieux que six semaines de doute.",
+    subtitle:
+      "Quelques heures maintenant valent mieux que six semaines de doute.",
     ctaLabel: "Je me prépare sereinement",
   },
 };

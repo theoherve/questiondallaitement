@@ -30,41 +30,41 @@
 
 **Créés :**
 
-| Fichier | Responsabilité |
-|---|---|
-| `supabase/migrations/00079_accompagnement_section_sales_hook.sql` | colonne `sales_hook` |
-| `src/app/(public)/accompagnements/_components/sales/section.tsx` | wrapper de section (padding, largeur, ancre) |
-| `src/app/(public)/accompagnements/_components/sales/sales-faq.tsx` | accordéon FAQ piloté par props (client) |
-| `src/app/(public)/accompagnements/_components/sales/sales-hero.tsx` | hero piloté par props |
-| `src/app/(public)/accompagnements/_components/sales/sales-instructor.tsx` | bloc consultante |
-| `src/app/(public)/accompagnements/_components/sales/sales-testimonials.tsx` | grille de témoignages |
-| `src/app/(public)/accompagnements/_components/sales/sales-pricing.tsx` | carte tarif + CTA |
-| `src/app/(public)/accompagnements/_components/sales/sales-side-cta.tsx` | carte flottante desktop (client) |
-| `src/app/(public)/accompagnements/_components/module/module-program-data.ts` | calcul pur : chapitres, compteurs de blocs |
-| `src/app/(public)/accompagnements/_components/module/module-program-data.spec.ts` | tests du calcul ci-dessus |
-| `src/app/(public)/accompagnements/_components/module/pack-upsell-data.ts` | calcul pur : delta de prix pack |
-| `src/app/(public)/accompagnements/_components/module/pack-upsell-data.spec.ts` | tests du calcul ci-dessus |
-| `src/app/(public)/accompagnements/_components/module/module-program.tsx` | rendu du programme (client, dépliage) |
-| `src/app/(public)/accompagnements/_components/module/module-sections.tsx` | sections propres au module |
-| `src/app/(public)/accompagnements/_components/module/pack-upsell.tsx` | bloc upsell |
-| `src/app/(public)/accompagnements/_components/module/module-sales-page.tsx` | orchestrateur + fetch catalogue |
-| `src/app/(public)/accompagnements/_components/module/content/types.ts` | type `ModuleContent` |
-| `src/app/(public)/accompagnements/_components/module/content/shared.ts` | défauts communs aux 8 modules |
-| `src/app/(public)/accompagnements/_components/module/content/<slug>.ts` × 8 | copy par module |
-| `src/app/(public)/accompagnements/_components/module/content/index.ts` | `MODULE_CONTENT` |
+| Fichier                                                                           | Responsabilité                               |
+| --------------------------------------------------------------------------------- | -------------------------------------------- |
+| `supabase/migrations/00079_accompagnement_section_sales_hook.sql`                 | colonne `sales_hook`                         |
+| `src/app/(public)/accompagnements/_components/sales/section.tsx`                  | wrapper de section (padding, largeur, ancre) |
+| `src/app/(public)/accompagnements/_components/sales/sales-faq.tsx`                | accordéon FAQ piloté par props (client)      |
+| `src/app/(public)/accompagnements/_components/sales/sales-hero.tsx`               | hero piloté par props                        |
+| `src/app/(public)/accompagnements/_components/sales/sales-instructor.tsx`         | bloc consultante                             |
+| `src/app/(public)/accompagnements/_components/sales/sales-testimonials.tsx`       | grille de témoignages                        |
+| `src/app/(public)/accompagnements/_components/sales/sales-pricing.tsx`            | carte tarif + CTA                            |
+| `src/app/(public)/accompagnements/_components/sales/sales-side-cta.tsx`           | carte flottante desktop (client)             |
+| `src/app/(public)/accompagnements/_components/module/module-program-data.ts`      | calcul pur : chapitres, compteurs de blocs   |
+| `src/app/(public)/accompagnements/_components/module/module-program-data.spec.ts` | tests du calcul ci-dessus                    |
+| `src/app/(public)/accompagnements/_components/module/pack-upsell-data.ts`         | calcul pur : delta de prix pack              |
+| `src/app/(public)/accompagnements/_components/module/pack-upsell-data.spec.ts`    | tests du calcul ci-dessus                    |
+| `src/app/(public)/accompagnements/_components/module/module-program.tsx`          | rendu du programme (client, dépliage)        |
+| `src/app/(public)/accompagnements/_components/module/module-sections.tsx`         | sections propres au module                   |
+| `src/app/(public)/accompagnements/_components/module/pack-upsell.tsx`             | bloc upsell                                  |
+| `src/app/(public)/accompagnements/_components/module/module-sales-page.tsx`       | orchestrateur + fetch catalogue              |
+| `src/app/(public)/accompagnements/_components/module/content/types.ts`            | type `ModuleContent`                         |
+| `src/app/(public)/accompagnements/_components/module/content/shared.ts`           | défauts communs aux 8 modules                |
+| `src/app/(public)/accompagnements/_components/module/content/<slug>.ts` × 8       | copy par module                              |
+| `src/app/(public)/accompagnements/_components/module/content/index.ts`            | `MODULE_CONTENT`                             |
 
 **Modifiés :**
 
-| Fichier | Modification |
-|---|---|
-| `src/app/(public)/accompagnements/_components/pack/pack-sections.tsx` | consomme `sales/*` |
-| `src/app/(public)/accompagnements/_components/pack/pack-faq.tsx` | supprimé, remplacé par `sales/sales-faq.tsx` |
-| `src/app/(public)/accompagnements/_components/pack/pack-side-cta.tsx` | supprimé, remplacé par `sales/sales-side-cta.tsx` |
-| `src/app/(public)/accompagnements/_components/pack/pack-sales-page.tsx` | imports mis à jour |
-| `src/app/(public)/accompagnements/[slug]/page.tsx` | routage vers `ModuleSalesPage`, `sales_hook` dans la requête |
-| `src/validations/accompagnements.ts` | `sales_hook` dans `sectionSchema` |
-| `src/app/(dashboard)/admin/accompagnements/_components/section-editor.tsx` | champ accroche |
-| `src/app/(dashboard)/admin/accompagnements/[id]/edit/page.tsx` | `sales_hook` dans la requête |
+| Fichier                                                                    | Modification                                                 |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `src/app/(public)/accompagnements/_components/pack/pack-sections.tsx`      | consomme `sales/*`                                           |
+| `src/app/(public)/accompagnements/_components/pack/pack-faq.tsx`           | supprimé, remplacé par `sales/sales-faq.tsx`                 |
+| `src/app/(public)/accompagnements/_components/pack/pack-side-cta.tsx`      | supprimé, remplacé par `sales/sales-side-cta.tsx`            |
+| `src/app/(public)/accompagnements/_components/pack/pack-sales-page.tsx`    | imports mis à jour                                           |
+| `src/app/(public)/accompagnements/[slug]/page.tsx`                         | routage vers `ModuleSalesPage`, `sales_hook` dans la requête |
+| `src/validations/accompagnements.ts`                                       | `sales_hook` dans `sectionSchema`                            |
+| `src/app/(dashboard)/admin/accompagnements/_components/section-editor.tsx` | champ accroche                                               |
+| `src/app/(dashboard)/admin/accompagnements/[id]/edit/page.tsx`             | `sales_hook` dans la requête                                 |
 
 ---
 
@@ -73,6 +73,7 @@
 Premier pas du refactor du pack, à iso-rendu. Aucune classe CSS ne change.
 
 **Files:**
+
 - Create: `src/app/(public)/accompagnements/_components/sales/section.tsx`
 - Create: `src/app/(public)/accompagnements/_components/sales/sales-faq.tsx`
 - Modify: `src/app/(public)/accompagnements/_components/pack/pack-sections.tsx`
@@ -80,6 +81,7 @@ Premier pas du refactor du pack, à iso-rendu. Aucune classe CSS ne change.
 - Delete: `src/app/(public)/accompagnements/_components/pack/pack-faq.tsx`
 
 **Interfaces:**
+
 - Produces: `Section({ id?, className?, children })`, `SalesFaq({ title, items })` où `items: { q: string; a: string }[]`.
 
 - [ ] **Step 1: Créer le wrapper de section**
@@ -101,7 +103,10 @@ export const Section = ({
   className?: string;
   children: React.ReactNode;
 }) => (
-  <section id={id} className={`scroll-mt-20 px-4 py-16 sm:px-6 sm:py-20 ${className}`}>
+  <section
+    id={id}
+    className={`scroll-mt-20 px-4 py-16 sm:px-6 sm:py-20 ${className}`}
+  >
     <div className="mx-auto max-w-6xl">{children}</div>
   </section>
 );
@@ -152,7 +157,7 @@ export function SalesFaq({
                 <ChevronDown
                   className={cn(
                     "h-5 w-5 shrink-0 text-primary-red transition-transform duration-300",
-                    isOpen && "rotate-180"
+                    isOpen && "rotate-180",
                   )}
                   aria-hidden
                 />
@@ -160,7 +165,7 @@ export function SalesFaq({
               <div
                 className={cn(
                   "grid transition-all duration-300 ease-out",
-                  isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                  isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
                 )}
               >
                 <div className="overflow-hidden">
@@ -225,6 +230,7 @@ git commit -m "refactor: extraire Section et la FAQ de la page pack vers sales/"
 Suite du refactor, toujours à iso-rendu pour le pack. Ces cinq composants deviennent pilotables par props pour servir aussi les modules.
 
 **Files:**
+
 - Create: `src/app/(public)/accompagnements/_components/sales/sales-hero.tsx`
 - Create: `src/app/(public)/accompagnements/_components/sales/sales-instructor.tsx`
 - Create: `src/app/(public)/accompagnements/_components/sales/sales-testimonials.tsx`
@@ -235,6 +241,7 @@ Suite du refactor, toujours à iso-rendu pour le pack. Ces cinq composants devie
 - Delete: `src/app/(public)/accompagnements/_components/pack/pack-side-cta.tsx`
 
 **Interfaces:**
+
 - Consumes: `Section` (Task 1).
 - Produces: `SalesHero`, `SalesInstructor`, `SalesTestimonials`, `SalesPricing`, `SalesSideCta`, et les types `Testimonial`, `SideCtaAnchor` (signatures exactes ci-dessous).
 
@@ -278,7 +285,9 @@ export function SalesHero({
         <div
           aria-hidden
           className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full opacity-20 blur-3xl"
-          style={{ backgroundImage: `linear-gradient(135deg, ${accent.from}, ${accent.to})` }}
+          style={{
+            backgroundImage: `linear-gradient(135deg, ${accent.from}, ${accent.to})`,
+          }}
         />
       )}
       <div
@@ -290,7 +299,10 @@ export function SalesHero({
           {Icon ? (
             <Icon className="h-3.5 w-3.5 text-accent-sage" aria-hidden />
           ) : (
-            <span className="h-1.5 w-1.5 rounded-full bg-primary-red" aria-hidden />
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-primary-red"
+              aria-hidden
+            />
           )}
           <span className="font-sans text-xs font-medium uppercase tracking-widest text-white/90">
             {eyebrow}
@@ -323,7 +335,10 @@ export function SalesHero({
           }`}
         >
           {reassurances.map((r) => (
-            <li key={r} className="flex items-center gap-2 text-sm text-white/90">
+            <li
+              key={r}
+              className="flex items-center gap-2 text-sm text-white/90"
+            >
               <CheckCircle className="h-4 w-4 text-accent-sage" aria-hidden />
               {r}
             </li>
@@ -393,7 +408,9 @@ export function SalesInstructor({
             <div className="h-28 w-28 shrink-0 rounded-full bg-primary-green/10" />
           )}
           <div>
-            <p className="font-serif text-xl font-semibold text-primary-green">{name}</p>
+            <p className="font-serif text-xl font-semibold text-primary-green">
+              {name}
+            </p>
             <p className="mt-2 text-primary-green/70">{displayBio}</p>
             <ul className="mt-4 flex flex-wrap gap-2">
               {credentials.map((c) => (
@@ -401,7 +418,10 @@ export function SalesInstructor({
                   key={c}
                   className="inline-flex items-center gap-1.5 rounded-full bg-primary-green/10 px-3 py-1 text-xs font-medium text-primary-green"
                 >
-                  <CheckCircle className="h-3 w-3 shrink-0 text-accent-sage" aria-hidden />
+                  <CheckCircle
+                    className="h-3 w-3 shrink-0 text-accent-sage"
+                    aria-hidden
+                  />
                   {c}
                 </li>
               ))}
@@ -449,8 +469,12 @@ export function SalesTestimonials({
               </blockquote>
               <figcaption className="mt-4 flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-accent-sage" aria-hidden />
-                <span className="text-sm font-medium text-primary-green">{t.author}</span>
-                <span className="text-xs text-primary-green/50">· {t.detail}</span>
+                <span className="text-sm font-medium text-primary-green">
+                  {t.author}
+                </span>
+                <span className="text-xs text-primary-green/50">
+                  · {t.detail}
+                </span>
               </figcaption>
             </figure>
           </ScrollReveal>
@@ -504,17 +528,27 @@ export function SalesPricing({
         <h2 className="text-center font-serif text-2xl font-bold text-primary-green sm:text-3xl">
           {title}
         </h2>
-        <p className="mt-2 text-center text-sm text-primary-green/70">{subtitle}</p>
+        <p className="mt-2 text-center text-sm text-primary-green/70">
+          {subtitle}
+        </p>
         <p className="mt-6 text-center font-serif text-5xl font-bold text-primary-red">
           {priceLabel}
         </p>
         {anchorLabel && (
-          <p className="mt-2 text-center text-sm font-medium text-accent-sage">{anchorLabel}</p>
+          <p className="mt-2 text-center text-sm font-medium text-accent-sage">
+            {anchorLabel}
+          </p>
         )}
         <ul className="mt-6 space-y-2">
           {includes.map((it) => (
-            <li key={it} className="flex items-start gap-2 text-sm text-primary-green/80">
-              <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent-sage" aria-hidden />
+            <li
+              key={it}
+              className="flex items-start gap-2 text-sm text-primary-green/80"
+            >
+              <CheckCircle
+                className="mt-0.5 h-4 w-4 shrink-0 text-accent-sage"
+                aria-hidden
+              />
               {it}
             </li>
           ))}
@@ -530,7 +564,10 @@ export function SalesPricing({
           />
         </div>
         <p className="mt-4 flex items-center justify-center gap-2 text-center text-sm font-medium text-primary-green/80">
-          <ShieldCheck className="h-4 w-4 shrink-0 text-accent-sage" aria-hidden />
+          <ShieldCheck
+            className="h-4 w-4 shrink-0 text-accent-sage"
+            aria-hidden
+          />
           {guarantee}
         </p>
       </div>
@@ -611,24 +648,35 @@ export function SalesSideCta({
         "fixed right-4 top-1/2 z-40 hidden w-60 -translate-y-1/2 transition-all duration-500 lg:block",
         visible
           ? "translate-x-0 opacity-100"
-          : "pointer-events-none translate-x-8 opacity-0"
+          : "pointer-events-none translate-x-8 opacity-0",
       )}
     >
       <div className="overflow-hidden rounded-2xl border border-primary-green/10 bg-white shadow-xl">
         {imageUrl && (
           <div className="relative aspect-4/3 w-full bg-background-beige-dark">
-            <Image src={imageUrl} alt="" fill sizes="240px" className="object-cover" />
+            <Image
+              src={imageUrl}
+              alt=""
+              fill
+              sizes="240px"
+              className="object-cover"
+            />
           </div>
         )}
         <div className="p-4">
-          <p className="font-serif text-2xl font-bold text-primary-red">{priceLabel}</p>
+          <p className="font-serif text-2xl font-bold text-primary-red">
+            {priceLabel}
+          </p>
           <ul className="mt-3 space-y-1.5">
             {meta.map((m) => (
               <li
                 key={m.text}
                 className="flex items-center gap-2 text-xs text-primary-green/70"
               >
-                <m.icon className="h-3.5 w-3.5 shrink-0 text-primary-green/50" aria-hidden />
+                <m.icon
+                  className="h-3.5 w-3.5 shrink-0 text-primary-green/50"
+                  aria-hidden
+                />
                 <span>{m.text}</span>
               </li>
             ))}
@@ -652,7 +700,10 @@ export function SalesSideCta({
                 href={a.href}
                 className="flex items-center gap-1.5 text-xs text-primary-green/70 transition-colors hover:text-primary-green"
               >
-                <span className="h-1 w-1 rounded-full bg-primary-red" aria-hidden />
+                <span
+                  className="h-1 w-1 rounded-full bg-primary-red"
+                  aria-hidden
+                />
                 {a.label}
               </a>
             ))}
@@ -781,12 +832,14 @@ git commit -m "refactor: rendre hero, consultante, temoignages, tarif et carte f
 ## Task 3: Colonne `sales_hook` et édition en back-office
 
 **Files:**
+
 - Create: `supabase/migrations/00079_accompagnement_section_sales_hook.sql`
 - Modify: `src/validations/accompagnements.ts:19-22`
 - Modify: `src/app/(dashboard)/admin/accompagnements/_components/section-editor.tsx`
 - Modify: `src/app/(dashboard)/admin/accompagnements/[id]/edit/page.tsx`
 
 **Interfaces:**
+
 - Produces: colonne `accompagnement_sections.sales_hook text`, champ `sales_hook?: string` accepté par `sectionSchema` et donc par `createSection` / `updateSection`.
 
 - [ ] **Step 1: Écrire la migration**
@@ -996,10 +1049,12 @@ git commit -m "feat: accroche commerciale editable par chapitre d'accompagnement
 Calcul pur, testé. Aucun rendu.
 
 **Files:**
+
 - Create: `src/app/(public)/accompagnements/_components/module/module-program-data.ts`
 - Test: `src/app/(public)/accompagnements/_components/module/module-program-data.spec.ts`
 
 **Interfaces:**
+
 - Produces: `type SectionRow`, `type BlockRow`, `type ProgramChapter`, `buildProgramChapters(rows)`, `buildProofItems(chapters)`, `formatChapterCounts(counts)`.
 
 - [ ] **Step 1: Écrire les tests d'abord**
@@ -1019,7 +1074,7 @@ const section = (
   id: string,
   position: number,
   types: string[],
-  salesHook: string | null = null
+  salesHook: string | null = null,
 ): SectionRow => ({
   id,
   title: `Chapitre ${id}`,
@@ -1051,7 +1106,9 @@ describe("buildProgramChapters", () => {
   });
 
   it("ignore un type de bloc inconnu au lieu de casser", () => {
-    const [chapter] = buildProgramChapters([section("a", 1, ["video", "hologramme"])]);
+    const [chapter] = buildProgramChapters([
+      section("a", 1, ["video", "hologramme"]),
+    ]);
     expect(chapter.counts.video).toBe(1);
   });
 
@@ -1061,7 +1118,7 @@ describe("buildProgramChapters", () => {
       section("b", 2, []),
     ]);
     expect(chapters[0].salesHook).toBe(
-      "Vous saurez reconnaître une bonne prise du sein."
+      "Vous saurez reconnaître une bonne prise du sein.",
     );
     expect(chapters[1].salesHook).toBeNull();
   });
@@ -1091,7 +1148,9 @@ describe("formatChapterCounts", () => {
   });
 
   it("renvoie un tableau vide quand le chapitre n'a que du texte", () => {
-    const [chapter] = buildProgramChapters([section("a", 1, ["text", "image"])]);
+    const [chapter] = buildProgramChapters([
+      section("a", 1, ["text", "image"]),
+    ]);
     expect(formatChapterCounts(chapter.counts)).toEqual([]);
   });
 });
@@ -1139,7 +1198,13 @@ Expected: FAIL, « Failed to resolve import "./module-program-data" ».
  */
 
 /** Types de la colonne `accompagnement_blocks.type` (enum `block_type`). */
-export const BLOCK_TYPES = ["text", "video", "image", "quiz", "download"] as const;
+export const BLOCK_TYPES = [
+  "text",
+  "video",
+  "image",
+  "quiz",
+  "download",
+] as const;
 export type BlockType = (typeof BLOCK_TYPES)[number];
 
 export type BlockRow = { id: string; type: string };
@@ -1240,10 +1305,12 @@ git commit -m "feat: calcul du programme d'un module depuis la base"
 ## Task 5: Calcul de l'upsell pack
 
 **Files:**
+
 - Create: `src/app/(public)/accompagnements/_components/module/pack-upsell-data.ts`
 - Test: `src/app/(public)/accompagnements/_components/module/pack-upsell-data.spec.ts`
 
 **Interfaces:**
+
 - Consumes: `formatPrice` de `@/config/accompagnements`.
 - Produces: `type PackUpsell`, `computePackUpsell(args)`.
 
@@ -1277,7 +1344,7 @@ describe("computePackUpsell", () => {
         modulePriceCents: 7500,
         currency: "EUR",
         totalModulesCount: 8,
-      })
+      }),
     ).toBeNull();
   });
 
@@ -1289,7 +1356,7 @@ describe("computePackUpsell", () => {
         modulePriceCents: 7500,
         currency: "EUR",
         totalModulesCount: 8,
-      })
+      }),
     ).toBeNull();
   });
 
@@ -1301,7 +1368,7 @@ describe("computePackUpsell", () => {
         modulePriceCents: 7500,
         currency: "EUR",
         totalModulesCount: 1,
-      })
+      }),
     ).toBeNull();
   });
 });
@@ -1382,10 +1449,12 @@ git commit -m "feat: calcul du complement pack sur une page de module"
 ## Task 6: Type de contenu et défauts partagés
 
 **Files:**
+
 - Create: `src/app/(public)/accompagnements/_components/module/content/types.ts`
 - Create: `src/app/(public)/accompagnements/_components/module/content/shared.ts`
 
 **Interfaces:**
+
 - Consumes: `Testimonial` de `sales/sales-testimonials.tsx`, `FaqItem` de `sales/sales-faq.tsx`.
 - Produces: `type ModuleContent`, `SHARED_CONTENT`.
 
@@ -1573,9 +1642,11 @@ git commit -m "feat: type de contenu et defauts partages des pages de module"
 ## Task 7: Composant programme
 
 **Files:**
+
 - Create: `src/app/(public)/accompagnements/_components/module/module-program.tsx`
 
 **Interfaces:**
+
 - Consumes: `ProgramChapter` et `formatChapterCounts` (Task 4), `Section` (Task 1).
 - Produces: `ModuleProgram({ title, intro, chapters })`.
 
@@ -1616,7 +1687,9 @@ export function ModuleProgram({
   const collapsible = chapters.length > COLLAPSE_THRESHOLD;
   const [expanded, setExpanded] = useState(false);
   const visible =
-    collapsible && !expanded ? chapters.slice(0, VISIBLE_WHEN_COLLAPSED) : chapters;
+    collapsible && !expanded
+      ? chapters.slice(0, VISIBLE_WHEN_COLLAPSED)
+      : chapters;
   const hiddenCount = chapters.length - visible.length;
 
   return (
@@ -1657,14 +1730,19 @@ export function ModuleProgram({
                           className="inline-flex items-center gap-1.5 text-xs text-primary-green/60"
                         >
                           <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                          {formatChapterCounts({
-                            ...chapter.counts,
-                            video: key === "video" ? chapter.counts.video : 0,
-                            download: key === "download" ? chapter.counts.download : 0,
-                            quiz: key === "quiz" ? chapter.counts.quiz : 0,
-                          })[0]}
+                          {
+                            formatChapterCounts({
+                              ...chapter.counts,
+                              video: key === "video" ? chapter.counts.video : 0,
+                              download:
+                                key === "download"
+                                  ? chapter.counts.download
+                                  : 0,
+                              quiz: key === "quiz" ? chapter.counts.quiz : 0,
+                            })[0]
+                          }
                         </li>
-                      ) : null
+                      ) : null,
                     )}
                   </ul>
                 )}
@@ -1709,9 +1787,11 @@ git commit -m "feat: section programme d'une page de module"
 Barre de preuve, problème, promesse, ce qui devient possible, dis-qualification, timeline, comment ça marche, CTA final.
 
 **Files:**
+
 - Create: `src/app/(public)/accompagnements/_components/module/module-sections.tsx`
 
 **Interfaces:**
+
 - Consumes: `Section` (Task 1), `ModuleContent` et `SHARED_CONTENT` (Task 6), `MODULE_ORDER` et `MODULE_ACCENTS` de `@/config/accompagnements`.
 - Produces: `ModuleProofBar`, `ModuleProblem`, `ModulePromise`, `ModuleOutcomes`, `ModuleFit`, `ModuleMoment`, `ModuleHowItWorks`, `ModuleFinalCta`, et le type `MomentEntry`.
 
@@ -1736,7 +1816,10 @@ export function ModuleProofBar({ items }: { items: string[] }) {
             key={item}
             className="flex items-center gap-2 text-sm font-medium text-primary-green/80"
           >
-            <CheckCircle className="h-4 w-4 shrink-0 text-accent-sage" aria-hidden />
+            <CheckCircle
+              className="h-4 w-4 shrink-0 text-accent-sage"
+              aria-hidden
+            />
             {item}
           </li>
         ))}
@@ -1746,7 +1829,11 @@ export function ModuleProofBar({ items }: { items: string[] }) {
 }
 
 /* --------------------------------------------------------------- Le problème */
-export function ModuleProblem({ content }: { content: ModuleContent["problem"] }) {
+export function ModuleProblem({
+  content,
+}: {
+  content: ModuleContent["problem"];
+}) {
   if (!content) return null;
   const { title, intro, points } = content;
   return (
@@ -1761,7 +1848,10 @@ export function ModuleProblem({ content }: { content: ModuleContent["problem"] }
         {points.map((p, i) => (
           <ScrollReveal key={p} delay={i * 60} className="h-full">
             <div className="flex h-full flex-col items-center justify-center gap-3 rounded-lg border border-primary-green/10 bg-white p-5 text-center">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-primary-red" aria-hidden />
+              <span
+                className="h-2 w-2 shrink-0 rounded-full bg-primary-red"
+                aria-hidden
+              />
               <span className="text-sm text-primary-green/80">{p}</span>
             </div>
           </ScrollReveal>
@@ -1772,7 +1862,11 @@ export function ModuleProblem({ content }: { content: ModuleContent["problem"] }
 }
 
 /* --------------------------------------------------------------- La promesse */
-export function ModulePromise({ content }: { content: ModuleContent["promise"] }) {
+export function ModulePromise({
+  content,
+}: {
+  content: ModuleContent["promise"];
+}) {
   if (!content) return null;
   const { title, paragraphs, bullets } = content;
   return (
@@ -1791,7 +1885,10 @@ export function ModulePromise({ content }: { content: ModuleContent["promise"] }
         {bullets.map((b, i) => (
           <ScrollReveal key={b} delay={i * 60}>
             <div className="flex items-center gap-3">
-              <CheckCircle className="h-5 w-5 shrink-0 text-primary-green" aria-hidden />
+              <CheckCircle
+                className="h-5 w-5 shrink-0 text-primary-green"
+                aria-hidden
+              />
               <span className="text-primary-green/80">{b}</span>
             </div>
           </ScrollReveal>
@@ -1802,7 +1899,11 @@ export function ModulePromise({ content }: { content: ModuleContent["promise"] }
 }
 
 /* ------------------------------------------------- Ce qui devient possible */
-export function ModuleOutcomes({ content }: { content: ModuleContent["outcomes"] }) {
+export function ModuleOutcomes({
+  content,
+}: {
+  content: ModuleContent["outcomes"];
+}) {
   return (
     <Section className="bg-background-beige">
       <ScrollReveal className="mx-auto max-w-3xl text-center">
@@ -1814,7 +1915,10 @@ export function ModuleOutcomes({ content }: { content: ModuleContent["outcomes"]
         {content.items.map((s, i) => (
           <ScrollReveal key={s} delay={i * 50}>
             <div className="flex items-start gap-3 rounded-lg border border-primary-green/10 bg-white p-4">
-              <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-accent-sage" aria-hidden />
+              <CheckCircle
+                className="mt-0.5 h-5 w-5 shrink-0 text-accent-sage"
+                aria-hidden
+              />
               <span className="text-primary-green/80">{s}</span>
             </div>
           </ScrollReveal>
@@ -1841,8 +1945,14 @@ export function ModuleFit({ content }: { content: ModuleContent["fit"] }) {
             </h3>
             <ul className="mt-4 space-y-3">
               {content.forYou.map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm text-primary-green/80">
-                  <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent-sage" aria-hidden />
+                <li
+                  key={item}
+                  className="flex items-start gap-2.5 text-sm text-primary-green/80"
+                >
+                  <CheckCircle
+                    className="mt-0.5 h-4 w-4 shrink-0 text-accent-sage"
+                    aria-hidden
+                  />
                   {item}
                 </li>
               ))}
@@ -1856,8 +1966,14 @@ export function ModuleFit({ content }: { content: ModuleContent["fit"] }) {
             </h3>
             <ul className="mt-4 space-y-3">
               {content.notForYou.map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm text-primary-green/70">
-                  <MinusCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary-green/30" aria-hidden />
+                <li
+                  key={item}
+                  className="flex items-start gap-2.5 text-sm text-primary-green/70"
+                >
+                  <MinusCircle
+                    className="mt-0.5 h-4 w-4 shrink-0 text-primary-green/30"
+                    aria-hidden
+                  />
                   {item}
                 </li>
               ))}
@@ -1949,7 +2065,11 @@ export function ModuleHowItWorks() {
 }
 
 /* ----------------------------------------------------------------- CTA final */
-export function ModuleFinalCta({ content }: { content: ModuleContent["finalCta"] }) {
+export function ModuleFinalCta({
+  content,
+}: {
+  content: ModuleContent["finalCta"];
+}) {
   return (
     <section className="bg-primary-rose px-4 py-20 sm:px-6">
       <div className="mx-auto max-w-2xl text-center">
@@ -1987,9 +2107,11 @@ git commit -m "feat: sections propres aux pages de module"
 ## Task 9: Bloc upsell pack
 
 **Files:**
+
 - Create: `src/app/(public)/accompagnements/_components/module/pack-upsell.tsx`
 
 **Interfaces:**
+
 - Consumes: `PackUpsell` (Task 5), `Section` (Task 1), `PACK_SLUG` de `@/config/accompagnements`.
 - Produces: `PackUpsellSection({ upsell })`.
 
@@ -2052,11 +2174,13 @@ git commit -m "feat: bloc upsell pack sur les pages de module"
 À la fin de cette tâche les 8 pages sont branchées. Elles ne s'afficheront qu'une fois leur fichier de contenu écrit (tâches 11 à 18), d'où le repli sur la fiche générique quand le contenu manque.
 
 **Files:**
+
 - Create: `src/app/(public)/accompagnements/_components/module/module-sales-page.tsx`
 - Create: `src/app/(public)/accompagnements/_components/module/content/index.ts`
 - Modify: `src/app/(public)/accompagnements/[slug]/page.tsx:90-99` (requête) et `:154-343` (routage)
 
 **Interfaces:**
+
 - Consumes: tout ce qui précède.
 - Produces: `ModuleSalesPage(props)`, `MODULE_CONTENT: Partial<Record<string, ModuleContent>>`.
 
@@ -2201,13 +2325,13 @@ export function ModuleSalesPage({
 
   const priceLabel = formatPrice(
     accompagnement.price_cents,
-    accompagnement.currency
+    accompagnement.currency,
   );
   const chapters = buildProgramChapters(sectionRows);
   const proofItems = buildProofItems(chapters);
 
   const moduleRows = sortByModuleOrder(
-    catalogRows.filter((row) => row.slug !== PACK_SLUG)
+    catalogRows.filter((row) => row.slug !== PACK_SLUG),
   );
   const packRow = catalogRows.find((row) => row.slug === PACK_SLUG) ?? null;
 
@@ -2319,10 +2443,7 @@ export function ModuleSalesPage({
         currency={accompagnement.currency}
       />
       <PackUpsellSection upsell={upsell} />
-      <Section
-        id="faq"
-        className="bg-background-beige"
-      >
+      <Section id="faq" className="bg-background-beige">
         <SalesFaq title={SHARED_CONTENT.faq.title} items={faqItems} />
       </Section>
       <ModuleFinalCta content={content.finalCta} />
@@ -2354,26 +2475,28 @@ Dans `src/app/(public)/accompagnements/[slug]/page.tsx`, le bloc `accompagnement
 Dans le même fichier, juste après le bloc `if (slug === PACK_SLUG) { ... }` (qui reste inchangé), insérer :
 
 ```tsx
-  if (hasModuleSalesPage(slug)) {
-    const catalogRows = await fetchCatalogRows();
-    return (
-      <ModuleSalesPage
-        accompagnement={{
-          id: accompagnement.id,
-          slug: accompagnement.slug,
-          title: accompagnement.title,
-          price_cents: accompagnement.price_cents,
-          currency: accompagnement.currency,
-          thumbnail_url: accompagnement.thumbnail_url,
-          consultants: accompagnement.consultants as PackSalesPageConsultant,
-        }}
-        sectionRows={(accompagnement.accompagnement_sections ?? []) as SectionRow[]}
-        catalogRows={catalogRows}
-        isLoggedIn={!!currentUser}
-        isEnrolled={isEnrolled}
-      />
-    );
-  }
+if (hasModuleSalesPage(slug)) {
+  const catalogRows = await fetchCatalogRows();
+  return (
+    <ModuleSalesPage
+      accompagnement={{
+        id: accompagnement.id,
+        slug: accompagnement.slug,
+        title: accompagnement.title,
+        price_cents: accompagnement.price_cents,
+        currency: accompagnement.currency,
+        thumbnail_url: accompagnement.thumbnail_url,
+        consultants: accompagnement.consultants as PackSalesPageConsultant,
+      }}
+      sectionRows={
+        (accompagnement.accompagnement_sections ?? []) as SectionRow[]
+      }
+      catalogRows={catalogRows}
+      isLoggedIn={!!currentUser}
+      isEnrolled={isEnrolled}
+    />
+  );
+}
 ```
 
 Ajouter les imports en tête du fichier :
@@ -2414,10 +2537,12 @@ git commit -m "feat: orchestrateur et routage des pages de vente de module"
 Fichier de référence : les tâches 12 à 18 suivent exactement cette forme.
 
 **Files:**
+
 - Create: `src/app/(public)/accompagnements/_components/module/content/mon-allaitement-des-premiers-jours.ts`
 - Modify: `src/app/(public)/accompagnements/_components/module/content/index.ts`
 
 **Interfaces:**
+
 - Consumes: `ModuleContent` (Task 6).
 - Produces: `MON_ALLAITEMENT_DES_PREMIERS_JOURS`, enregistré dans `MODULE_CONTENT`.
 
@@ -2433,7 +2558,7 @@ import type { ModuleContent } from "./types";
  */
 export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
   hero: {
-    eyebrow: "Consultante IBCLC depuis 2011 · 5 000+ familles accompagnées",
+    eyebrow: "CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES",
     titleOverride:
       "Les premières semaines décident souvent de tout votre allaitement. Vous n'avez pas à les traverser à l'aveugle.",
     subtitle:
@@ -2442,8 +2567,7 @@ export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
   },
   problem: {
     title: "Les premières semaines, personne ne vous a vraiment préparée",
-    intro:
-      "Vous vous êtes préparée à accoucher. Pas à ça.",
+    intro: "Vous vous êtes préparée à accoucher. Pas à ça.",
     points: [
       "Chaque mise au sein vous fait mal, et vous serrez les dents en attendant que « ça passe ».",
       "Vous ne savez pas si votre bébé boit assez, et personne ne vous donne de critère fiable pour le vérifier.",
@@ -2599,7 +2723,7 @@ git commit -m "feat: page de vente de Mon allaitement des premiers jours"
 
 Chacune suit exactement la forme de la Task 11 : créer `content/<slug>.ts` exportant un `ModuleContent`, l'ajouter à `MODULE_CONTENT` dans `content/index.ts`, vérifier la page dans le navigateur, commiter. Les briefs ci-dessous donnent les chaînes à écrire ; tout ce qui n'est pas précisé (structure du fichier, `program.title`, `moment`, en-têtes de `fit`, commentaire `// PLACEHOLDER` au-dessus des témoignages) est identique à la Task 11.
 
-Pour toutes : `hero.eyebrow` = `"Consultante IBCLC depuis 2011 · 5 000+ familles accompagnées"`, `hero.ctaLabel` et `finalCta.ctaLabel` = la valeur déjà présente dans `ACCOMPAGNEMENT_CTA_LABELS` pour ce slug (`src/config/accompagnement-cta.ts`), `moment.title` = `"À quel moment de votre allaitement ?"`, `moment.intro` = `"Chaque accompagnement couvre une étape. Voici où celui-ci se situe."`, `fit.forYouTitle` = `"Oui, si"`, `fit.notForYouTitle` = `"Pas encore, si"`.
+Pour toutes : `hero.eyebrow` = `"CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES"`, `hero.ctaLabel` et `finalCta.ctaLabel` = la valeur déjà présente dans `ACCOMPAGNEMENT_CTA_LABELS` pour ce slug (`src/config/accompagnement-cta.ts`), `moment.title` = `"À quel moment de votre allaitement ?"`, `moment.intro` = `"Chaque accompagnement couvre une étape. Voici où celui-ci se situe."`, `fit.forYouTitle` = `"Oui, si"`, `fit.notForYouTitle` = `"Pas encore, si"`.
 
 Chaque module a besoin de : 6 `problem.points`, 2 `promise.paragraphs`, 3 `promise.bullets`, 6 `outcomes.items`, 4 `fit.forYou`, 3 `fit.notForYou`, 3 témoignages, 3 questions de FAQ propres au module.
 
@@ -2936,28 +3060,28 @@ git commit -m "chore: verification finale des pages de vente des modules"
 
 **Couverture de la spec :**
 
-| Exigence de la spec | Tâche |
-|---|---|
-| §4 primitives extraites vers `sales/` | 1, 2 |
-| §4 pack refactoré à iso-rendu | 1, 2 (steps de vérification) |
-| §5 sections 1 et 2 (hero, barre de preuve) | 2, 8, 10 |
-| §5 sections 3, 4 (problème, promesse, optionnelles) | 8, 11 à 18 |
-| §5 section 5 et §6 (programme DB + `sales_hook`) | 4, 7 |
-| §5 section 6 (ce qui devient possible) | 8 |
-| §5 section 7 (dis-qualification) | 8 |
-| §5 section 8 (timeline, maillage interne) | 8, 10 |
-| §5 sections 9, 10 (comment ça marche, consultante) | 2, 8 |
-| §5 section 11 (témoignages optionnels) | 2, 10, 11 à 17 |
-| §5 section 12 (tarif, garantie) | 2, 6 |
-| §5 section 13 (upsell pack) | 5, 9 |
-| §5 sections 14, 15 (FAQ, CTA final) | 1, 8, 10 |
-| §5 variante courte urgences | 18 |
-| §7 migration `sales_hook` + back-office | 3 |
-| §8 routage, repli générique, `long_description_html` retiré | 10 |
-| §9 type `ModuleContent` et `shared.ts` | 6 |
-| §10 copy + placeholders balisés | 11 à 18, 19 step 5 |
-| §11 tests (upsell, compteurs, repli sans section) | 4, 5 |
-| §13 critères de succès | 19 |
+| Exigence de la spec                                         | Tâche                        |
+| ----------------------------------------------------------- | ---------------------------- |
+| §4 primitives extraites vers `sales/`                       | 1, 2                         |
+| §4 pack refactoré à iso-rendu                               | 1, 2 (steps de vérification) |
+| §5 sections 1 et 2 (hero, barre de preuve)                  | 2, 8, 10                     |
+| §5 sections 3, 4 (problème, promesse, optionnelles)         | 8, 11 à 18                   |
+| §5 section 5 et §6 (programme DB + `sales_hook`)            | 4, 7                         |
+| §5 section 6 (ce qui devient possible)                      | 8                            |
+| §5 section 7 (dis-qualification)                            | 8                            |
+| §5 section 8 (timeline, maillage interne)                   | 8, 10                        |
+| §5 sections 9, 10 (comment ça marche, consultante)          | 2, 8                         |
+| §5 section 11 (témoignages optionnels)                      | 2, 10, 11 à 17               |
+| §5 section 12 (tarif, garantie)                             | 2, 6                         |
+| §5 section 13 (upsell pack)                                 | 5, 9                         |
+| §5 sections 14, 15 (FAQ, CTA final)                         | 1, 8, 10                     |
+| §5 variante courte urgences                                 | 18                           |
+| §7 migration `sales_hook` + back-office                     | 3                            |
+| §8 routage, repli générique, `long_description_html` retiré | 10                           |
+| §9 type `ModuleContent` et `shared.ts`                      | 6                            |
+| §10 copy + placeholders balisés                             | 11 à 18, 19 step 5           |
+| §11 tests (upsell, compteurs, repli sans section)           | 4, 5                         |
+| §13 critères de succès                                      | 19                           |
 
 **Cohérence des types :** `SectionRow` est défini en Task 4 et consommé tel quel en Task 10. `ProgramChapter` et `formatChapterCounts` (Task 4) sont consommés en Task 7. `PackUpsell` (Task 5) est consommé en Task 9 et construit en Task 10. `Testimonial` (Task 2) et `FaqItem` (Task 1) sont importés par `types.ts` (Task 6). `SideCtaAnchor` (Task 2) est construit en Task 10. `ModuleContent` (Task 6) est le type de tous les fichiers des tâches 11 à 18 et le paramètre de tous les composants de la Task 8.
 

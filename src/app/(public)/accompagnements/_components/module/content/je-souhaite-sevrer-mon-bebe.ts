@@ -8,7 +8,7 @@ import type { ModuleContent } from "./types";
  */
 export const JE_SOUHAITE_SEVRER_MON_BEBE: ModuleContent = {
   hero: {
-    eyebrow: "Consultante IBCLC depuis 2011 · 5 000+ familles accompagnées",
+    eyebrow: "CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES",
     titleOverride:
       "Arrêter d'allaiter est une décision. Elle mérite d'être accompagnée, pas subie.",
     subtitle:
@@ -73,7 +73,8 @@ export const JE_SOUHAITE_SEVRER_MON_BEBE: ModuleContent = {
   },
   moment: {
     title: "À quel moment de votre allaitement ?",
-    intro: "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
+    intro:
+      "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
   // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
   pricing: {
@@ -96,7 +97,8 @@ export const JE_SOUHAITE_SEVRER_MON_BEBE: ModuleContent = {
   ],
   finalCta: {
     title: "Sevrez en douceur, et en confiance",
-    subtitle: "Votre décision est la bonne. Reste à la mettre en œuvre correctement.",
+    subtitle:
+      "Votre décision est la bonne. Reste à la mettre en œuvre correctement.",
     ctaLabel: "Je sèvre en douceur et en confiance",
   },
 };

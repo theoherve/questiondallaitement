@@ -8,7 +8,7 @@ import type { ModuleContent } from "./types";
  */
 export const LA_DIVERSIFICATION_DE_MON_BEBE_ALLAITE: ModuleContent = {
   hero: {
-    eyebrow: "Consultante IBCLC depuis 2011 · 5 000+ familles accompagnées",
+    eyebrow: "CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES",
     titleOverride:
       "Diversifier un bébé allaité, ce n'est pas la même chose. Et personne ne vous le dit.",
     subtitle:
@@ -74,7 +74,8 @@ export const LA_DIVERSIFICATION_DE_MON_BEBE_ALLAITE: ModuleContent = {
   },
   moment: {
     title: "À quel moment de votre allaitement ?",
-    intro: "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
+    intro:
+      "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
   // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
   pricing: {

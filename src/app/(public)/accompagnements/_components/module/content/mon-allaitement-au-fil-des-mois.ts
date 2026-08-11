@@ -9,7 +9,7 @@ import type { ModuleContent } from "./types";
  */
 export const MON_ALLAITEMENT_AU_FIL_DES_MOIS: ModuleContent = {
   hero: {
-    eyebrow: "Consultante IBCLC depuis 2011 · 5 000+ familles accompagnées",
+    eyebrow: "CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES",
     titleOverride:
       "Votre allaitement est lancé. Les questions, elles, ne s'arrêtent pas là.",
     subtitle:
@@ -75,7 +75,8 @@ export const MON_ALLAITEMENT_AU_FIL_DES_MOIS: ModuleContent = {
   },
   moment: {
     title: "À quel moment de votre allaitement ?",
-    intro: "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
+    intro:
+      "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
   // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
   pricing: {

@@ -8,7 +8,7 @@
  */
 export const PACK_CONTENT = {
   hero: {
-    eyebrow: "Consultante IBCLC depuis 2011 · 5 000+ familles accompagnées",
+    eyebrow: "CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES",
     titleOverride:
       "Et si allaiter ne rimait plus avec douleur, épuisement et doutes, mais avec une évidence tranquille ?",
     subtitle:

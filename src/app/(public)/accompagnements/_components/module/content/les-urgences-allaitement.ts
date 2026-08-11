@@ -11,7 +11,7 @@ import type { ModuleContent } from "./types";
  */
 export const LES_URGENCES_ALLAITEMENT: ModuleContent = {
   hero: {
-    eyebrow: "Consultante IBCLC depuis 2011 · 5 000+ familles accompagnées",
+    eyebrow: "CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES",
     titleOverride:
       "Une crevasse, un engorgement, une mastite. Ce qu'il faut faire, tout de suite.",
     subtitle:
@@ -52,7 +52,8 @@ export const LES_URGENCES_ALLAITEMENT: ModuleContent = {
   },
   moment: {
     title: "À quel moment de votre allaitement ?",
-    intro: "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
+    intro:
+      "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
   pricing: {
     title: "Soulagez la douleur, ce soir",

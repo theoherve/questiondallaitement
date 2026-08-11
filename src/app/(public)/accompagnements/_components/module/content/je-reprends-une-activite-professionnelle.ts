@@ -8,7 +8,7 @@ import type { ModuleContent } from "./types";
  */
 export const JE_REPRENDS_UNE_ACTIVITE_PROFESSIONNELLE: ModuleContent = {
   hero: {
-    eyebrow: "Consultante IBCLC depuis 2011 · 5 000+ familles accompagnées",
+    eyebrow: "CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES",
     titleOverride:
       "Reprendre le travail ne vous oblige pas à arrêter d'allaiter.",
     subtitle:
@@ -17,7 +17,8 @@ export const JE_REPRENDS_UNE_ACTIVITE_PROFESSIONNELLE: ModuleContent = {
   },
   problem: {
     title: "La date approche et rien n'est prêt",
-    intro: "Vous savez quand vous reprenez. Vous ne savez pas comment vous allez faire.",
+    intro:
+      "Vous savez quand vous reprenez. Vous ne savez pas comment vous allez faire.",
     points: [
       "Vous ne savez pas combien de lait tirer, ni quand commencer.",
       "Le tire-lait vous intimide et les premiers essais ont donné trois gouttes.",
@@ -28,7 +29,8 @@ export const JE_REPRENDS_UNE_ACTIVITE_PROFESSIONNELLE: ModuleContent = {
     ],
   },
   promise: {
-    title: "Ce n'est pas un problème de lactation, c'est un problème d'organisation",
+    title:
+      "Ce n'est pas un problème de lactation, c'est un problème d'organisation",
     paragraphs: [
       "Une lactation installée ne s'arrête pas parce que vous reprenez le travail. Ce qui la met en difficulté, c'est un plan de tirage improvisé, un stock constitué trop tard et un mode de garde mal informé.",
       "Ce module donne la méthode que je transmets en consultation avant chaque reprise : quand commencer, combien tirer, comment conserver, quoi dire au mode de garde et à l'employeur.",
@@ -73,7 +75,8 @@ export const JE_REPRENDS_UNE_ACTIVITE_PROFESSIONNELLE: ModuleContent = {
   },
   moment: {
     title: "À quel moment de votre allaitement ?",
-    intro: "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
+    intro:
+      "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
   // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
   pricing: {

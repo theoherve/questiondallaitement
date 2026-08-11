@@ -7,7 +7,7 @@ import type { ModuleContent } from "./types";
  */
 export const MON_BEBE_NE_FAIT_PAS_SES_NUITS: ModuleContent = {
   hero: {
-    eyebrow: "Consultante IBCLC depuis 2011 · 5 000+ familles accompagnées",
+    eyebrow: "CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES",
     titleOverride:
       "Votre bébé ne dort pas comme on vous a dit qu'il devrait. Peut-être que c'est la consigne qui est fausse.",
     subtitle:
@@ -73,7 +73,8 @@ export const MON_BEBE_NE_FAIT_PAS_SES_NUITS: ModuleContent = {
   },
   moment: {
     title: "À quel moment de votre allaitement ?",
-    intro: "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
+    intro:
+      "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
   // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
   pricing: {

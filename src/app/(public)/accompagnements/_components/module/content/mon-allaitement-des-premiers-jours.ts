@@ -7,7 +7,7 @@ import type { ModuleContent } from "./types";
  */
 export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
   hero: {
-    eyebrow: "Consultante IBCLC depuis 2011 · 5 000+ familles accompagnées",
+    eyebrow: "CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES",
     titleOverride:
       "Les premières semaines décident souvent de tout votre allaitement. Vous n'avez pas à les traverser à l'aveugle.",
     subtitle:
@@ -72,7 +72,8 @@ export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
   },
   moment: {
     title: "À quel moment de votre allaitement ?",
-    intro: "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
+    intro:
+      "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
   // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
   pricing: {

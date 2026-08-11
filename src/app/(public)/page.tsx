@@ -19,7 +19,7 @@ import { PACK_SLUG, sortByModuleOrder } from "@/config/accompagnements";
 
 const BIO_STATS = [
   { value: "20+", label: "ans d'expérience" },
-  { value: "5 000+", label: "consultations" },
+  { value: "70 K+", label: "consultations" },
   { value: "3", label: "livres publiés" },
   { value: "IBCLC", label: "Certification internationale" },
 ];
@@ -247,7 +247,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
             >
               {[
                 { value: "20+", label: "ans d'exp." },
-                { value: "5k+", label: "consultations" },
+                { value: "70k+", label: "consultations" },
                 { value: "IBCLC", label: "Certification internationale" },
               ].map((item, i) => (
                 <div key={item.label} className="flex items-center gap-5">
@@ -493,11 +493,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                   &ldquo;Chaque parcours d&apos;allaitement est unique, je suis là pour vous accompagner avec bienveillance et rigueur scientifique.&rdquo;
                 </blockquote>
                 <p className="mt-5 leading-relaxed text-primary-green/70 lg:text-lg">
-                  Investie auprès des familles depuis plus de 20 ans, je vous
-                  accompagne dans votre allaitement et le sommeil de votre tout
-                  petit. Auteure de 3 ouvrages de référence, je forme également
-                  les professionnels, je suis conférencière internationale et
-                  experte auprès de la presse.
+                  Spécialiste de l’allaitement et du sommeil du tout-petit, j’accompagne les parents depuis plus de 20 ans. Auteure de 3 ouvrages de référence, conférencière internationale et formatrice de professionnels, je mets à votre disposition une expertise reconnue, nourrie par l’expérience de terrain et les données scientifiques les plus récentes.
                 </p>
 
                 {/* Stats */}
@@ -565,8 +561,7 @@ const HomePage = async ({ searchParams }: HomePageProps) => {
                     Mon équipe
                   </p>
                   <h2 className="mt-3 font-serif text-3xl font-bold text-primary-green lg:text-5xl">
-                    Des consultantes
-                    <br />à votre écoute
+                    Un soutien accessible 7j/7
                   </h2>
                   <p className="mt-4 max-w-lg text-primary-green/70 lg:text-lg">
                     Des professionnelles certifiées pour un accompagnement humain et bienveillant.
