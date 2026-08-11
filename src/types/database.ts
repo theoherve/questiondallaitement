@@ -106,6 +106,29 @@ export type Profile = {
   updated_at: string;
 };
 
+export type Child = {
+  id: string;
+  client_id: string;
+  first_name: string;
+  birth_date: string;
+  sex: "female" | "male";
+  is_premature: boolean;
+  gestational_age_weeks: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WeightMeasurement = {
+  id: string;
+  child_id: string;
+  weight_grams: number;
+  measured_at: string;
+  source: "home" | "consultation";
+  recorded_by: string;
+  consultant_id: string | null;
+  created_at: string;
+};
+
 export type Consultant = {
   id: string;
   slug: string;
