@@ -1,5 +1,6 @@
 import { z } from "zod/v4";
 import { FORMATION_CATEGORIES } from "@/config/formation-categories";
+import { FORMATION_AUDIENCE_GROUPS } from "@/config/formation-audience";
 
 // ─── Formation ──────────────────────────────────────────────────
 
@@ -54,6 +55,8 @@ export const formationSchema = z
     // Famille de format. Pilote la pastille et les filtres publics, qui se
     // deduisaient du titre avant la migration 00075.
     category: z.enum(FORMATION_CATEGORIES).default("formation"),
+    // Public vise, distinct du format (category). Voir migration 00091.
+    audience_group: z.enum(FORMATION_AUDIENCE_GROUPS).default("both"),
     // Mention libre affichee sur la fiche : certification, eligibilite.
     badge: z.string().trim().optional().nullable(),
     // Codes de l'organisme partenaire. Normalises en majuscules a la saisie :
