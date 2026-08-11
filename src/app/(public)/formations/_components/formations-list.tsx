@@ -77,6 +77,15 @@ export type FormationData = {
 
 type CategoryFilter = "all" | FormationCategory;
 
+/** Filtre « Quand » : distingue les sessions datees des formations permanentes. */
+type WhenFilter = "upcoming" | "evergreen" | "all";
+
+const WHEN_FILTERS: { value: WhenFilter; label: string }[] = [
+  { value: "upcoming", label: "À venir" },
+  { value: "evergreen", label: "Disponible à tout moment" },
+  { value: "all", label: "Tout" },
+];
+
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
@@ -143,6 +152,9 @@ export const FormationsList = ({
   evergreenFormations: FormationData[];
 }) => {
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>("all");
+  // Par defaut, seules les sessions a venir s'affichent : les formations
+  // permanentes n'ont pas a passer devant l'agenda a chaque visite.
+  const [whenFilter, setWhenFilter] = useState<WhenFilter>("upcoming");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
   const [showPast, setShowPast] = useState(false);
@@ -240,12 +252,20 @@ export const FormationsList = ({
 
   const clearFilters = useCallback(() => {
     setActiveCategory("all");
+    setWhenFilter("upcoming");
     setSelectedDate(undefined);
     setShowAllUpcoming(false);
     setShowAllPast(false);
   }, []);
 
-  const hasActiveFilters = activeCategory !== "all" || selectedDate !== undefined;
+  const hasActiveFilters =
+    activeCategory !== "all" || whenFilter !== "upcoming" || selectedDate !== undefined;
+
+  // Le filtre « Quand » decide QUELLE section s'affiche, pas seulement son
+  // contenu : « a venir » masque entierement le bloc permanent, et
+  // inversement.
+  const showUpcomingSection = whenFilter !== "evergreen";
+  const showEvergreenSection = whenFilter !== "upcoming";
 
   return (
     <div className="flex flex-col gap-8 lg:flex-row lg:gap-10">
@@ -253,6 +273,33 @@ export const FormationsList = ({
       {/* Left sidebar: Calendar + Filters (sticky on desktop)         */}
       {/* ============================================================ */}
       <aside className="w-full shrink-0 lg:sticky lg:top-24 lg:w-70 lg:self-start">
+        {/* Toggle « Quand » : decide quelle section (a venir / permanente)
+            s'affiche. Par defaut, seule « A venir » est active. */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            {WHEN_FILTERS.map((filter) => {
+              const isActive = whenFilter === filter.value;
+              return (
+                <button
+                  key={filter.value}
+                  onClick={() => {
+                    setWhenFilter(filter.value);
+                    setShowAllUpcoming(false);
+                    setShowAllPast(false);
+                  }}
+                  className={`cursor-pointer rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? "bg-primary-green text-white shadow-sm"
+                      : "bg-background-beige-dark text-primary-green/70 hover:bg-primary-green/10 hover:text-primary-green"
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Toggle audience : dimension separee de la categorie (public vise
             vs format). Pilote par l'URL pour permettre un lien profond
             depuis le tableau de bord espace-client. */}
@@ -264,7 +311,7 @@ export const FormationsList = ({
                 <button
                   key={filter.value}
                   onClick={() => handleAudienceChange(filter.value)}
-                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+                  className={`cursor-pointer rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
                     isActive
                       ? "bg-primary-red text-white shadow-sm"
                       : "bg-background-beige-dark text-primary-green/70 hover:bg-primary-green/10 hover:text-primary-green"
@@ -305,7 +352,7 @@ export const FormationsList = ({
                       setShowAllUpcoming(false);
                       setShowAllPast(false);
                     }}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+                    className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
                       isActive
                         ? "bg-primary-green text-white shadow-sm"
                         : "bg-background-beige-dark text-primary-green/70 hover:bg-primary-green/10 hover:text-primary-green"
@@ -401,29 +448,44 @@ export const FormationsList = ({
           </div>
         )}
 
-        {/* Formations sans date — en tete, parce qu'elles sont accessibles
-            immediatement, contrairement a tout ce qui suit. */}
-        {filteredEvergreen.length > 0 && (
-          <section className="mb-14">
-            <div className="mb-6 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary-green" />
-              <h2 className="font-serif text-xl font-semibold text-primary-green">
-                Disponibles à tout moment
+        {/* Formations sans date — masquees par defaut (whenFilter =
+            "upcoming") pour ne pas passer devant l'agenda a chaque visite. */}
+        {showEvergreenSection && (
+          filteredEvergreen.length > 0 ? (
+            <section className="mb-14">
+              <div className="mb-6 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary-green" />
+                <h2 className="font-serif text-xl font-semibold text-primary-green">
+                  Disponibles à tout moment
+                </h2>
+                <span className="text-sm text-primary-green/40">
+                  ({filteredEvergreen.length})
+                </span>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2">
+                {filteredEvergreen.map((formation) => (
+                  <FormationCard key={formation.id} formation={formation} />
+                ))}
+              </div>
+            </section>
+          ) : !showUpcomingSection ? (
+            <div className="py-12 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-background-beige-dark">
+                <Sparkles className="h-8 w-8 text-primary-green/30" />
+              </div>
+              <h2 className="mt-4 font-serif text-lg font-semibold text-primary-green">
+                Aucune formation disponible à tout moment
               </h2>
-              <span className="text-sm text-primary-green/40">
-                ({filteredEvergreen.length})
-              </span>
+              <p className="mt-1 text-sm text-primary-green/50">
+                Essayez d&apos;ajuster vos filtres ou consultez les sessions à
+                venir.
+              </p>
             </div>
-            <div className="grid gap-6 sm:grid-cols-2">
-              {filteredEvergreen.map((formation) => (
-                <FormationCard key={formation.id} formation={formation} />
-              ))}
-            </div>
-          </section>
+          ) : null
         )}
 
         {/* Upcoming formations */}
-        {filteredUpcoming.length > 0 ? (
+        {showUpcomingSection && (filteredUpcoming.length > 0 ? (
           <section>
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -494,7 +556,7 @@ export const FormationsList = ({
               </Button>
             )}
           </div>
-        )}
+        ))}
 
         {/* Past formations — collapsible */}
         {filteredPast.length > 0 && (
