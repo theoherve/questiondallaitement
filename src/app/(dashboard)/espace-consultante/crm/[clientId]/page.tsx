@@ -9,15 +9,19 @@ import {
   Mail,
   Phone,
   Clock,
+  Baby,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
-import { getContactDetail, getTags } from "../../crm/actions";
+import { getContactDetail, getTags, getChildrenForContact } from "../../crm/actions";
 import { NotesEditor } from "../../crm/_components/notes-editor";
 import { TagAssigner } from "../../crm/_components/tag-assigner";
 import { InteractionTimeline } from "../../crm/_components/interaction-timeline";
 import { ClientScore } from "../../crm/_components/client-score";
+import { ChildrenPanel } from "../../crm/_components/children-panel";
+import { createAdminClient } from "@/lib/supabase/admin";
+import type { WeightMeasurement } from "@/types/database";
 
 export const metadata: Metadata = {
   title: "Détail contact : CRM",
@@ -29,14 +33,33 @@ const ContactDetailPage = async ({
   params: Promise<{ clientId: string }>;
 }) => {
   const { clientId } = await params;
-  const [contact, allTags] = await Promise.all([
+  const [contact, allTags, children] = await Promise.all([
     getContactDetail(clientId),
     getTags(),
+    getChildrenForContact(clientId),
   ]);
 
   if (!contact) notFound();
 
   const { profile, score, interactions, notes, tags } = contact;
+
+  const measurementsByChild: Record<string, WeightMeasurement[]> = {};
+  if (children.length > 0) {
+    const supabase = createAdminClient();
+    const { data: allMeasurements } = await supabase
+      .from("weight_measurements")
+      .select("*")
+      .in(
+        "child_id",
+        children.map((c) => c.id),
+      )
+      .order("measured_at", { ascending: true });
+    for (const child of children) {
+      measurementsByChild[child.id] = (allMeasurements ?? []).filter(
+        (m) => m.child_id === child.id,
+      );
+    }
+  }
   const displayName =
     profile.first_name || profile.last_name
       ? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
@@ -121,6 +144,22 @@ const ContactDetailPage = async ({
         </CardHeader>
         <CardContent>
           <NotesEditor clientId={clientId} notes={notes} />
+        </CardContent>
+      </Card>
+
+      {/* Enfants */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-primary-green">
+            <Baby className="h-5 w-5" />
+            Enfants ({children.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChildrenPanel
+            children={children}
+            measurementsByChild={measurementsByChild}
+          />
         </CardContent>
       </Card>
     </div>
