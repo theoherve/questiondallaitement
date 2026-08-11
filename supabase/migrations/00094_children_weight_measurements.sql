@@ -49,13 +49,23 @@ CREATE POLICY weight_measurements_select_own ON weight_measurements
   FOR SELECT USING (
     EXISTS (SELECT 1 FROM children c WHERE c.id = child_id AND c.client_id = auth.uid())
   );
+-- Un client ne peut créer qu'une pesée « à domicile » signée de sa main : sans
+-- ces conditions, il pourrait forger via l'API REST une pesée attribuée à une
+-- consultation. Les écritures côté consultante passent par le service role,
+-- qui contourne entièrement RLS : cette policy ne contraint que le client.
 CREATE POLICY weight_measurements_insert_own ON weight_measurements
   FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM children c WHERE c.id = child_id AND c.client_id = auth.uid())
+    recorded_by = auth.uid()
+    AND source = 'home'
+    AND consultant_id IS NULL
+    AND EXISTS (SELECT 1 FROM children c WHERE c.id = child_id AND c.client_id = auth.uid())
   );
+-- Filet de sécurité derrière le contrôle applicatif (fenêtre de 24h incluse) :
+-- un client ne supprime que les pesées qu'il a lui-même enregistrées.
 CREATE POLICY weight_measurements_delete_own ON weight_measurements
   FOR DELETE USING (
-    EXISTS (SELECT 1 FROM children c WHERE c.id = child_id AND c.client_id = auth.uid())
+    recorded_by = auth.uid()
+    AND EXISTS (SELECT 1 FROM children c WHERE c.id = child_id AND c.client_id = auth.uid())
   );
 CREATE POLICY weight_measurements_select_admin ON weight_measurements
   FOR SELECT USING (is_admin());
