@@ -9,11 +9,17 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/invoicing/send-invoice-email", () => ({
   sendInvoiceEmail: vi.fn().mockResolvedValue(undefined),
 }));
-const mockRedeem = vi.fn(async (..._args: unknown[]) => ({
-  ok: true,
-  redemptionId: "red-1",
-  amountCents: 5000,
-}));
+type RedeemResult =
+  | { ok: true; redemptionId: string; amountCents: number }
+  | { ok: false; error: string };
+
+const mockRedeem = vi.fn(
+  async (..._args: unknown[]): Promise<RedeemResult> => ({
+    ok: true,
+    redemptionId: "red-1",
+    amountCents: 5000,
+  }),
+);
 vi.mock("@/lib/gift-cards/redeem", () => ({
   redeemGiftCard: (...args: unknown[]) => mockRedeem(...args),
 }));
@@ -40,6 +46,13 @@ const mockLookupGiftCard = vi.fn(
 );
 vi.mock("@/lib/gift-cards/balance", () => ({
   lookupGiftCard: (...args: unknown[]) => mockLookupGiftCard(...args),
+}));
+
+// La lecture de la carte passe par le service-role, comme partout ailleurs dans
+// le module : le client de session serait filtre par RLS.
+const mockCreateAdminClient = vi.fn(() => ({ __admin: true }));
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => mockCreateAdminClient(),
 }));
 
 const CONSULTANT_ID = "11111111-1111-1111-1111-111111111111";
@@ -79,6 +92,13 @@ describe("createManualInvoice", () => {
   beforeEach(() => {
     mockGetSupabaseAndUser.mockReset();
     mockRedeem.mockClear();
+    // `mockClear` ne remet pas l'implementation : sans ca, un scenario d'echec
+    // contaminerait les suivants.
+    mockRedeem.mockImplementation(async () => ({
+      ok: true,
+      redemptionId: "red-1",
+      amountCents: 5000,
+    }));
     mockLookupGiftCard.mockClear();
     mockLookupGiftCard.mockImplementation(async () => ({
       ok: true,
@@ -213,6 +233,89 @@ describe("createManualInvoice", () => {
         invoiceId: expect.any(String),
       }),
     );
+  });
+
+  it("lit la carte avec le client service-role, pas avec le client de session", async () => {
+    const sessionClient = buildFullSupabase();
+    mockGetSupabaseAndUser.mockResolvedValue({
+      supabase: sessionClient,
+      user: { id: CONSULTANT_ID },
+    });
+
+    await createManualInvoice({
+      clientId: CLIENT_ID,
+      description: "Consultation",
+      ttcCents: 5000,
+      giftCardCode: "CADEAU-ABC234",
+    });
+
+    expect(mockLookupGiftCard).toHaveBeenCalledWith(
+      { __admin: true },
+      "CADEAU-ABC234",
+    );
+  });
+
+  it("remonte un avertissement quand la carte est introuvable, sans perdre la facture", async () => {
+    mockLookupGiftCard.mockImplementation(async () => ({
+      ok: false as const,
+      error: "not_found" as const,
+    }));
+    mockGetSupabaseAndUser.mockResolvedValue({
+      supabase: buildFullSupabase(),
+      user: { id: CONSULTANT_ID },
+    });
+
+    const result = await createManualInvoice({
+      clientId: CLIENT_ID,
+      description: "Consultation",
+      ttcCents: 5000,
+      giftCardCode: "CADEAU-INCONNU",
+    });
+
+    // La facture existe : c'est bien un succes. Mais sans avertissement, Carole
+    // la croirait soldee par la carte et ne reclamerait jamais le reglement.
+    expect(result.success).toBe(true);
+    expect(result.data?.invoiceId).toBeDefined();
+    expect(result.warning).toContain("carte cadeau");
+    expect(mockRedeem).not.toHaveBeenCalled();
+  });
+
+  it("remonte un avertissement quand le debit de la carte echoue", async () => {
+    mockRedeem.mockImplementation(async () => ({
+      ok: false as const,
+      error: "insufficient_balance" as const,
+    }));
+    mockGetSupabaseAndUser.mockResolvedValue({
+      supabase: buildFullSupabase(),
+      user: { id: CONSULTANT_ID },
+    });
+
+    const result = await createManualInvoice({
+      clientId: CLIENT_ID,
+      description: "Consultation",
+      ttcCents: 5000,
+      giftCardCode: "CADEAU-ABC234",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.warning).toContain("solde insuffisant");
+  });
+
+  it("ne remonte aucun avertissement quand tout s'est bien passe", async () => {
+    mockGetSupabaseAndUser.mockResolvedValue({
+      supabase: buildFullSupabase(),
+      user: { id: CONSULTANT_ID },
+    });
+
+    const result = await createManualInvoice({
+      clientId: CLIENT_ID,
+      description: "Consultation",
+      ttcCents: 5000,
+      giftCardCode: "CADEAU-ABC234",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.warning).toBeUndefined();
   });
 
   it("n'appelle pas redeemGiftCard quand la carte n'est pas trouvable", async () => {

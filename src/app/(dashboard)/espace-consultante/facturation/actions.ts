@@ -6,9 +6,22 @@ import { sendInvoiceEmail } from "@/lib/invoicing/send-invoice-email";
 import { buildCorrectionContent } from "@/lib/invoicing/correction";
 import { buildManualInvoiceContent } from "@/lib/invoicing/manual-invoice";
 import { buildInvoicesCsv, type InvoiceExportRow } from "@/lib/invoicing/csv-export";
-import { redeemGiftCard } from "@/lib/gift-cards/redeem";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { redeemGiftCard, type RedeemGiftCardError } from "@/lib/gift-cards/redeem";
 import { lookupGiftCard } from "@/lib/gift-cards/balance";
+import { giftCardErrorMessage } from "@/lib/gift-cards/booking-errors";
 import type { ActionResult } from "@/types";
+
+/** Libelles des refus de `redeem_gift_card`, pour l'avertissement affiche. */
+const REDEEM_ERROR_LABELS: Record<RedeemGiftCardError, string> = {
+  not_found: "code inconnu",
+  not_active: "carte plus utilisable",
+  expired: "carte expirée",
+  already_used: "carte déjà utilisée",
+  insufficient_balance: "solde insuffisant",
+  invoice_mismatch: "facture d'une autre consultante",
+  unknown: "erreur inattendue",
+};
 
 const INVOICE_FIELDS =
   "id, number, issued_at, type, currency, vat_rate, amount_ht_cents, amount_vat_cents, amount_ttc_cents, description, client_name, client_email, issuer_legal_name, issuer_address, issuer_siren, issuer_vat_number, issuer_legal_form, status, promo_code, discount_cents, gross_amount_ttc_cents, origin, payment_status, issuer_iban, issuer_bic";
@@ -242,10 +255,22 @@ export const createManualInvoice = async (input: {
 
   const created = invoice as { id: string };
 
+  // Avertissement porte jusqu'a l'interface : la facture est emise, mais si la
+  // carte cadeau n'a pas pu etre appliquee, la consultante doit le voir. Tant
+  // que l'echec ne partait qu'en `console.error`, elle croyait la remise
+  // enregistree et decouvrait l'ecart au moment du reglement.
+  let giftCardWarning: string | undefined;
+
   if (input.giftCardCode) {
-    const lookup = await lookupGiftCard(supabase, input.giftCardCode);
+    // Client admin, et non le client de session : partout ailleurs la lecture
+    // d'une carte passe par le service-role. Avec le client de session, la
+    // lecture serait filtree par RLS — invisible aujourd'hui parce que Carole
+    // est a la fois admin et seule consultante, faux des qu'un role
+    // consultante non-admin existera.
+    const lookup = await lookupGiftCard(createAdminClient(), input.giftCardCode);
     if (!lookup.ok) {
       console.error("[createManualInvoice] carte cadeau", lookup.error);
+      giftCardWarning = `Facture émise, mais la carte cadeau n'a pas été appliquée : ${giftCardErrorMessage(lookup.error).toLowerCase()}`;
     } else {
       // Le solde peut etre inferieur au total de la facture : on cappe au
       // solde disponible plutot que de rejeter (voir §7.3 — solde restant
@@ -263,6 +288,9 @@ export const createManualInvoice = async (input: {
       });
       if (!redemption.ok) {
         console.error("[createManualInvoice] carte cadeau", redemption.error);
+        giftCardWarning =
+          "Facture émise, mais la carte cadeau n'a pas pu être appliquée " +
+          `(${REDEEM_ERROR_LABELS[redemption.error]}). Enregistrez le règlement à la main.`;
       }
     }
   }
@@ -278,7 +306,11 @@ export const createManualInvoice = async (input: {
   }
 
   revalidatePath("/espace-consultante/facturation");
-  return { success: true, data: { invoiceId: created.id } };
+  return {
+    success: true,
+    data: { invoiceId: created.id },
+    ...(giftCardWarning ? { warning: giftCardWarning } : {}),
+  };
 };
 
 /**

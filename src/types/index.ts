@@ -82,4 +82,12 @@ export type ActionResult<T = void> = {
    * simple toast générique.
    */
   fieldErrors?: Record<string, string>;
+  /**
+   * Avertissement sur une action qui a bien abouti, mais dont une partie
+   * accessoire a echoue. Distinct de `error` : celui-ci veut dire « rien n'a
+   * ete fait ». Sans ce champ, une facture emise dont la carte cadeau n'a pas
+   * pu etre appliquee remontait comme un succes complet, et la consultante
+   * n'avait aucun moyen de le savoir.
+   */
+  warning?: string;
 };
