@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef } from "react";
 import {
   ComposedChart,
   Area,
@@ -110,8 +109,6 @@ export const WeightChart = ({
   birthDate: string;
   sex: "female" | "male";
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-
   if (measurements.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
@@ -123,7 +120,7 @@ export const WeightChart = ({
   const data = buildChartData(measurements, birthDate, sex);
 
   return (
-    <div className="space-y-2" ref={containerRef}>
+    <div className="space-y-2">
       <ResponsiveContainer width="100%" height={320}>
         <ComposedChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -231,7 +228,6 @@ export const WeightChart = ({
           />
         </ComposedChart>
       </ResponsiveContainer>
-      <div className="who-median-line" style={{ display: "none" }} />
       <p className="text-center text-xs text-muted-foreground">
         Ces courbes sont indicatives et ne remplacent pas un avis médical.
       </p>
