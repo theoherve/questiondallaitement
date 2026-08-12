@@ -17,6 +17,7 @@ import {
   PromoCodeField,
   type AppliedPromo,
 } from "@/components/promo/promo-code-field";
+import { GiftCardField, type AppliedGiftCard } from "./gift-card-field";
 import { WITHDRAWAL_TEXTS } from "@/lib/legal/withdrawal";
 
 type StepConfirmationProps = {
@@ -29,6 +30,9 @@ type StepConfirmationProps = {
    * mode est choisi, sans laisser le temps de saisir quoi que ce soit.
    */
   onPromoApplied: (promo: AppliedPromo | null) => void;
+  /** Remise appliquee : la remise du code promo est deja deduite du montant. */
+  promo: AppliedPromo | null;
+  onGiftCardApplied: (giftCard: AppliedGiftCard | null) => void;
   isPending: boolean;
   /** La consultation a lieu dans les quatorze jours : accord obligatoire. */
   waiverRequired: boolean;
@@ -64,6 +68,8 @@ export const StepConfirmation = ({
   state,
   onConfirm,
   onPromoApplied,
+  promo,
+  onGiftCardApplied,
   isPending,
   waiverRequired,
   waiverAccepted,
@@ -153,13 +159,23 @@ export const StepConfirmation = ({
           {/* Un reglement sur place ne passe pas par la plateforme : rien a
               remiser. */}
           {state.paymentMethod === "online" && state.consultationTypeId && (
-            <div className="mt-4">
+            <div className="mt-4 space-y-4">
               <PromoCodeField
                 serviceKind="booking"
                 itemId={state.consultationTypeId}
                 amountCents={totalPrice}
                 currency={state.currency}
                 onApplied={onPromoApplied}
+              />
+              {/* Verifie sur le montant deja remise par le code promo : c'est
+                  dans cet ordre que `createBooking` les applique, et un apercu
+                  calcule sur le plein tarif annoncerait une remise plus grande
+                  que celle reellement debitee. */}
+              <GiftCardField
+                consultationTypeId={state.consultationTypeId}
+                amountCents={promo ? promo.finalCents : totalPrice}
+                currency={state.currency}
+                onApplied={onGiftCardApplied}
               />
             </div>
           )}
