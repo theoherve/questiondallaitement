@@ -24,10 +24,10 @@ Carole a un vrai besoin de facturer hors Stripe (virement différé, pack de con
 **`invoices`** (altération) :
 - `payment_id` devient nullable (une facture manuelle n'a pas de paiement Stripe).
 - `reference_id` devient nullable (pas de booking/formation/event associé pour une facture libre).
+- `type` (colonne `payment_type`) devient nullable — une facture manuelle n'a pas d'origine `payment_type` réelle.
+- `origin TEXT NOT NULL DEFAULT 'stripe' CHECK (origin IN ('stripe', 'manual'))` — distingue une facture auto-émise (Stripe) d'une facture libre. Choix d'une colonne dédiée plutôt que d'étendre l'enum `payment_type` : PostgreSQL interdit d'utiliser une valeur d'enum tout juste ajoutée dans la même transaction qui l'a créée, et chaque fichier de migration de ce projet s'exécute comme une seule transaction — ajouter puis utiliser `'manual'` dans le même fichier échouerait.
 - `payment_status TEXT NOT NULL DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid', 'partial', 'paid'))` — maintenu par trigger, jamais écrit directement par l'application.
 - `due_date TIMESTAMPTZ` — nullable ; si absent à l'affichage/facturation, échéance = `issued_at` ("à réception").
-
-**`payment_type`** (enum) : ajout de la valeur `'manual'`, utilisée uniquement par `invoices.type` pour une facture libre (jamais par `payments.type`, qui reste réservé aux paiements Stripe réels).
 
 **`invoice_settlements`** (nouvelle table) — règlements manuels enregistrés sur une facture :
 ```
@@ -43,7 +43,7 @@ created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 - RLS activée. Policy SELECT : consultant propriétaire de la facture (jointure `invoices.consultant_id = auth.uid()`) + admin. **Aucune policy UPDATE/DELETE** — un règlement mal saisi se corrige par un nouveau règlement (ex. montant négatif interdit par le check, donc en pratique par une note explicative et un ajustement humain), jamais par une modification silencieuse de l'historique financier. Insertion uniquement via server action (service role), pas de policy INSERT cliente.
 - Trigger `AFTER INSERT` sur `invoice_settlements` : recalcule `invoices.payment_status` en sommant les règlements de la facture face à `amount_ttc_cents` (`0` → `unpaid`, `< total` → `partial`, `>= total` → `paid`).
 
-**`billing_profile`** (altération) : ajout `iban TEXT`, `bic TEXT`, nullables, en clair — mêmes garanties que les autres champs du profil (SIREN, adresse).
+**`consultants`** (altération) : ajout `billing_iban TEXT`, `billing_bic TEXT`, nullables, en clair — mêmes garanties que les autres champs `billing_*` déjà sur cette table (SIREN, adresse, TVA), gérés par `src/lib/invoicing/billing-profile.ts` et la page `espace-consultante/parametres`.
 
 **Numérotation** : une facture manuelle consomme la même séquence `invoice_sequences(consultant_id, year, month)` qu'une facture Stripe, via une nouvelle fonction `create_manual_invoice(p_content JSONB)` (SECURITY DEFINER, même structure que `create_invoice` mais sans exiger de `payment_id`/`reference_id`). Garantit la continuité légale de la numérotation entre les deux origines de facture.
 
