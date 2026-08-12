@@ -41,6 +41,22 @@ const tables: Record<string, unknown[]> = {};
 const insertedRows: Array<{ table: string; row: unknown }> = [];
 const rpcCalls: Array<{ name: string; args: unknown }> = [];
 const rpcResult = { data: { id: "invoice-1" }, error: null as unknown };
+const deletedRows: Array<{ table: string }> = [];
+
+/**
+ * Permet aux tests de simuler l'echec d'un `.update(...).eq(...)` ou d'un
+ * `.delete().eq(...)` precis (ex: la cloture de la carte d'origine dans
+ * `replaceExpiredGiftCard`), sans affecter les autres tables. Remis a `null`
+ * dans `beforeEach`.
+ */
+const forcedUpdateError: { table: string | null; error: unknown } = {
+  table: null,
+  error: null,
+};
+const forcedDeleteError: { table: string | null; error: unknown } = {
+  table: null,
+  error: null,
+};
 
 const mockRpc = vi.fn(async (name: string, args: unknown) => {
   rpcCalls.push({ name, args });
@@ -70,7 +86,19 @@ const buildChain = (table: string) => {
     },
     update: (patch: Record<string, unknown>) => ({
       eq: () => {
+        if (forcedUpdateError.table === table) {
+          return Promise.resolve({ error: forcedUpdateError.error });
+        }
         insertedRows.push({ table: `${table}:update`, row: patch });
+        return Promise.resolve({ error: null });
+      },
+    }),
+    delete: () => ({
+      eq: () => {
+        if (forcedDeleteError.table === table) {
+          return Promise.resolve({ error: forcedDeleteError.error });
+        }
+        deletedRows.push({ table });
         return Promise.resolve({ error: null });
       },
     }),
@@ -108,6 +136,17 @@ const asAdmin = () =>
     email: "admin@example.com",
     roles: ["admin"],
   });
+
+// Hook global (et non scope a un seul `describe`) : `refundExpiredGiftCard`
+// et `replaceExpiredGiftCard` sont testes dans des blocs `describe` freres de
+// celui qui definit le `beforeEach` existant, qui ne les couvre donc pas.
+beforeEach(() => {
+  forcedUpdateError.table = null;
+  forcedUpdateError.error = null;
+  forcedDeleteError.table = null;
+  forcedDeleteError.error = null;
+  deletedRows.length = 0;
+});
 
 describe("admin cartes-cadeaux actions", () => {
   beforeEach(() => {
@@ -510,4 +549,89 @@ describe("replaceExpiredGiftCard", () => {
       expect.objectContaining({ beneficiaryEmail: "marie@example.com" }),
     );
   });
+
+  it("reporte consultation_type_id et pas de solde pour une carte 'service'", async () => {
+    asAdmin();
+    tables.gift_cards = [
+      expiredAmountCard({
+        type: "service",
+        initial_amount_cents: null,
+        consultation_type_id: "ct-1",
+      }),
+    ];
+
+    const result = await replaceExpiredGiftCard({ giftCardId: "gc-expired", note: "test" });
+
+    expect(result.success).toBe(true);
+
+    // Pas de lecture de gift_card_redemptions pour une carte 'service' : le
+    // solde ne s'applique pas, contrairement au type 'amount'. `mockInsert`
+    // n'est pas vide en entrant ici (pas de `beforeEach` clearAllMocks dans
+    // ce `describe`) : on prend son dernier appel plutot que le premier.
+    const lastCall = mockInsert.mock.calls.at(-1) as unknown[];
+    const buildRow = lastCall[1] as (code: string) => Record<string, unknown>;
+    const row = buildRow("CADEAU-ABC234");
+    expect(row).toMatchObject({
+      type: "service",
+      consultation_type_id: "ct-1",
+      initial_amount_cents: null,
+      replaces_gift_card_id: "gc-expired",
+    });
+  });
+
+  it(
+    "annule la carte de remplacement si la cloture de l'originale echoue, " +
+      "pour eviter deux cartes actives sur le meme solde",
+    async () => {
+      asAdmin();
+      tables.gift_cards = [expiredAmountCard()];
+      tables.gift_card_redemptions = [{ gift_card_id: "gc-expired", amount_cents: 2000 }];
+      forcedUpdateError.table = "gift_cards";
+      forcedUpdateError.error = { message: "connection reset" };
+      const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await replaceExpiredGiftCard({ giftCardId: "gc-expired", note: "test" });
+
+      expect(result.success).toBe(false);
+      // La carte de remplacement, deja creee avant la tentative de cloture,
+      // doit avoir ete annulee — sinon l'ancienne et la nouvelle seraient
+      // actives en meme temps pour le meme solde.
+      expect(deletedRows).toEqual([{ table: "gift_cards" }]);
+      expect(result.error).not.toContain("intervention manuelle");
+
+      spy.mockRestore();
+    },
+  );
+
+  it(
+    "signale clairement qu'une intervention manuelle est necessaire si la " +
+      "compensation echoue aussi",
+    async () => {
+      asAdmin();
+      tables.gift_cards = [expiredAmountCard()];
+      tables.gift_card_redemptions = [{ gift_card_id: "gc-expired", amount_cents: 2000 }];
+      forcedUpdateError.table = "gift_cards";
+      forcedUpdateError.error = { message: "connection reset" };
+      forcedDeleteError.table = "gift_cards";
+      forcedDeleteError.error = { message: "connection reset" };
+      const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await replaceExpiredGiftCard({ giftCardId: "gc-expired", note: "test" });
+
+      expect(result.success).toBe(false);
+      expect(deletedRows).toEqual([]);
+      expect(result.error).toContain("intervention manuelle");
+      // Les deux identifiants doivent etre traces pour permettre une
+      // reconciliation manuelle — le doublon actif ne se rattrape pas seul.
+      expect(spy).toHaveBeenCalledWith(
+        expect.stringContaining("intervention manuelle requise"),
+        expect.objectContaining({
+          originalGiftCardId: "gc-expired",
+          replacementGiftCardId: "gc-1",
+        }),
+      );
+
+      spy.mockRestore();
+    },
+  );
 });

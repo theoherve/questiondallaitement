@@ -522,10 +522,37 @@ export const replaceExpiredGiftCard = async (input: {
 
   if (closeError) {
     console.error("[replaceExpiredGiftCard] cloture carte d'origine", closeError);
+
+    // A ce stade, le remplacement existe deja en base : sans compensation,
+    // l'ancienne carte resterait active en pratique — deux cartes actives
+    // pour le meme solde, un risque de double depense. Pas de transaction
+    // disponible ici (aucune RPC ad hoc pour ces deux ecritures), donc on
+    // annule a la main la carte de remplacement qui vient d'etre creee.
+    const { error: cleanupError } = await supabase
+      .from("gift_cards")
+      .delete()
+      .eq("id", replacement.id);
+
+    if (cleanupError) {
+      console.error(
+        "[replaceExpiredGiftCard] echec de la compensation apres cloture ratee — intervention manuelle requise",
+        {
+          originalGiftCardId: original.id,
+          replacementGiftCardId: replacement.id,
+          closeError,
+          cleanupError,
+        },
+      );
+      return {
+        success: false,
+        error: `La clôture de l'ancienne carte a échoué et la nouvelle carte (code ${replacement.code}) n'a pas pu être annulée automatiquement — intervention manuelle requise pour éviter un doublon actif. Contactez le support technique avec les deux codes (${original.code} et ${replacement.code}).`,
+      };
+    }
+
     return {
       success: false,
       error:
-        "La nouvelle carte a été créée, mais l'ancienne n'a pas pu être clôturée — contactez le support technique.",
+        "La clôture de l'ancienne carte a échoué : l'opération a été annulée, aucune nouvelle carte n'a été conservée. Réessayez.",
     };
   }
 
