@@ -170,8 +170,15 @@ export const deleteWeightMeasurement = async (
     .eq("id", measurementId)
     .single();
 
-  if (!measurement || measurement.recorded_by !== user.id) {
+  if (!measurement) {
     return { success: false, error: "Pesée introuvable" };
+  }
+  if (measurement.recorded_by !== user.id) {
+    return {
+      success: false,
+      error:
+        "Cette pesée a été saisie par votre consultante, vous ne pouvez pas la supprimer.",
+    };
   }
 
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;

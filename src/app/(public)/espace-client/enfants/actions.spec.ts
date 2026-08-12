@@ -331,7 +331,7 @@ describe("deleteWeightMeasurement", () => {
     expect(deleteCalls).toHaveLength(1);
   });
 
-  it("rejette si la pesée n'a pas été enregistrée par l'appelant", async () => {
+  it("rejette si la pesée a été enregistrée par la consultante", async () => {
     mockGetSupabaseAndUser.mockResolvedValue({
       user: { id: "client-1" },
       supabase: {},
@@ -345,6 +345,22 @@ describe("deleteWeightMeasurement", () => {
       },
       error: null,
     };
+
+    const result = await deleteWeightMeasurement("m1");
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(
+      "Cette pesée a été saisie par votre consultante, vous ne pouvez pas la supprimer.",
+    );
+    expect(deleteCalls).toHaveLength(0);
+  });
+
+  it("rejette une pesée réellement introuvable", async () => {
+    mockGetSupabaseAndUser.mockResolvedValue({
+      user: { id: "client-1" },
+      supabase: {},
+    });
+    responses.weightMeasurementSingle = { data: null, error: null };
 
     const result = await deleteWeightMeasurement("m1");
 
