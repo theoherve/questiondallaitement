@@ -10,6 +10,8 @@ import { fr } from "date-fns/locale";
 import { formatMoneyCents } from "@/lib/invoicing/invoice-view";
 import { ResendInvoiceButton } from "./_components/resend-button";
 import { CorrectInvoiceButton } from "./_components/correct-button";
+import { getContacts } from "../crm/actions";
+import { NewInvoiceButton } from "./_components/new-invoice-button";
 
 export const metadata: Metadata = {
   title: "Facturation",
@@ -34,15 +36,25 @@ const ConsultantInvoicesPage = async () => {
 
   const rows = invoices ?? [];
 
+  const contacts = await getContacts();
+  const clients = contacts.map((c) => ({
+    id: c.id,
+    label: `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim() || c.email,
+  }));
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-serif text-2xl font-bold text-primary-green">
-          Facturation
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Les factures émises automatiquement à chaque encaissement.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-serif text-2xl font-bold text-primary-green">
+            Facturation
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Les factures émises automatiquement à chaque encaissement, et
+            celles créées manuellement.
+          </p>
+        </div>
+        <NewInvoiceButton clients={clients} />
       </div>
 
       {rows.length === 0 ? (
