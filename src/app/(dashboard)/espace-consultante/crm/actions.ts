@@ -536,6 +536,18 @@ export const upsertConsultationNote = async (
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
+  if (parsed.data.child_id !== null) {
+    const { data: child } = await supabase
+      .from("children")
+      .select("id")
+      .eq("id", parsed.data.child_id)
+      .eq("client_id", booking.client_id)
+      .single();
+    if (!child) {
+      return { success: false, error: "Enfant introuvable" };
+    }
+  }
+
   const { data: note, error } = await supabase
     .from("consultation_notes")
     .upsert(
@@ -620,12 +632,24 @@ export const unpublishConsultationNote = async (
 };
 
 /**
+ * Ce que le panneau "consultations précédentes" affiche réellement : une
+ * sélection volontairement étroite (jamais un `*`), pour que notes_internes
+ * ne soit jamais exposée à un futur consommateur côté client de ce type.
+ */
+export type ConsultationNoteSummary = Pick<
+  ConsultationNote,
+  "id" | "booking_id" | "motif" | "status"
+> & { booking_starts_at: string };
+
+/**
  * Panneau "consultations précédentes" du dossier famille : une seule
  * vérification de relation consultante/client, comme getFamilyDossierForContact.
+ * La date affichée est celle du rendez-vous (bookings.starts_at), pas la date
+ * de création de la ligne — le tri suit la même règle.
  */
 export const getConsultationNotesForFamilyDossier = async (
   clientId: string,
-): Promise<ConsultationNote[]> => {
+): Promise<ConsultationNoteSummary[]> => {
   const user = await requireConsultant();
   const supabase = createAdminClient();
 
@@ -635,11 +659,22 @@ export const getConsultationNotesForFamilyDossier = async (
 
   const { data } = await supabase
     .from("consultation_notes")
-    .select("*")
+    .select("id, booking_id, motif, status, bookings(starts_at)")
     .eq("client_id", clientId)
-    .order("created_at", { ascending: false });
+    .order("starts_at", { ascending: false, referencedTable: "bookings" });
 
-  return (data as ConsultationNote[] | null) ?? [];
+  return (
+    (data as unknown as (Pick<
+      ConsultationNote,
+      "id" | "booking_id" | "motif" | "status"
+    > & { bookings: { starts_at: string } | null })[] | null) ?? []
+  ).map((note) => ({
+    id: note.id,
+    booking_id: note.booking_id,
+    motif: note.motif,
+    status: note.status,
+    booking_starts_at: note.bookings?.starts_at ?? "",
+  }));
 };
 
 export const deleteChildAsConsultant = async (

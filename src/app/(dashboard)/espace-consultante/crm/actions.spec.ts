@@ -29,6 +29,9 @@ const {
   mockConsultationNotesListData,
   upsertCalls,
   updateCalls,
+  mockChildOwnershipSingleData,
+  childrenEqCalls,
+  consultationNotesEqCalls,
 } = vi.hoisted(() => ({
   mockBookingsData: { data: [] as unknown[] },
   mockAccompagnementsData: { data: [] as { id: string }[] },
@@ -55,6 +58,10 @@ const {
   mockConsultationNotesListData: { data: [] as unknown[] },
   upsertCalls: [] as { table: string; data: unknown; onConflict?: string }[],
   updateCalls: [] as { table: string; data: unknown }[],
+  // Résultat du second `.eq()` (ownership de l'enfant) dans upsertConsultationNote.
+  mockChildOwnershipSingleData: { data: null as { id: string } | null },
+  childrenEqCalls: [] as { column: string; value: unknown }[],
+  consultationNotesEqCalls: [] as { column: string; value: unknown }[],
 }));
 
 /** Objet à la fois attendable (await) et chaînable, comme un query builder. */
@@ -103,11 +110,19 @@ vi.mock("@/lib/supabase/admin", () => ({
       if (table === "children") {
         return {
           select: () => ({
-            eq: () =>
-              thenableWith(mockChildrenData, {
+            eq: (column: string, value: unknown) => {
+              childrenEqCalls.push({ column, value });
+              return thenableWith(mockChildrenData, {
                 order: () => Promise.resolve(mockChildrenData),
                 single: () => Promise.resolve(mockChildSingleData),
-              }),
+                eq: (column2: string, value2: unknown) => {
+                  childrenEqCalls.push({ column: column2, value: value2 });
+                  return {
+                    single: () => Promise.resolve(mockChildOwnershipSingleData),
+                  };
+                },
+              });
+            },
           }),
           delete: () => {
             deleteCalls.push({ table });
@@ -146,11 +161,13 @@ vi.mock("@/lib/supabase/admin", () => ({
       if (table === "consultation_notes") {
         return {
           select: () => ({
-            eq: () =>
-              thenableWith(mockConsultationNotesListData, {
+            eq: (column: string, value: unknown) => {
+              consultationNotesEqCalls.push({ column, value });
+              return thenableWith(mockConsultationNotesListData, {
                 single: () => Promise.resolve(mockConsultationNoteSingleData),
                 order: () => Promise.resolve(mockConsultationNotesListData),
-              }),
+              });
+            },
           }),
           upsert: (data: unknown, options?: { onConflict?: string }) => {
             upsertCalls.push({ table, data, onConflict: options?.onConflict });
@@ -214,6 +231,9 @@ const resetMocks = () => {
   mockConsultationNotesListData.data = [];
   upsertCalls.length = 0;
   updateCalls.length = 0;
+  mockChildOwnershipSingleData.data = null;
+  childrenEqCalls.length = 0;
+  consultationNotesEqCalls.length = 0;
 };
 
 const asConsultant = () =>
@@ -641,6 +661,50 @@ describe("upsertConsultationNote", () => {
     expect(result.success).toBe(false);
     expect(upsertCalls).toHaveLength(0);
   });
+
+  it("rejette un child_id qui appartient à un autre client", async () => {
+    asConsultant();
+    mockBookingSingleData.data = {
+      id: "booking-1",
+      client_id: "client-1",
+      consultant_id: "consultant-1",
+    };
+    // Aucun enfant trouvé pour ce couple (id, client_id du booking) : l'enfant
+    // existe peut-être, mais chez un autre client.
+    mockChildOwnershipSingleData.data = null;
+
+    const result = await upsertConsultationNote("booking-1", {
+      ...validFields,
+      child_id: "123e4567-e89b-12d3-a456-426614174000",
+    });
+
+    expect(result).toEqual({ success: false, error: "Enfant introuvable" });
+    expect(upsertCalls).toHaveLength(0);
+    expect(childrenEqCalls).toContainEqual({
+      column: "client_id",
+      value: "client-1",
+    });
+  });
+
+  it("accepte un child_id qui appartient bien au client du booking", async () => {
+    asConsultant();
+    mockBookingSingleData.data = {
+      id: "booking-1",
+      client_id: "client-1",
+      consultant_id: "consultant-1",
+    };
+    mockChildOwnershipSingleData.data = {
+      id: "123e4567-e89b-12d3-a456-426614174000",
+    };
+
+    const result = await upsertConsultationNote("booking-1", {
+      ...validFields,
+      child_id: "123e4567-e89b-12d3-a456-426614174000",
+    });
+
+    expect(result.success).toBe(true);
+    expect(upsertCalls).toHaveLength(1);
+  });
 });
 
 describe("publishConsultationNote", () => {
@@ -751,13 +815,42 @@ describe("getConsultationNotesForFamilyDossier", () => {
     expect(result).toEqual([]);
   });
 
-  it("retourne les fiches du client quand une relation existe", async () => {
+  it("retourne les fiches du client quand une relation existe, datées du rendez-vous", async () => {
+    asConsultant();
+    mockBookingsData.data = [{ id: "booking-1" }];
+    mockConsultationNotesListData.data = [
+      {
+        id: "note-1",
+        booking_id: "booking-1",
+        motif: "Douleur",
+        status: "draft",
+        bookings: { starts_at: "2026-08-01T10:00:00.000Z" },
+      },
+    ];
+
+    const result = await getConsultationNotesForFamilyDossier("client-1");
+
+    expect(result).toEqual([
+      {
+        id: "note-1",
+        booking_id: "booking-1",
+        motif: "Douleur",
+        status: "draft",
+        booking_starts_at: "2026-08-01T10:00:00.000Z",
+      },
+    ]);
+  });
+
+  it("filtre réellement sur le client_id demandé", async () => {
     asConsultant();
     mockBookingsData.data = [{ id: "booking-1" }];
     mockConsultationNotesListData.data = [{ id: "note-1" }];
 
-    const result = await getConsultationNotesForFamilyDossier("client-1");
+    await getConsultationNotesForFamilyDossier("client-42");
 
-    expect(result).toEqual([{ id: "note-1" }]);
+    expect(consultationNotesEqCalls).toContainEqual({
+      column: "client_id",
+      value: "client-42",
+    });
   });
 });

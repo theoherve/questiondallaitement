@@ -2,13 +2,13 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import type { ConsultationNote } from "@/types/database";
+import type { ConsultationNoteSummary } from "../../../crm/actions";
 
 export const PreviousNotesPanel = ({
   notes,
   currentBookingId,
 }: {
-  notes: ConsultationNote[];
+  notes: ConsultationNoteSummary[];
   currentBookingId: string;
 }) => {
   const otherNotes = notes.filter((n) => n.booking_id !== currentBookingId);
@@ -31,7 +31,7 @@ export const PreviousNotesPanel = ({
           >
             <span className="line-clamp-1">{note.motif || "(motif non renseigné)"}</span>
             <span className="ml-3 flex shrink-0 items-center gap-2 text-muted-foreground">
-              {format(new Date(note.created_at), "d MMM yyyy", { locale: fr })}
+              {format(new Date(note.booking_starts_at), "d MMM yyyy", { locale: fr })}
               <Badge variant={note.status === "published" ? "default" : "secondary"}>
                 {note.status === "published" ? "Publiée" : "Brouillon"}
               </Badge>
