@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { WeightChart } from "./weight-chart";
-import { buildChartData } from "./weight-chart";
+import { buildChartData, WeightTooltip } from "./weight-chart";
 
 // Polyfill ResizeObserver pour jsdom
 // ResizeObserver est utilisé par ResponsiveContainer de Recharts pour mesurer la taille
@@ -135,5 +135,116 @@ describe("WeightChart", () => {
     );
     expect(screen.getByText("Pesée à domicile")).toBeInTheDocument();
     expect(screen.getByText("Pesée en consultation")).toBeInTheDocument();
+  });
+
+  it("rend un point rond vert-sage pour une pesée à domicile", () => {
+    const { container } = render(
+      <WeightChart
+        measurements={[
+          {
+            id: "m1",
+            child_id: "c1",
+            weight_grams: 4200,
+            measured_at: "2025-02-01",
+            source: "home",
+            recorded_by: "u1",
+            consultant_id: null,
+            created_at: "2025-02-01T00:00:00.000Z",
+          },
+        ]}
+        birthDate="2025-01-01"
+        sex="female"
+      />,
+    );
+    // Le vrai SVG Recharts (dans .recharts-surface, pas la légende statique)
+    // doit contenir un <circle> avec le fill accent-sage pour une pesée domicile.
+    const homeDot = container.querySelector(
+      '.recharts-surface circle[fill="#a8c4a0"]',
+    );
+    expect(homeDot).toBeTruthy();
+  });
+
+  it("rend un point losange rouge-primaire pour une pesée en consultation", () => {
+    const { container } = render(
+      <WeightChart
+        measurements={[
+          {
+            id: "m2",
+            child_id: "c1",
+            weight_grams: 4800,
+            measured_at: "2025-03-01",
+            source: "consultation",
+            recorded_by: "u1",
+            consultant_id: "cons1",
+            created_at: "2025-03-01T00:00:00.000Z",
+          },
+        ]}
+        birthDate="2025-01-01"
+        sex="female"
+      />,
+    );
+    // Le losange (rect roté à 45°) doit être présent dans le SVG réel
+    // pour une pesée en consultation, avec le fill primary-red.
+    const consultationDot = container.querySelector(
+      '.recharts-surface rect[fill="#a0283e"]',
+    );
+    expect(consultationDot).toBeTruthy();
+    expect(consultationDot?.getAttribute("transform")).toMatch(/^rotate\(45/);
+  });
+});
+
+describe("WeightTooltip", () => {
+  it("affiche la ligne source « Domicile » pour une pesée à domicile", () => {
+    render(
+      <WeightTooltip
+        active
+        payload={[
+          {
+            payload: {
+              ageDays: 30,
+              measured: 4200,
+              source: "home",
+              p3: null,
+              p15: null,
+              p50: null,
+              p85: null,
+              p97: null,
+              d15: null,
+              d50: null,
+              d85: null,
+              d97: null,
+            },
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Domicile")).toBeInTheDocument();
+  });
+
+  it("affiche la ligne source « Consultation » pour une pesée en consultation", () => {
+    render(
+      <WeightTooltip
+        active
+        payload={[
+          {
+            payload: {
+              ageDays: 60,
+              measured: 4800,
+              source: "consultation",
+              p3: null,
+              p15: null,
+              p50: null,
+              p85: null,
+              p97: null,
+              d15: null,
+              d50: null,
+              d85: null,
+              d97: null,
+            },
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Consultation")).toBeInTheDocument();
   });
 });

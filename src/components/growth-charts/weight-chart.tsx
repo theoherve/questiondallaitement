@@ -145,7 +145,7 @@ const buildChartData = (
   );
 };
 
-export { buildChartData };
+export { buildChartData, MeasuredDot, WeightTooltip };
 
 export const WeightChart = ({
   measurements,
