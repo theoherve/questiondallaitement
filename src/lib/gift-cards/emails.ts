@@ -69,3 +69,29 @@ export const sendGiftCardPurchaseEmails = async (
     });
   }
 };
+
+export type GiftCardExpiryReminderInput = {
+  code: string;
+  typeLabel: string;
+  amountLabel: string | null;
+  expiresAtLabel: string;
+  recipientName: string;
+  recipientEmail: string;
+};
+
+export const sendGiftCardExpiryReminderEmail = async (
+  input: GiftCardExpiryReminderInput,
+): Promise<void> => {
+  const html = `
+    <p>Bonjour ${input.recipientName},</p>
+    <p>Votre carte cadeau <strong>${input.code}</strong> expire le ${input.expiresAtLabel}.</p>
+    <p>${input.typeLabel}${input.amountLabel ? ` — ${input.amountLabel}` : ""}</p>
+    <p>Pensez à l'utiliser avant cette date.</p>
+  `;
+
+  await sendTransactionalEmail({
+    to: input.recipientEmail,
+    subject: "Votre carte cadeau expire bientôt",
+    html,
+  });
+};
