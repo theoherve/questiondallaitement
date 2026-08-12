@@ -19,6 +19,7 @@ import { computeBookingPrice } from "@/lib/booking/pricing";
 import { contactSchema } from "@/validations/bookings";
 import { sendNewBookingNotification } from "@/lib/emails/send";
 import { sendGuestSetupEmailIfNeeded } from "@/lib/auth/password-setup";
+import { findOrCreateGuestProfile } from "@/lib/auth/guest-profile";
 import { addMinutes, format, startOfDay, endOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { siteConfig } from "@/config/site";
@@ -478,45 +479,22 @@ export const createBooking = async (
   }
 
   // Guest checkout: find or create profile
-  let clientId: string;
   // Pilote l'invitation a definir un mot de passe : une cliente qui reserve en
   // invitee pour la deuxieme fois sans avoir finalise son compte doit encore
   // recevoir le lien.
-  let clientPasswordHash: string | null = null;
+  const guestProfile = await findOrCreateGuestProfile(supabase, {
+    email,
+    first_name,
+    last_name,
+    phone,
+  });
 
-  const { data: existingProfile } = await supabase
-    .from("profiles")
-    .select("id, password_hash")
-    .eq("email", email.toLowerCase())
-    .is("deleted_at", null)
-    .single();
-
-  if (existingProfile) {
-    clientId = existingProfile.id;
-    clientPasswordHash = existingProfile.password_hash;
-    await supabase
-      .from("profiles")
-      .update({ first_name, last_name, phone })
-      .eq("id", clientId);
-  } else {
-    const { data: newProfile, error: profileError } = await supabase
-      .from("profiles")
-      .insert({
-        id: crypto.randomUUID(),
-        email: email.toLowerCase(),
-        roles: ["client"],
-        first_name,
-        last_name,
-        phone,
-      })
-      .select("id")
-      .single();
-
-    if (profileError || !newProfile) {
-      return { success: false, error: "Erreur lors de la création du profil" };
-    }
-    clientId = newProfile.id;
+  if (!guestProfile.success) {
+    return { success: false, error: guestProfile.error };
   }
+
+  const clientId = guestProfile.id;
+  const clientPasswordHash = guestProfile.password_hash;
 
   // Fetch consultant for Stripe and emails
   const { data: consultant } = await supabase

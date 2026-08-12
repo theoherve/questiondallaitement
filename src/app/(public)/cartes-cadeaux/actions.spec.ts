@@ -17,7 +17,30 @@ const createChain = (singleData: unknown) => {
   const chain: Record<string, unknown> = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
     maybeSingle: vi.fn().mockResolvedValue({ data: singleData, error: null }),
+    single: vi.fn().mockResolvedValue({ data: singleData, error: null }),
+    update: vi.fn().mockReturnThis(),
+  };
+  return chain;
+};
+
+/** Profil invitee introuvable (`.single()` sur `profiles`), suivi de sa création (`insert().select().single()`). */
+const createGuestProfileLookupChain = () => {
+  const chain: Record<string, unknown> = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data: null, error: null }),
+  };
+  return chain;
+};
+
+const createGuestProfileInsertChain = (id: string) => {
+  const chain: Record<string, unknown> = {
+    insert: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data: { id }, error: null }),
   };
   return chain;
 };
@@ -52,13 +75,16 @@ const CONSULTANT_BILLING_COMPLETE = {
 /**
  * Séquence par défaut pour un achat de type "amount" (pas de requête
  * consultation_types) : 1. consultants (lecture principale), 2. is_platform_owner,
- * 3. profil de facturation.
+ * 3. profil de facturation, 4. recherche du profil invitée (introuvable),
+ * 5. création du profil invitée.
  */
-const mockDefaultSequence = () => {
+const mockDefaultSequence = (guestProfileId = "guest-profile-1") => {
   mockFrom
     .mockImplementationOnce(() => createChain(CONSULTANT))
     .mockImplementationOnce(() => createChain({ is_platform_owner: false }))
-    .mockImplementation(() => createChain(CONSULTANT_BILLING_COMPLETE));
+    .mockImplementationOnce(() => createChain(CONSULTANT_BILLING_COMPLETE))
+    .mockImplementationOnce(() => createGuestProfileLookupChain())
+    .mockImplementationOnce(() => createGuestProfileInsertChain(guestProfileId));
 };
 
 describe("purchaseGiftCard", () => {
@@ -129,6 +155,10 @@ describe("purchaseGiftCard", () => {
         commissionRate: 15,
         metadata: expect.objectContaining({
           type: "gift_card",
+          client_id: "guest-profile-1",
+          reference_id: expect.stringMatching(
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+          ),
           gift_card_type: "amount",
           gift_card_amount_cents: "9000",
           buyer_email: "jean@example.com",
@@ -147,7 +177,9 @@ describe("purchaseGiftCard", () => {
         createChain({ ...CONSULTANT, stripe_account_id: null }),
       )
       .mockImplementationOnce(() => createChain({ is_platform_owner: true }))
-      .mockImplementation(() => createChain(CONSULTANT_BILLING_COMPLETE));
+      .mockImplementationOnce(() => createChain(CONSULTANT_BILLING_COMPLETE))
+      .mockImplementationOnce(() => createGuestProfileLookupChain())
+      .mockImplementationOnce(() => createGuestProfileInsertChain("guest-profile-2"));
 
     const result = await purchaseGiftCard({
       type: "amount",

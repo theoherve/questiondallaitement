@@ -7,6 +7,7 @@ import {
   isPlatformOwnerConsultant,
 } from "@/lib/stripe/sale-routing";
 import { consultantCanSell } from "@/lib/invoicing/consultant-billing";
+import { findOrCreateGuestProfile } from "@/lib/auth/guest-profile";
 import { siteConfig } from "@/config/site";
 import type { ActionResult } from "@/types";
 
@@ -86,6 +87,26 @@ export const purchaseGiftCard = async (
     };
   }
 
+  // La carte n'existe pas encore a cet instant : elle n'est creee qu'apres
+  // confirmation du paiement, dans le webhook (`handleGiftCardPurchase`). Mais
+  // `payments.client_id` et `payments.reference_id` sont NOT NULL et ecrits
+  // par `handleCheckoutCompleted` juste apres, quel que soit le type d'achat :
+  // il faut donc un profil (meme invitee) et un id de carte pre-generes avant
+  // de creer la session Stripe, pour que ce champ soit deja renseigne dans le
+  // metadata que le webhook recevra.
+  const guestProfile = await findOrCreateGuestProfile(supabase, {
+    email: input.buyerEmail,
+    first_name: input.buyerName,
+    last_name: null,
+    phone: null,
+  });
+
+  if (!guestProfile.success) {
+    return { success: false, error: guestProfile.error };
+  }
+
+  const giftCardId = crypto.randomUUID();
+
   const session = await createCheckoutSession({
     consultantStripeAccountId: routing.destinationAccountId ?? undefined,
     holdOnPlatform: routing.holdOnPlatform,
@@ -96,6 +117,8 @@ export const purchaseGiftCard = async (
     customerEmail: input.buyerEmail,
     metadata: {
       type: "gift_card",
+      client_id: guestProfile.id,
+      reference_id: giftCardId,
       gift_card_type: input.type,
       ...(input.type === "amount"
         ? { gift_card_amount_cents: String(input.amountCents) }

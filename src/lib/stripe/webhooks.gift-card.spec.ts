@@ -39,6 +39,7 @@ describe("handleGiftCardPurchase", () => {
         buyer_name: "Jean Martin",
         buyer_email: "jean@example.com",
         delivery_mode: "email",
+        reference_id: "guest-uuid-1",
       },
       "pi_123",
     );
@@ -47,6 +48,7 @@ describe("handleGiftCardPurchase", () => {
     const buildRow = mockInsert.mock.calls[0][1] as (code: string) => Record<string, unknown>;
     const row = buildRow("CADEAU-ABC234");
     expect(row).toMatchObject({
+      id: "guest-uuid-1",
       type: "amount",
       initial_amount_cents: 9000,
       consultant_id: "consultant-1",
@@ -67,6 +69,7 @@ describe("handleGiftCardPurchase", () => {
         buyer_name: "Jean Martin",
         buyer_email: "jean@example.com",
         delivery_mode: "pdf",
+        reference_id: "guest-uuid-2",
       },
       "pi_123",
     );
@@ -74,6 +77,7 @@ describe("handleGiftCardPurchase", () => {
     const buildRow = mockInsert.mock.calls[0][1] as (code: string) => Record<string, unknown>;
     const row = buildRow("CADEAU-XYZ987");
     expect(row).toMatchObject({
+      id: "guest-uuid-2",
       type: "service",
       consultation_type_id: "ct-1",
       initial_amount_cents: null,

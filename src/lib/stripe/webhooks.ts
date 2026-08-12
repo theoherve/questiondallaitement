@@ -316,6 +316,12 @@ export const handleGiftCardPurchase = async (
   expiresAt.setMonth(expiresAt.getMonth() + 12);
 
   const card = await insertGiftCardWithUniqueCode(supabase, (code) => ({
+    // Pre-genere dans `purchaseGiftCard` avant la session Stripe, pour
+    // correspondre au `reference_id` deja ecrit dans `payments` par
+    // `handleCheckoutCompleted`. Sans cet id explicite, Postgres en genererait
+    // un autre et l'upsert de `payments` (NOT NULL sur `reference_id`) ne
+    // correspondrait plus a la carte reellement creee.
+    id: metadata.reference_id,
     code,
     type: metadata.gift_card_type,
     initial_amount_cents: isAmount ? Number(metadata.gift_card_amount_cents) : null,
