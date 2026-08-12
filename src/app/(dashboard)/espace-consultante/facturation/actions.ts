@@ -6,6 +6,7 @@ import { sendInvoiceEmail } from "@/lib/invoicing/send-invoice-email";
 import { buildCorrectionContent } from "@/lib/invoicing/correction";
 import { buildManualInvoiceContent } from "@/lib/invoicing/manual-invoice";
 import { buildInvoicesCsv, type InvoiceExportRow } from "@/lib/invoicing/csv-export";
+import { redeemGiftCard } from "@/lib/gift-cards/redeem";
 import type { ActionResult } from "@/types";
 
 const INVOICE_FIELDS =
@@ -170,6 +171,7 @@ export const createManualInvoice = async (input: {
   description: string;
   ttcCents: number;
   dueDate?: string;
+  giftCardCode?: string;
 }): Promise<ActionResult<{ invoiceId: string }>> => {
   const { supabase, user } = await getSupabaseAndUser();
 
@@ -238,6 +240,18 @@ export const createManualInvoice = async (input: {
   }
 
   const created = invoice as { id: string };
+
+  if (input.giftCardCode) {
+    const redemption = await redeemGiftCard(supabase, {
+      code: input.giftCardCode,
+      amountCents: input.ttcCents,
+      invoiceId: created.id,
+      recordedBy: user.id,
+    });
+    if (!redemption.ok) {
+      console.error("[createManualInvoice] carte cadeau", redemption.error);
+    }
+  }
 
   try {
     await sendInvoiceEmail(invoice as Parameters<typeof sendInvoiceEmail>[0]);

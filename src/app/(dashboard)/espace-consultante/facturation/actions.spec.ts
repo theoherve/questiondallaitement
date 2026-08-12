@@ -9,6 +9,14 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/invoicing/send-invoice-email", () => ({
   sendInvoiceEmail: vi.fn().mockResolvedValue(undefined),
 }));
+const mockRedeem = vi.fn(async (..._args: unknown[]) => ({
+  ok: true,
+  redemptionId: "red-1",
+  amountCents: 5000,
+}));
+vi.mock("@/lib/gift-cards/redeem", () => ({
+  redeemGiftCard: (...args: unknown[]) => mockRedeem(...args),
+}));
 
 const CONSULTANT_ID = "11111111-1111-1111-1111-111111111111";
 const CLIENT_ID = "22222222-2222-2222-2222-222222222222";
@@ -46,6 +54,67 @@ const buildSupabase = (tables: Record<string, unknown[]>) => {
 describe("createManualInvoice", () => {
   beforeEach(() => {
     mockGetSupabaseAndUser.mockReset();
+    mockRedeem.mockClear();
+  });
+
+  const buildFullSupabase = () =>
+    buildSupabase({
+      bookings: [{ id: "b1" }],
+      accompagnements: [],
+      profiles: [
+        { first_name: "Marie", last_name: "Dupont", email: "marie@example.com" },
+      ],
+      consultants: [
+        {
+          billing_legal_name: "Marie Dupont",
+          billing_address: "1 rue de la Paix",
+          billing_siren: "123456789",
+          billing_vat_number: null,
+          billing_legal_form: "EI",
+          billing_iban: "FR7630001007941234567890185",
+          billing_bic: "BDFEFRPP",
+        },
+      ],
+    });
+
+  it("redeems the gift card against the invoice when giftCardCode is provided", async () => {
+    mockGetSupabaseAndUser.mockResolvedValue({
+      supabase: buildFullSupabase(),
+      user: { id: CONSULTANT_ID },
+    });
+
+    const result = await createManualInvoice({
+      clientId: CLIENT_ID,
+      description: "Consultation",
+      ttcCents: 5000,
+      giftCardCode: "CADEAU-ABC234",
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockRedeem).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        code: "CADEAU-ABC234",
+        amountCents: 5000,
+        invoiceId: expect.any(String),
+      }),
+    );
+  });
+
+  it("still returns the created invoice when giftCardCode is omitted", async () => {
+    mockGetSupabaseAndUser.mockResolvedValue({
+      supabase: buildFullSupabase(),
+      user: { id: CONSULTANT_ID },
+    });
+
+    const result = await createManualInvoice({
+      clientId: CLIENT_ID,
+      description: "Consultation",
+      ttcCents: 5000,
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockRedeem).not.toHaveBeenCalled();
   });
 
   it("refuse un client sans relation avec la consultante", async () => {
