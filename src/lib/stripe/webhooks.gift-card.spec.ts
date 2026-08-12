@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const mockRedeem = vi.fn(async () => ({ ok: true, redemptionId: "red-1", amountCents: 4000 }));
+const mockRedeem = vi.fn(async (..._args: unknown[]) => ({
+  ok: true,
+  redemptionId: "red-1",
+  amountCents: 4000,
+}));
 vi.mock("@/lib/gift-cards/redeem", () => ({
   redeemGiftCard: (...args: unknown[]) => mockRedeem(...args),
 }));

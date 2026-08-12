@@ -21,6 +21,42 @@ const buildSupabase = (giftCard: unknown, redemptions: unknown[]) => {
   return { from } as never;
 };
 
+const buildFailingSupabase = (failOn: "gift_cards" | "gift_card_redemptions") => {
+  const from = vi.fn((table: string) => {
+    const fails = table === failOn;
+    if (table === "gift_cards") {
+      return {
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({
+              data: fails
+                ? null
+                : {
+                    id: "gc-1",
+                    type: "amount",
+                    status: "active",
+                    expires_at: FUTURE,
+                    initial_amount_cents: 9000,
+                    consultation_type_id: null,
+                  },
+              error: fails ? { message: "connection reset" } : null,
+            }),
+          }),
+        }),
+      };
+    }
+    return {
+      select: () => ({
+        eq: async () => ({
+          data: null,
+          error: fails ? { message: "connection reset" } : null,
+        }),
+      }),
+    };
+  });
+  return { from } as never;
+};
+
 const FUTURE = new Date(Date.now() + 86_400_000).toISOString();
 const PAST = new Date(Date.now() - 86_400_000).toISOString();
 
@@ -28,6 +64,25 @@ describe("lookupGiftCard", () => {
   it("returns not_found when no row matches", async () => {
     const result = await lookupGiftCard(buildSupabase(null, []), "CADEAU-NOPE00");
     expect(result).toEqual({ ok: false, error: "not_found" });
+  });
+
+  it("logs and reports not_found when the gift_cards select errors", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const result = await lookupGiftCard(buildFailingSupabase("gift_cards"), "CADEAU-ABC234");
+    expect(result).toEqual({ ok: false, error: "not_found" });
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("logs and reports not_found when the redemptions select errors", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const result = await lookupGiftCard(
+      buildFailingSupabase("gift_card_redemptions"),
+      "CADEAU-ABC234",
+    );
+    expect(result).toEqual({ ok: false, error: "not_found" });
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
   });
 
   it("returns expired when past expires_at", async () => {

@@ -5,7 +5,7 @@ vi.mock("@/lib/resend/client", () => ({
   sendTransactionalEmail: (...args: unknown[]) => mockSend(...args),
 }));
 
-const mockRenderPdf = vi.fn(async () => Buffer.from("pdf-bytes"));
+const mockRenderPdf = vi.fn(async (..._args: unknown[]) => Buffer.from("pdf-bytes"));
 vi.mock("./pdf", () => ({
   renderGiftCardPdf: (...args: unknown[]) => mockRenderPdf(...args),
 }));

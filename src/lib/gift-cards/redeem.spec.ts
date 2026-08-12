@@ -41,6 +41,7 @@ describe("redeemGiftCard", () => {
     ["gift_card_expired", "expired"],
     ["gift_card_already_used", "already_used"],
     ["gift_card_insufficient_balance", "insufficient_balance"],
+    ["invoice_consultant_mismatch", "invoice_mismatch"],
     ["something_else", "unknown"],
   ])("maps RPC error %s to %s", async (rpcMessage, expected) => {
     const supabase = buildSupabase(async () => ({

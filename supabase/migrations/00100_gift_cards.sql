@@ -36,7 +36,11 @@ CREATE TABLE gift_cards (
   CONSTRAINT gift_cards_amount_type_chk CHECK (
     (type = 'amount' AND initial_amount_cents IS NOT NULL AND consultation_type_id IS NULL)
     OR (type = 'service' AND initial_amount_cents IS NULL AND consultation_type_id IS NOT NULL)
-  )
+  ),
+  -- Une carte a 0 ou a montant negatif n'a aucun sens et casserait le calcul de
+  -- solde (initial - SUM(redemptions)). NULL reste accepte : c'est le cas des
+  -- cartes 'service', garde par la contrainte ci-dessus.
+  CONSTRAINT gift_cards_initial_amount_positive_chk CHECK (initial_amount_cents > 0)
 );
 
 CREATE INDEX idx_gift_cards_code ON gift_cards(code);
@@ -119,6 +123,20 @@ BEGIN
     RAISE EXCEPTION 'gift_card_expired';
   END IF;
 
+  -- Defense en profondeur : meme appelee par du code serveur, la fonction ne
+  -- doit jamais solder la facture d'une autre consultante avec cette carte.
+  -- Sans ce controle, un appelant compromis (ou une erreur de plomberie) suffit
+  -- a transferer la valeur d'une carte vers une facture qui n'a rien a voir.
+  IF p_invoice_id IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM invoices
+      WHERE invoices.id = p_invoice_id
+        AND invoices.consultant_id = v_card.consultant_id
+    ) THEN
+      RAISE EXCEPTION 'invoice_consultant_mismatch';
+    END IF;
+  END IF;
+
   IF v_card.type = 'service' THEN
     IF EXISTS (SELECT 1 FROM gift_card_redemptions WHERE gift_card_id = v_card.id) THEN
       RAISE EXCEPTION 'gift_card_already_used';
@@ -156,3 +174,11 @@ BEGIN
   RETURN to_jsonb(v_redemption);
 END;
 $$;
+
+-- Cette fonction est SECURITY DEFINER : elle contourne RLS et ecrit un
+-- reglement sur la facture qu'on lui passe. Exposee via PostgREST, la cle
+-- publique `anon` permettrait a quiconque detenant UN code de carte valide de
+-- solder n'importe quelle facture du systeme, au nom de n'importe quel profil.
+-- Seul le code serveur (client service-role) doit pouvoir l'appeler.
+REVOKE EXECUTE ON FUNCTION redeem_gift_card(TEXT, INT, UUID, UUID, UUID)
+  FROM PUBLIC, anon, authenticated;

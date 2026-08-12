@@ -14,6 +14,13 @@ export type RedeemGiftCardError =
   | "expired"
   | "already_used"
   | "insufficient_balance"
+  /**
+   * La facture visee n'appartient pas a la consultante qui a emis la carte.
+   * Mappe explicitement plutot que replie sur "unknown" : c'est le signe d'un
+   * bug de plomberie ou d'un appel malveillant, et le confondre avec une
+   * erreur inconnue rendrait le diagnostic impossible.
+   */
+  | "invoice_mismatch"
   | "unknown";
 
 export type RedeemGiftCardResult =
@@ -26,6 +33,7 @@ const ERROR_MAP: Record<string, RedeemGiftCardError> = {
   gift_card_expired: "expired",
   gift_card_already_used: "already_used",
   gift_card_insufficient_balance: "insufficient_balance",
+  invoice_consultant_mismatch: "invoice_mismatch",
 };
 
 export const redeemGiftCard = async (

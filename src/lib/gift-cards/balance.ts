@@ -15,20 +15,36 @@ export const lookupGiftCard = async (
   supabase: SupabaseClient,
   code: string,
 ): Promise<GiftCardLookup> => {
-  const { data: card } = await supabase
+  const { data: card, error: cardError } = await supabase
     .from("gift_cards")
     .select("id, type, status, expires_at, initial_amount_cents, consultation_type_id")
     .eq("code", code)
     .maybeSingle();
 
+  // La forme de l'erreur publique reste `not_found` — les appelants filtrent
+  // dessus — mais une panne transitoire de la base ne doit pas disparaitre
+  // sans laisser de trace : sinon la cliente lit « code inconnu » sur un code
+  // parfaitement valide, et rien dans les logs ne le dit.
+  if (cardError) {
+    console.error("[lookupGiftCard] lecture gift_cards", cardError);
+    return { ok: false, error: "not_found" };
+  }
+
   if (!card) return { ok: false, error: "not_found" };
   if (card.status !== "active") return { ok: false, error: "not_active" };
   if (new Date(card.expires_at) < new Date()) return { ok: false, error: "expired" };
 
-  const { data: redemptions } = await supabase
+  const { data: redemptions, error: redemptionsError } = await supabase
     .from("gift_card_redemptions")
     .select("amount_cents")
     .eq("gift_card_id", card.id);
+
+  // Un echec ici donnerait `used = 0`, donc un solde surevalue : on refuse
+  // plutot que d'annoncer une remise que la redemption refusera ensuite.
+  if (redemptionsError) {
+    console.error("[lookupGiftCard] lecture gift_card_redemptions", redemptionsError);
+    return { ok: false, error: "not_found" };
+  }
 
   const used = (redemptions ?? []).reduce(
     (sum: number, r: { amount_cents: number }) => sum + r.amount_cents,
