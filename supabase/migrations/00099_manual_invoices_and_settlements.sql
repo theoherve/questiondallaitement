@@ -210,7 +210,9 @@ BEGIN
     currency, vat_rate, amount_ttc_cents, amount_ht_cents, amount_vat_cents,
     description, client_name, client_email,
     issuer_legal_name, issuer_address, issuer_siren, issuer_vat_number,
-    issuer_legal_form, status, document_type, origin, payment_status
+    issuer_legal_form, status, document_type,
+    promo_code, discount_cents, gross_amount_ttc_cents,
+    origin, payment_status
   ) VALUES (
     v_payment_id,
     v_consultant_id,
@@ -233,6 +235,9 @@ BEGIN
     p_content->>'issuer_legal_form',
     COALESCE(p_content->>'status', 'issued'),
     'invoice',
+    p_content->>'promo_code',
+    (p_content->>'discount_cents')::INT,
+    (p_content->>'gross_amount_ttc_cents')::INT,
     'stripe',
     'paid'
   )
@@ -291,7 +296,7 @@ BEGIN
     description, client_name, client_email,
     issuer_legal_name, issuer_address, issuer_siren, issuer_vat_number,
     issuer_legal_form, status, document_type, corrects_invoice_id,
-    origin, payment_status
+    origin, payment_status, issuer_iban, issuer_bic, due_date
   ) VALUES (
     v_orig.payment_id, v_orig.consultant_id, v_orig.client_id, v_orig.type,
     v_orig.reference_id,
@@ -303,7 +308,8 @@ BEGIN
     v_orig.issuer_legal_name, v_orig.issuer_address, v_orig.issuer_siren,
     v_orig.issuer_vat_number, v_orig.issuer_legal_form,
     'issued', 'credit_note', v_orig.id,
-    v_orig.origin, v_orig.payment_status
+    v_orig.origin, v_orig.payment_status,
+    v_orig.issuer_iban, v_orig.issuer_bic, v_orig.due_date
   );
 
   -- 2. Originale annulee (libere l'unicite partielle pour la corrigee).
@@ -327,7 +333,7 @@ BEGIN
     description, client_name, client_email,
     issuer_legal_name, issuer_address, issuer_siren, issuer_vat_number,
     issuer_legal_form, status, document_type, replaces_invoice_id,
-    origin, payment_status
+    origin, payment_status, issuer_iban, issuer_bic, due_date
   ) VALUES (
     v_orig.payment_id, v_orig.consultant_id, v_orig.client_id, v_orig.type,
     v_orig.reference_id,
@@ -342,7 +348,8 @@ BEGIN
     v_orig.issuer_legal_name, v_orig.issuer_address, v_orig.issuer_siren,
     v_orig.issuer_vat_number, v_orig.issuer_legal_form,
     'issued', 'invoice', v_orig.id,
-    v_orig.origin, v_orig.payment_status
+    v_orig.origin, v_orig.payment_status,
+    v_orig.issuer_iban, v_orig.issuer_bic, v_orig.due_date
   )
   RETURNING * INTO v_new;
 
