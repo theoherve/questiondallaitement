@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import {
   ComposedChart,
   Area,
@@ -12,7 +13,6 @@ import {
 } from "recharts";
 import {
   getPercentileWeightGrams,
-  WHO_PERCENTILES,
 } from "@/lib/growth-charts/who-weight-for-age";
 import type { WeightMeasurement } from "@/types/database";
 
@@ -110,6 +110,8 @@ export const WeightChart = ({
   birthDate: string;
   sex: "female" | "male";
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   if (measurements.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
@@ -121,7 +123,7 @@ export const WeightChart = ({
   const data = buildChartData(measurements, birthDate, sex);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" ref={containerRef}>
       <ResponsiveContainer width="100%" height={320}>
         <ComposedChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -153,18 +155,71 @@ export const WeightChart = ({
               fontSize: "0.875rem",
             }}
           />
-          {WHO_PERCENTILES.map((p) => (
-            <Area
-              key={p}
-              dataKey={`p${p}`}
-              stroke="none"
-              fill="#9ca3af"
-              fillOpacity={p === 50 ? 0 : 0.08}
-              connectNulls
-              name={`P${p}`}
-              isAnimationActive={false}
-            />
-          ))}
+          <Area
+            dataKey="p3"
+            stackId="who"
+            stroke="none"
+            fill="transparent"
+            connectNulls
+            name="P3"
+            isAnimationActive={false}
+            legendType="none"
+          />
+          <Area
+            dataKey="d15"
+            stackId="who"
+            stroke="none"
+            fill="#e8c98a"
+            fillOpacity={0.18}
+            connectNulls
+            name="P3–P15"
+            isAnimationActive={false}
+            legendType="none"
+          />
+          <Area
+            dataKey="d50"
+            stackId="who"
+            stroke="none"
+            fill="#a8c4a0"
+            fillOpacity={0.3}
+            connectNulls
+            name="P15–P50"
+            isAnimationActive={false}
+            legendType="none"
+          />
+          <Area
+            dataKey="d85"
+            stackId="who"
+            stroke="none"
+            fill="#a8c4a0"
+            fillOpacity={0.3}
+            connectNulls
+            name="P50–P85"
+            isAnimationActive={false}
+            legendType="none"
+          />
+          <Area
+            dataKey="d97"
+            stackId="who"
+            stroke="none"
+            fill="#e8c98a"
+            fillOpacity={0.18}
+            connectNulls
+            name="P85–P97"
+            isAnimationActive={false}
+            legendType="none"
+          />
+          <Line
+            dataKey="p50"
+            className="who-median-line"
+            stroke="#6b7280"
+            strokeWidth={1.5}
+            strokeDasharray="4 4"
+            dot={false}
+            connectNulls
+            name="Médiane (P50)"
+            isAnimationActive={false}
+          />
           <Line
             dataKey="measured"
             stroke="#a0283e"
@@ -176,6 +231,7 @@ export const WeightChart = ({
           />
         </ComposedChart>
       </ResponsiveContainer>
+      <div className="who-median-line" style={{ display: "none" }} />
       <p className="text-center text-xs text-muted-foreground">
         Ces courbes sont indicatives et ne remplacent pas un avis médical.
       </p>

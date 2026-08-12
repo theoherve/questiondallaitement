@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { WeightChart } from "./weight-chart";
 import { buildChartData } from "./weight-chart";
 
@@ -62,5 +62,31 @@ describe("WeightChart", () => {
     expect(
       screen.getByText(/ne remplacent pas un avis médical/i),
     ).toBeInTheDocument();
+  });
+
+  it("affiche une ligne dédiée à la médiane P50", async () => {
+    const { container } = render(
+      <WeightChart
+        measurements={[
+          {
+            id: "m1",
+            child_id: "c1",
+            weight_grams: 4200,
+            measured_at: "2025-02-01",
+            source: "home",
+            recorded_by: "u1",
+            consultant_id: null,
+            created_at: "2025-02-01T00:00:00.000Z",
+          },
+        ]}
+        birthDate="2025-01-01"
+        sex="female"
+      />,
+    );
+    await waitFor(() => {
+      expect(
+        container.querySelector(".who-median-line"),
+      ).toBeTruthy();
+    });
   });
 });
