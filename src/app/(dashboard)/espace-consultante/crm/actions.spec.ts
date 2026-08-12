@@ -32,6 +32,9 @@ const {
   mockChildOwnershipSingleData,
   childrenEqCalls,
   consultationNotesEqCalls,
+  mockNoteOwnershipSingleData,
+  mockNoteHistoryListData,
+  noteOwnershipEqCalls,
 } = vi.hoisted(() => ({
   mockBookingsData: { data: [] as unknown[] },
   mockAccompagnementsData: { data: [] as { id: string }[] },
@@ -62,6 +65,10 @@ const {
   mockChildOwnershipSingleData: { data: null as { id: string } | null },
   childrenEqCalls: [] as { column: string; value: unknown }[],
   consultationNotesEqCalls: [] as { column: string; value: unknown }[],
+  // getNoteHistory : résultat du .single() de vérification de propriété de la note.
+  mockNoteOwnershipSingleData: { data: null as { id: string } | null },
+  mockNoteHistoryListData: { data: [] as unknown[] },
+  noteOwnershipEqCalls: [] as { column: string; value: unknown }[],
 }));
 
 /** Objet à la fois attendable (await) et chaînable, comme un query builder. */
@@ -184,6 +191,45 @@ vi.mock("@/lib/supabase/admin", () => ({
           },
         };
       }
+      if (table === "crm_notes") {
+        return {
+          select: () => ({
+            eq: (column: string, value: unknown) => {
+              noteOwnershipEqCalls.push({ column, value });
+              return {
+                eq: (column2: string, value2: unknown) => {
+                  noteOwnershipEqCalls.push({ column: column2, value: value2 });
+                  return {
+                    single: () => Promise.resolve(mockNoteOwnershipSingleData),
+                  };
+                },
+              };
+            },
+          }),
+          insert: (data: unknown) => {
+            insertCalls.push({ table, data });
+            return {
+              select: () => ({
+                single: () =>
+                  Promise.resolve({ data: { id: "note-1" }, error: null }),
+              }),
+            };
+          },
+          update: (data: unknown) => {
+            updateCalls.push({ table, data });
+            return { eq: () => ({ eq: () => Promise.resolve({ error: null }) }) };
+          },
+        };
+      }
+      if (table === "crm_notes_history") {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: () => Promise.resolve(mockNoteHistoryListData),
+            }),
+          }),
+        };
+      }
       return {
         insert: (data: unknown) => {
           insertCalls.push({ table, data });
@@ -210,6 +256,7 @@ import {
   publishConsultationNote,
   unpublishConsultationNote,
   getConsultationNotesForFamilyDossier,
+  getNoteHistory,
 } from "./actions";
 
 /** Remet à zéro l'ensemble des réponses simulées entre deux tests. */
@@ -234,6 +281,9 @@ const resetMocks = () => {
   mockChildOwnershipSingleData.data = null;
   childrenEqCalls.length = 0;
   consultationNotesEqCalls.length = 0;
+  mockNoteOwnershipSingleData.data = null;
+  mockNoteHistoryListData.data = [];
+  noteOwnershipEqCalls.length = 0;
 };
 
 const asConsultant = () =>
@@ -852,5 +902,41 @@ describe("getConsultationNotesForFamilyDossier", () => {
       column: "client_id",
       value: "client-42",
     });
+  });
+});
+
+describe("getNoteHistory", () => {
+  beforeEach(resetMocks);
+
+  it("retourne l'historique d'une note appartenant à la consultante", async () => {
+    asConsultant();
+    mockNoteOwnershipSingleData.data = { id: "note-1" };
+    mockNoteHistoryListData.data = [
+      { id: "h-2", content: "deuxième version", edited_at: "2026-08-10T10:00:00.000Z" },
+      { id: "h-1", content: "première version", edited_at: "2026-08-09T10:00:00.000Z" },
+    ];
+
+    const result = await getNoteHistory("note-1");
+
+    expect(result).toEqual([
+      { id: "h-2", content: "deuxième version", edited_at: "2026-08-10T10:00:00.000Z" },
+      { id: "h-1", content: "première version", edited_at: "2026-08-09T10:00:00.000Z" },
+    ]);
+    expect(noteOwnershipEqCalls).toEqual([
+      { column: "id", value: "note-1" },
+      { column: "consultant_id", value: "consultant-1" },
+    ]);
+  });
+
+  it("ne renvoie rien si la note n'appartient pas à la consultante courante", async () => {
+    asConsultant();
+    mockNoteOwnershipSingleData.data = null;
+    mockNoteHistoryListData.data = [
+      { id: "h-1", content: "fuite potentielle", edited_at: "2026-08-09T10:00:00.000Z" },
+    ];
+
+    const result = await getNoteHistory("note-not-mine");
+
+    expect(result).toEqual([]);
   });
 });

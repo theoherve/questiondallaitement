@@ -853,6 +853,32 @@ export const updateNote = async (
   return { success: true };
 };
 
+export const getNoteHistory = async (
+  noteId: string,
+): Promise<{ id: string; content: string; edited_at: string }[]> => {
+  const user = await requireConsultant();
+  const supabase = createAdminClient();
+
+  const { data: note } = await supabase
+    .from("crm_notes")
+    .select("id")
+    .eq("id", noteId)
+    .eq("consultant_id", user.id)
+    .single();
+
+  if (!note) {
+    return [];
+  }
+
+  const { data } = await supabase
+    .from("crm_notes_history")
+    .select("id, content, edited_at")
+    .eq("note_id", noteId)
+    .order("edited_at", { ascending: false });
+
+  return data ?? [];
+};
+
 // ─── Tags CRUD ──────────────────────────────────────────────
 
 export const getTags = async (): Promise<
