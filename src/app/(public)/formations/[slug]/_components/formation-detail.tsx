@@ -547,9 +547,9 @@ export const FormationDetail = ({
                     )}
 
                     {/* Location */}
-                    {formation.location && (
+                    {formation.location && formation.type !== "online" && (
                       <div className="flex items-start gap-3">
-                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary-red" />
+                        <TypeIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary-red" />
                         <div>
                           <p className="font-medium text-primary-green">
                             {formation.location}
@@ -560,6 +560,41 @@ export const FormationDetail = ({
                         </div>
                       </div>
                     )}
+
+                    {/* Lien de connexion : reserve aux inscrits, pas expose a
+                        un visiteur non paye qui pourrait rejoindre la visio. */}
+                    {formation.location &&
+                      formation.type === "online" &&
+                      (isAlreadyRegistered ? (
+                        <div className="flex items-start gap-3">
+                          <TypeIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary-red" />
+                          <div>
+                            <a
+                              href={formation.location}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium text-primary-green underline"
+                            >
+                              Lien de connexion
+                            </a>
+                            <p className="text-xs text-primary-green/50">
+                              {typeLabel}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-start gap-3">
+                          <TypeIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary-red" />
+                          <div>
+                            <p className="font-medium text-primary-green">
+                              {typeLabel}
+                            </p>
+                            <p className="text-xs text-primary-green/50">
+                              Le lien de connexion apparaît ici après inscription
+                            </p>
+                          </div>
+                        </div>
+                      ))}
 
                     {/* Spots */}
                     {formation.max_participants && (

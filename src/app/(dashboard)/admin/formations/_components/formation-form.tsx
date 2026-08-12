@@ -564,19 +564,23 @@ export const FormationForm = ({
                 </select>
               </div>
 
-              {(formData.type === "in_person" || formData.type === "hybrid") && (
-                <div className="space-y-2">
-                  <Label htmlFor="location">Lieu</Label>
-                  <Input
-                    id="location"
-                    value={formData.location}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, location: e.target.value }))
-                    }
-                    placeholder="Adresse ou lieu"
-                  />
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="location">
+                  {formData.type === "online" ? "Lien de connexion" : "Lieu"}
+                </Label>
+                <Input
+                  id="location"
+                  value={formData.location}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, location: e.target.value }))
+                  }
+                  placeholder={
+                    formData.type === "online"
+                      ? "https://..."
+                      : "Adresse ou lieu"
+                  }
+                />
+              </div>
             </CardContent>
           </Card>
           </TabsContent>
