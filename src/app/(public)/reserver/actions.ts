@@ -10,6 +10,8 @@ import {
 import { consultantCanSell } from "@/lib/invoicing/consultant-billing";
 import {
   attachSessionToRedemption,
+  cancelRedemption,
+  confirmRedemption,
   resolvePromoForPurchase,
 } from "@/lib/promo/reserve";
 import { bookingRequiresWaiver } from "@/lib/legal/withdrawal";
@@ -21,6 +23,11 @@ import { sendNewBookingNotification } from "@/lib/emails/send";
 import { sendGuestSetupEmailIfNeeded } from "@/lib/auth/password-setup";
 import { findOrCreateGuestProfile } from "@/lib/auth/guest-profile";
 import { lookupGiftCard } from "@/lib/gift-cards/balance";
+import { redeemGiftCard } from "@/lib/gift-cards/redeem";
+import {
+  giftCardErrorMessage,
+  type GiftCardBookingCheck,
+} from "@/lib/gift-cards/booking-errors";
 import { addMinutes, format, startOfDay, endOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { siteConfig } from "@/config/site";
@@ -434,11 +441,20 @@ export const computeSlotPrice = async (
 export const checkGiftCardForBooking = async (
   code: string,
   amountCents: number,
-): Promise<{ ok: true; discountCents: number } | { ok: false; error: string }> => {
+  consultationTypeId: string,
+): Promise<GiftCardBookingCheck> => {
   const supabase = createAdminClient();
   const lookup = await lookupGiftCard(supabase, code);
 
   if (!lookup.ok) return { ok: false, error: lookup.error };
+
+  // Une carte « prestation » est liee a un type de consultation precis
+  // (§7.3). Sans ce controle, une carte vendue pour une consultation courte a
+  // 45 € couvrait integralement une consultation longue a 170 € : le montant
+  // renvoye etait le prix de la prestation reservee, quel qu'il soit.
+  if (lookup.type === "service" && lookup.consultationTypeId !== consultationTypeId) {
+    return { ok: false, error: "consultation_type_mismatch" };
+  }
 
   const discountCents =
     lookup.type === "amount" ? Math.min(lookup.balanceCents!, amountCents) : amountCents;
@@ -448,9 +464,20 @@ export const checkGiftCardForBooking = async (
 
 // ─── Booking creation ────────────────────────────────────────
 
+export type CreateBookingData = {
+  booking_id: string;
+  redirect_url?: string;
+  /**
+   * La carte cadeau couvrait la totalite du prix : la reservation est deja
+   * confirmee, il n'y a pas de redirection Stripe a suivre. Le formulaire
+   * enchaine directement sur la page de confirmation.
+   */
+  no_payment_required?: boolean;
+};
+
 export const createBooking = async (
   formData: BookingFormData
-): Promise<ActionResult<{ booking_id: string; redirect_url?: string }>> => {
+): Promise<ActionResult<CreateBookingData>> => {
   const contactParsed = contactSchema.safeParse(formData.contact);
   if (!contactParsed.success) {
     return { success: false, error: contactParsed.error.issues[0]?.message };
@@ -609,8 +636,27 @@ export const createBooking = async (
 
     let giftCardDiscountCents = 0;
     if (formData.giftCardCode) {
-      const giftCardCheck = await checkGiftCardForBooking(formData.giftCardCode, chargedCents);
-      if (giftCardCheck.ok) giftCardDiscountCents = giftCardCheck.discountCents;
+      const giftCardCheck = await checkGiftCardForBooking(
+        formData.giftCardCode,
+        chargedCents,
+        formData.consultation_type_id,
+      );
+
+      // Un code refuse doit etre dit. Tant qu'on l'ignorait en silence, la
+      // cliente qui avait saisi un code expire ou inconnu partait payer le
+      // plein tarif sans qu'aucun message ne lui signale que sa carte n'avait
+      // pas ete prise en compte. Meme traitement que le code promo juste
+      // au-dessus, qui refuse la vente plutot que de remiser dans le vide.
+      if (!giftCardCheck.ok) {
+        // Le code promo a deja ete reserve : sans liberation, son quota se
+        // consommerait sur un tunnel qui n'aboutira pas.
+        if (promo?.ok && promo.redemptionId) {
+          await cancelRedemption(promo.redemptionId as string);
+        }
+        return { success: false, error: giftCardErrorMessage(giftCardCheck.error) };
+      }
+
+      giftCardDiscountCents = giftCardCheck.discountCents;
     }
     const finalChargedCents = Math.max(0, chargedCents - giftCardDiscountCents);
 
@@ -629,6 +675,29 @@ export const createBooking = async (
           error: "Impossible d'enregistrer votre accord. Réessayez.",
         };
       }
+    }
+
+    // Carte cadeau couvrant la totalite du prix : il n'y a rien a encaisser.
+    // C'est le cas NORMAL d'une carte « prestation », et celui d'une carte
+    // « montant » dont le solde couvre le tarif. Stripe refuse une session a 0
+    // (montant minimum de charge) : tant qu'on l'appelait quand meme, ces
+    // reservations echouaient sur une erreur de paiement generique alors que
+    // precisement rien ne devait etre paye.
+    if (finalChargedCents === 0 && formData.giftCardCode) {
+      return await confirmGiftCardCoveredBooking({
+        bookingId,
+        clientId,
+        consultantId: formData.consultant_id,
+        consultationTypeId: formData.consultation_type_id,
+        durationOptionId: formData.duration_option_id,
+        startsAt: startsAt.toISOString(),
+        endsAt: endsAt.toISOString(),
+        location: formData.location,
+        reason,
+        giftCardCode: formData.giftCardCode,
+        giftCardAmountCents: giftCardDiscountCents,
+        promoRedemptionId: promo?.ok ? (promo.redemptionId as string | undefined) : undefined,
+      });
     }
 
     try {
@@ -778,4 +847,118 @@ export const createBooking = async (
   });
 
   return { success: true, data: { booking_id: booking.id } };
+};
+
+/**
+ * Confirme une reservation entierement couverte par une carte cadeau.
+ *
+ * Aucun paiement Stripe n'a lieu sur ce chemin : il n'y aura donc aucun
+ * `checkout.session.completed`, et rien de ce que le webhook fait d'habitude ne
+ * se produira tout seul. Cette fonction rejoue donc ici les etapes qui comptent
+ * pour la cliente : creation de la reservation confirmee, debit de la carte,
+ * salle Zoom, confirmations. Les briques sont importees de `webhooks.ts` plutot
+ * que dupliquees, pour que les deux chemins ne divergent pas.
+ *
+ * Volontairement absent : la ligne `payments` et la facture. Il n'y a pas
+ * d'encaissement a enregistrer — la vente a ete facturee a l'achat de la carte,
+ * et l'ecriture comptable de son usage est la ligne `gift_card_redemptions`.
+ * La notification « paiement recu » est ecartee pour la meme raison.
+ *
+ * Import dynamique de `webhooks.ts` : ce module charge le SDK Stripe, inutile
+ * sur les autres chemins de reservation.
+ */
+const confirmGiftCardCoveredBooking = async (input: {
+  bookingId: string;
+  clientId: string;
+  consultantId: string;
+  consultationTypeId: string;
+  durationOptionId: string;
+  startsAt: string;
+  endsAt: string;
+  location: ConsultationLocation;
+  reason: string;
+  giftCardCode: string;
+  giftCardAmountCents: number;
+  promoRedemptionId?: string;
+}): Promise<ActionResult<CreateBookingData>> => {
+  const supabase = createAdminClient();
+
+  const { data: booking, error } = await supabase
+    .from("bookings")
+    .insert({
+      id: input.bookingId,
+      client_id: input.clientId,
+      consultant_id: input.consultantId,
+      consultation_type_id: input.consultationTypeId,
+      duration_option_id: input.durationOptionId,
+      starts_at: input.startsAt,
+      ends_at: input.endsAt,
+      // Meme etat terminal qu'une reservation payee en ligne
+      // (`handleBookingConfirmation`) : la prestation est due.
+      status: "confirmed",
+      location: input.location,
+      payment_method: "online",
+      reason: input.reason,
+    })
+    .select("id")
+    .single();
+
+  if (error || !booking) {
+    if (input.promoRedemptionId) await cancelRedemption(input.promoRedemptionId);
+    if (error?.message?.includes("bookings_consultant_slot_unique")) {
+      return {
+        success: false,
+        error: "Ce créneau vient d'être réservé. Choisissez-en un autre.",
+      };
+    }
+    return { success: false, error: "Erreur lors de la création de la réservation" };
+  }
+
+  const redemption = await redeemGiftCard(supabase, {
+    code: input.giftCardCode,
+    amountCents: input.giftCardAmountCents,
+    bookingId: booking.id,
+    recordedBy: input.consultantId,
+  });
+
+  // Course perdue : le solde a ete consomme entre la verification et
+  // maintenant. On defait la reservation plutot que de la laisser confirmee —
+  // sans paiement et sans debit de carte, la consultation serait offerte a
+  // l'insu de la consultante. Rien n'y est encore attache a cet instant (ni
+  // email, ni salle Zoom) : la suppression est propre, et la cliente peut
+  // reessayer.
+  if (!redemption.ok) {
+    await supabase.from("bookings").delete().eq("id", booking.id);
+    if (input.promoRedemptionId) await cancelRedemption(input.promoRedemptionId);
+    return {
+      success: false,
+      error:
+        "Votre carte cadeau n'a pas pu être appliquée (solde entre-temps " +
+        "consommé). Aucune réservation n'a été enregistrée, réessayez.",
+    };
+  }
+
+  if (input.promoRedemptionId) {
+    await confirmRedemption(input.promoRedemptionId, null);
+  }
+
+  const { attachZoomMeetingIfNeeded, sendCheckoutEmails, fireCheckoutAutomations } =
+    await import("@/lib/stripe/webhooks");
+
+  await attachZoomMeetingIfNeeded({
+    bookingId: booking.id,
+    consultantId: input.consultantId,
+    consultationTypeId: input.consultationTypeId,
+    location: input.location,
+    startsAt: input.startsAt,
+    endsAt: input.endsAt,
+  });
+
+  await sendCheckoutEmails("booking", input.clientId, input.consultantId, booking.id);
+  await fireCheckoutAutomations("booking", input.clientId, input.consultantId, booking.id);
+
+  return {
+    success: true,
+    data: { booking_id: booking.id, no_payment_required: true },
+  };
 };

@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Suivi des appels par table
 const insertCalls: Array<{ table: string; data: unknown }> = [];
 const upsertCalls: Array<{ table: string; data: unknown }> = [];
+const deleteCalls: Array<{ table: string }> = [];
 
 // Appels mockImplementationOnce pour simuler les séquences de from()
 const mockFrom = vi.fn();
@@ -28,9 +29,33 @@ vi.mock("@/lib/stripe/connect", () => ({
 const mockResolvePromo = vi.fn();
 const mockAttachSession = vi.fn();
 
+const mockCancelRedemption = vi.fn();
+const mockConfirmRedemption = vi.fn();
+
 vi.mock("@/lib/promo/reserve", () => ({
   resolvePromoForPurchase: (...args: unknown[]) => mockResolvePromo(...args),
   attachSessionToRedemption: (...args: unknown[]) => mockAttachSession(...args),
+  cancelRedemption: (...args: unknown[]) => mockCancelRedemption(...args),
+  confirmRedemption: (...args: unknown[]) => mockConfirmRedemption(...args),
+}));
+
+const mockRedeemGiftCard = vi.fn();
+
+vi.mock("@/lib/gift-cards/redeem", () => ({
+  redeemGiftCard: (...args: unknown[]) => mockRedeemGiftCard(...args),
+}));
+
+// Le chemin « carte cadeau couvrant 100 % du prix » reutilise les briques de
+// confirmation du webhook plutot que de les dupliquer : on verifie donc qu'il
+// les appelle, pas ce qu'elles font.
+const mockAttachZoom = vi.fn();
+const mockSendCheckoutEmails = vi.fn();
+const mockFireAutomations = vi.fn();
+
+vi.mock("@/lib/stripe/webhooks", () => ({
+  attachZoomMeetingIfNeeded: (...args: unknown[]) => mockAttachZoom(...args),
+  sendCheckoutEmails: (...args: unknown[]) => mockSendCheckoutEmails(...args),
+  fireCheckoutAutomations: (...args: unknown[]) => mockFireAutomations(...args),
 }));
 
 const mockSendGuestAccountEmail = vi.fn().mockResolvedValue(undefined);
@@ -82,6 +107,10 @@ const createChain = (opts: {
     is: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
+    delete: vi.fn(() => {
+      deleteCalls.push({ table: tableName });
+      return chain;
+    }),
     limit: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     upsert: vi.fn((data: unknown) => {
@@ -669,5 +698,156 @@ describe("createBooking — code promo", () => {
     );
 
     expect(mockResolvePromo).not.toHaveBeenCalled();
+  });
+});
+
+// ─── Cartes cadeaux ───────────────────────────────────────────
+
+describe("createBooking — carte cadeau", () => {
+  const FREE_BOOKING_ID = "booking-uuid-free";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFrom.mockReset();
+    insertCalls.length = 0;
+    upsertCalls.length = 0;
+    deleteCalls.length = 0;
+
+    mockFrom
+      .mockImplementationOnce((t: string) =>
+        createChain({ singleData: DURATION_OPTION }, t),
+      )
+      .mockImplementationOnce((t: string) =>
+        createChain({ singleData: CONSULTATION_TYPE }, t),
+      )
+      .mockImplementationOnce((t: string) =>
+        createChain({ singleData: { id: "client-uuid-existing" } }, t),
+      )
+      .mockImplementationOnce((t: string) => createChain({}, t))
+      .mockImplementationOnce((t: string) =>
+        createChain({ singleData: CONSULTANT }, t),
+      )
+      .mockImplementation((t: string) =>
+        t === "bookings"
+          ? createChain({ insertSingleData: { id: FREE_BOOKING_ID } }, t)
+          : createChain({ singleData: CONSULTANT_EXTRA }, t),
+      );
+
+    mockResolvePromo.mockResolvedValue(null);
+    mockCreateCheckoutSession.mockResolvedValue({
+      id: "cs_test_booking",
+      url: "https://checkout.stripe.com/session_test",
+    });
+    mockRedeemGiftCard.mockResolvedValue({
+      ok: true,
+      redemptionId: "red-1",
+      amountCents: 5000,
+    });
+  });
+
+  it("refuse la reservation quand le code cadeau est invalide", async () => {
+    // Le silence d'avant : la cliente partait payer le plein tarif sans savoir
+    // que sa carte n'avait pas ete prise en compte.
+    mockLookupGiftCard.mockResolvedValueOnce({ ok: false, error: "expired" });
+
+    const result = await createBooking(
+      makeBookingForm({ giftCardCode: "CADEAU-EXPIRE" }),
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("expirée");
+    expect(mockCreateCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it("refuse une carte prestation vendue pour une autre consultation", async () => {
+    mockLookupGiftCard.mockResolvedValueOnce({
+      ok: true,
+      giftCardId: "gc-9",
+      type: "service",
+      balanceCents: null,
+      consultationTypeId: "ct-une-autre",
+      expiresAt: "2027-01-01T00:00:00.000Z",
+    });
+
+    const result = await createBooking(
+      makeBookingForm({ giftCardCode: "CADEAU-AUTRE0" }),
+    );
+
+    expect(result.success).toBe(false);
+    expect(mockCreateCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it("confirme la reservation sans passer par Stripe quand la carte couvre tout", async () => {
+    mockLookupGiftCard.mockResolvedValueOnce({
+      ok: true,
+      giftCardId: "gc-10",
+      type: "amount",
+      // Le prix des fixtures est de 5000 : le solde couvre tout.
+      balanceCents: 5000,
+      consultationTypeId: null,
+      expiresAt: "2027-01-01T00:00:00.000Z",
+    });
+
+    const result = await createBooking(
+      makeBookingForm({ giftCardCode: "CADEAU-PLEIN0" }),
+    );
+
+    // Stripe refuse une session a 0 : ce chemin ne doit pas l'appeler du tout.
+    expect(mockCreateCheckoutSession).not.toHaveBeenCalled();
+    expect(result.success).toBe(true);
+    expect(result.data?.no_payment_required).toBe(true);
+    expect(result.data?.redirect_url).toBeUndefined();
+
+    const bookingInsert = insertCalls.find((c) => c.table === "bookings");
+    expect(bookingInsert!.data).toMatchObject({
+      status: "confirmed",
+      payment_method: "online",
+    });
+
+    // Pas de webhook sur ce chemin : la carte doit etre debitee ici meme.
+    expect(mockRedeemGiftCard).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        code: "CADEAU-PLEIN0",
+        amountCents: 5000,
+        bookingId: FREE_BOOKING_ID,
+        recordedBy: "consultant-uuid-001",
+      }),
+    );
+
+    // Meme experience de confirmation qu'une reservation payee.
+    expect(mockSendCheckoutEmails).toHaveBeenCalledWith(
+      "booking",
+      "client-uuid-existing",
+      "consultant-uuid-001",
+      FREE_BOOKING_ID,
+    );
+    expect(mockFireAutomations).toHaveBeenCalled();
+    expect(mockAttachZoom).toHaveBeenCalled();
+  });
+
+  it("annule la reservation si le debit de la carte echoue au dernier moment", async () => {
+    mockLookupGiftCard.mockResolvedValueOnce({
+      ok: true,
+      giftCardId: "gc-11",
+      type: "amount",
+      balanceCents: 5000,
+      consultationTypeId: null,
+      expiresAt: "2027-01-01T00:00:00.000Z",
+    });
+    mockRedeemGiftCard.mockResolvedValue({
+      ok: false,
+      error: "insufficient_balance",
+    });
+
+    const result = await createBooking(
+      makeBookingForm({ giftCardCode: "CADEAU-COURSE" }),
+    );
+
+    expect(result.success).toBe(false);
+    // Laisser la reservation confirmee reviendrait a offrir la consultation :
+    // ni paiement, ni debit de carte.
+    expect(deleteCalls).toEqual([{ table: "bookings" }]);
+    expect(mockSendCheckoutEmails).not.toHaveBeenCalled();
   });
 });
