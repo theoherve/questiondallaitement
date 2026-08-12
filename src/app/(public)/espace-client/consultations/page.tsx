@@ -37,7 +37,7 @@ const MyConsultationsPage = async () => {
             <Card key={note.id}>
               <CardContent className="space-y-3 pt-6">
                 <p className="text-xs text-muted-foreground">
-                  {format(new Date(note.created_at), "d MMMM yyyy", {
+                  {format(new Date(note.booking_starts_at), "d MMMM yyyy", {
                     locale: fr,
                   })}
                 </p>
