@@ -15,6 +15,7 @@ import {
   runWeeklyDigest,
   runAdminDigest,
 } from "@/lib/notifications/jobs";
+import { sendGiftCardExpiryReminders } from "@/lib/gift-cards/reminders";
 
 /**
  * Previent le backoffice qu'une etape du cron a echoue. Sans cela, l'echec
@@ -275,6 +276,11 @@ export const GET = async (request: Request) => {
     ["review_requests_sent", runReviewRequests, "Demandes d'avis"],
     ["weekly_digests_sent", runWeeklyDigest, "Resume hebdomadaire"],
     ["admin_digests_sent", runAdminDigest, "Recapitulatif administration"],
+    [
+      "gift_card_expiry_reminders_sent",
+      sendGiftCardExpiryReminders,
+      "Rappels d'expiration de cartes cadeaux",
+    ],
   ] as const) {
     try {
       results[key] = await run();

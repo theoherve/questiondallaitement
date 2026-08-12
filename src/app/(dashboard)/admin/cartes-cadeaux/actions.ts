@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { insertGiftCardWithUniqueCode } from "@/lib/gift-cards/code";
-import { sendGiftCardPurchaseEmails } from "@/lib/gift-cards/emails";
+import {
+  sendGiftCardPurchaseEmails,
+  sendGiftCardRefundConfirmationEmail,
+} from "@/lib/gift-cards/emails";
 import { findOrCreateGuestProfile } from "@/lib/auth/guest-profile";
 import { STANDARD_VAT_RATE } from "@/lib/invoicing/vat";
 import type { ActionResult } from "@/types";
@@ -39,6 +42,8 @@ export type GiftCardListItem = {
   buyerName: string;
   issuedAt: string;
   expiresAt: string;
+  closedReason: "refunded" | "replaced" | null;
+  createdBy: "purchase" | "manual";
   redemptions: GiftCardRedemptionItem[];
 };
 
@@ -49,7 +54,7 @@ export const listGiftCards = async (): Promise<ActionResult<GiftCardListItem[]>>
   const { data, error } = await supabase
     .from("gift_cards")
     .select(
-      "id, code, type, status, initial_amount_cents, buyer_name, issued_at, expires_at, gift_card_redemptions(amount_cents, redeemed_at)",
+      "id, code, type, status, initial_amount_cents, buyer_name, issued_at, expires_at, closed_reason, created_by, gift_card_redemptions(amount_cents, redeemed_at)",
     )
     .order("issued_at", { ascending: false });
 
@@ -78,6 +83,8 @@ export const listGiftCards = async (): Promise<ActionResult<GiftCardListItem[]>>
       buyerName: row.buyer_name,
       issuedAt: row.issued_at,
       expiresAt: row.expires_at,
+      closedReason: row.closed_reason ?? null,
+      createdBy: row.created_by,
       redemptions: redemptions
         .map((r) => ({ amountCents: r.amount_cents, redeemedAt: r.redeemed_at }))
         .sort((a, b) => a.redeemedAt.localeCompare(b.redeemedAt)),
@@ -346,6 +353,289 @@ export const listConsultationTypesForGiftCards = async (): Promise<
       title: row.title,
       priceCents: row.price_cents,
     })),
+  };
+};
+
+const REFUND_WINDOW_DAYS = 90;
+
+type EligibleExpiredCard = {
+  id: string;
+  code: string;
+  type: "amount" | "service";
+  initial_amount_cents: number | null;
+  consultation_type_id: string | null;
+  buyer_name: string;
+  buyer_email: string;
+  beneficiary_name: string | null;
+  beneficiary_email: string | null;
+  consultant_id: string;
+  created_by: "purchase" | "manual";
+};
+
+/**
+ * Charge une carte et verifie son eligibilite a la procedure post-expiration
+ * (§7.6 Exception 2). Le statut stocke reste 'active' pour une carte perimee
+ * (voir `listGiftCards` : 'expired' est un statut d'affichage, jamais ecrit
+ * en base) — l'expiration reelle se lit sur `expires_at`, jamais sur
+ * `status`.
+ */
+const loadEligibleExpiredCard = async (
+  supabase: ReturnType<typeof createAdminClient>,
+  giftCardId: string,
+): Promise<{ ok: true; giftCard: EligibleExpiredCard } | { ok: false; error: string }> => {
+  const { data: card } = await supabase
+    .from("gift_cards")
+    .select(
+      "id, code, type, status, expires_at, initial_amount_cents, consultation_type_id, buyer_name, buyer_email, beneficiary_name, beneficiary_email, consultant_id, closed_reason, created_by",
+    )
+    .eq("id", giftCardId)
+    .maybeSingle();
+
+  if (!card) return { ok: false, error: "Carte cadeau introuvable." };
+  if (card.closed_reason) return { ok: false, error: "Cette carte a déjà été traitée." };
+  if (card.status !== "active") {
+    return { ok: false, error: "Cette carte n'est plus disponible pour cette procédure." };
+  }
+  if (new Date(card.expires_at) >= new Date()) {
+    return { ok: false, error: "Cette carte n'est pas expirée." };
+  }
+
+  const windowEnd = new Date(card.expires_at);
+  windowEnd.setDate(windowEnd.getDate() + REFUND_WINDOW_DAYS);
+  if (windowEnd < new Date()) {
+    return {
+      ok: false,
+      error: "Le délai de recours de 90 jours après expiration est dépassé.",
+    };
+  }
+
+  return { ok: true, giftCard: card };
+};
+
+/**
+ * Remboursement exceptionnel apres expiration (§7.6 Exception 2). Aucun
+ * appel Stripe : Carole effectue le virement elle-meme avec l'IBAN/BIC recu
+ * par email, hors app — la fenetre de remboursement Stripe/reseau carte est
+ * souvent deja fermee a 12 mois + 90 jours. Cette action se contente de
+ * tracer la decision.
+ */
+export const refundExpiredGiftCard = async (input: {
+  giftCardId: string;
+  note: string;
+}): Promise<ActionResult> => {
+  const admin = await requireAdmin();
+  const supabase = createAdminClient();
+
+  const loaded = await loadEligibleExpiredCard(supabase, input.giftCardId);
+  if (!loaded.ok) return { success: false, error: loaded.error };
+
+  // Une carte emise a titre gracieux (promotion, jeu, geste commercial —
+  // `created_by === 'manual'`) n'a jamais ete payee : la rembourser
+  // reviendrait a verser de l'argent reel pour un solde qui n'en a jamais
+  // coute. La prolongation reste en revanche autorisee pour ces cartes,
+  // c'est ce guard qui les distingue (§07 module cartes cadeaux, ligne 68).
+  if (loaded.giftCard.created_by !== "purchase") {
+    return {
+      success: false,
+      error: "Une carte offerte à titre gracieux n'est pas remboursable.",
+    };
+  }
+
+  const closedAt = new Date().toISOString();
+  const { error } = await supabase
+    .from("gift_cards")
+    .update({
+      status: "cancelled",
+      closed_reason: "refunded",
+      closed_at: closedAt,
+      closed_note: input.note,
+    })
+    .eq("id", loaded.giftCard.id)
+    .is("closed_reason", null);
+
+  if (error) {
+    console.error("[refundExpiredGiftCard]", error);
+    return { success: false, error: "Le remboursement n'a pas pu être enregistré." };
+  }
+
+  await supabase.from("audit_logs").insert({
+    user_id: admin.id,
+    action: "gift_card_refunded_after_expiry",
+    entity_type: "gift_card",
+    entity_id: loaded.giftCard.id,
+    metadata: { code: loaded.giftCard.code, note: input.note },
+  });
+
+  // Confirmation non bloquante (design §69) : la beneficiaire (ou l'acheteuse,
+  // faute de beneficiaire) doit savoir que sa carte est desormais close. Un
+  // echec d'envoi ne doit pas remettre en cause la cloture qui vient d'etre
+  // enregistree.
+  try {
+    await sendGiftCardRefundConfirmationEmail({
+      code: loaded.giftCard.code,
+      recipientName: loaded.giftCard.beneficiary_name ?? loaded.giftCard.buyer_name,
+      recipientEmail: loaded.giftCard.beneficiary_email ?? loaded.giftCard.buyer_email,
+    });
+  } catch (err) {
+    console.error("[refundExpiredGiftCard] envoi email", err);
+  }
+
+  revalidatePath("/admin/cartes-cadeaux");
+  return { success: true };
+};
+
+const REPLACEMENT_VALIDITY_MONTHS = 9;
+
+/**
+ * Prolongation (§7.6 Exception 2) : emet une carte de remplacement valable
+ * 9 mois pour le solde restant de la carte expiree, puis cloture
+ * l'originale. Pas de nouvelle facture — l'achat d'origine a deja ete
+ * facture ; ce n'est pas un nouveau geste commercial mais la continuation
+ * du meme.
+ */
+export const replaceExpiredGiftCard = async (input: {
+  giftCardId: string;
+  note: string;
+}): Promise<ActionResult<{ newGiftCardId: string; code: string }>> => {
+  const admin = await requireAdmin();
+  const supabase = createAdminClient();
+
+  const loaded = await loadEligibleExpiredCard(supabase, input.giftCardId);
+  if (!loaded.ok) return { success: false, error: loaded.error };
+  const original = loaded.giftCard;
+
+  let remainingAmountCents: number | null = null;
+  if (original.type === "amount") {
+    const { data: redemptions } = await supabase
+      .from("gift_card_redemptions")
+      .select("amount_cents")
+      .eq("gift_card_id", original.id);
+    const used = (redemptions ?? []).reduce(
+      (sum: number, r: { amount_cents: number }) => sum + r.amount_cents,
+      0,
+    );
+    remainingAmountCents = (original.initial_amount_cents ?? 0) - used;
+    if (remainingAmountCents <= 0) {
+      return { success: false, error: "Cette carte n'a plus de solde à reporter." };
+    }
+  }
+
+  const issuedAt = new Date();
+  const expiresAt = new Date(issuedAt);
+  expiresAt.setMonth(expiresAt.getMonth() + REPLACEMENT_VALIDITY_MONTHS);
+
+  const replacement = await insertGiftCardWithUniqueCode(supabase, (code) => ({
+    code,
+    type: original.type,
+    initial_amount_cents: remainingAmountCents,
+    consultation_type_id: original.type === "service" ? original.consultation_type_id : null,
+    consultant_id: original.consultant_id,
+    buyer_name: original.buyer_name,
+    buyer_email: original.buyer_email,
+    beneficiary_name: original.beneficiary_name,
+    beneficiary_email: original.beneficiary_email,
+    personal_message: null,
+    delivery_mode: "email",
+    issued_at: issuedAt.toISOString(),
+    expires_at: expiresAt.toISOString(),
+    created_by: "manual",
+    created_by_admin_id: admin.id,
+    replaces_gift_card_id: original.id,
+  }));
+
+  const { error: closeError } = await supabase
+    .from("gift_cards")
+    .update({
+      status: "cancelled",
+      closed_reason: "replaced",
+      closed_at: issuedAt.toISOString(),
+      closed_note: input.note,
+    })
+    .eq("id", original.id)
+    .is("closed_reason", null);
+
+  if (closeError) {
+    console.error("[replaceExpiredGiftCard] cloture carte d'origine", closeError);
+
+    // A ce stade, le remplacement existe deja en base : sans compensation,
+    // l'ancienne carte resterait active en pratique — deux cartes actives
+    // pour le meme solde, un risque de double depense. Pas de transaction
+    // disponible ici (aucune RPC ad hoc pour ces deux ecritures), donc on
+    // annule a la main la carte de remplacement qui vient d'etre creee.
+    const { error: cleanupError } = await supabase
+      .from("gift_cards")
+      .delete()
+      .eq("id", replacement.id);
+
+    if (cleanupError) {
+      console.error(
+        "[replaceExpiredGiftCard] echec de la compensation apres cloture ratee — intervention manuelle requise",
+        {
+          originalGiftCardId: original.id,
+          replacementGiftCardId: replacement.id,
+          closeError,
+          cleanupError,
+        },
+      );
+      return {
+        success: false,
+        error: `La clôture de l'ancienne carte a échoué et la nouvelle carte (code ${replacement.code}) n'a pas pu être annulée automatiquement — intervention manuelle requise pour éviter un doublon actif. Contactez le support technique avec les deux codes (${original.code} et ${replacement.code}).`,
+      };
+    }
+
+    return {
+      success: false,
+      error:
+        "La clôture de l'ancienne carte a échoué : l'opération a été annulée, aucune nouvelle carte n'a été conservée. Réessayez.",
+    };
+  }
+
+  const consultantName = await resolveConsultantName(supabase, original.consultant_id);
+
+  try {
+    await sendGiftCardPurchaseEmails({
+      code: replacement.code,
+      typeLabel:
+        original.type === "amount"
+          ? "Carte cadeau de remplacement"
+          : "Carte cadeau de remplacement — prestation offerte",
+      amountLabel:
+        original.type === "amount" && remainingAmountCents != null
+          ? formatEuros(remainingAmountCents)
+          : null,
+      expiresAtLabel: expiresAt.toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+      buyerName: original.buyer_name,
+      buyerEmail: original.buyer_email,
+      beneficiaryName: original.beneficiary_name,
+      beneficiaryEmail: original.beneficiary_email,
+      personalMessage: null,
+      deliveryMode: "email",
+      consultantName,
+    });
+  } catch (err) {
+    console.error("[replaceExpiredGiftCard] envoi email", err);
+  }
+
+  await supabase.from("audit_logs").insert({
+    user_id: admin.id,
+    action: "gift_card_replaced_after_expiry",
+    entity_type: "gift_card",
+    entity_id: original.id,
+    metadata: {
+      original_code: original.code,
+      new_code: replacement.code,
+      note: input.note,
+    },
+  });
+
+  revalidatePath("/admin/cartes-cadeaux");
+  return {
+    success: true,
+    data: { newGiftCardId: replacement.id, code: replacement.code },
   };
 };
 

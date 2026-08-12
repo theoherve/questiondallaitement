@@ -1,5 +1,7 @@
 import { listConsultationTypesForGiftCards, listGiftCards } from "./actions";
 import { IssueGiftCardForm } from "./_components/issue-gift-card-form";
+import { RefundGiftCardButton } from "./_components/refund-gift-card-button";
+import { ReplaceGiftCardButton } from "./_components/replace-gift-card-button";
 
 const STATUS_LABELS: Record<string, string> = {
   active: "Active",
@@ -8,7 +10,40 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: "Annulée",
 };
 
+const REFUND_WINDOW_DAYS = 90;
+
 const formatEuros = (cents: number) => `${(cents / 100).toFixed(2)} €`;
+
+/**
+ * Une carte n'est proposable a la procedure post-expiration (§7.6 Exception 2)
+ * que si elle est expiree, pas deja close, et dans la fenetre de 90 jours
+ * apres `expiresAt`. Verification d'affichage seulement — l'enforcement reel
+ * est cote serveur dans `refundExpiredGiftCard`/`replaceExpiredGiftCard`.
+ */
+const isEligibleForPostExpiryAction = (card: {
+  status: string;
+  closedReason: "refunded" | "replaced" | null;
+  expiresAt: string;
+}) => {
+  if (card.status !== "expired" || card.closedReason) return false;
+  const windowEnd = new Date(card.expiresAt);
+  windowEnd.setDate(windowEnd.getDate() + REFUND_WINDOW_DAYS);
+  return windowEnd >= new Date();
+};
+
+/**
+ * Une carte emise a titre gracieux (`created_by === 'manual'`) n'est jamais
+ * remboursable (§07 module cartes cadeaux, ligne 68) meme si elle reste
+ * eligible a la procedure post-expiration par ailleurs — c'est le bouton
+ * « Prolonger » qui reste propose dans ce cas, pas « Rembourser ». Verification
+ * d'affichage seulement — l'enforcement reel est cote serveur.
+ */
+const isEligibleForRefund = (card: {
+  status: string;
+  closedReason: "refunded" | "replaced" | null;
+  expiresAt: string;
+  createdBy: "purchase" | "manual";
+}) => isEligibleForPostExpiryAction(card) && card.createdBy === "purchase";
 
 export default async function AdminGiftCardsPage() {
   const [result, consultationTypes] = await Promise.all([
@@ -35,6 +70,7 @@ export default async function AdminGiftCardsPage() {
             <th className="border-b p-2">Acheteur</th>
             <th className="border-b p-2">Expire le</th>
             <th className="border-b p-2">Utilisations</th>
+            <th className="border-b p-2">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -67,6 +103,18 @@ export default async function AdminGiftCardsPage() {
                       ))}
                     </ul>
                   </details>
+                )}
+              </td>
+              <td className="border-b p-2">
+                {isEligibleForPostExpiryAction(card) ? (
+                  <div className="flex gap-1">
+                    {isEligibleForRefund(card) && (
+                      <RefundGiftCardButton giftCardId={card.id} />
+                    )}
+                    <ReplaceGiftCardButton giftCardId={card.id} />
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
                 )}
               </td>
             </tr>
