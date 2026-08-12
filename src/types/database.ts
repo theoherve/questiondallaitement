@@ -129,6 +129,38 @@ export type WeightMeasurement = {
   created_at: string;
 };
 
+export type ConsultationNoteStatus = "draft" | "published";
+
+export type ConsultationNote = {
+  id: string;
+  booking_id: string;
+  client_id: string;
+  consultant_id: string;
+  child_id: string | null;
+  motif: string;
+  antecedents_medicaux: boolean;
+  antecedents_medicaux_detail: string | null;
+  antecedents_chirurgicaux: boolean;
+  antecedents_chirurgicaux_detail: string | null;
+  allergies: boolean;
+  allergies_detail: string | null;
+  traitements_en_cours: boolean;
+  traitements_en_cours_detail: string | null;
+  observation: string;
+  conclusion: string;
+  notes_internes: string | null;
+  status: ConsultationNoteStatus;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Vue publique d'une fiche : jamais de notes_internes, jamais de brouillon. */
+export type PublishedConsultationNote = Omit<
+  ConsultationNote,
+  "notes_internes" | "consultant_id"
+>;
+
 export type Consultant = {
   id: string;
   slug: string;
