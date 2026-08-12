@@ -273,6 +273,52 @@ describe("admin cartes-cadeaux actions", () => {
     ]);
   });
 
+  it("expose closedReason pour une carte deja close par la procedure d'expiration", async () => {
+    asAdmin();
+    const past = new Date(Date.now() - 86_400_000).toISOString();
+    tables.gift_cards = [
+      {
+        id: "gc-closed",
+        code: "CADEAU-CLOSE0",
+        type: "amount",
+        status: "cancelled",
+        initial_amount_cents: 9000,
+        buyer_name: "Jean",
+        issued_at: past,
+        expires_at: past,
+        closed_reason: "refunded",
+        gift_card_redemptions: [],
+      },
+    ];
+
+    const result = await listGiftCards();
+
+    expect(result.success).toBe(true);
+    expect(result.data![0].closedReason).toBe("refunded");
+  });
+
+  it("closedReason vaut null pour une carte non close", async () => {
+    asAdmin();
+    tables.gift_cards = [
+      {
+        id: "gc-open",
+        code: "CADEAU-OPEN00",
+        type: "amount",
+        status: "active",
+        initial_amount_cents: 9000,
+        buyer_name: "Jean",
+        issued_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 86_400_000).toISOString(),
+        closed_reason: null,
+        gift_card_redemptions: [],
+      },
+    ];
+
+    const result = await listGiftCards();
+
+    expect(result.data![0].closedReason).toBeNull();
+  });
+
   it("lists gift cards for an admin session", async () => {
     asAdmin();
     const result = await listGiftCards();

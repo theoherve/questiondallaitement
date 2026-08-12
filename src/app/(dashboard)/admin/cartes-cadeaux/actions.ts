@@ -39,6 +39,7 @@ export type GiftCardListItem = {
   buyerName: string;
   issuedAt: string;
   expiresAt: string;
+  closedReason: "refunded" | "replaced" | null;
   redemptions: GiftCardRedemptionItem[];
 };
 
@@ -49,7 +50,7 @@ export const listGiftCards = async (): Promise<ActionResult<GiftCardListItem[]>>
   const { data, error } = await supabase
     .from("gift_cards")
     .select(
-      "id, code, type, status, initial_amount_cents, buyer_name, issued_at, expires_at, gift_card_redemptions(amount_cents, redeemed_at)",
+      "id, code, type, status, initial_amount_cents, buyer_name, issued_at, expires_at, closed_reason, gift_card_redemptions(amount_cents, redeemed_at)",
     )
     .order("issued_at", { ascending: false });
 
@@ -78,6 +79,7 @@ export const listGiftCards = async (): Promise<ActionResult<GiftCardListItem[]>>
       buyerName: row.buyer_name,
       issuedAt: row.issued_at,
       expiresAt: row.expires_at,
+      closedReason: row.closed_reason ?? null,
       redemptions: redemptions
         .map((r) => ({ amountCents: r.amount_cents, redeemedAt: r.redeemed_at }))
         .sort((a, b) => a.redeemedAt.localeCompare(b.redeemedAt)),
