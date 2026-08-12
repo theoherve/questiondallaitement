@@ -451,6 +451,133 @@ export const refundExpiredGiftCard = async (input: {
   return { success: true };
 };
 
+const REPLACEMENT_VALIDITY_MONTHS = 9;
+
+/**
+ * Prolongation (§7.6 Exception 2) : emet une carte de remplacement valable
+ * 9 mois pour le solde restant de la carte expiree, puis cloture
+ * l'originale. Pas de nouvelle facture — l'achat d'origine a deja ete
+ * facture ; ce n'est pas un nouveau geste commercial mais la continuation
+ * du meme.
+ */
+export const replaceExpiredGiftCard = async (input: {
+  giftCardId: string;
+  note: string;
+}): Promise<ActionResult<{ newGiftCardId: string; code: string }>> => {
+  const admin = await requireAdmin();
+  const supabase = createAdminClient();
+
+  const loaded = await loadEligibleExpiredCard(supabase, input.giftCardId);
+  if (!loaded.ok) return { success: false, error: loaded.error };
+  const original = loaded.giftCard;
+
+  let remainingAmountCents: number | null = null;
+  if (original.type === "amount") {
+    const { data: redemptions } = await supabase
+      .from("gift_card_redemptions")
+      .select("amount_cents")
+      .eq("gift_card_id", original.id);
+    const used = (redemptions ?? []).reduce(
+      (sum: number, r: { amount_cents: number }) => sum + r.amount_cents,
+      0,
+    );
+    remainingAmountCents = (original.initial_amount_cents ?? 0) - used;
+    if (remainingAmountCents <= 0) {
+      return { success: false, error: "Cette carte n'a plus de solde à reporter." };
+    }
+  }
+
+  const issuedAt = new Date();
+  const expiresAt = new Date(issuedAt);
+  expiresAt.setMonth(expiresAt.getMonth() + REPLACEMENT_VALIDITY_MONTHS);
+
+  const replacement = await insertGiftCardWithUniqueCode(supabase, (code) => ({
+    code,
+    type: original.type,
+    initial_amount_cents: remainingAmountCents,
+    consultation_type_id: original.type === "service" ? original.consultation_type_id : null,
+    consultant_id: original.consultant_id,
+    buyer_name: original.buyer_name,
+    buyer_email: original.buyer_email,
+    beneficiary_name: original.beneficiary_name,
+    beneficiary_email: original.beneficiary_email,
+    personal_message: null,
+    delivery_mode: "email",
+    issued_at: issuedAt.toISOString(),
+    expires_at: expiresAt.toISOString(),
+    created_by: "manual",
+    created_by_admin_id: admin.id,
+    replaces_gift_card_id: original.id,
+  }));
+
+  const { error: closeError } = await supabase
+    .from("gift_cards")
+    .update({
+      status: "cancelled",
+      closed_reason: "replaced",
+      closed_at: issuedAt.toISOString(),
+      closed_note: input.note,
+    })
+    .eq("id", original.id);
+
+  if (closeError) {
+    console.error("[replaceExpiredGiftCard] cloture carte d'origine", closeError);
+    return {
+      success: false,
+      error:
+        "La nouvelle carte a été créée, mais l'ancienne n'a pas pu être clôturée — contactez le support technique.",
+    };
+  }
+
+  const consultantName = await resolveConsultantName(supabase, original.consultant_id);
+
+  try {
+    await sendGiftCardPurchaseEmails({
+      code: replacement.code,
+      typeLabel:
+        original.type === "amount"
+          ? "Carte cadeau de remplacement"
+          : "Carte cadeau de remplacement — prestation offerte",
+      amountLabel:
+        original.type === "amount" && remainingAmountCents != null
+          ? formatEuros(remainingAmountCents)
+          : null,
+      expiresAtLabel: expiresAt.toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+      buyerName: original.buyer_name,
+      buyerEmail: original.buyer_email,
+      beneficiaryName: original.beneficiary_name,
+      beneficiaryEmail: original.beneficiary_email,
+      personalMessage: null,
+      deliveryMode: "email",
+      consultantName,
+    });
+  } catch (err) {
+    console.error("[replaceExpiredGiftCard] envoi email", err);
+  }
+
+  await supabase.from("audit_logs").insert({
+    user_id: admin.id,
+    action: "gift_card_replaced_after_expiry",
+    entity_type: "gift_card",
+    entity_id: original.id,
+    metadata: {
+      original_code: original.code,
+      new_code: replacement.code,
+      note: input.note,
+    },
+  });
+
+  revalidatePath("/admin/cartes-cadeaux");
+  return {
+    success: true,
+    data: { newGiftCardId: replacement.id, code: replacement.code },
+  };
+};
+
 const formatEuros = (cents: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
     cents / 100,

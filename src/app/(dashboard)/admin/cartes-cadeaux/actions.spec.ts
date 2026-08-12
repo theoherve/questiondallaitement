@@ -51,7 +51,16 @@ const buildChain = (table: string) => {
   const rows = () => tables[table] ?? [];
   const chain: Record<string, unknown> = {
     select: () => chain,
-    eq: () => chain,
+    // `eq` doit a la fois rester chainable (`.eq().maybeSingle()`) et
+    // fonctionner comme terminal awaitable direct (`.eq()` seul, pour lire
+    // `gift_card_redemptions` sans `.maybeSingle()` derriere) — d'ou ce
+    // "then" ajoute a une copie du chain plutot qu'un simple retour de chain.
+    eq: () => ({
+      ...chain,
+      then: (
+        resolve: (v: { data: unknown[]; error: null }) => void,
+      ) => resolve({ data: rows(), error: null }),
+    }),
     order: () => Promise.resolve({ data: rows(), error: null }),
     maybeSingle: () => Promise.resolve({ data: rows()[0] ?? null, error: null }),
     single: () => Promise.resolve({ data: rows()[0] ?? null, error: null }),
@@ -78,6 +87,7 @@ import {
   listGiftCards,
   listConsultationTypesForGiftCards,
   refundExpiredGiftCard,
+  replaceExpiredGiftCard,
 } from "./actions";
 
 const BILLING_CONSULTANT = {
@@ -417,5 +427,87 @@ describe("refundExpiredGiftCard", () => {
           (r.row as { action: string }).action === "gift_card_refunded_after_expiry",
       ),
     ).toHaveLength(1);
+  });
+});
+
+describe("replaceExpiredGiftCard", () => {
+  const expiredAmountCard = (overrides: Record<string, unknown> = {}) => ({
+    id: "gc-expired",
+    code: "CADEAU-EXPIR0",
+    type: "amount",
+    status: "active",
+    initial_amount_cents: 9000,
+    consultation_type_id: null,
+    buyer_name: "Jean Martin",
+    buyer_email: "jean@example.com",
+    beneficiary_name: "Marie Dupont",
+    beneficiary_email: "marie@example.com",
+    consultant_id: "consultant-1",
+    closed_reason: null,
+    expires_at: new Date(Date.now() - 10 * 86_400_000).toISOString(),
+    ...overrides,
+  });
+
+  it("refuse le remplacement d'une carte non eligible", async () => {
+    asAdmin();
+    tables.gift_cards = [
+      expiredAmountCard({ expires_at: new Date(Date.now() + 86_400_000).toISOString() }),
+    ];
+
+    const result = await replaceExpiredGiftCard({ giftCardId: "gc-expired", note: "test" });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("refuse le remplacement d'une carte 'montant' entierement consommee", async () => {
+    asAdmin();
+    tables.gift_cards = [expiredAmountCard()];
+    tables.gift_card_redemptions = [{ gift_card_id: "gc-expired", amount_cents: 9000 }];
+
+    const result = await replaceExpiredGiftCard({ giftCardId: "gc-expired", note: "test" });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("solde");
+  });
+
+  it("emet une nouvelle carte de 9 mois avec le solde restant, et cloture l'originale", async () => {
+    asAdmin();
+    tables.gift_cards = [expiredAmountCard()];
+    tables.gift_card_redemptions = [{ gift_card_id: "gc-expired", amount_cents: 2000 }];
+
+    const result = await replaceExpiredGiftCard({
+      giftCardId: "gc-expired",
+      note: "Demande recue le 12/08",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.code).toBe("CADEAU-ABC234"); // mockInsert renvoie toujours ce code
+
+    const buildRow = mockInsert.mock.calls[0][1] as (code: string) => Record<string, unknown>;
+    const row = buildRow("CADEAU-ABC234");
+    expect(row).toMatchObject({
+      type: "amount",
+      initial_amount_cents: 7000,
+      consultant_id: "consultant-1",
+      buyer_email: "jean@example.com",
+      beneficiary_email: "marie@example.com",
+      created_by: "manual",
+      replaces_gift_card_id: "gc-expired",
+    });
+
+    const expiresAt = new Date(row.expires_at as string);
+    const expectedMonth = (new Date().getMonth() + 9) % 12;
+    expect(expiresAt.getMonth()).toBe(expectedMonth);
+
+    expect(
+      insertedRows.filter(
+        (r) =>
+          r.table === "audit_logs" &&
+          (r.row as { action: string }).action === "gift_card_replaced_after_expiry",
+      ),
+    ).toHaveLength(1);
+    expect(mockSendEmails).toHaveBeenCalledWith(
+      expect.objectContaining({ beneficiaryEmail: "marie@example.com" }),
+    );
   });
 });
