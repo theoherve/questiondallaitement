@@ -9,7 +9,7 @@ import { buildInvoicesCsv, type InvoiceExportRow } from "@/lib/invoicing/csv-exp
 import type { ActionResult } from "@/types";
 
 const INVOICE_FIELDS =
-  "id, number, issued_at, type, currency, vat_rate, amount_ht_cents, amount_vat_cents, amount_ttc_cents, description, client_name, client_email, issuer_legal_name, issuer_address, issuer_siren, issuer_vat_number, issuer_legal_form, status, promo_code, discount_cents, gross_amount_ttc_cents";
+  "id, number, issued_at, type, currency, vat_rate, amount_ht_cents, amount_vat_cents, amount_ttc_cents, description, client_name, client_email, issuer_legal_name, issuer_address, issuer_siren, issuer_vat_number, issuer_legal_form, status, promo_code, discount_cents, gross_amount_ttc_cents, origin, payment_status, issuer_iban, issuer_bic";
 
 /**
  * Renvoie la facture a la cliente (lien + PDF). Contrairement a l'envoi
@@ -227,6 +227,8 @@ export const createManualInvoice = async (input: {
       issuer_siren: consultant.billing_siren,
       issuer_vat_number: consultant.billing_vat_number,
       issuer_legal_form: consultant.billing_legal_form,
+      issuer_iban: consultant.billing_iban,
+      issuer_bic: consultant.billing_bic,
     },
   });
 
@@ -238,12 +240,7 @@ export const createManualInvoice = async (input: {
   const created = invoice as { id: string };
 
   try {
-    await sendInvoiceEmail({
-      ...(invoice as Parameters<typeof sendInvoiceEmail>[0]),
-      origin: "manual",
-      issuer_iban: consultant.billing_iban,
-      issuer_bic: consultant.billing_bic,
-    });
+    await sendInvoiceEmail(invoice as Parameters<typeof sendInvoiceEmail>[0]);
     await supabase
       .from("invoices")
       .update({ emailed_at: new Date().toISOString() })

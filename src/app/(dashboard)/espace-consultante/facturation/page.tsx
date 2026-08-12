@@ -159,18 +159,10 @@ const ConsultantInvoicesPage = async () => {
                       />
                     )}
                   {invoice.origin === "manual" && invoice.payment_status !== "paid" && (
-                    <>
-                      <SettlementButton
-                        invoiceId={invoice.id}
-                        remainingCents={remainingCentsFor(invoice)}
-                      />
-                      {isOverdue(invoice.due_date, invoice.payment_status) && (
-                        <ResendInvoiceButton
-                          invoiceId={invoice.id}
-                          alreadySent
-                        />
-                      )}
-                    </>
+                    <SettlementButton
+                      invoiceId={invoice.id}
+                      remainingCents={remainingCentsFor(invoice)}
+                    />
                   )}
                   <ResendInvoiceButton
                     invoiceId={invoice.id}

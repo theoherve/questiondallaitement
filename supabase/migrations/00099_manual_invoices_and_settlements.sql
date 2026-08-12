@@ -15,7 +15,12 @@ ALTER TABLE invoices
     CHECK (origin IN ('stripe', 'manual')),
   ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'unpaid'
     CHECK (payment_status IN ('unpaid', 'partial', 'paid')),
-  ADD COLUMN due_date TIMESTAMPTZ;
+  ADD COLUMN due_date TIMESTAMPTZ,
+  -- Coordonnees de virement, snapshotees a l'emission comme les autres
+  -- issuer_* : une facture manuelle en attente affiche les instructions de
+  -- paiement telles qu'elles etaient au moment de l'emission.
+  ADD COLUMN issuer_iban TEXT,
+  ADD COLUMN issuer_bic TEXT;
 
 -- Une facture Stripe est payee des l'emission (le paiement l'a precedee) :
 -- corrige le defaut pour les lignes existantes et toutes les futures
@@ -129,7 +134,7 @@ BEGIN
     currency, vat_rate, amount_ttc_cents, amount_ht_cents, amount_vat_cents,
     description, client_name, client_email,
     issuer_legal_name, issuer_address, issuer_siren, issuer_vat_number,
-    issuer_legal_form, status, origin, payment_status
+    issuer_legal_form, issuer_iban, issuer_bic, status, origin, payment_status
   ) VALUES (
     NULL,
     v_consultant_id,
@@ -151,6 +156,8 @@ BEGIN
     p_content->>'issuer_siren',
     p_content->>'issuer_vat_number',
     p_content->>'issuer_legal_form',
+    p_content->>'issuer_iban',
+    p_content->>'issuer_bic',
     'issued',
     'manual',
     'unpaid'
@@ -179,7 +186,10 @@ DECLARE
   v_number TEXT;
   v_row invoices;
 BEGIN
-  SELECT * INTO v_row FROM invoices WHERE payment_id = v_payment_id;
+  SELECT * INTO v_row FROM invoices
+  WHERE payment_id = v_payment_id
+    AND document_type = 'invoice'
+    AND status = 'issued';
   IF FOUND THEN
     RETURN to_jsonb(v_row);
   END IF;
@@ -200,7 +210,7 @@ BEGIN
     currency, vat_rate, amount_ttc_cents, amount_ht_cents, amount_vat_cents,
     description, client_name, client_email,
     issuer_legal_name, issuer_address, issuer_siren, issuer_vat_number,
-    issuer_legal_form, status, origin, payment_status
+    issuer_legal_form, status, document_type, origin, payment_status
   ) VALUES (
     v_payment_id,
     v_consultant_id,
@@ -222,11 +232,120 @@ BEGIN
     p_content->>'issuer_vat_number',
     p_content->>'issuer_legal_form',
     COALESCE(p_content->>'status', 'issued'),
+    'invoice',
     'stripe',
     'paid'
   )
   RETURNING * INTO v_row;
 
   RETURN to_jsonb(v_row);
+END;
+$$;
+
+/**
+ * Mise a jour de correct_invoice (00057) pour reprendre `origin` et
+ * `payment_status` de la facture originale sur l'avoir et la corrigee.
+ *
+ * Sans ca, les deux documents retombaient sur les defauts de colonne
+ * (origin='stripe', payment_status='unpaid') : corriger une facture manuelle
+ * lui faisait perdre son affichage IBAN/reglement, et corriger une facture
+ * Stripe deja payee produisait un avoir et une corrigee marques 'unpaid' —
+ * faux pour l'export comptable. Le reste de la fonction est inchange.
+ */
+CREATE OR REPLACE FUNCTION correct_invoice(p_original_id UUID, p_content JSONB)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_orig invoices;
+  v_now TIMESTAMPTZ := now();
+  v_year INT := EXTRACT(YEAR FROM v_now);
+  v_month INT := EXTRACT(MONTH FROM v_now);
+  v_seq INT;
+  v_number TEXT;
+  v_new invoices;
+BEGIN
+  SELECT * INTO v_orig FROM invoices WHERE id = p_original_id FOR UPDATE;
+
+  IF NOT FOUND OR v_orig.document_type <> 'invoice' OR v_orig.status <> 'issued' THEN
+    RAISE EXCEPTION 'Facture introuvable ou non corrigeable';
+  END IF;
+
+  -- 1. Avoir : reprend l'originale, montants negatifs.
+  INSERT INTO invoice_sequences AS s (consultant_id, year, month, last_number)
+  VALUES (v_orig.consultant_id, v_year, v_month, 1)
+  ON CONFLICT (consultant_id, year, month)
+    DO UPDATE SET last_number = s.last_number + 1
+  RETURNING s.last_number INTO v_seq;
+
+  v_number := to_char(v_year, 'FM0000') || '-' || to_char(v_month, 'FM00')
+           || '-' || to_char(v_seq, 'FM0000');
+
+  INSERT INTO invoices (
+    payment_id, consultant_id, client_id, type, reference_id,
+    number, year, month, sequence, issued_at,
+    currency, vat_rate,
+    amount_ttc_cents, amount_ht_cents, amount_vat_cents,
+    description, client_name, client_email,
+    issuer_legal_name, issuer_address, issuer_siren, issuer_vat_number,
+    issuer_legal_form, status, document_type, corrects_invoice_id,
+    origin, payment_status
+  ) VALUES (
+    v_orig.payment_id, v_orig.consultant_id, v_orig.client_id, v_orig.type,
+    v_orig.reference_id,
+    v_number, v_year, v_month, v_seq, v_now,
+    v_orig.currency, v_orig.vat_rate,
+    -v_orig.amount_ttc_cents, -v_orig.amount_ht_cents, -v_orig.amount_vat_cents,
+    'Avoir sur facture ' || v_orig.number,
+    v_orig.client_name, v_orig.client_email,
+    v_orig.issuer_legal_name, v_orig.issuer_address, v_orig.issuer_siren,
+    v_orig.issuer_vat_number, v_orig.issuer_legal_form,
+    'issued', 'credit_note', v_orig.id,
+    v_orig.origin, v_orig.payment_status
+  );
+
+  -- 2. Originale annulee (libere l'unicite partielle pour la corrigee).
+  UPDATE invoices SET status = 'cancelled' WHERE id = v_orig.id;
+
+  -- 3. Facture corrigee.
+  INSERT INTO invoice_sequences AS s (consultant_id, year, month, last_number)
+  VALUES (v_orig.consultant_id, v_year, v_month, 1)
+  ON CONFLICT (consultant_id, year, month)
+    DO UPDATE SET last_number = s.last_number + 1
+  RETURNING s.last_number INTO v_seq;
+
+  v_number := to_char(v_year, 'FM0000') || '-' || to_char(v_month, 'FM00')
+           || '-' || to_char(v_seq, 'FM0000');
+
+  INSERT INTO invoices (
+    payment_id, consultant_id, client_id, type, reference_id,
+    number, year, month, sequence, issued_at,
+    currency, vat_rate,
+    amount_ttc_cents, amount_ht_cents, amount_vat_cents,
+    description, client_name, client_email,
+    issuer_legal_name, issuer_address, issuer_siren, issuer_vat_number,
+    issuer_legal_form, status, document_type, replaces_invoice_id,
+    origin, payment_status
+  ) VALUES (
+    v_orig.payment_id, v_orig.consultant_id, v_orig.client_id, v_orig.type,
+    v_orig.reference_id,
+    v_number, v_year, v_month, v_seq, v_now,
+    v_orig.currency,
+    (p_content->>'vat_rate')::NUMERIC,
+    (p_content->>'amount_ttc_cents')::INT,
+    (p_content->>'amount_ht_cents')::INT,
+    (p_content->>'amount_vat_cents')::INT,
+    p_content->>'description',
+    v_orig.client_name, v_orig.client_email,
+    v_orig.issuer_legal_name, v_orig.issuer_address, v_orig.issuer_siren,
+    v_orig.issuer_vat_number, v_orig.issuer_legal_form,
+    'issued', 'invoice', v_orig.id,
+    v_orig.origin, v_orig.payment_status
+  )
+  RETURNING * INTO v_new;
+
+  RETURN to_jsonb(v_new);
 END;
 $$;
