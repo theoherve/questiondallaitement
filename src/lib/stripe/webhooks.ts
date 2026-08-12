@@ -18,6 +18,8 @@ import { autoAssignLabelsOnEnrollment } from "@/lib/admin-workflows/labels";
 import { sendGuestSetupEmailIfNeeded } from "@/lib/auth/password-setup";
 import { emitInvoiceForPayment } from "@/lib/invoicing/emit";
 import { cancelRedemption, confirmRedemption } from "@/lib/promo/reserve";
+import { insertGiftCardWithUniqueCode } from "@/lib/gift-cards/code";
+import { sendGiftCardPurchaseEmails } from "@/lib/gift-cards/emails";
 
 const getSupabase = () => createAdminClient();
 
@@ -56,6 +58,9 @@ export const handleCheckoutCompleted = async (
         reference_id,
         paymentIntentId ?? null,
       );
+      break;
+    case "gift_card":
+      await handleGiftCardPurchase(metadata, paymentIntentId ?? null);
       break;
   }
 
@@ -297,6 +302,57 @@ export const handleAccountDeauthorized = async (account: Stripe.Account) => {
       onboarding_completed: false,
     })
     .eq("id", consultantId);
+};
+
+export const handleGiftCardPurchase = async (
+  metadata: Record<string, string | undefined>,
+  _paymentIntentId: string | null,
+): Promise<void> => {
+  const supabase = getSupabase();
+  const isAmount = metadata.gift_card_type === "amount";
+
+  const issuedAt = new Date();
+  const expiresAt = new Date(issuedAt);
+  expiresAt.setMonth(expiresAt.getMonth() + 12);
+
+  const card = await insertGiftCardWithUniqueCode(supabase, (code) => ({
+    code,
+    type: metadata.gift_card_type,
+    initial_amount_cents: isAmount ? Number(metadata.gift_card_amount_cents) : null,
+    consultation_type_id: isAmount ? null : metadata.consultation_type_id,
+    consultant_id: metadata.consultant_id,
+    buyer_name: metadata.buyer_name,
+    buyer_email: metadata.buyer_email,
+    beneficiary_name: metadata.beneficiary_name ?? null,
+    beneficiary_email: metadata.beneficiary_email ?? null,
+    personal_message: metadata.personal_message ?? null,
+    delivery_mode: metadata.delivery_mode,
+    issued_at: issuedAt.toISOString(),
+    expires_at: expiresAt.toISOString(),
+    created_by: "purchase",
+  }));
+
+  await sendGiftCardPurchaseEmails({
+    code: card.code,
+    typeLabel: isAmount ? "Carte cadeau" : "Carte cadeau — prestation offerte",
+    amountLabel: isAmount
+      ? new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
+          Number(metadata.gift_card_amount_cents) / 100,
+        )
+      : null,
+    expiresAtLabel: new Date(card.expires_at).toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }),
+    buyerName: metadata.buyer_name ?? "",
+    buyerEmail: metadata.buyer_email ?? "",
+    beneficiaryName: metadata.beneficiary_name ?? null,
+    beneficiaryEmail: metadata.beneficiary_email ?? null,
+    personalMessage: metadata.personal_message ?? null,
+    deliveryMode: metadata.delivery_mode as "email" | "pdf",
+    consultantName: "Carole Hervé",
+  });
 };
 
 const handleFormationPurchase = async (

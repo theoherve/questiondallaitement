@@ -10,7 +10,7 @@ import {
 
 type Reader = SupabaseClient;
 
-type PaymentType = "accompagnement" | "booking" | "formation";
+type PaymentType = "accompagnement" | "booking" | "formation" | "gift_card";
 
 /**
  * Emet la facture d'un paiement confirme, designe par son identifiant.
@@ -180,6 +180,10 @@ const describeSale = async (
       .eq("id", referenceId)
       .maybeSingle();
     return data?.title ?? "Formation";
+  }
+
+  if (type === "gift_card") {
+    return "Carte cadeau";
   }
 
   // booking : le libelle porte le type de consultation quand on le retrouve.
