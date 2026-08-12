@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { sendInvoiceEmail } from "@/lib/invoicing/send-invoice-email";
 import { buildCorrectionContent } from "@/lib/invoicing/correction";
 import { buildManualInvoiceContent } from "@/lib/invoicing/manual-invoice";
+import { buildInvoicesCsv, type InvoiceExportRow } from "@/lib/invoicing/csv-export";
 import type { ActionResult } from "@/types";
 
 const INVOICE_FIELDS =
@@ -319,4 +320,67 @@ export const recordSettlement = async (input: {
 
   revalidatePath("/espace-consultante/facturation");
   return { success: true };
+};
+
+/**
+ * Export CSV factures + reglements, filtre par periode/statut/patiente
+ * (module Facturation §6.4). Pas de FEC.
+ */
+export const exportInvoicesCsv = async (filters: {
+  from?: string;
+  to?: string;
+  status?: "unpaid" | "partial" | "paid";
+  clientId?: string;
+}): Promise<ActionResult<string>> => {
+  const { supabase, user } = await getSupabaseAndUser();
+
+  let query = supabase
+    .from("invoices")
+    .select(
+      "id, number, issued_at, document_type, status, payment_status, client_name, amount_ht_cents, amount_vat_cents, amount_ttc_cents, currency",
+    )
+    .eq("consultant_id", user.id);
+
+  if (filters.from) query = query.gte("issued_at", filters.from);
+  if (filters.to) query = query.lte("issued_at", filters.to);
+  if (filters.status) query = query.eq("payment_status", filters.status);
+  if (filters.clientId) query = query.eq("client_id", filters.clientId);
+
+  const { data: invoices } = await query.order("issued_at", { ascending: false });
+  const rows = invoices ?? [];
+
+  const invoiceIds = rows.map((r: { id: string }) => r.id);
+  const { data: settlements } =
+    invoiceIds.length > 0
+      ? await supabase
+          .from("invoice_settlements")
+          .select("invoice_id, method, amount_cents, paid_at")
+          .in("invoice_id", invoiceIds)
+      : { data: [] };
+
+  const settlementsByInvoice = new Map<
+    string,
+    { method: string; amount_cents: number; paid_at: string }[]
+  >();
+  for (const s of settlements ?? []) {
+    const list = settlementsByInvoice.get(s.invoice_id) ?? [];
+    list.push({ method: s.method, amount_cents: s.amount_cents, paid_at: s.paid_at });
+    settlementsByInvoice.set(s.invoice_id, list);
+  }
+
+  const exportRows: InvoiceExportRow[] = rows.map((row) => ({
+    number: row.number,
+    issued_at: row.issued_at,
+    document_type: row.document_type,
+    status: row.status,
+    payment_status: row.payment_status,
+    client_name: row.client_name,
+    amount_ht_cents: row.amount_ht_cents,
+    amount_vat_cents: row.amount_vat_cents,
+    amount_ttc_cents: row.amount_ttc_cents,
+    currency: row.currency,
+    settlements: settlementsByInvoice.get(row.id) ?? [],
+  }));
+
+  return { success: true, data: buildInvoicesCsv(exportRows) };
 };

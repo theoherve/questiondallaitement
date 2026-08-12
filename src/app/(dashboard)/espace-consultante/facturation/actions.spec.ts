@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createManualInvoice, recordSettlement } from "./actions";
+import { createManualInvoice, recordSettlement, exportInvoicesCsv } from "./actions";
 
 const mockGetSupabaseAndUser = vi.fn();
 vi.mock("@/lib/supabase/server-auth", () => ({
@@ -219,5 +219,53 @@ describe("recordSettlement", () => {
     expect(insert).toHaveBeenCalledWith(
       expect.objectContaining({ invoice_id: "invoice-1", amount_cents: 5000 }),
     );
+  });
+});
+
+describe("exportInvoicesCsv", () => {
+  beforeEach(() => {
+    mockGetSupabaseAndUser.mockReset();
+  });
+
+  it("ne renvoie que les factures de la consultante appelante, filtrees", async () => {
+    const eq = vi.fn().mockReturnThis();
+    const gte = vi.fn().mockReturnThis();
+    const lte = vi.fn().mockReturnThis();
+    const order = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: "invoice-1",
+          number: "2026-08-0001",
+          issued_at: "2026-08-01T00:00:00.000Z",
+          document_type: "invoice",
+          status: "issued",
+          payment_status: "paid",
+          client_name: "Marie Dupont",
+          amount_ht_cents: 10000,
+          amount_vat_cents: 2000,
+          amount_ttc_cents: 12000,
+          currency: "eur",
+        },
+      ],
+    });
+    const select = vi.fn().mockReturnValue({ eq, gte, lte, order });
+
+    mockGetSupabaseAndUser.mockResolvedValue({
+      supabase: {
+        from: (name: string) => {
+          if (name === "invoice_settlements") {
+            return { select: () => ({ in: () => Promise.resolve({ data: [] }) }) };
+          }
+          return { select };
+        },
+      },
+      user: { id: CONSULTANT_ID },
+    });
+
+    const result = await exportInvoicesCsv({});
+
+    expect(result.success).toBe(true);
+    expect(result.data).toContain("2026-08-0001");
+    expect(eq).toHaveBeenCalledWith("consultant_id", CONSULTANT_ID);
   });
 });
