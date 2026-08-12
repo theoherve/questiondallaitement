@@ -20,8 +20,43 @@ import { emitInvoiceForPayment } from "@/lib/invoicing/emit";
 import { cancelRedemption, confirmRedemption } from "@/lib/promo/reserve";
 import { insertGiftCardWithUniqueCode } from "@/lib/gift-cards/code";
 import { sendGiftCardPurchaseEmails } from "@/lib/gift-cards/emails";
+import { redeemGiftCard } from "@/lib/gift-cards/redeem";
 
 const getSupabase = () => createAdminClient();
+
+/**
+ * Finalise la redemption d'une carte cadeau appliquee a une reservation, une
+ * fois le paiement confirme. Rejoue integralement la verification cote
+ * serveur (solde, validite) via redeemGiftCard : le montant en metadata
+ * n'est qu'une indication, jamais une source de verite pour l'ecriture.
+ */
+export const finalizeBookingGiftCardRedemption = async (
+  metadata: Record<string, string | undefined>,
+  bookingId: string,
+): Promise<void> => {
+  if (!metadata.gift_card_code) return;
+
+  const result = await redeemGiftCard(getSupabase(), {
+    code: metadata.gift_card_code,
+    amountCents: Number(metadata.gift_card_discount_cents ?? "0"),
+    bookingId,
+    recordedBy: metadata.consultant_id!,
+  });
+
+  if (!result.ok) {
+    // Cas rare : le solde a ete consomme entre la verification temps reel et
+    // la confirmation du paiement (deux reservations concurrentes sur le
+    // meme code). L'argent est deja encaisse ; on trace plutot que d'echouer
+    // le webhook, meme logique que logInvoiceIssue.
+    await getSupabase().from("audit_logs").insert({
+      user_id: metadata.consultant_id,
+      action: "gift_card_redemption_failed",
+      entity_type: "booking",
+      entity_id: bookingId,
+      metadata: { code: metadata.gift_card_code, error: result.error },
+    });
+  }
+};
 
 export const handleCheckoutCompleted = async (
   session: Stripe.Checkout.Session,
@@ -83,6 +118,10 @@ export const handleCheckoutCompleted = async (
   // utilisable.
   if (redemptionId && slotConflict) {
     await cancelRedemption(redemptionId);
+  }
+
+  if (type === "booking" && bookingOutcome === "created" && !slotConflict) {
+    await finalizeBookingGiftCardRedemption(metadata, reference_id);
   }
 
   const { data: paymentRow } = await getSupabase()

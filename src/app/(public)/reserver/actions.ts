@@ -20,6 +20,7 @@ import { contactSchema } from "@/validations/bookings";
 import { sendNewBookingNotification } from "@/lib/emails/send";
 import { sendGuestSetupEmailIfNeeded } from "@/lib/auth/password-setup";
 import { findOrCreateGuestProfile } from "@/lib/auth/guest-profile";
+import { lookupGiftCard } from "@/lib/gift-cards/balance";
 import { addMinutes, format, startOfDay, endOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { siteConfig } from "@/config/site";
@@ -53,6 +54,13 @@ export type BookingFormData = {
    * reglement sur place ne passe pas par la plateforme.
    */
   promo_code?: string;
+  /**
+   * Code carte cadeau saisi a l'etape paiement. Seule la valeur est
+   * transmise : la validite et le solde sont revalides cote serveur au
+   * moment de la redemption (webhook), jamais fait confiance a un montant
+   * fourni par le client.
+   */
+  giftCardCode?: string;
 };
 
 // ─── Public queries ──────────────────────────────────────────
@@ -417,6 +425,27 @@ export const computeSlotPrice = async (
   });
 };
 
+/**
+ * Verification en lecture seule, utilisee par le formulaire avant soumission
+ * pour afficher la remise attendue. N'ecrit rien : la redemption reelle a
+ * lieu dans le webhook Stripe, une fois le paiement confirme, et revalide
+ * tout cote serveur (voir finalizeBookingGiftCardRedemption).
+ */
+export const checkGiftCardForBooking = async (
+  code: string,
+  amountCents: number,
+): Promise<{ ok: true; discountCents: number } | { ok: false; error: string }> => {
+  const supabase = createAdminClient();
+  const lookup = await lookupGiftCard(supabase, code);
+
+  if (!lookup.ok) return { ok: false, error: lookup.error };
+
+  const discountCents =
+    lookup.type === "amount" ? Math.min(lookup.balanceCents!, amountCents) : amountCents;
+
+  return { ok: true, discountCents };
+};
+
 // ─── Booking creation ────────────────────────────────────────
 
 export const createBooking = async (
@@ -578,6 +607,13 @@ export const createBooking = async (
 
     const chargedCents = promo?.ok ? promo.finalCents : totalPriceCents;
 
+    let giftCardDiscountCents = 0;
+    if (formData.giftCardCode) {
+      const giftCardCheck = await checkGiftCardForBooking(formData.giftCardCode, chargedCents);
+      if (giftCardCheck.ok) giftCardDiscountCents = giftCardCheck.discountCents;
+    }
+    const finalChargedCents = Math.max(0, chargedCents - giftCardDiscountCents);
+
     if (waiverRequired) {
       const recorded = await recordWithdrawalWaiver(supabase, {
         clientId,
@@ -601,7 +637,7 @@ export const createBooking = async (
         holdOnPlatform: routing.holdOnPlatform,
         transferGroup: bookingId,
         commissionRate: routing.commissionRate,
-        priceInCents: chargedCents,
+        priceInCents: finalChargedCents,
         currency: consultationType.currency,
         productName: consultationType.title,
         productDescription: `Consultation avec ${consultantName}, ${durationOption.duration_minutes} min`,
@@ -627,6 +663,12 @@ export const createBooking = async (
                 promo_redemption_id: promo.redemptionId as string,
                 discount_cents: promo.discountCents.toString(),
                 original_price_cents: totalPriceCents.toString(),
+              }
+            : {}),
+          ...(formData.giftCardCode
+            ? {
+                gift_card_code: formData.giftCardCode,
+                gift_card_discount_cents: String(giftCardDiscountCents),
               }
             : {}),
         },
