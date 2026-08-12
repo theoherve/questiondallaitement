@@ -25,6 +25,11 @@ export type InvoiceRecord = {
   promo_code?: string | null;
   discount_cents?: number | null;
   gross_amount_ttc_cents?: number | null;
+  origin?: "stripe" | "manual";
+  payment_status?: "unpaid" | "partial" | "paid";
+  due_date?: string | null;
+  issuer_iban?: string | null;
+  issuer_bic?: string | null;
 };
 
 const CURRENCY_CODES: Record<string, string> = { eur: "EUR" };
@@ -66,6 +71,7 @@ export type InvoiceView = {
   documentLabel: string;
   /** Ligne de remise, absente si la vente s'est faite au prix plein. */
   discount?: { label: string; gross: string; amount: string };
+  paymentInstructions?: { iban: string; bic: string };
   client: { name: string; email: string };
   issuer: {
     legalName: string;
@@ -99,6 +105,12 @@ export const buildInvoiceView = (record: InvoiceRecord): InvoiceView => ({
           amount: `-${formatMoneyCents(record.discount_cents, record.currency)}`,
         },
       }
+    : {}),
+  ...(record.origin === "manual" &&
+  record.payment_status !== "paid" &&
+  record.issuer_iban &&
+  record.issuer_bic
+    ? { paymentInstructions: { iban: record.issuer_iban, bic: record.issuer_bic } }
     : {}),
   client: { name: record.client_name, email: record.client_email },
   issuer: {

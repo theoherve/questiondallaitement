@@ -90,4 +90,40 @@ describe("buildInvoiceView", () => {
     const view = buildInvoiceView({ ...record, vat_rate: 5.5 });
     expect(view.vatRateLabel).toBe("5,5 %");
   });
+
+  it("expose les instructions de virement pour une facture manuelle impayee avec IBAN", () => {
+    const view = buildInvoiceView({
+      ...record,
+      origin: "manual",
+      payment_status: "unpaid",
+      issuer_iban: "FR7630006000011234567890189",
+      issuer_bic: "BNPAFRPPXXX",
+    });
+    expect(view.paymentInstructions).toEqual({
+      iban: "FR7630006000011234567890189",
+      bic: "BNPAFRPPXXX",
+    });
+  });
+
+  it("n'expose pas d'instructions de virement une fois la facture payee", () => {
+    const view = buildInvoiceView({
+      ...record,
+      origin: "manual",
+      payment_status: "paid",
+      issuer_iban: "FR7630006000011234567890189",
+      issuer_bic: "BNPAFRPPXXX",
+    });
+    expect(view.paymentInstructions).toBeUndefined();
+  });
+
+  it("n'expose pas d'instructions pour une facture Stripe", () => {
+    const view = buildInvoiceView({
+      ...record,
+      origin: "stripe",
+      payment_status: "paid",
+      issuer_iban: "FR7630006000011234567890189",
+      issuer_bic: "BNPAFRPPXXX",
+    });
+    expect(view.paymentInstructions).toBeUndefined();
+  });
 });

@@ -79,6 +79,12 @@ const s = StyleSheet.create({
     color: "#1a1a1a",
     fontWeight: 700,
   },
+  paymentInstructions: {
+    marginTop: 16,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: "#cccccc",
+  },
   legal: {
     marginTop: 32,
     paddingTop: 8,
@@ -166,6 +172,14 @@ const InvoicePdf = ({ view }: { view: InvoiceView }) => (
           <Text>{view.ttc}</Text>
         </View>
       </View>
+
+      {view.paymentInstructions && (
+        <View style={s.paymentInstructions}>
+          <Text style={s.label}>Règlement par virement</Text>
+          <Text>IBAN : {view.paymentInstructions.iban}</Text>
+          <Text>BIC : {view.paymentInstructions.bic}</Text>
+        </View>
+      )}
 
       <Text style={s.legal}>
         TVA acquittée sur les encaissements. En cas de retard de paiement, une

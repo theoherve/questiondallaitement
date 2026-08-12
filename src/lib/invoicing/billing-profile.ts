@@ -13,6 +13,8 @@ export type BillingProfile = {
   billing_address: string | null;
   billing_siren: string | null;
   billing_vat_number: string | null;
+  billing_iban?: string | null;
+  billing_bic?: string | null;
 };
 
 /** Champs sans lesquels une facture n'est pas recevable. */
