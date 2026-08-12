@@ -1,5 +1,9 @@
-import { describe, it, expect } from "vitest";
-import { childSchema, weightMeasurementSchema } from "./children";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  childSchema,
+  weightMeasurementSchema,
+  isNotInFuture,
+} from "./children";
 
 describe("childSchema", () => {
   it("accepte un enfant valide sans prématurité", () => {
@@ -111,13 +115,26 @@ describe("weightMeasurementSchema", () => {
   });
 });
 
-import { isNotInFuture } from "./children";
-
 describe("isNotInFuture", () => {
+  // Horloge figée : sans cela, `Date.now() + 20h` ne bascule sur le jour
+  // suivant que si l'heure UTC réelle est ≥ 04:00, et le test passerait sans
+  // rien vérifier le reste du temps.
+  // À 12:00 UTC : +20h → le lendemain 08:00 UTC, donc la date produite est bien
+  // « demain », strictement postérieure à maintenant mais dans la marge de 24h.
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-15T12:00:00.000Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("accepte une date jusqu'à 24h dans le futur (marge fuseau horaire)", () => {
     const in20Hours = new Date(Date.now() + 20 * 60 * 60 * 1000)
       .toISOString()
       .slice(0, 10);
+    expect(in20Hours).toBe("2026-06-16");
     expect(isNotInFuture(in20Hours)).toBe(true);
   });
 
@@ -125,6 +142,7 @@ describe("isNotInFuture", () => {
     const inTwoDays = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
       .toISOString()
       .slice(0, 10);
+    expect(inTwoDays).toBe("2026-06-17");
     expect(isNotInFuture(inTwoDays)).toBe(false);
   });
 });
