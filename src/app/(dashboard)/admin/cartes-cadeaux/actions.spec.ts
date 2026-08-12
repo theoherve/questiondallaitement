@@ -59,6 +59,12 @@ const buildChain = (table: string) => {
       insertedRows.push({ table, row });
       return Promise.resolve({ error: null });
     },
+    update: (patch: Record<string, unknown>) => ({
+      eq: () => {
+        insertedRows.push({ table: `${table}:update`, row: patch });
+        return Promise.resolve({ error: null });
+      },
+    }),
   };
   return chain;
 };
@@ -71,6 +77,7 @@ import {
   issueGiftCardManually,
   listGiftCards,
   listConsultationTypesForGiftCards,
+  refundExpiredGiftCard,
 } from "./actions";
 
 const BILLING_CONSULTANT = {
@@ -337,5 +344,78 @@ describe("admin cartes-cadeaux actions", () => {
     expect(result.data).toEqual([
       { id: "ct-1", title: "Consultation initiale", priceCents: 9000 },
     ]);
+  });
+});
+
+describe("refundExpiredGiftCard", () => {
+  const expiredCard = (overrides: Record<string, unknown> = {}) => ({
+    id: "gc-expired",
+    code: "CADEAU-EXPIR0",
+    type: "amount",
+    status: "active",
+    initial_amount_cents: 9000,
+    consultation_type_id: null,
+    buyer_name: "Jean Martin",
+    buyer_email: "jean@example.com",
+    beneficiary_name: null,
+    beneficiary_email: null,
+    consultant_id: "consultant-1",
+    closed_reason: null,
+    expires_at: new Date(Date.now() - 10 * 86_400_000).toISOString(),
+    ...overrides,
+  });
+
+  it("refuse une carte qui n'est pas expiree", async () => {
+    asAdmin();
+    tables.gift_cards = [
+      expiredCard({ expires_at: new Date(Date.now() + 86_400_000).toISOString() }),
+    ];
+
+    const result = await refundExpiredGiftCard({ giftCardId: "gc-expired", note: "test" });
+
+    expect(result).toEqual({ success: false, error: "Cette carte n'est pas expirée." });
+  });
+
+  it("refuse une carte dont la fenetre de 90 jours est depassee", async () => {
+    asAdmin();
+    tables.gift_cards = [
+      expiredCard({
+        expires_at: new Date(Date.now() - 91 * 86_400_000).toISOString(),
+      }),
+    ];
+
+    const result = await refundExpiredGiftCard({ giftCardId: "gc-expired", note: "test" });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("90 jours");
+  });
+
+  it("refuse une carte deja close", async () => {
+    asAdmin();
+    tables.gift_cards = [expiredCard({ closed_reason: "refunded" })];
+
+    const result = await refundExpiredGiftCard({ giftCardId: "gc-expired", note: "test" });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("déjà été traitée");
+  });
+
+  it("cloture la carte et trace la decision quand elle est eligible", async () => {
+    asAdmin();
+    tables.gift_cards = [expiredCard()];
+
+    const result = await refundExpiredGiftCard({
+      giftCardId: "gc-expired",
+      note: "Virement effectué le 12/08, réf ABC123",
+    });
+
+    expect(result.success).toBe(true);
+    expect(
+      insertedRows.filter(
+        (r) =>
+          r.table === "audit_logs" &&
+          (r.row as { action: string }).action === "gift_card_refunded_after_expiry",
+      ),
+    ).toHaveLength(1);
   });
 });

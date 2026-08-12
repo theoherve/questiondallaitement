@@ -351,6 +351,106 @@ export const listConsultationTypesForGiftCards = async (): Promise<
   };
 };
 
+const REFUND_WINDOW_DAYS = 90;
+
+type EligibleExpiredCard = {
+  id: string;
+  code: string;
+  type: "amount" | "service";
+  initial_amount_cents: number | null;
+  consultation_type_id: string | null;
+  buyer_name: string;
+  buyer_email: string;
+  beneficiary_name: string | null;
+  beneficiary_email: string | null;
+  consultant_id: string;
+};
+
+/**
+ * Charge une carte et verifie son eligibilite a la procedure post-expiration
+ * (§7.6 Exception 2). Le statut stocke reste 'active' pour une carte perimee
+ * (voir `listGiftCards` : 'expired' est un statut d'affichage, jamais ecrit
+ * en base) — l'expiration reelle se lit sur `expires_at`, jamais sur
+ * `status`.
+ */
+const loadEligibleExpiredCard = async (
+  supabase: ReturnType<typeof createAdminClient>,
+  giftCardId: string,
+): Promise<{ ok: true; giftCard: EligibleExpiredCard } | { ok: false; error: string }> => {
+  const { data: card } = await supabase
+    .from("gift_cards")
+    .select(
+      "id, code, type, status, expires_at, initial_amount_cents, consultation_type_id, buyer_name, buyer_email, beneficiary_name, beneficiary_email, consultant_id, closed_reason",
+    )
+    .eq("id", giftCardId)
+    .maybeSingle();
+
+  if (!card) return { ok: false, error: "Carte cadeau introuvable." };
+  if (card.closed_reason) return { ok: false, error: "Cette carte a déjà été traitée." };
+  if (card.status !== "active") {
+    return { ok: false, error: "Cette carte n'est plus disponible pour cette procédure." };
+  }
+  if (new Date(card.expires_at) >= new Date()) {
+    return { ok: false, error: "Cette carte n'est pas expirée." };
+  }
+
+  const windowEnd = new Date(card.expires_at);
+  windowEnd.setDate(windowEnd.getDate() + REFUND_WINDOW_DAYS);
+  if (windowEnd < new Date()) {
+    return {
+      ok: false,
+      error: "Le délai de recours de 90 jours après expiration est dépassé.",
+    };
+  }
+
+  return { ok: true, giftCard: card };
+};
+
+/**
+ * Remboursement exceptionnel apres expiration (§7.6 Exception 2). Aucun
+ * appel Stripe : Carole effectue le virement elle-meme avec l'IBAN/BIC recu
+ * par email, hors app — la fenetre de remboursement Stripe/reseau carte est
+ * souvent deja fermee a 12 mois + 90 jours. Cette action se contente de
+ * tracer la decision.
+ */
+export const refundExpiredGiftCard = async (input: {
+  giftCardId: string;
+  note: string;
+}): Promise<ActionResult> => {
+  const admin = await requireAdmin();
+  const supabase = createAdminClient();
+
+  const loaded = await loadEligibleExpiredCard(supabase, input.giftCardId);
+  if (!loaded.ok) return { success: false, error: loaded.error };
+
+  const closedAt = new Date().toISOString();
+  const { error } = await supabase
+    .from("gift_cards")
+    .update({
+      status: "cancelled",
+      closed_reason: "refunded",
+      closed_at: closedAt,
+      closed_note: input.note,
+    })
+    .eq("id", loaded.giftCard.id);
+
+  if (error) {
+    console.error("[refundExpiredGiftCard]", error);
+    return { success: false, error: "Le remboursement n'a pas pu être enregistré." };
+  }
+
+  await supabase.from("audit_logs").insert({
+    user_id: admin.id,
+    action: "gift_card_refunded_after_expiry",
+    entity_type: "gift_card",
+    entity_id: loaded.giftCard.id,
+    metadata: { code: loaded.giftCard.code, note: input.note },
+  });
+
+  revalidatePath("/admin/cartes-cadeaux");
+  return { success: true };
+};
+
 const formatEuros = (cents: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
     cents / 100,
