@@ -17,8 +17,7 @@ import Link from "next/link";
 import {
   getContactDetail,
   getTags,
-  getChildrenForContact,
-  getWeightMeasurementsForContact,
+  getFamilyDossierForContact,
 } from "../../crm/actions";
 import { NotesEditor } from "../../crm/_components/notes-editor";
 import { TagAssigner } from "../../crm/_components/tag-assigner";
@@ -36,12 +35,12 @@ const ContactDetailPage = async ({
   params: Promise<{ clientId: string }>;
 }) => {
   const { clientId } = await params;
-  const [contact, allTags, children, measurementsByChild] = await Promise.all([
-    getContactDetail(clientId),
-    getTags(),
-    getChildrenForContact(clientId),
-    getWeightMeasurementsForContact(clientId),
-  ]);
+  const [contact, allTags, { children, measurementsByChild }] =
+    await Promise.all([
+      getContactDetail(clientId),
+      getTags(),
+      getFamilyDossierForContact(clientId),
+    ]);
 
   if (!contact) notFound();
 

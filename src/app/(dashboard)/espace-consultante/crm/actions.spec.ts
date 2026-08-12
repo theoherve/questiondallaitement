@@ -23,6 +23,7 @@ const {
   mockMeasurementsData,
   mockDeleteResult,
   deleteCalls,
+  bookingsNotCalls,
 } = vi.hoisted(() => ({
   mockBookingsData: { data: [] as unknown[] },
   mockAccompagnementsData: { data: [] as { id: string }[] },
@@ -32,11 +33,14 @@ const {
     data: null as { id: string; client_id: string; birth_date?: string } | null,
   },
   mockMeasurementSingleData: {
-    data: null as { id: string; child_id: string } | null,
+    data: null as
+      | { id: string; child_id: string; created_at?: string }
+      | null,
   },
   mockMeasurementsData: { data: [] as unknown[] },
   mockDeleteResult: { error: null as unknown },
   deleteCalls: [] as { table: string }[],
+  bookingsNotCalls: [] as { column: string; operator: string; value: unknown }[],
 }));
 
 /** Objet à la fois attendable (await) et chaînable, comme un query builder. */
@@ -53,9 +57,10 @@ vi.mock("@/lib/supabase/admin", () => ({
           select: () => ({
             eq: () => ({
               eq: () => ({
-                not: () => ({
-                  limit: () => Promise.resolve(mockBookingsData),
-                }),
+                not: (column: string, operator: string, value: unknown) => {
+                  bookingsNotCalls.push({ column, operator, value });
+                  return { limit: () => Promise.resolve(mockBookingsData) };
+                },
               }),
             }),
           }),
@@ -139,8 +144,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 import {
   createTag,
-  getChildrenForContact,
-  getWeightMeasurementsForContact,
+  getFamilyDossierForContact,
   addWeightMeasurementAsConsultant,
   deleteChildAsConsultant,
   deleteWeightMeasurementAsConsultant,
@@ -151,6 +155,7 @@ const resetMocks = () => {
   vi.clearAllMocks();
   insertCalls.length = 0;
   deleteCalls.length = 0;
+  bookingsNotCalls.length = 0;
   mockBookingsData.data = [];
   mockAccompagnementsData.data = [];
   mockEnrollmentsData.data = [];
@@ -223,25 +228,27 @@ describe("createTag", () => {
   });
 });
 
-describe("getChildrenForContact", () => {
+describe("getFamilyDossierForContact", () => {
   beforeEach(resetMocks);
 
-  it("retourne un tableau vide si le consultant n'a aucune relation avec ce client", async () => {
+  it("ne renvoie rien si le consultant n'a aucune relation avec ce client", async () => {
     asConsultant();
+    mockChildrenData.data = [{ id: "child-1", first_name: "Léa" }];
+    mockMeasurementsData.data = [{ id: "m1", child_id: "child-1" }];
 
-    const result = await getChildrenForContact("client-1");
+    const result = await getFamilyDossierForContact("client-1");
 
-    expect(result).toEqual([]);
+    expect(result).toEqual({ children: [], measurementsByChild: {} });
   });
 
-  it("retourne les enfants du client quand une relation de rendez-vous existe", async () => {
+  it("retourne le dossier du client quand une relation de rendez-vous existe", async () => {
     asConsultant();
     mockBookingsData.data = [{ id: "booking-1" }];
     mockChildrenData.data = [{ id: "child-1", first_name: "Léa" }];
 
-    const result = await getChildrenForContact("client-1");
+    const result = await getFamilyDossierForContact("client-1");
 
-    expect(result).toEqual([{ id: "child-1", first_name: "Léa" }]);
+    expect(result.children).toEqual([{ id: "child-1", first_name: "Léa" }]);
   });
 
   it("accepte aussi une relation via une inscription à un accompagnement", async () => {
@@ -251,23 +258,9 @@ describe("getChildrenForContact", () => {
     mockEnrollmentsData.data = [{ client_id: "client-1" }];
     mockChildrenData.data = [{ id: "child-1", first_name: "Léa" }];
 
-    const result = await getChildrenForContact("client-1");
+    const result = await getFamilyDossierForContact("client-1");
 
-    expect(result).toEqual([{ id: "child-1", first_name: "Léa" }]);
-  });
-});
-
-describe("getWeightMeasurementsForContact", () => {
-  beforeEach(resetMocks);
-
-  it("ne renvoie rien sans relation avec le client", async () => {
-    asConsultant();
-    mockChildrenData.data = [{ id: "child-1" }];
-    mockMeasurementsData.data = [{ id: "m1", child_id: "child-1" }];
-
-    const result = await getWeightMeasurementsForContact("client-1");
-
-    expect(result).toEqual({});
+    expect(result.children).toEqual([{ id: "child-1", first_name: "Léa" }]);
   });
 
   it("regroupe les pesées par enfant quand la relation existe", async () => {
@@ -279,9 +272,9 @@ describe("getWeightMeasurementsForContact", () => {
       { id: "m2", child_id: "child-1" },
     ];
 
-    const result = await getWeightMeasurementsForContact("client-1");
+    const result = await getFamilyDossierForContact("client-1");
 
-    expect(result).toEqual({
+    expect(result.measurementsByChild).toEqual({
       "child-1": [
         { id: "m1", child_id: "child-1" },
         { id: "m2", child_id: "child-1" },
@@ -330,21 +323,22 @@ describe("addWeightMeasurementAsConsultant", () => {
     expect(insertCalls).toHaveLength(0);
   });
 
-  it("refuse un rendez-vous annulé comme seule relation", async () => {
+  it("demande à Supabase d'exclure les rendez-vous annulés", async () => {
     mockChildSingleData.data = {
       id: validInput.child_id,
       client_id: "client-9",
       birth_date: "2025-01-01",
     };
-    // Le mock bookings applique déjà .not("status", "eq", "cancelled") :
-    // un rendez-vous annulé ne remonte donc pas dans la requête.
     mockBookingsData.data = [];
     mockAccompagnementsData.data = [];
 
-    const result = await addWeightMeasurementAsConsultant(validInput);
+    await addWeightMeasurementAsConsultant(validInput);
 
-    expect(result.success).toBe(false);
-    expect(insertCalls).toHaveLength(0);
+    expect(bookingsNotCalls).toContainEqual({
+      column: "status",
+      operator: "eq",
+      value: "cancelled",
+    });
   });
 
   it("refuse une pesée antérieure à la date de naissance", async () => {
@@ -457,8 +451,15 @@ describe("deleteWeightMeasurementAsConsultant", () => {
     expect(deleteCalls).toHaveLength(0);
   });
 
-  it("supprime la pesée quand la relation existe, sans fenêtre de 24h", async () => {
-    mockMeasurementSingleData.data = { id: "m1", child_id: "child-1" };
+  it("supprime la pesée quand la relation existe, même si elle a plusieurs jours (pas de fenêtre 24h côté consultante)", async () => {
+    const fiveDaysAgo = new Date(
+      Date.now() - 5 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+    mockMeasurementSingleData.data = {
+      id: "m1",
+      child_id: "child-1",
+      created_at: fiveDaysAgo,
+    };
     mockChildSingleData.data = { id: "child-1", client_id: "client-9" };
     mockBookingsData.data = [{ id: "booking-1" }];
 

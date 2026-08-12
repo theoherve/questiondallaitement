@@ -12,7 +12,6 @@ import {
 } from "recharts";
 import {
   getPercentileWeightGrams,
-  WHO_PERCENTILES,
 } from "@/lib/growth-charts/who-weight-for-age";
 import type { WeightMeasurement } from "@/types/database";
 
@@ -25,6 +24,86 @@ type ChartPoint = {
   p50: number | null;
   p85: number | null;
   p97: number | null;
+  d15: number | null;
+  d50: number | null;
+  d85: number | null;
+  d97: number | null;
+};
+
+const SOURCE_LABEL: Record<"home" | "consultation", string> = {
+  home: "Domicile",
+  consultation: "Consultation",
+};
+
+/**
+ * Couleurs de la palette du site (`globals.css`), partagées entre le rendu SVG
+ * réel des points et la légende statique sous le graphique.
+ */
+const HOME_COLOR = "#a8c4a0"; // --color-accent-sage
+const CONSULTATION_COLOR = "#a0283e"; // --color-primary-red
+const MEDIAN_COLOR = "#2d4a47"; // --color-primary-green-light
+
+const MeasuredDot = (props: {
+  cx?: number;
+  cy?: number;
+  payload?: ChartPoint;
+}) => {
+  const { cx, cy, payload } = props;
+  if (cx == null || cy == null || !payload?.source) return null;
+  if (payload.source === "consultation") {
+    const size = 5;
+    return (
+      <rect
+        x={cx - size}
+        y={cy - size}
+        width={size * 2}
+        height={size * 2}
+        transform={`rotate(45 ${cx} ${cy})`}
+        fill={CONSULTATION_COLOR}
+      />
+    );
+  }
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={4}
+      fill={HOME_COLOR}
+      stroke={CONSULTATION_COLOR}
+      strokeWidth={1}
+    />
+  );
+};
+
+const WeightTooltip = ({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { payload: ChartPoint }[];
+}) => {
+  if (!active || !payload?.length) return null;
+  const point = payload[0].payload;
+  // Points de fond (tous les 14 jours, sans pesée réelle) : on affiche au moins
+  // la médiane OMS à cet âge plutôt que rien.
+  if (point.measured == null) {
+    if (point.p50 == null) return null;
+    return (
+      <div className="rounded-lg border bg-card px-3 py-2 text-sm shadow-sm">
+        <p>{Math.round(point.ageDays / 30)} mois</p>
+        <p className="text-muted-foreground">
+          Médiane (P50) : {(point.p50 / 1000).toFixed(2)} kg
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-lg border bg-card px-3 py-2 text-sm shadow-sm">
+      <p>{Math.round(point.ageDays / 30)} mois</p>
+      <p>{(point.measured / 1000).toFixed(2)} kg</p>
+      {point.source && <p className="text-muted-foreground">{SOURCE_LABEL[point.source]}</p>}
+    </div>
+  );
 };
 
 const ageDaysBetween = (birthDate: string, measuredAt: string): number =>
@@ -32,6 +111,24 @@ const ageDaysBetween = (birthDate: string, measuredAt: string): number =>
     (new Date(measuredAt).getTime() - new Date(birthDate).getTime()) /
       (24 * 60 * 60 * 1000),
   );
+
+const withDeltas = (
+  p3: number | null,
+  p15: number | null,
+  p50: number | null,
+  p85: number | null,
+  p97: number | null,
+) => ({
+  p3,
+  p15,
+  p50,
+  p85,
+  p97,
+  d15: p15 != null && p3 != null ? p15 - p3 : null,
+  d50: p50 != null && p15 != null ? p50 - p15 : null,
+  d85: p85 != null && p50 != null ? p85 - p50 : null,
+  d97: p97 != null && p85 != null ? p97 - p85 : null,
+});
 
 const buildChartData = (
   measurements: WeightMeasurement[],
@@ -44,11 +141,13 @@ const buildChartData = (
       ageDays,
       measured: m.weight_grams,
       source: m.source,
-      p3: getPercentileWeightGrams(ageDays, sex, 3),
-      p15: getPercentileWeightGrams(ageDays, sex, 15),
-      p50: getPercentileWeightGrams(ageDays, sex, 50),
-      p85: getPercentileWeightGrams(ageDays, sex, 85),
-      p97: getPercentileWeightGrams(ageDays, sex, 97),
+      ...withDeltas(
+        getPercentileWeightGrams(ageDays, sex, 3),
+        getPercentileWeightGrams(ageDays, sex, 15),
+        getPercentileWeightGrams(ageDays, sex, 50),
+        getPercentileWeightGrams(ageDays, sex, 85),
+        getPercentileWeightGrams(ageDays, sex, 97),
+      ),
     };
   });
 
@@ -60,11 +159,13 @@ const buildChartData = (
       ageDays,
       measured: null,
       source: null,
-      p3: getPercentileWeightGrams(ageDays, sex, 3),
-      p15: getPercentileWeightGrams(ageDays, sex, 15),
-      p50: getPercentileWeightGrams(ageDays, sex, 50),
-      p85: getPercentileWeightGrams(ageDays, sex, 85),
-      p97: getPercentileWeightGrams(ageDays, sex, 97),
+      ...withDeltas(
+        getPercentileWeightGrams(ageDays, sex, 3),
+        getPercentileWeightGrams(ageDays, sex, 15),
+        getPercentileWeightGrams(ageDays, sex, 50),
+        getPercentileWeightGrams(ageDays, sex, 85),
+        getPercentileWeightGrams(ageDays, sex, 97),
+      ),
     });
   }
 
@@ -72,6 +173,8 @@ const buildChartData = (
     (a, b) => a.ageDays - b.ageDays,
   );
 };
+
+export { buildChartData, WeightTooltip };
 
 export const WeightChart = ({
   measurements,
@@ -110,44 +213,112 @@ export const WeightChart = ({
             className="fill-muted-foreground"
             width={70}
           />
-          <Tooltip
-            labelFormatter={(label) =>
-              `${Math.round(Number(label) / 30)} mois`
-            }
-            formatter={(value, name) => [
-              `${(Number(value) / 1000).toFixed(2)} kg`,
-              String(name),
-            ]}
-            contentStyle={{
-              backgroundColor: "hsl(var(--card))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "0.5rem",
-              fontSize: "0.875rem",
-            }}
+          <Tooltip content={<WeightTooltip />} />
+          <Area
+            dataKey="p3"
+            stackId="who"
+            stroke="none"
+            fill="transparent"
+            connectNulls
+            name="P3"
+            isAnimationActive={false}
+            legendType="none"
           />
-          {WHO_PERCENTILES.map((p) => (
-            <Area
-              key={p}
-              dataKey={`p${p}`}
-              stroke="none"
-              fill="#9ca3af"
-              fillOpacity={p === 50 ? 0 : 0.08}
-              connectNulls
-              name={`P${p}`}
-              isAnimationActive={false}
-            />
-          ))}
+          <Area
+            dataKey="d15"
+            stackId="who"
+            stroke="none"
+            fill="#e8c98a"
+            fillOpacity={0.18}
+            connectNulls
+            name="P3–P15"
+            isAnimationActive={false}
+            legendType="none"
+          />
+          <Area
+            dataKey="d50"
+            stackId="who"
+            stroke="none"
+            fill="#a8c4a0"
+            fillOpacity={0.3}
+            connectNulls
+            name="P15–P50"
+            isAnimationActive={false}
+            legendType="none"
+          />
+          <Area
+            dataKey="d85"
+            stackId="who"
+            stroke="none"
+            fill="#a8c4a0"
+            fillOpacity={0.3}
+            connectNulls
+            name="P50–P85"
+            isAnimationActive={false}
+            legendType="none"
+          />
+          <Area
+            dataKey="d97"
+            stackId="who"
+            stroke="none"
+            fill="#e8c98a"
+            fillOpacity={0.18}
+            connectNulls
+            name="P85–P97"
+            isAnimationActive={false}
+            legendType="none"
+          />
+          <Line
+            dataKey="p50"
+            className="who-median-line"
+            stroke={MEDIAN_COLOR}
+            strokeWidth={1.5}
+            strokeDasharray="4 4"
+            dot={false}
+            connectNulls
+            name="Médiane (P50)"
+            isAnimationActive={false}
+          />
           <Line
             dataKey="measured"
-            stroke="#a0283e"
+            stroke={CONSULTATION_COLOR}
             strokeWidth={2}
-            dot={{ r: 4 }}
+            dot={<MeasuredDot />}
+            activeDot={<MeasuredDot />}
             connectNulls
             name="Poids de l'enfant"
             isAnimationActive={false}
           />
         </ComposedChart>
       </ResponsiveContainer>
+      <div className="flex justify-center gap-4 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <svg width="10" height="10" aria-hidden="true">
+            <circle
+              cx="5"
+              cy="5"
+              r="4"
+              fill={HOME_COLOR}
+              stroke={CONSULTATION_COLOR}
+              strokeWidth="1"
+            />
+          </svg>
+          Pesée à domicile
+        </span>
+        <span className="flex items-center gap-1.5">
+          <svg width="10" height="10" aria-hidden="true">
+            <rect
+              x="1"
+              y="1"
+              width="8"
+              height="8"
+              transform="rotate(45 5 5)"
+              fill={CONSULTATION_COLOR}
+            />
+          </svg>
+          Pesée en consultation
+        </span>
+      </div>
       <p className="text-center text-xs text-muted-foreground">
         Ces courbes sont indicatives et ne remplacent pas un avis médical.
       </p>

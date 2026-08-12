@@ -170,8 +170,29 @@ export const deleteWeightMeasurement = async (
     .eq("id", measurementId)
     .single();
 
-  if (!measurement || measurement.recorded_by !== user.id) {
+  if (!measurement) {
     return { success: false, error: "Pesée introuvable" };
+  }
+
+  // Avant de distinguer les deux messages d'erreur, on s'assure que la pesée
+  // concerne bien un enfant de cet utilisateur : sinon le message « saisie par
+  // votre consultante » serait faux et confirmerait l'existence de l'UUID.
+  const { data: child } = await supabase
+    .from("children")
+    .select("id")
+    .eq("id", measurement.child_id)
+    .eq("client_id", user.id)
+    .single();
+  if (!child) {
+    return { success: false, error: "Pesée introuvable" };
+  }
+
+  if (measurement.recorded_by !== user.id) {
+    return {
+      success: false,
+      error:
+        "Cette pesée a été saisie par votre consultante, vous ne pouvez pas la supprimer.",
+    };
   }
 
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;

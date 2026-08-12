@@ -424,63 +424,55 @@ const hasClientRelationship = async (
   return !!enrollmentLink && enrollmentLink.length > 0;
 };
 
-export const getChildrenForContact = async (
+/**
+ * Charge en une seule action le dossier famille d'un client : ses enfants et
+ * leurs pesées regroupées par enfant.
+ *
+ * La relation consultante/client est vérifiée ici, une seule fois, et n'est
+ * jamais fournie par l'appelant : une server action est un endpoint HTTP dont
+ * les arguments sont entièrement contrôlés par le client, donc aucun paramètre
+ * ne doit pouvoir court-circuiter ce contrôle d'accès. La liste des enfants est
+ * re-dérivée depuis la base : aucun identifiant d'enfant fourni par l'appelant
+ * n'est utilisé tel quel.
+ */
+export const getFamilyDossierForContact = async (
   clientId: string,
-): Promise<Child[]> => {
+): Promise<{
+  children: Child[];
+  measurementsByChild: Record<string, WeightMeasurement[]>;
+}> => {
   const user = await requireConsultant();
   const supabase = createAdminClient();
 
   if (!(await hasClientRelationship(supabase, user.id, clientId))) {
-    return [];
+    return { children: [], measurementsByChild: {} };
   }
 
-  const { data } = await supabase
+  const { data: childrenData } = await supabase
     .from("children")
     .select("*")
     .eq("client_id", clientId)
     .order("birth_date", { ascending: false });
+  const children = childrenData ?? [];
 
-  return data ?? [];
-};
-
-/**
- * Lit les pesées des enfants d'un client, en revérifiant elle-même la relation
- * consultante/client et en re-dérivant la liste des enfants depuis la base :
- * aucun identifiant d'enfant fourni par l'appelant n'est utilisé tel quel.
- */
-export const getWeightMeasurementsForContact = async (
-  clientId: string,
-): Promise<Record<string, WeightMeasurement[]>> => {
-  const user = await requireConsultant();
-  const supabase = createAdminClient();
-
-  if (!(await hasClientRelationship(supabase, user.id, clientId))) {
-    return {};
-  }
-
-  const { data: children } = await supabase
-    .from("children")
-    .select("id")
-    .eq("client_id", clientId);
-
-  const childIds = (children ?? []).map((c) => c.id);
-  if (childIds.length === 0) return {};
-
-  const { data: measurements } = await supabase
-    .from("weight_measurements")
-    .select("*")
-    .in("child_id", childIds)
-    .order("measured_at", { ascending: true });
-
-  const byChild: Record<string, WeightMeasurement[]> = {};
+  const childIds = children.map((c: Child) => c.id);
+  const measurementsByChild: Record<string, WeightMeasurement[]> = {};
   for (const childId of childIds) {
-    byChild[childId] = [];
-  }
-  for (const measurement of (measurements ?? []) as WeightMeasurement[]) {
-    byChild[measurement.child_id]?.push(measurement);
+    measurementsByChild[childId] = [];
   }
 
-  return byChild;
+  if (childIds.length > 0) {
+    const { data: measurements } = await supabase
+      .from("weight_measurements")
+      .select("*")
+      .in("child_id", childIds)
+      .order("measured_at", { ascending: true });
+    for (const measurement of (measurements ?? []) as WeightMeasurement[]) {
+      measurementsByChild[measurement.child_id]?.push(measurement);
+    }
+  }
+
+  return { children, measurementsByChild };
 };
 
 export const deleteChildAsConsultant = async (
