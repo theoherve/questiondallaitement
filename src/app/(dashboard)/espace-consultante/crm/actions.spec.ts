@@ -464,8 +464,15 @@ describe("deleteWeightMeasurementAsConsultant", () => {
     expect(deleteCalls).toHaveLength(0);
   });
 
-  it("supprime la pesée quand la relation existe, sans fenêtre de 24h", async () => {
-    mockMeasurementSingleData.data = { id: "m1", child_id: "child-1" };
+  it("supprime la pesée quand la relation existe, même si elle a plusieurs jours (pas de fenêtre 24h côté consultante)", async () => {
+    const fiveDaysAgo = new Date(
+      Date.now() - 5 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+    mockMeasurementSingleData.data = {
+      id: "m1",
+      child_id: "child-1",
+      created_at: fiveDaysAgo,
+    };
     mockChildSingleData.data = { id: "child-1", client_id: "client-9" };
     mockBookingsData.data = [{ id: "booking-1" }];
 
