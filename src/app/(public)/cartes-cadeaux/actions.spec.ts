@@ -1,19 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+// ─── Supabase mock ────────────────────────────────────────────
+//
+// Chaque test contrôle la séquence des appels from() via mockImplementationOnce,
+// pour distinguer les requêtes sur `consultants` (lecture principale), sur le
+// drapeau `is_platform_owner` (routage) et sur le profil de facturation
+// (consultantCanSell) — même si elles ciblent toutes la table `consultants`.
+
+const mockFrom = vi.fn();
+
 vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: () => ({
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          maybeSingle: async () => ({
-            data: { id: "consultant-1", stripe_account_id: "acct_1", commission_rate: 15 },
-            error: null,
-          }),
-        }),
-      }),
-    }),
-  }),
+  createAdminClient: () => ({ from: mockFrom }),
 }));
+
+const createChain = (singleData: unknown) => {
+  const chain: Record<string, unknown> = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockResolvedValue({ data: singleData, error: null }),
+  };
+  return chain;
+};
 
 const mockCreateCheckoutSession = vi.fn(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -28,8 +35,37 @@ vi.mock("@/lib/stripe/connect", () => ({
 
 import { purchaseGiftCard } from "./actions";
 
+const CONSULTANT = {
+  id: "consultant-1",
+  stripe_account_id: "acct_1",
+  commission_rate: 15,
+};
+
+const CONSULTANT_BILLING_COMPLETE = {
+  billing_legal_name: "Sophie Martin",
+  billing_address: "1 rue des Lilas, 44000 Nantes",
+  billing_siren: "540075819",
+  billing_vat_number: "FR94540075819",
+  billing_legal_form: "Entreprise individuelle",
+};
+
+/**
+ * Séquence par défaut pour un achat de type "amount" (pas de requête
+ * consultation_types) : 1. consultants (lecture principale), 2. is_platform_owner,
+ * 3. profil de facturation.
+ */
+const mockDefaultSequence = () => {
+  mockFrom
+    .mockImplementationOnce(() => createChain(CONSULTANT))
+    .mockImplementationOnce(() => createChain({ is_platform_owner: false }))
+    .mockImplementation(() => createChain(CONSULTANT_BILLING_COMPLETE));
+};
+
 describe("purchaseGiftCard", () => {
-  beforeEach(() => mockCreateCheckoutSession.mockClear());
+  beforeEach(() => {
+    mockCreateCheckoutSession.mockClear();
+    mockFrom.mockReset();
+  });
 
   it("rejects an amount not in the predefined list", async () => {
     const result = await purchaseGiftCard({
@@ -69,6 +105,8 @@ describe("purchaseGiftCard", () => {
   });
 
   it("creates a checkout session with gift_card metadata for a valid amount card", async () => {
+    mockDefaultSequence();
+
     const result = await purchaseGiftCard({
       type: "amount",
       amountCents: 9000,
@@ -86,6 +124,9 @@ describe("purchaseGiftCard", () => {
       expect.objectContaining({
         priceInCents: 9000,
         customerEmail: "jean@example.com",
+        holdOnPlatform: false,
+        consultantStripeAccountId: "acct_1",
+        commissionRate: 15,
         metadata: expect.objectContaining({
           type: "gift_card",
           gift_card_type: "amount",
@@ -95,5 +136,79 @@ describe("purchaseGiftCard", () => {
         }),
       }),
     );
+  });
+
+  it("holds funds on the platform without commission when the consultant is the platform owner", async () => {
+    // Carole est la plateforme : router vers un compte connecte qui lui
+    // appartient serait un aller-retour inutile (cf. 00051), et une commission
+    // qu'elle se verserait a elle-meme n'a pas de sens.
+    mockFrom
+      .mockImplementationOnce(() =>
+        createChain({ ...CONSULTANT, stripe_account_id: null }),
+      )
+      .mockImplementationOnce(() => createChain({ is_platform_owner: true }))
+      .mockImplementation(() => createChain(CONSULTANT_BILLING_COMPLETE));
+
+    const result = await purchaseGiftCard({
+      type: "amount",
+      amountCents: 9000,
+      buyerName: "Jean Martin",
+      buyerEmail: "jean@example.com",
+      deliveryMode: "email",
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockCreateCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        holdOnPlatform: true,
+        consultantStripeAccountId: undefined,
+        commissionRate: 0,
+      }),
+    );
+  });
+
+  it("returns a clean error instead of throwing when the consultant has no Stripe account", async () => {
+    // Consultante tierce sans compte connecte : avant le fix, holdOnPlatform
+    // n'etait jamais positionne et l'appel Stripe partait avec
+    // transfer_data.destination undefined, provoquant une exception non geree.
+    mockFrom
+      .mockImplementationOnce(() =>
+        createChain({ ...CONSULTANT, stripe_account_id: null }),
+      )
+      .mockImplementationOnce(() => createChain({ is_platform_owner: false }))
+      .mockImplementation(() => createChain(CONSULTANT_BILLING_COMPLETE));
+
+    const result = await purchaseGiftCard({
+      type: "amount",
+      amountCents: 9000,
+      buyerName: "Jean Martin",
+      buyerEmail: "jean@example.com",
+      deliveryMode: "email",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("Stripe");
+    expect(mockCreateCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it("returns a clean error when the consultant's billing profile is incomplete", async () => {
+    mockFrom
+      .mockImplementationOnce(() => createChain(CONSULTANT))
+      .mockImplementationOnce(() => createChain({ is_platform_owner: false }))
+      .mockImplementation(() =>
+        createChain({ ...CONSULTANT_BILLING_COMPLETE, billing_legal_name: null }),
+      );
+
+    const result = await purchaseGiftCard({
+      type: "amount",
+      amountCents: 9000,
+      buyerName: "Jean Martin",
+      buyerEmail: "jean@example.com",
+      deliveryMode: "email",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("facturation");
+    expect(mockCreateCheckoutSession).not.toHaveBeenCalled();
   });
 });

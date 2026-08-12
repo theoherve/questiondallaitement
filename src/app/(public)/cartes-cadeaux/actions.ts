@@ -2,6 +2,11 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createCheckoutSession } from "@/lib/stripe/connect";
+import {
+  routeSale,
+  isPlatformOwnerConsultant,
+} from "@/lib/stripe/sale-routing";
+import { consultantCanSell } from "@/lib/invoicing/consultant-billing";
 import { siteConfig } from "@/config/site";
 import type { ActionResult } from "@/types";
 
@@ -53,9 +58,38 @@ export const purchaseGiftCard = async (
     return { success: false, error: "Prestation introuvable." };
   }
 
-  const session = await createCheckoutSession({
-    consultantStripeAccountId: consultant.stripe_account_id ?? undefined,
+  // Ou vont les fonds : chez la consultante, ou sur la plateforme quand
+  // c'est sa proprietaire qui vend (voir sale-routing.ts).
+  const isPlatformOwner = await isPlatformOwnerConsultant(supabase, consultant.id);
+
+  const routing = routeSale({
+    isPlatformOwner,
+    stripeAccountId: consultant.stripe_account_id,
     commissionRate: consultant.commission_rate,
+    hasCollaborators: false,
+  });
+
+  if (!routing) {
+    return { success: false, error: "La consultante n'a pas configuré son compte Stripe" };
+  }
+
+  // Pas de vente en ligne sans pouvoir facturer : la facture est emise a
+  // l'encaissement, et une facture sans les mentions obligatoires de
+  // l'emettrice n'a aucune valeur. On refuse plutot que d'encaisser sans
+  // pouvoir facturer.
+  if (!(await consultantCanSell(supabase, consultant.id))) {
+    return {
+      success: false,
+      error:
+        "La consultante n'a pas complété ses informations de facturation. " +
+        "L'achat de carte cadeau est momentanément indisponible.",
+    };
+  }
+
+  const session = await createCheckoutSession({
+    consultantStripeAccountId: routing.destinationAccountId ?? undefined,
+    holdOnPlatform: routing.holdOnPlatform,
+    commissionRate: routing.commissionRate,
     priceInCents,
     currency: "eur",
     productName: "Carte cadeau",
