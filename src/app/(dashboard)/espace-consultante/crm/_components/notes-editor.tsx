@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pencil, Loader2, X, Check } from "lucide-react";
-import { createNote, updateNote } from "../actions";
+import { createNote, updateNote, getNoteHistory } from "../actions";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -15,6 +15,8 @@ type Note = {
   created_at: string;
   updated_at: string;
 };
+
+type HistoryEntry = { id: string; content: string; edited_at: string };
 
 export const NotesEditor = ({
   clientId,
@@ -27,6 +29,27 @@ export const NotesEditor = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [openHistoryId, setOpenHistoryId] = useState<string | null>(null);
+  const [historyByNote, setHistoryByNote] = useState<
+    Record<string, HistoryEntry[]>
+  >({});
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  const toggleHistory = (noteId: string) => {
+    if (openHistoryId === noteId) {
+      setOpenHistoryId(null);
+      return;
+    }
+    setOpenHistoryId(noteId);
+    if (!historyByNote[noteId]) {
+      setHistoryLoading(true);
+      getNoteHistory(noteId)
+        .then((entries) => {
+          setHistoryByNote((prev) => ({ ...prev, [noteId]: entries }));
+        })
+        .finally(() => setHistoryLoading(false));
+    }
+  };
 
   const handleCreate = () => {
     if (!newContent.trim()) return;
@@ -150,6 +173,41 @@ export const NotesEditor = ({
                     </Button>
                   </div>
                 </div>
+                {note.updated_at !== note.created_at && (
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      className="text-xs text-muted-foreground underline"
+                      onClick={() => toggleHistory(note.id)}
+                    >
+                      Voir l&apos;historique
+                    </button>
+                    {openHistoryId === note.id && (
+                      <div className="mt-2 space-y-2 border-l-2 pl-3">
+                        {historyLoading && !historyByNote[note.id] ? (
+                          <p className="text-xs text-muted-foreground">
+                            Chargement…
+                          </p>
+                        ) : (
+                          (historyByNote[note.id] ?? []).map((entry) => (
+                            <div key={entry.id}>
+                              <p className="text-xs text-muted-foreground">
+                                {format(
+                                  new Date(entry.edited_at),
+                                  "d MMM yyyy 'à' HH:mm",
+                                  { locale: fr },
+                                )}
+                              </p>
+                              <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                                {entry.content}
+                              </p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>
