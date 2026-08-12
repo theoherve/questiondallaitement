@@ -125,6 +125,11 @@ export const clientNav: NavItem[] = [
     iconKey: "Baby",
   },
   {
+    title: "Mes consultations",
+    href: "/espace-client/consultations",
+    iconKey: "ClipboardList",
+  },
+  {
     title: "Mes réservations",
     href: "/espace-client/reservations",
     iconKey: "CalendarDays",
