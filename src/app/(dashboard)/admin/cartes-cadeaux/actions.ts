@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { insertGiftCardWithUniqueCode } from "@/lib/gift-cards/code";
-import { sendGiftCardPurchaseEmails } from "@/lib/gift-cards/emails";
+import {
+  sendGiftCardPurchaseEmails,
+  sendGiftCardRefundConfirmationEmail,
+} from "@/lib/gift-cards/emails";
 import { findOrCreateGuestProfile } from "@/lib/auth/guest-profile";
 import { STANDARD_VAT_RATE } from "@/lib/invoicing/vat";
 import type { ActionResult } from "@/types";
@@ -40,6 +43,7 @@ export type GiftCardListItem = {
   issuedAt: string;
   expiresAt: string;
   closedReason: "refunded" | "replaced" | null;
+  createdBy: "purchase" | "manual";
   redemptions: GiftCardRedemptionItem[];
 };
 
@@ -50,7 +54,7 @@ export const listGiftCards = async (): Promise<ActionResult<GiftCardListItem[]>>
   const { data, error } = await supabase
     .from("gift_cards")
     .select(
-      "id, code, type, status, initial_amount_cents, buyer_name, issued_at, expires_at, closed_reason, gift_card_redemptions(amount_cents, redeemed_at)",
+      "id, code, type, status, initial_amount_cents, buyer_name, issued_at, expires_at, closed_reason, created_by, gift_card_redemptions(amount_cents, redeemed_at)",
     )
     .order("issued_at", { ascending: false });
 
@@ -80,6 +84,7 @@ export const listGiftCards = async (): Promise<ActionResult<GiftCardListItem[]>>
       issuedAt: row.issued_at,
       expiresAt: row.expires_at,
       closedReason: row.closed_reason ?? null,
+      createdBy: row.created_by,
       redemptions: redemptions
         .map((r) => ({ amountCents: r.amount_cents, redeemedAt: r.redeemed_at }))
         .sort((a, b) => a.redeemedAt.localeCompare(b.redeemedAt)),
@@ -364,6 +369,7 @@ type EligibleExpiredCard = {
   beneficiary_name: string | null;
   beneficiary_email: string | null;
   consultant_id: string;
+  created_by: "purchase" | "manual";
 };
 
 /**
@@ -380,7 +386,7 @@ const loadEligibleExpiredCard = async (
   const { data: card } = await supabase
     .from("gift_cards")
     .select(
-      "id, code, type, status, expires_at, initial_amount_cents, consultation_type_id, buyer_name, buyer_email, beneficiary_name, beneficiary_email, consultant_id, closed_reason",
+      "id, code, type, status, expires_at, initial_amount_cents, consultation_type_id, buyer_name, buyer_email, beneficiary_name, beneficiary_email, consultant_id, closed_reason, created_by",
     )
     .eq("id", giftCardId)
     .maybeSingle();
@@ -423,6 +429,18 @@ export const refundExpiredGiftCard = async (input: {
   const loaded = await loadEligibleExpiredCard(supabase, input.giftCardId);
   if (!loaded.ok) return { success: false, error: loaded.error };
 
+  // Une carte emise a titre gracieux (promotion, jeu, geste commercial —
+  // `created_by === 'manual'`) n'a jamais ete payee : la rembourser
+  // reviendrait a verser de l'argent reel pour un solde qui n'en a jamais
+  // coute. La prolongation reste en revanche autorisee pour ces cartes,
+  // c'est ce guard qui les distingue (§07 module cartes cadeaux, ligne 68).
+  if (loaded.giftCard.created_by !== "purchase") {
+    return {
+      success: false,
+      error: "Une carte offerte à titre gracieux n'est pas remboursable.",
+    };
+  }
+
   const closedAt = new Date().toISOString();
   const { error } = await supabase
     .from("gift_cards")
@@ -432,7 +450,8 @@ export const refundExpiredGiftCard = async (input: {
       closed_at: closedAt,
       closed_note: input.note,
     })
-    .eq("id", loaded.giftCard.id);
+    .eq("id", loaded.giftCard.id)
+    .is("closed_reason", null);
 
   if (error) {
     console.error("[refundExpiredGiftCard]", error);
@@ -446,6 +465,20 @@ export const refundExpiredGiftCard = async (input: {
     entity_id: loaded.giftCard.id,
     metadata: { code: loaded.giftCard.code, note: input.note },
   });
+
+  // Confirmation non bloquante (design §69) : la beneficiaire (ou l'acheteuse,
+  // faute de beneficiaire) doit savoir que sa carte est desormais close. Un
+  // echec d'envoi ne doit pas remettre en cause la cloture qui vient d'etre
+  // enregistree.
+  try {
+    await sendGiftCardRefundConfirmationEmail({
+      code: loaded.giftCard.code,
+      recipientName: loaded.giftCard.beneficiary_name ?? loaded.giftCard.buyer_name,
+      recipientEmail: loaded.giftCard.beneficiary_email ?? loaded.giftCard.buyer_email,
+    });
+  } catch (err) {
+    console.error("[refundExpiredGiftCard] envoi email", err);
+  }
 
   revalidatePath("/admin/cartes-cadeaux");
   return { success: true };
@@ -518,7 +551,8 @@ export const replaceExpiredGiftCard = async (input: {
       closed_at: issuedAt.toISOString(),
       closed_note: input.note,
     })
-    .eq("id", original.id);
+    .eq("id", original.id)
+    .is("closed_reason", null);
 
   if (closeError) {
     console.error("[replaceExpiredGiftCard] cloture carte d'origine", closeError);

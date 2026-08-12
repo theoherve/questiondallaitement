@@ -24,8 +24,10 @@ vi.mock("@/lib/gift-cards/code", () => ({
 }));
 
 const mockSendEmails = vi.fn(async (..._args: unknown[]) => {});
+const mockSendRefundEmail = vi.fn(async (..._args: unknown[]) => {});
 vi.mock("@/lib/gift-cards/emails", () => ({
   sendGiftCardPurchaseEmails: (...args: unknown[]) => mockSendEmails(...args),
+  sendGiftCardRefundConfirmationEmail: (...args: unknown[]) => mockSendRefundEmail(...args),
 }));
 
 const mockGuestProfile = vi.fn(async (..._args: unknown[]) => ({
@@ -86,11 +88,21 @@ const buildChain = (table: string) => {
     },
     update: (patch: Record<string, unknown>) => ({
       eq: () => {
-        if (forcedUpdateError.table === table) {
-          return Promise.resolve({ error: forcedUpdateError.error });
-        }
-        insertedRows.push({ table: `${table}:update`, row: patch });
-        return Promise.resolve({ error: null });
+        // `.eq(id)` doit rester chainable avec `.is(...)` (garde TOCTOU des
+        // actions post-expiration) sans executer l'effet (push / erreur
+        // forcee) deux fois : le calcul n'a lieu qu'a la resolution finale,
+        // que ce soit directement sur `.eq()` ou apres `.is()`.
+        const settle = () => {
+          if (forcedUpdateError.table === table) {
+            return { error: forcedUpdateError.error };
+          }
+          insertedRows.push({ table: `${table}:update`, row: patch });
+          return { error: null };
+        };
+        return {
+          then: (resolve: (v: { error: unknown }) => void) => resolve(settle()),
+          is: () => Promise.resolve(settle()),
+        };
       },
     }),
     delete: () => ({
@@ -146,6 +158,8 @@ beforeEach(() => {
   forcedDeleteError.table = null;
   forcedDeleteError.error = null;
   deletedRows.length = 0;
+  insertedRows.length = 0;
+  mockSendRefundEmail.mockClear();
 });
 
 describe("admin cartes-cadeaux actions", () => {
@@ -410,6 +424,7 @@ describe("refundExpiredGiftCard", () => {
     beneficiary_email: null,
     consultant_id: "consultant-1",
     closed_reason: null,
+    created_by: "purchase",
     expires_at: new Date(Date.now() - 10 * 86_400_000).toISOString(),
     ...overrides,
   });
@@ -467,6 +482,51 @@ describe("refundExpiredGiftCard", () => {
       ),
     ).toHaveLength(1);
   });
+
+  it("envoie un email de confirmation apres remboursement", async () => {
+    asAdmin();
+    tables.gift_cards = [expiredCard()];
+
+    await refundExpiredGiftCard({ giftCardId: "gc-expired", note: "test" });
+
+    expect(mockSendRefundEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: "CADEAU-EXPIR0",
+        recipientEmail: "jean@example.com",
+      }),
+    );
+  });
+
+  it("reste un succes meme si l'email de confirmation echoue", async () => {
+    asAdmin();
+    tables.gift_cards = [expiredCard()];
+    mockSendRefundEmail.mockRejectedValueOnce(new Error("resend down"));
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await refundExpiredGiftCard({ giftCardId: "gc-expired", note: "test" });
+
+    expect(result.success).toBe(true);
+    expect(
+      insertedRows.filter((r) => r.table === "gift_cards:update"),
+    ).toHaveLength(1);
+
+    spy.mockRestore();
+  });
+
+  it("refuse le remboursement d'une carte emise a titre gracieux (created_by=manual)", async () => {
+    asAdmin();
+    tables.gift_cards = [expiredCard({ created_by: "manual" })];
+
+    const result = await refundExpiredGiftCard({ giftCardId: "gc-expired", note: "test" });
+
+    expect(result).toEqual({
+      success: false,
+      error: "Une carte offerte à titre gracieux n'est pas remboursable.",
+    });
+    expect(
+      insertedRows.filter((r) => r.table === "gift_cards:update"),
+    ).toHaveLength(0);
+  });
 });
 
 describe("replaceExpiredGiftCard", () => {
@@ -483,6 +543,10 @@ describe("replaceExpiredGiftCard", () => {
     beneficiary_email: "marie@example.com",
     consultant_id: "consultant-1",
     closed_reason: null,
+    // Cartes emises a titre gracieux par defaut ici : le remplacement doit
+    // rester possible pour elles (seul le remboursement, teste plus haut, les
+    // exclut) — voir l'assertion `created_by` plus bas.
+    created_by: "manual",
     expires_at: new Date(Date.now() - 10 * 86_400_000).toISOString(),
     ...overrides,
   });
@@ -511,6 +575,9 @@ describe("replaceExpiredGiftCard", () => {
 
   it("emet une nouvelle carte de 9 mois avec le solde restant, et cloture l'originale", async () => {
     asAdmin();
+    // La carte d'origine ici est `created_by: 'manual'` (fixture par defaut) :
+    // la prolongation reste autorisee pour une carte offerte a titre gracieux,
+    // seul le remboursement l'exclut (voir describe("refundExpiredGiftCard")).
     tables.gift_cards = [expiredAmountCard()];
     tables.gift_card_redemptions = [{ gift_card_id: "gc-expired", amount_cents: 2000 }];
 

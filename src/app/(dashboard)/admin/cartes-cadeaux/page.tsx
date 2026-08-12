@@ -31,6 +31,20 @@ const isEligibleForPostExpiryAction = (card: {
   return windowEnd >= new Date();
 };
 
+/**
+ * Une carte emise a titre gracieux (`created_by === 'manual'`) n'est jamais
+ * remboursable (§07 module cartes cadeaux, ligne 68) meme si elle reste
+ * eligible a la procedure post-expiration par ailleurs — c'est le bouton
+ * « Prolonger » qui reste propose dans ce cas, pas « Rembourser ». Verification
+ * d'affichage seulement — l'enforcement reel est cote serveur.
+ */
+const isEligibleForRefund = (card: {
+  status: string;
+  closedReason: "refunded" | "replaced" | null;
+  expiresAt: string;
+  createdBy: "purchase" | "manual";
+}) => isEligibleForPostExpiryAction(card) && card.createdBy === "purchase";
+
 export default async function AdminGiftCardsPage() {
   const [result, consultationTypes] = await Promise.all([
     listGiftCards(),
@@ -94,7 +108,9 @@ export default async function AdminGiftCardsPage() {
               <td className="border-b p-2">
                 {isEligibleForPostExpiryAction(card) ? (
                   <div className="flex gap-1">
-                    <RefundGiftCardButton giftCardId={card.id} />
+                    {isEligibleForRefund(card) && (
+                      <RefundGiftCardButton giftCardId={card.id} />
+                    )}
                     <ReplaceGiftCardButton giftCardId={card.id} />
                   </div>
                 ) : (

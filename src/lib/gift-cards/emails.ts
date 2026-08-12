@@ -95,3 +95,31 @@ export const sendGiftCardExpiryReminderEmail = async (
     html,
   });
 };
+
+export type GiftCardRefundConfirmationInput = {
+  code: string;
+  recipientName: string;
+  recipientEmail: string;
+};
+
+/**
+ * Confirme la cloture d'une carte cadeau suite a un remboursement
+ * exceptionnel apres expiration (§7.6 Exception 2, design §69). Meme style
+ * que `sendGiftCardExpiryReminderEmail` : HTML inline, un seul appel a
+ * `sendTransactionalEmail`.
+ */
+export const sendGiftCardRefundConfirmationEmail = async (
+  input: GiftCardRefundConfirmationInput,
+): Promise<void> => {
+  const html = `
+    <p>Bonjour ${input.recipientName},</p>
+    <p>Votre carte cadeau <strong>${input.code}</strong> a été remboursée et est désormais close.</p>
+    <p>Le virement a été effectué séparément par notre équipe.</p>
+  `;
+
+  await sendTransactionalEmail({
+    to: input.recipientEmail,
+    subject: "Votre carte cadeau a été remboursée",
+    html,
+  });
+};

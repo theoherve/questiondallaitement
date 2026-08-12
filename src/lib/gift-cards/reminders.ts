@@ -28,6 +28,7 @@ export const sendGiftCardExpiryReminders = async (): Promise<number> => {
   if (!cards || cards.length === 0) return 0;
 
   let sent = 0;
+  const updateFailures: string[] = [];
 
   for (const card of cards as Array<{
     id: string;
@@ -77,12 +78,26 @@ export const sendGiftCardExpiryReminders = async (): Promise<number> => {
       .update({ reminder_sent_at: new Date().toISOString() })
       .eq("id", card.id);
     if (updateError) {
+      // `reminder_sent_at` reste NULL : sans signalement, cette carte serait
+      // re-selectionnee et re-emailee a chaque passage horaire du cron,
+      // indefiniment, sans que personne ne le voie. On ne compte pas cette
+      // carte dans `sent`, et on continue le traitement des autres cartes
+      // avant de faire remonter l'echec (throw en fin de boucle, capte par le
+      // try/catch de la route cron qui appelle `notifyJobFailure`).
       console.error(
         `[sendGiftCardExpiryReminders] marquage reminder_sent_at carte ${card.code}`,
         updateError,
       );
+      updateFailures.push(card.code);
+      continue;
     }
     sent++;
+  }
+
+  if (updateFailures.length > 0) {
+    throw new Error(
+      `Échec de mise à jour reminder_sent_at pour ${updateFailures.length} carte(s): ${updateFailures.join(", ")}`,
+    );
   }
 
   return sent;

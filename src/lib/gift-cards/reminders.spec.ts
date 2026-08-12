@@ -7,6 +7,8 @@ vi.mock("./emails", () => ({
 
 let cards: Record<string, unknown>[] = [];
 const updatedIds: string[] = [];
+/** IDs pour lesquels le test simule un echec de `.update(...).eq("id", id)`. */
+const forcedUpdateFailureIds = new Set<string>();
 
 const buildChain = () => {
   const chain: Record<string, unknown> = {
@@ -17,8 +19,11 @@ const buildChain = () => {
     lte: () => Promise.resolve({ data: cards, error: null }),
     update: (patch: Record<string, unknown>) => ({
       eq: (_col: string, id: string) => {
-        updatedIds.push(id);
         expect(patch.reminder_sent_at).toBeDefined();
+        if (forcedUpdateFailureIds.has(id)) {
+          return Promise.resolve({ error: { message: "connection reset" } });
+        }
+        updatedIds.push(id);
         return Promise.resolve({ error: null });
       },
     }),
@@ -42,6 +47,7 @@ describe("sendGiftCardExpiryReminders", () => {
   beforeEach(() => {
     mockSendReminder.mockClear();
     updatedIds.length = 0;
+    forcedUpdateFailureIds.clear();
     cards = [];
   });
 
@@ -140,4 +146,64 @@ describe("sendGiftCardExpiryReminders", () => {
     expect(updatedIds).toEqual([]);
     spy.mockRestore();
   });
+
+  it(
+    "n'incremente pas sent pour une carte dont le marquage reminder_sent_at " +
+      "echoue, traite les autres cartes, puis leve une erreur en fin de boucle",
+    async () => {
+      cards = [
+        {
+          id: "gc-ok-1",
+          code: "CADEAU-OK0001",
+          type: "amount",
+          initial_amount_cents: 9000,
+          buyer_name: "Jean Martin",
+          buyer_email: "jean@example.com",
+          beneficiary_name: null,
+          beneficiary_email: null,
+          expires_at: inDays(20),
+          gift_card_redemptions: [],
+        },
+        {
+          id: "gc-update-fail",
+          code: "CADEAU-FAILUP",
+          type: "amount",
+          initial_amount_cents: 9000,
+          buyer_name: "Marie Curie",
+          buyer_email: "marie.curie@example.com",
+          beneficiary_name: null,
+          beneficiary_email: null,
+          expires_at: inDays(21),
+          gift_card_redemptions: [],
+        },
+        {
+          id: "gc-ok-2",
+          code: "CADEAU-OK0002",
+          type: "amount",
+          initial_amount_cents: 9000,
+          buyer_name: "Ada Lovelace",
+          buyer_email: "ada@example.com",
+          beneficiary_name: null,
+          beneficiary_email: null,
+          expires_at: inDays(22),
+          gift_card_redemptions: [],
+        },
+      ];
+      forcedUpdateFailureIds.add("gc-update-fail");
+      const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      await expect(sendGiftCardExpiryReminders()).rejects.toThrow(
+        /reminder_sent_at.*CADEAU-FAILUP/,
+      );
+
+      // Les deux autres cartes ont ete traitees (email envoye + marquage
+      // reussi) malgre l'echec de la troisieme : le throw n'interrompt pas la
+      // boucle, il ne fait que remonter l'echec une fois toutes les cartes
+      // traitees.
+      expect(mockSendReminder).toHaveBeenCalledTimes(3);
+      expect(updatedIds).toEqual(["gc-ok-1", "gc-ok-2"]);
+
+      spy.mockRestore();
+    },
+  );
 });
