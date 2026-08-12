@@ -31,6 +31,8 @@ export const updateBillingProfile = async (
       billing_siren: value("billing_siren"),
       billing_vat_number: value("billing_vat_number"),
       billing_legal_form: value("billing_legal_form"),
+      billing_iban: value("billing_iban"),
+      billing_bic: value("billing_bic"),
     })
     .eq("id", user.id);
 

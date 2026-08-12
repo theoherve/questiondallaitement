@@ -83,6 +83,8 @@ const ConsultantSettingsPage = async () => {
               billing_siren: consultant?.billing_siren ?? null,
               billing_vat_number: consultant?.billing_vat_number ?? null,
               billing_legal_form: consultant?.billing_legal_form ?? null,
+              billing_iban: consultant?.billing_iban ?? null,
+              billing_bic: consultant?.billing_bic ?? null,
             }}
           />
         </TabsContent>

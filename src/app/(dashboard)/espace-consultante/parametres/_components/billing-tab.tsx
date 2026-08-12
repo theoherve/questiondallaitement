@@ -13,7 +13,11 @@ import {
 } from "@/lib/invoicing/billing-profile";
 
 type BillingTabProps = {
-  billing: BillingProfile & { billing_legal_form: string | null };
+  billing: BillingProfile & {
+    billing_legal_form: string | null;
+    billing_iban: string | null;
+    billing_bic: string | null;
+  };
 };
 
 export const BillingTab = ({ billing }: BillingTabProps) => {
@@ -122,6 +126,37 @@ export const BillingTab = ({ billing }: BillingTabProps) => {
             placeholder="Entreprise individuelle"
           />
         </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="billing_iban">
+              IBAN{" "}
+              <span className="text-muted-foreground">(facultatif)</span>
+            </Label>
+            <Input
+              id="billing_iban"
+              name="billing_iban"
+              defaultValue={billing.billing_iban ?? ""}
+              placeholder="FR76 3000 6000 0112 3456 7890 189"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="billing_bic">
+              BIC{" "}
+              <span className="text-muted-foreground">(facultatif)</span>
+            </Label>
+            <Input
+              id="billing_bic"
+              name="billing_bic"
+              defaultValue={billing.billing_bic ?? ""}
+              placeholder="BNPAFRPPXXX"
+            />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Affiché sur les factures manuelles réglées par virement, tant
+          qu&apos;elles ne sont pas soldées.
+        </p>
 
         <div className="flex items-center gap-3">
           <Button
