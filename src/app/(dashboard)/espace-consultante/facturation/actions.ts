@@ -254,3 +254,69 @@ export const createManualInvoice = async (input: {
   revalidatePath("/espace-consultante/facturation");
   return { success: true, data: { invoiceId: created.id } };
 };
+
+/**
+ * Enregistre un reglement manuel (espece/cheque/virement) sur une facture de
+ * la consultante appelante. Le statut de reglement de la facture est
+ * recalcule par le trigger `invoice_settlements_recompute_status` (00099),
+ * jamais ecrit ici directement.
+ */
+export const recordSettlement = async (input: {
+  invoiceId: string;
+  method: "cash" | "check" | "transfer";
+  amountCents: number;
+  paidAt: string;
+  note?: string;
+}): Promise<ActionResult> => {
+  const { supabase, user } = await getSupabaseAndUser();
+
+  const { data: invoice } = await supabase
+    .from("invoices")
+    .select("id, amount_ttc_cents")
+    .eq("id", input.invoiceId)
+    .eq("consultant_id", user.id)
+    .maybeSingle();
+
+  if (!invoice) {
+    return { success: false, error: "Facture introuvable." };
+  }
+
+  if (input.amountCents <= 0) {
+    return { success: false, error: "Le montant doit être strictement positif." };
+  }
+
+  const { data: existingSettlements } = await supabase
+    .from("invoice_settlements")
+    .select("amount_cents")
+    .eq("invoice_id", input.invoiceId);
+
+  const alreadySettled = (existingSettlements ?? []).reduce(
+    (sum: number, s: { amount_cents: number }) => sum + s.amount_cents,
+    0,
+  );
+  const remaining = invoice.amount_ttc_cents - alreadySettled;
+
+  if (input.amountCents > remaining) {
+    return {
+      success: false,
+      error: `Ce règlement dépasserait le solde restant (${(remaining / 100).toFixed(2)} €).`,
+    };
+  }
+
+  const { error } = await supabase.from("invoice_settlements").insert({
+    invoice_id: input.invoiceId,
+    method: input.method,
+    amount_cents: input.amountCents,
+    paid_at: input.paidAt,
+    note: input.note ?? null,
+    recorded_by: user.id,
+  });
+
+  if (error) {
+    console.error("[recordSettlement]", error);
+    return { success: false, error: "L'enregistrement du règlement a échoué." };
+  }
+
+  revalidatePath("/espace-consultante/facturation");
+  return { success: true };
+};

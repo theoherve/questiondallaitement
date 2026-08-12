@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createManualInvoice } from "./actions";
+import { createManualInvoice, recordSettlement } from "./actions";
 
 const mockGetSupabaseAndUser = vi.fn();
 vi.mock("@/lib/supabase/server-auth", () => ({
@@ -108,5 +108,116 @@ describe("createManualInvoice", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe("recordSettlement", () => {
+  beforeEach(() => {
+    mockGetSupabaseAndUser.mockReset();
+  });
+
+  it("refuse une facture d'un autre consultant", async () => {
+    mockGetSupabaseAndUser.mockResolvedValue({
+      supabase: {
+        from: (name: string) => ({
+          select: () => ({
+            eq: () => ({
+              eq: () => ({ maybeSingle: () => Promise.resolve({ data: null }) }),
+            }),
+          }),
+        }),
+      },
+      user: { id: CONSULTANT_ID },
+    });
+
+    const result = await recordSettlement({
+      invoiceId: "invoice-1",
+      method: "transfer",
+      amountCents: 5000,
+      paidAt: "2026-08-05T00:00:00.000Z",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("refuse un montant superieur au solde restant", async () => {
+    mockGetSupabaseAndUser.mockResolvedValue({
+      supabase: {
+        from: (name: string) => {
+          if (name === "invoices") {
+            return {
+              select: () => ({
+                eq: () => ({
+                  eq: () => ({
+                    maybeSingle: () =>
+                      Promise.resolve({
+                        data: { id: "invoice-1", amount_ttc_cents: 10000 },
+                      }),
+                  }),
+                }),
+              }),
+            };
+          }
+          return {
+            select: () => ({
+              eq: () => Promise.resolve({ data: [{ amount_cents: 8000 }] }),
+            }),
+          };
+        },
+      },
+      user: { id: CONSULTANT_ID },
+    });
+
+    const result = await recordSettlement({
+      invoiceId: "invoice-1",
+      method: "transfer",
+      amountCents: 5000,
+      paidAt: "2026-08-05T00:00:00.000Z",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("enregistre un reglement dans la limite du solde", async () => {
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    mockGetSupabaseAndUser.mockResolvedValue({
+      supabase: {
+        from: (name: string) => {
+          if (name === "invoices") {
+            return {
+              select: () => ({
+                eq: () => ({
+                  eq: () => ({
+                    maybeSingle: () =>
+                      Promise.resolve({
+                        data: { id: "invoice-1", amount_ttc_cents: 10000 },
+                      }),
+                  }),
+                }),
+              }),
+            };
+          }
+          return {
+            select: () => ({
+              eq: () => Promise.resolve({ data: [{ amount_cents: 3000 }] }),
+            }),
+            insert,
+          };
+        },
+      },
+      user: { id: CONSULTANT_ID },
+    });
+
+    const result = await recordSettlement({
+      invoiceId: "invoice-1",
+      method: "transfer",
+      amountCents: 5000,
+      paidAt: "2026-08-05T00:00:00.000Z",
+    });
+
+    expect(result.success).toBe(true);
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ invoice_id: "invoice-1", amount_cents: 5000 }),
+    );
   });
 });
