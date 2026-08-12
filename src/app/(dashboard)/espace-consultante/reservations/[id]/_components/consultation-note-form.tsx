@@ -42,11 +42,11 @@ const ANTECEDENT_LABELS: Record<AntecedentKey, string> = {
 export const ConsultationNoteForm = ({
   bookingId,
   initialNote,
-  children,
+  familyChildren,
 }: {
   bookingId: string;
   initialNote: ConsultationNote | null;
-  children: Child[];
+  familyChildren: Child[];
 }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -155,7 +155,7 @@ export const ConsultationNoteForm = ({
           onChange={(e) => setChildId(e.target.value || null)}
         >
           <option value="">Consultation parent seule</option>
-          {children.map((child) => (
+          {familyChildren.map((child) => (
             <option key={child.id} value={child.id}>
               {child.first_name}
             </option>
