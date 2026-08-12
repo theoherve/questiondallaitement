@@ -15,6 +15,7 @@ import { StepConfirmation } from "./step-confirmation";
 import { bookingRequiresWaiver } from "@/lib/legal/withdrawal";
 import { createBooking, computeSlotPrice, type BookingFormData } from "../actions";
 import type { AppliedPromo } from "@/components/promo/promo-code-field";
+import type { AppliedGiftCard } from "./gift-card-field";
 import type { ConsultationLocation, BookingPaymentMethod, LocationConfig } from "@/types/database";
 
 type ServiceOption = {
@@ -89,6 +90,7 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
   const [error, setError] = useState<string | null>(null);
   const [waiverAccepted, setWaiverAccepted] = useState(false);
   const [promo, setPromo] = useState<AppliedPromo | null>(null);
+  const [giftCard, setGiftCard] = useState<AppliedGiftCard | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleBack = () => {
@@ -122,6 +124,7 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
         payment_method: state.paymentMethod!,
         withdrawal_waiver_accepted: waiverAccepted,
         promo_code: promo?.code,
+        giftCardCode: giftCard?.code,
       };
 
       const result = await createBooking(formData);
@@ -135,6 +138,11 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
         window.location.href = result.data.redirect_url;
         return;
       }
+
+      // Ni redirection Stripe, ni erreur : soit un reglement sur place, soit une
+      // carte cadeau qui couvre tout le prix (`no_payment_required`). Dans les
+      // deux cas la reservation est deja enregistree, la page de confirmation
+      // est le bon point d'arrivee.
 
       router.push(`/reserver/confirmation?booking_id=${result.data?.booking_id}`);
     });
@@ -195,6 +203,7 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
                 // Le montant change : une remise calculee sur l'ancien prix
                 // n'a plus de sens.
                 setPromo(null);
+                setGiftCard(null);
                 setState({
                   ...state,
                   durationMinutes,
@@ -224,6 +233,7 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
               selected={state.location}
               onSelect={(loc) => {
                 setPromo(null);
+                setGiftCard(null);
                 setState({
                   ...state,
                   location: loc,
@@ -247,6 +257,7 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
               durationMinutes={state.durationMinutes}
               onSelect={(consultantId, consultantName, consultationTypeId, surcharge, durationOptionId) => {
                 setPromo(null);
+                setGiftCard(null);
                 setState({
                   ...state,
                   consultantId,
@@ -271,6 +282,7 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
                 // Un creneau week-end majore le prix : la remise doit etre
                 // recalculee.
                 setPromo(null);
+                setGiftCard(null);
                 // Compute final price after slot selection (weekend/holiday detection)
                 startTransition(async () => {
                   if (state.durationOptionId && state.consultantId && state.location) {
@@ -327,7 +339,14 @@ export const BookingWizard = ({ services, locationConfigs }: BookingWizardProps)
               state={state}
               services={services}
               onConfirm={handleSubmit}
-              onPromoApplied={setPromo}
+              onPromoApplied={(next) => {
+                setPromo(next);
+                // Le montant restant change : un apercu de carte cadeau calcule
+                // sur l'ancien montant n'a plus de sens.
+                setGiftCard(null);
+              }}
+              promo={promo}
+              onGiftCardApplied={setGiftCard}
               isPending={isPending}
               waiverRequired={
                 !!state.selectedSlot &&

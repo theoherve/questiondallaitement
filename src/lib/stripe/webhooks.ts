@@ -18,8 +18,45 @@ import { autoAssignLabelsOnEnrollment } from "@/lib/admin-workflows/labels";
 import { sendGuestSetupEmailIfNeeded } from "@/lib/auth/password-setup";
 import { emitInvoiceForPayment } from "@/lib/invoicing/emit";
 import { cancelRedemption, confirmRedemption } from "@/lib/promo/reserve";
+import { insertGiftCardWithUniqueCode } from "@/lib/gift-cards/code";
+import { sendGiftCardPurchaseEmails } from "@/lib/gift-cards/emails";
+import { redeemGiftCard } from "@/lib/gift-cards/redeem";
 
 const getSupabase = () => createAdminClient();
+
+/**
+ * Finalise la redemption d'une carte cadeau appliquee a une reservation, une
+ * fois le paiement confirme. Rejoue integralement la verification cote
+ * serveur (solde, validite) via redeemGiftCard : le montant en metadata
+ * n'est qu'une indication, jamais une source de verite pour l'ecriture.
+ */
+export const finalizeBookingGiftCardRedemption = async (
+  metadata: Record<string, string | undefined>,
+  bookingId: string,
+): Promise<void> => {
+  if (!metadata.gift_card_code) return;
+
+  const result = await redeemGiftCard(getSupabase(), {
+    code: metadata.gift_card_code,
+    amountCents: Number(metadata.gift_card_discount_cents ?? "0"),
+    bookingId,
+    recordedBy: metadata.consultant_id!,
+  });
+
+  if (!result.ok) {
+    // Cas rare : le solde a ete consomme entre la verification temps reel et
+    // la confirmation du paiement (deux reservations concurrentes sur le
+    // meme code). L'argent est deja encaisse ; on trace plutot que d'echouer
+    // le webhook, meme logique que logInvoiceIssue.
+    await getSupabase().from("audit_logs").insert({
+      user_id: metadata.consultant_id,
+      action: "gift_card_redemption_failed",
+      entity_type: "booking",
+      entity_id: bookingId,
+      metadata: { code: metadata.gift_card_code, error: result.error },
+    });
+  }
+};
 
 export const handleCheckoutCompleted = async (
   session: Stripe.Checkout.Session,
@@ -57,6 +94,9 @@ export const handleCheckoutCompleted = async (
         paymentIntentId ?? null,
       );
       break;
+    case "gift_card":
+      await handleGiftCardPurchase(metadata, paymentIntentId ?? null);
+      break;
   }
 
   // Creneau vendu deux fois : la cliente a paye pour une consultation qui ne
@@ -80,6 +120,23 @@ export const handleCheckoutCompleted = async (
     await cancelRedemption(redemptionId);
   }
 
+  if (type === "booking" && bookingOutcome === "created" && !slotConflict) {
+    await finalizeBookingGiftCardRedemption(metadata, reference_id);
+  }
+
+  // Une carte cadeau appliquee a la reservation est une remise comme une
+  // autre : sans la porter ici, la facture n'affiche que le montant reduit,
+  // sans rien qui explique l'ecart avec le tarif de la prestation. Les deux
+  // remises se cumulent (code promo puis carte cadeau, dans cet ordre chez
+  // `createBooking`), donc le total remise est leur somme.
+  const promoDiscountCents = metadata.discount_cents
+    ? parseInt(metadata.discount_cents)
+    : 0;
+  const giftCardDiscountCents = metadata.gift_card_discount_cents
+    ? parseInt(metadata.gift_card_discount_cents)
+    : 0;
+  const totalDiscountCents = promoDiscountCents + giftCardDiscountCents;
+
   const { data: paymentRow } = await getSupabase()
     .from("payments")
     .upsert(
@@ -90,13 +147,11 @@ export const handleCheckoutCompleted = async (
         amount_cents: session.amount_total ?? 0,
         platform_fee_cents: parseInt(metadata.platform_fee_cents ?? "0"),
         currency: session.currency ?? "eur",
-        type: type as "accompagnement" | "booking" | "formation",
+        type,
         reference_id,
         status: slotConflict ? "refunded" : "succeeded",
         promo_code_id: metadata.promo_code_id ?? null,
-        discount_cents: metadata.discount_cents
-          ? parseInt(metadata.discount_cents)
-          : null,
+        discount_cents: totalDiscountCents > 0 ? totalDiscountCents : null,
         original_amount_cents: metadata.original_price_cents
           ? parseInt(metadata.original_price_cents)
           : null,
@@ -297,6 +352,121 @@ export const handleAccountDeauthorized = async (account: Stripe.Account) => {
       onboarding_completed: false,
     })
     .eq("id", consultantId);
+};
+
+export const handleGiftCardPurchase = async (
+  metadata: Record<string, string | undefined>,
+  _paymentIntentId: string | null,
+): Promise<void> => {
+  const supabase = getSupabase();
+  const isAmount = metadata.gift_card_type === "amount";
+
+  // Redelivery Stripe : la carte porte le `reference_id` pre-genere avant la
+  // session Checkout, donc un rejeu retomberait sur une violation de cle
+  // primaire. `insertGiftCardWithUniqueCode` ne sait pas distinguer cette
+  // collision d'une collision de `code` : elle regenererait cinq codes, tous
+  // rejetes sur la meme PK, puis leverait — avant l'ecriture de `payments` et
+  // l'emission de la facture en aval. Stripe retenterait alors indefiniment.
+  // On sort donc tot, sans recreer la carte ni renvoyer les emails d'achat a
+  // l'acheteuse (la premiere livraison les a deja envoyes). Meme logique
+  // d'idempotence que `create_invoice`.
+  if (metadata.reference_id) {
+    const { data: existing } = await supabase
+      .from("gift_cards")
+      .select("id")
+      .eq("id", metadata.reference_id)
+      .maybeSingle();
+
+    if (existing) return;
+  }
+
+  const issuedAt = new Date();
+  const expiresAt = new Date(issuedAt);
+  expiresAt.setMonth(expiresAt.getMonth() + 12);
+
+  const card = await insertGiftCardWithUniqueCode(supabase, (code) => ({
+    // Pre-genere dans `purchaseGiftCard` avant la session Stripe, pour
+    // correspondre au `reference_id` deja ecrit dans `payments` par
+    // `handleCheckoutCompleted`. Sans cet id explicite, Postgres en genererait
+    // un autre et l'upsert de `payments` (NOT NULL sur `reference_id`) ne
+    // correspondrait plus a la carte reellement creee.
+    id: metadata.reference_id,
+    code,
+    type: metadata.gift_card_type,
+    initial_amount_cents: isAmount ? Number(metadata.gift_card_amount_cents) : null,
+    consultation_type_id: isAmount ? null : metadata.consultation_type_id,
+    consultant_id: metadata.consultant_id,
+    buyer_name: metadata.buyer_name,
+    buyer_email: metadata.buyer_email,
+    beneficiary_name: metadata.beneficiary_name ?? null,
+    beneficiary_email: metadata.beneficiary_email ?? null,
+    personal_message: metadata.personal_message ?? null,
+    delivery_mode: metadata.delivery_mode,
+    issued_at: issuedAt.toISOString(),
+    expires_at: expiresAt.toISOString(),
+    created_by: "purchase",
+  }));
+
+  // Un echec d'email (Resend indisponible) ou de rendu PDF ne doit pas
+  // interrompre le traitement : la suite du webhook enregistre le paiement et
+  // emet la facture. Une carte livree sans email se renvoie a la main depuis le
+  // back-office ; un encaissement sans ligne `payments` ni facture, non.
+  try {
+    await sendGiftCardPurchaseEmails({
+      code: card.code,
+      typeLabel: isAmount ? "Carte cadeau" : "Carte cadeau — prestation offerte",
+      amountLabel: isAmount
+        ? new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
+            Number(metadata.gift_card_amount_cents) / 100,
+          )
+        : null,
+      expiresAtLabel: new Date(card.expires_at).toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+      buyerName: metadata.buyer_name ?? "",
+      buyerEmail: metadata.buyer_email ?? "",
+      beneficiaryName: metadata.beneficiary_name ?? null,
+      beneficiaryEmail: metadata.beneficiary_email ?? null,
+      personalMessage: metadata.personal_message ?? null,
+      deliveryMode: metadata.delivery_mode as "email" | "pdf",
+      consultantName: await resolveConsultantName(metadata.consultant_id),
+    });
+  } catch (err) {
+    console.error("[handleGiftCardPurchase] envoi de la carte cadeau", err);
+    await supabase.from("audit_logs").insert({
+      user_id: metadata.consultant_id,
+      action: "gift_card_delivery_failed",
+      entity_type: "gift_card",
+      entity_id: card.id,
+      metadata: {
+        code: card.code,
+        delivery_mode: metadata.delivery_mode,
+        error: err instanceof Error ? err.message : "Unknown error",
+      },
+    });
+  }
+};
+
+/**
+ * Nom affiche de la consultante emettrice, lu depuis son profil. Code en dur,
+ * il serait faux le jour ou une deuxieme consultante est integree — et le
+ * document remis a la beneficiaire porterait le nom de quelqu'un d'autre.
+ */
+const resolveConsultantName = async (
+  consultantId: string | undefined,
+): Promise<string> => {
+  if (!consultantId) return "";
+
+  const { data } = await getSupabase()
+    .from("profiles")
+    .select("first_name, last_name")
+    .eq("id", consultantId)
+    .maybeSingle();
+
+  if (!data) return "";
+  return `${data.first_name ?? ""} ${data.last_name ?? ""}`.trim();
 };
 
 const handleFormationPurchase = async (
@@ -601,41 +771,68 @@ const handleBookingConfirmation = async (
     // Non-blocking
   }
 
-  // Create Zoom meeting for teleconsultations (non-blocking)
-  if (meta.location === "teleconsultation") {
-    try {
-      const { createMeeting } = await import("@/lib/zoom/client");
-      const durationMinutes = Math.round(
-        (new Date(meta.ends_at).getTime() - new Date(meta.starts_at).getTime()) / 60000,
-      );
-      const { data: consultationType } = await getSupabase()
-        .from("consultation_types")
-        .select("title")
-        .eq("id", meta.consultation_type_id)
-        .single();
-      const topic = consultationType?.title
-        ? `${consultationType.title}, Téléconsultation`
-        : "Téléconsultation";
-      const meeting = await createMeeting(
-        meta.consultant_id,
-        topic,
-        meta.starts_at,
-        durationMinutes,
-      );
-      await getSupabase()
-        .from("bookings")
-        .update({
-          zoom_meeting_id: meeting.id,
-          zoom_join_url: meeting.join_url,
-          zoom_host_url: meeting.start_url,
-        })
-        .eq("id", meta.reference_id);
-    } catch {
-      // Non-blocking: Zoom failure should never fail the booking
-    }
-  }
+  await attachZoomMeetingIfNeeded({
+    bookingId: meta.reference_id,
+    consultantId: meta.consultant_id,
+    consultationTypeId: meta.consultation_type_id,
+    location: meta.location,
+    startsAt: meta.starts_at,
+    endsAt: meta.ends_at,
+  });
 
   return "created";
+};
+
+/**
+ * Cree la salle Zoom d'une teleconsultation et l'attache a la reservation.
+ *
+ * Exportee parce que deux chemins confirment une reservation en ligne : le
+ * webhook Stripe, et la server action quand la carte cadeau couvre 100 % du
+ * prix (aucun paiement, donc aucun evenement Stripe). Sans mise en commun, une
+ * consultation entierement offerte se retrouverait sans lien de connexion.
+ *
+ * Non bloquant : un echec Zoom ne doit jamais faire echouer la reservation.
+ */
+export const attachZoomMeetingIfNeeded = async (input: {
+  bookingId: string;
+  consultantId: string;
+  consultationTypeId: string;
+  location: string | undefined;
+  startsAt: string;
+  endsAt: string;
+}): Promise<void> => {
+  if (input.location !== "teleconsultation") return;
+
+  try {
+    const { createMeeting } = await import("@/lib/zoom/client");
+    const durationMinutes = Math.round(
+      (new Date(input.endsAt).getTime() - new Date(input.startsAt).getTime()) / 60000,
+    );
+    const { data: consultationType } = await getSupabase()
+      .from("consultation_types")
+      .select("title")
+      .eq("id", input.consultationTypeId)
+      .single();
+    const topic = consultationType?.title
+      ? `${consultationType.title}, Téléconsultation`
+      : "Téléconsultation";
+    const meeting = await createMeeting(
+      input.consultantId,
+      topic,
+      input.startsAt,
+      durationMinutes,
+    );
+    await getSupabase()
+      .from("bookings")
+      .update({
+        zoom_meeting_id: meeting.id,
+        zoom_join_url: meeting.join_url,
+        zoom_host_url: meeting.start_url,
+      })
+      .eq("id", input.bookingId);
+  } catch {
+    // Non-blocking: Zoom failure should never fail the booking
+  }
 };
 
 /**
@@ -782,7 +979,14 @@ const notifyPurchase = async (
   }
 };
 
-const sendCheckoutEmails = async (
+/**
+ * Confirmation cote cliente et cote consultante, apres une vente en ligne.
+ *
+ * Exportee pour le chemin « carte cadeau couvrant 100 % du prix » : il n'y a
+ * pas de paiement Stripe, donc pas de webhook, mais la cliente doit recevoir
+ * exactement la meme confirmation que pour une reservation payee.
+ */
+export const sendCheckoutEmails = async (
   type: string,
   clientId: string,
   consultantId: string,
@@ -904,7 +1108,8 @@ const sendCheckoutEmails = async (
   }
 };
 
-const fireCheckoutAutomations = async (
+/** Voir `sendCheckoutEmails` : meme raison d'etre exportee. */
+export const fireCheckoutAutomations = async (
   type: string,
   clientId: string,
   consultantId: string,

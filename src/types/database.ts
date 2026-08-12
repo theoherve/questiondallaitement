@@ -41,7 +41,7 @@ export type PaymentStatus =
   | "refunded"
   | "partially_refunded";
 
-export type PaymentType = "accompagnement" | "booking" | "formation";
+export type PaymentType = "accompagnement" | "booking" | "formation" | "gift_card";
 
 export type ConsultationLocation = "cabinet" | "teleconsultation" | "domicile";
 

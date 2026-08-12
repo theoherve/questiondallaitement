@@ -300,7 +300,7 @@ const BookingDetailPage = async ({ params }: Props) => {
           <ConsultationNoteForm
             bookingId={booking.id}
             initialNote={consultationNote}
-            children={familyDossier.children}
+            familyChildren={familyDossier.children}
           />
         </CardContent>
       </Card>

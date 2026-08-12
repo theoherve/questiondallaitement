@@ -34,7 +34,21 @@ export const NewInvoiceButton = ({ clients }: { clients: Client[] }) => {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [giftCardCode, setGiftCardCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Facture emise mais carte cadeau non appliquee : la facture est bien la, il
+   * n'y a rien a corriger dans le formulaire. On garde donc le dialogue ouvert
+   * avec le message plutot que de le fermer comme sur un succes complet.
+   */
+  const [warning, setWarning] = useState<string | null>(null);
+  /**
+   * Une facture legalement numerotee vient d'etre emise pour ce dialogue.
+   * Une fois vrai, on n'autorise plus de nouvelle soumission du meme
+   * formulaire (qui emettrait une deuxieme facture et retenterait le
+   * debit de la meme carte cadeau) : le bouton devient « Fermer ».
+   */
+  const [submitted, setSubmitted] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const reset = () => {
@@ -42,11 +56,15 @@ export const NewInvoiceButton = ({ clients }: { clients: Client[] }) => {
     setDescription("");
     setAmount("");
     setDueDate("");
+    setGiftCardCode("");
     setError(null);
+    setWarning(null);
+    setSubmitted(false);
   };
 
   const handleSubmit = () => {
     setError(null);
+    setWarning(null);
     const euros = Number(amount.replace(",", "."));
     if (!clientId || !description.trim() || !Number.isFinite(euros) || euros <= 0) {
       setError("Renseignez une cliente, une désignation et un montant valide.");
@@ -58,8 +76,12 @@ export const NewInvoiceButton = ({ clients }: { clients: Client[] }) => {
         description: description.trim(),
         ttcCents: Math.round(euros * 100),
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+        giftCardCode: giftCardCode.trim() || undefined,
       });
-      if (result.success) {
+      if (result.success && result.warning) {
+        setWarning(result.warning);
+        setSubmitted(true);
+      } else if (result.success) {
         setOpen(false);
         reset();
       } else {
@@ -128,24 +150,52 @@ export const NewInvoiceButton = ({ clients }: { clients: Client[] }) => {
               />
             </div>
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="new-invoice-gift-card">
+              Code carte cadeau{" "}
+              <span className="text-muted-foreground">(optionnel)</span>
+            </Label>
+            <Input
+              id="new-invoice-gift-card"
+              value={giftCardCode}
+              onChange={(e) => setGiftCardCode(e.target.value.toUpperCase())}
+              placeholder="CADEAU-XXXXXX"
+            />
+          </div>
           {error && (
             <p className="text-sm text-destructive" role="alert">
               {error}
             </p>
           )}
+          {warning && (
+            <p className="text-sm text-amber-600" role="alert">
+              {warning}
+            </p>
+          )}
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
-            Annuler
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isPending}
-            className="bg-primary-green hover:bg-primary-green/90"
-          >
-            {isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            Émettre la facture
-          </Button>
+          {!submitted && (
+            <Button variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
+              Annuler
+            </Button>
+          )}
+          {submitted ? (
+            <Button
+              onClick={() => setOpen(false)}
+              className="bg-primary-green hover:bg-primary-green/90"
+            >
+              Fermer
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              disabled={isPending}
+              className="bg-primary-green hover:bg-primary-green/90"
+            >
+              {isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+              Émettre la facture
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
