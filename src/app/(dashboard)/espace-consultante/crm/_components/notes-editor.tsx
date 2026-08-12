@@ -49,6 +49,9 @@ export const NotesEditor = ({
         .then((entries) => {
           setHistoryByNote((prev) => ({ ...prev, [noteId]: entries }));
         })
+        .catch(() => {
+          toast.error("Impossible de charger l'historique");
+        })
         .finally(() => {
           setLoadingHistoryIds((prev) => {
             const next = new Set(prev);
@@ -82,6 +85,11 @@ export const NotesEditor = ({
       if (result.success) {
         toast.success("Note modifiée");
         setEditingId(null);
+        setHistoryByNote((prev) => {
+          const next = { ...prev };
+          delete next[noteId];
+          return next;
+        });
       } else {
         toast.error(result.error);
       }

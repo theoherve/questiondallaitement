@@ -36,11 +36,18 @@ describe("NotesEditor", () => {
   });
 
   it("n'affiche pas de bouton de suppression", () => {
-    render(<NotesEditor clientId="client-1" notes={notes} />);
+    const { container } = render(
+      <NotesEditor clientId="client-1" notes={notes} />,
+    );
 
-    expect(
-      screen.queryByRole("button", { name: /supprimer/i }),
-    ).not.toBeInTheDocument();
+    // Le bouton supprimer était une icône Trash2 sans aria-label, donc une
+    // requête par nom accessible ne le détecterait pas s'il était réintroduit.
+    // On vérifie plutôt qu'aucune icône lucide "trash" n'est rendue, et que
+    // seul le bouton d'édition (Pencil) reste par note.
+    expect(container.querySelectorAll(".lucide-trash-2")).toHaveLength(0);
+    expect(container.querySelectorAll(".lucide-pencil")).toHaveLength(
+      notes.length,
+    );
   });
 
   it("affiche le lien historique seulement pour une note modifiée", () => {
