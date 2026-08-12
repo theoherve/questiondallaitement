@@ -33,7 +33,9 @@ export const NotesEditor = ({
   const [historyByNote, setHistoryByNote] = useState<
     Record<string, HistoryEntry[]>
   >({});
-  const [historyLoading, setHistoryLoading] = useState(false);
+  const [loadingHistoryIds, setLoadingHistoryIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   const toggleHistory = (noteId: string) => {
     if (openHistoryId === noteId) {
@@ -42,12 +44,18 @@ export const NotesEditor = ({
     }
     setOpenHistoryId(noteId);
     if (!historyByNote[noteId]) {
-      setHistoryLoading(true);
+      setLoadingHistoryIds((prev) => new Set(prev).add(noteId));
       getNoteHistory(noteId)
         .then((entries) => {
           setHistoryByNote((prev) => ({ ...prev, [noteId]: entries }));
         })
-        .finally(() => setHistoryLoading(false));
+        .finally(() => {
+          setLoadingHistoryIds((prev) => {
+            const next = new Set(prev);
+            next.delete(noteId);
+            return next;
+          });
+        });
     }
   };
 
@@ -184,7 +192,8 @@ export const NotesEditor = ({
                     </button>
                     {openHistoryId === note.id && (
                       <div className="mt-2 space-y-2 border-l-2 pl-3">
-                        {historyLoading && !historyByNote[note.id] ? (
+                        {loadingHistoryIds.has(note.id) &&
+                        !historyByNote[note.id] ? (
                           <p className="text-xs text-muted-foreground">
                             Chargement…
                           </p>
