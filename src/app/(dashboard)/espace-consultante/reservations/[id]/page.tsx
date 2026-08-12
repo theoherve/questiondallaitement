@@ -24,6 +24,13 @@ import { fr } from "date-fns/locale";
 import { BookingActions } from "../_components/booking-actions";
 import { AddToCalendarButton } from "@/components/add-to-calendar-button";
 import type { BookingStatus } from "@/types/database";
+import {
+  getConsultationNoteForBooking,
+  getConsultationNotesForFamilyDossier,
+  getFamilyDossierForContact,
+} from "../../crm/actions";
+import { ConsultationNoteForm } from "./_components/consultation-note-form";
+import { PreviousNotesPanel } from "./_components/previous-notes-panel";
 
 export const metadata: Metadata = {
   title: "Détail de la réservation",
@@ -80,6 +87,12 @@ const BookingDetailPage = async ({ params }: Props) => {
     .single();
 
   if (!booking) notFound();
+
+  const [consultationNote, familyDossier, previousNotes] = await Promise.all([
+    getConsultationNoteForBooking(booking.id),
+    getFamilyDossierForContact(booking.client_id),
+    getConsultationNotesForFamilyDossier(booking.client_id),
+  ]);
 
   const client = booking.profiles as unknown as {
     first_name: string | null;
@@ -275,6 +288,34 @@ const BookingDetailPage = async ({ params }: Props) => {
           </CardContent>
         </Card>
       )}
+
+      {/* Fiche de consultation */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-serif text-lg">
+            Fiche de consultation
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ConsultationNoteForm
+            bookingId={booking.id}
+            initialNote={consultationNote}
+            children={familyDossier.children}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Consultations précédentes */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-serif text-lg">
+            Consultations précédentes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PreviousNotesPanel notes={previousNotes} currentBookingId={booking.id} />
+        </CardContent>
+      </Card>
 
       {/* Paiement */}
       {payments.length > 0 && (
