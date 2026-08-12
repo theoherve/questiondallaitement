@@ -49,6 +49,14 @@ CREATE POLICY consultation_notes_select_own_published ON consultation_notes
 CREATE POLICY consultation_notes_select_admin ON consultation_notes
   FOR SELECT USING (is_admin());
 
--- Aucune policy d'écriture pour le client : toutes les écritures passent par
--- le service role (server actions consultante), qui contourne RLS. La
--- policy de lecture ci-dessus est le seul filet de sécurité pour le client.
+-- Aucune policy d'écriture pour le client. Important : ces policies sont
+-- inertes sur le chemin applicatif réel de ce projet — toutes les server
+-- actions (consultante comme client) utilisent createAdminClient(), le
+-- client Supabase service-role, sous une session NextAuth. Aucun JWT
+-- Supabase avec un auth.uid() n'est jamais émis pour une session navigateur
+-- réelle ici, donc RLS ne s'applique jamais à ces requêtes : elles la
+-- contournent entièrement. Elles restent posées en défense en profondeur
+-- pour un futur accès PostgREST direct (hors service role). Le véritable
+-- filet de sécurité côté client est la sélection explicite de colonnes dans
+-- la server action (getMyPublishedConsultationNotes) : jamais de SELECT *,
+-- notes_internes n'est jamais chargé.
