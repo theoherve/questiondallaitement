@@ -11,11 +11,15 @@ export const isRealCalendarDate = (value: string): boolean => {
   return parsed.toISOString().slice(0, 10) === value;
 };
 
-/** Une date de naissance ou de pesée ne peut pas être postérieure à aujourd'hui. */
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Une date de naissance ou de pesée ne peut pas être postérieure à aujourd'hui.
+ * Tolérance d'un jour pour absorber le décalage entre minuit UTC (interprétation
+ * de la date saisie) et l'heure locale française. */
 export const isNotInFuture = (value: string): boolean => {
   const parsed = new Date(`${value}T00:00:00.000Z`);
   if (Number.isNaN(parsed.getTime())) return false;
-  return parsed.getTime() <= Date.now();
+  return parsed.getTime() <= Date.now() + ONE_DAY_MS;
 };
 
 export const childSchema = z

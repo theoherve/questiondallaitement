@@ -110,3 +110,21 @@ describe("weightMeasurementSchema", () => {
     expect(result.success).toBe(false);
   });
 });
+
+import { isNotInFuture } from "./children";
+
+describe("isNotInFuture", () => {
+  it("accepte une date jusqu'à 24h dans le futur (marge fuseau horaire)", () => {
+    const in20Hours = new Date(Date.now() + 20 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    expect(isNotInFuture(in20Hours)).toBe(true);
+  });
+
+  it("rejette toujours une date à plus de 24h dans le futur", () => {
+    const inTwoDays = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    expect(isNotInFuture(inTwoDays)).toBe(false);
+  });
+});
