@@ -172,6 +172,12 @@ export const StepConfirmation = ({
                   calcule sur le plein tarif annoncerait une remise plus grande
                   que celle reellement debitee. */}
               <GiftCardField
+                /* Remonte quand le code promo change : force le
+                   remontage du champ pour vider son etat interne
+                   « applique », qui ne serait sinon jamais reinitialise
+                   puisque les deux champs vivent sur la meme etape et
+                   ne sont jamais demontes. */
+                key={promo?.code ?? "no-promo"}
                 consultationTypeId={state.consultationTypeId}
                 amountCents={promo ? promo.finalCents : totalPrice}
                 currency={state.currency}

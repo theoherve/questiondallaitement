@@ -42,6 +42,13 @@ export const NewInvoiceButton = ({ clients }: { clients: Client[] }) => {
    * avec le message plutot que de le fermer comme sur un succes complet.
    */
   const [warning, setWarning] = useState<string | null>(null);
+  /**
+   * Une facture legalement numerotee vient d'etre emise pour ce dialogue.
+   * Une fois vrai, on n'autorise plus de nouvelle soumission du meme
+   * formulaire (qui emettrait une deuxieme facture et retenterait le
+   * debit de la meme carte cadeau) : le bouton devient « Fermer ».
+   */
+  const [submitted, setSubmitted] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const reset = () => {
@@ -52,6 +59,7 @@ export const NewInvoiceButton = ({ clients }: { clients: Client[] }) => {
     setGiftCardCode("");
     setError(null);
     setWarning(null);
+    setSubmitted(false);
   };
 
   const handleSubmit = () => {
@@ -72,6 +80,7 @@ export const NewInvoiceButton = ({ clients }: { clients: Client[] }) => {
       });
       if (result.success && result.warning) {
         setWarning(result.warning);
+        setSubmitted(true);
       } else if (result.success) {
         setOpen(false);
         reset();
@@ -165,17 +174,28 @@ export const NewInvoiceButton = ({ clients }: { clients: Client[] }) => {
           )}
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
-            Annuler
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isPending}
-            className="bg-primary-green hover:bg-primary-green/90"
-          >
-            {isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            Émettre la facture
-          </Button>
+          {!submitted && (
+            <Button variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
+              Annuler
+            </Button>
+          )}
+          {submitted ? (
+            <Button
+              onClick={() => setOpen(false)}
+              className="bg-primary-green hover:bg-primary-green/90"
+            >
+              Fermer
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              disabled={isPending}
+              className="bg-primary-green hover:bg-primary-green/90"
+            >
+              {isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+              Émettre la facture
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
