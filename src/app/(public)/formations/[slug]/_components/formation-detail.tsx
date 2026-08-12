@@ -267,13 +267,13 @@ export const FormationDetail = ({
                 )}
 
                 {/* Résumé — troisieme niveau de lecture, mis en forme.
-                    Filet vertical plutot qu'encadre : le bandeau est deja une
-                    surface pleine, une boite dedans ferait boite dans boite.
+                    Encadre rose pale : fait ressortir le resume sur la page,
+                    meme codage visuel que le bloc "a qui s'adresse" plus bas.
                     Titres masques : l'editeur les autorise, mais ils
                     entreraient en concurrence avec le h1 juste au-dessus. */}
                 {formation.summary_html && (
                   <div
-                    className="mt-5 max-w-2xl border-l-2 border-primary-red/40 pl-4
+                    className="mt-5 max-w-2xl rounded-lg bg-primary-rose/10 p-4 sm:p-5
                                text-[0.95rem] leading-relaxed text-primary-green/75
                                [&_p]:mb-2 [&_p:last-child]:mb-0
                                [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1
@@ -476,7 +476,7 @@ export const FormationDetail = ({
                   <div className="text-center">
                     {!formation.show_price ? (
                       <p className="text-sm text-muted-foreground">
-                        Tarif à venir
+                        Tarif : consulter l’organisme
                       </p>
                     ) : isFree ? (
                       <>

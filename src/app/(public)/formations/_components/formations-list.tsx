@@ -787,7 +787,9 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
         <div className="mt-5 flex items-center justify-between border-t border-primary-green/10 pt-4">
           <div>
             {!formation.show_price ? (
-              <p className="text-sm text-primary-green/50">Tarif à venir</p>
+              <p className="text-sm text-primary-green/50">
+                Tarif : consulter l’organisme
+              </p>
             ) : isFree ? (
               <Badge variant="secondary" className="bg-accent-honey-soft text-primary-green">
                 {FORMATION_SCHOOL_PRICE_LABEL}
