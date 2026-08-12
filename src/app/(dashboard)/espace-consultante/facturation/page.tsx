@@ -47,6 +47,29 @@ const ConsultantInvoicesPage = async () => {
 
   const rows = invoices ?? [];
 
+  const settleableIds = rows
+    .filter((invoice) => invoice.origin === "manual" && invoice.payment_status !== "paid")
+    .map((invoice) => invoice.id);
+
+  const { data: settlements } =
+    settleableIds.length > 0
+      ? await supabase
+          .from("invoice_settlements")
+          .select("invoice_id, amount_cents")
+          .in("invoice_id", settleableIds)
+      : { data: [] };
+
+  const settledByInvoice = new Map<string, number>();
+  for (const s of settlements ?? []) {
+    settledByInvoice.set(
+      s.invoice_id,
+      (settledByInvoice.get(s.invoice_id) ?? 0) + s.amount_cents,
+    );
+  }
+
+  const remainingCentsFor = (invoice: { id: string; amount_ttc_cents: number }) =>
+    invoice.amount_ttc_cents - (settledByInvoice.get(invoice.id) ?? 0);
+
   const contacts = await getContacts();
   const clients = contacts.map((c) => ({
     id: c.id,
@@ -139,7 +162,7 @@ const ConsultantInvoicesPage = async () => {
                     <>
                       <SettlementButton
                         invoiceId={invoice.id}
-                        remainingCents={invoice.amount_ttc_cents}
+                        remainingCents={remainingCentsFor(invoice)}
                       />
                       {isOverdue(invoice.due_date, invoice.payment_status) && (
                         <ResendInvoiceButton
