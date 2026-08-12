@@ -144,8 +144,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 import {
   createTag,
-  getChildrenForContact,
-  getWeightMeasurementsForContact,
+  getFamilyDossierForContact,
   addWeightMeasurementAsConsultant,
   deleteChildAsConsultant,
   deleteWeightMeasurementAsConsultant,
@@ -229,25 +228,27 @@ describe("createTag", () => {
   });
 });
 
-describe("getChildrenForContact", () => {
+describe("getFamilyDossierForContact", () => {
   beforeEach(resetMocks);
 
-  it("retourne un tableau vide si le consultant n'a aucune relation avec ce client", async () => {
+  it("ne renvoie rien si le consultant n'a aucune relation avec ce client", async () => {
     asConsultant();
+    mockChildrenData.data = [{ id: "child-1", first_name: "Léa" }];
+    mockMeasurementsData.data = [{ id: "m1", child_id: "child-1" }];
 
-    const result = await getChildrenForContact("client-1");
+    const result = await getFamilyDossierForContact("client-1");
 
-    expect(result).toEqual([]);
+    expect(result).toEqual({ children: [], measurementsByChild: {} });
   });
 
-  it("retourne les enfants du client quand une relation de rendez-vous existe", async () => {
+  it("retourne le dossier du client quand une relation de rendez-vous existe", async () => {
     asConsultant();
     mockBookingsData.data = [{ id: "booking-1" }];
     mockChildrenData.data = [{ id: "child-1", first_name: "Léa" }];
 
-    const result = await getChildrenForContact("client-1");
+    const result = await getFamilyDossierForContact("client-1");
 
-    expect(result).toEqual([{ id: "child-1", first_name: "Léa" }]);
+    expect(result.children).toEqual([{ id: "child-1", first_name: "Léa" }]);
   });
 
   it("accepte aussi une relation via une inscription à un accompagnement", async () => {
@@ -257,35 +258,9 @@ describe("getChildrenForContact", () => {
     mockEnrollmentsData.data = [{ client_id: "client-1" }];
     mockChildrenData.data = [{ id: "child-1", first_name: "Léa" }];
 
-    const result = await getChildrenForContact("client-1");
+    const result = await getFamilyDossierForContact("client-1");
 
-    expect(result).toEqual([{ id: "child-1", first_name: "Léa" }]);
-  });
-
-  it("accepte un résultat de relation déjà vérifié, sans requêter à nouveau les réservations", async () => {
-    asConsultant();
-    mockChildrenData.data = [{ id: "child-1", first_name: "Léa" }];
-    // mockBookingsData reste vide : si le code revérifiait la relation lui-même,
-    // il ne trouverait aucune réservation et renverrait [].
-    mockBookingsData.data = [];
-
-    const result = await getChildrenForContact("client-1", true);
-
-    expect(result).toEqual([{ id: "child-1", first_name: "Léa" }]);
-  });
-});
-
-describe("getWeightMeasurementsForContact", () => {
-  beforeEach(resetMocks);
-
-  it("ne renvoie rien sans relation avec le client", async () => {
-    asConsultant();
-    mockChildrenData.data = [{ id: "child-1" }];
-    mockMeasurementsData.data = [{ id: "m1", child_id: "child-1" }];
-
-    const result = await getWeightMeasurementsForContact("client-1");
-
-    expect(result).toEqual({});
+    expect(result.children).toEqual([{ id: "child-1", first_name: "Léa" }]);
   });
 
   it("regroupe les pesées par enfant quand la relation existe", async () => {
@@ -297,26 +272,15 @@ describe("getWeightMeasurementsForContact", () => {
       { id: "m2", child_id: "child-1" },
     ];
 
-    const result = await getWeightMeasurementsForContact("client-1");
+    const result = await getFamilyDossierForContact("client-1");
 
-    expect(result).toEqual({
+    expect(result.measurementsByChild).toEqual({
       "child-1": [
         { id: "m1", child_id: "child-1" },
         { id: "m2", child_id: "child-1" },
       ],
       "child-2": [],
     });
-  });
-
-  it("accepte un résultat de relation déjà vérifié, sans requêter à nouveau les réservations", async () => {
-    asConsultant();
-    mockChildrenData.data = [{ id: "child-1" }];
-    mockMeasurementsData.data = [{ id: "m1", child_id: "child-1" }];
-    mockBookingsData.data = [];
-
-    const result = await getWeightMeasurementsForContact("client-1", true);
-
-    expect(result).toEqual({ "child-1": [{ id: "m1", child_id: "child-1" }] });
   });
 });
 
