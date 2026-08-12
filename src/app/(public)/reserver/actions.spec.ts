@@ -50,6 +50,12 @@ vi.mock("@/lib/booking/pricing", () => ({
   }),
 }));
 
+const mockLookupGiftCard = vi.fn();
+
+vi.mock("@/lib/gift-cards/balance", () => ({
+  lookupGiftCard: (...args: unknown[]) => mockLookupGiftCard(...args),
+}));
+
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import { createBooking } from "./actions";
@@ -612,6 +618,28 @@ describe("createBooking — code promo", () => {
       "redemption-4",
       "cs_test_booking",
     );
+  });
+
+  it("calcule platform_fee_cents sur le montant apres remise carte cadeau, pas avant", async () => {
+    mockResolvePromo.mockResolvedValue(null);
+    mockLookupGiftCard.mockResolvedValueOnce({
+      ok: true,
+      giftCardId: "gc-1",
+      type: "amount",
+      balanceCents: 2000,
+      consultationTypeId: null,
+      expiresAt: "2027-01-01T00:00:00.000Z",
+    });
+
+    await createBooking(makeBookingForm({ giftCardCode: "CADEAU-ABC234" }));
+
+    const args = mockCreateCheckoutSession.mock.calls[0][0];
+    // Prix 5000, carte cadeau -2000 => 3000 charges. Commission 10 % de 3000 = 300,
+    // et non de 5000 (ce qui donnerait 500) : la carte cadeau doit reduire l'assiette
+    // de la commission comme le fait deja le montant reellement envoye a Stripe.
+    expect(args.priceInCents).toBe(3000);
+    expect(args.metadata.platform_fee_cents).toBe("300");
+    expect(args.metadata.gift_card_discount_cents).toBe("2000");
   });
 
   it("refuse la reservation quand le code est invalide", async () => {

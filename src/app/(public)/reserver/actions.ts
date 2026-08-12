@@ -654,7 +654,7 @@ export const createBooking = async (
           location: formData.location,
           reason: reason.substring(0, 500),
           platform_fee_cents: Math.round(
-            chargedCents * (routing.commissionRate / 100)
+            finalChargedCents * (routing.commissionRate / 100)
           ).toString(),
           ...(promo?.ok
             ? {
