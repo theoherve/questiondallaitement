@@ -12,6 +12,8 @@ import { ResendInvoiceButton } from "./_components/resend-button";
 import { CorrectInvoiceButton } from "./_components/correct-button";
 import { getContacts } from "../crm/actions";
 import { NewInvoiceButton } from "./_components/new-invoice-button";
+import { SettlementButton } from "./_components/settlement-button";
+import { ExportButton } from "./_components/export-button";
 
 export const metadata: Metadata = {
   title: "Facturation",
@@ -23,13 +25,22 @@ const TYPE_LABELS: Record<string, string> = {
   formation: "Formation",
 };
 
+const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  unpaid: "En attente",
+  partial: "Partiellement payée",
+  paid: "Payée",
+};
+
+const isOverdue = (dueDate: string | null, paymentStatus: string) =>
+  Boolean(dueDate) && paymentStatus !== "paid" && new Date(dueDate as string) < new Date();
+
 const ConsultantInvoicesPage = async () => {
   const { supabase, user } = await getSupabaseAndUser();
 
   const { data: invoices } = await supabase
     .from("invoices")
     .select(
-      "id, number, issued_at, type, amount_ttc_cents, currency, client_name, status, emailed_at, document_type, description",
+      "id, number, issued_at, type, amount_ttc_cents, currency, client_name, status, emailed_at, document_type, description, payment_status, due_date, origin",
     )
     .eq("consultant_id", user.id)
     .order("issued_at", { ascending: false });
@@ -54,7 +65,10 @@ const ConsultantInvoicesPage = async () => {
             celles créées manuellement.
           </p>
         </div>
-        <NewInvoiceButton clients={clients} />
+        <div className="flex items-center gap-3">
+          <ExportButton />
+          <NewInvoiceButton clients={clients} />
+        </div>
       </div>
 
       {rows.length === 0 ? (
@@ -81,6 +95,16 @@ const ConsultantInvoicesPage = async () => {
                     {invoice.status === "cancelled" && (
                       <Badge variant="destructive" className="ml-2">
                         Annulée
+                      </Badge>
+                    )}
+                    {invoice.origin === "manual" && (
+                      <Badge
+                        variant={isOverdue(invoice.due_date, invoice.payment_status) ? "destructive" : "outline"}
+                        className="ml-2"
+                      >
+                        {isOverdue(invoice.due_date, invoice.payment_status)
+                          ? "En retard"
+                          : PAYMENT_STATUS_LABELS[invoice.payment_status]}
                       </Badge>
                     )}
                   </p>
@@ -111,6 +135,20 @@ const ConsultantInvoicesPage = async () => {
                         ).toFixed(2)}
                       />
                     )}
+                  {invoice.origin === "manual" && invoice.payment_status !== "paid" && (
+                    <>
+                      <SettlementButton
+                        invoiceId={invoice.id}
+                        remainingCents={invoice.amount_ttc_cents}
+                      />
+                      {isOverdue(invoice.due_date, invoice.payment_status) && (
+                        <ResendInvoiceButton
+                          invoiceId={invoice.id}
+                          alreadySent
+                        />
+                      )}
+                    </>
+                  )}
                   <ResendInvoiceButton
                     invoiceId={invoice.id}
                     alreadySent={Boolean(invoice.emailed_at)}
