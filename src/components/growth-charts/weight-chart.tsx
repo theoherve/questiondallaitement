@@ -35,6 +35,14 @@ const SOURCE_LABEL: Record<"home" | "consultation", string> = {
   consultation: "Consultation",
 };
 
+/**
+ * Couleurs de la palette du site (`globals.css`), partagées entre le rendu SVG
+ * réel des points et la légende statique sous le graphique.
+ */
+const HOME_COLOR = "#a8c4a0"; // --color-accent-sage
+const CONSULTATION_COLOR = "#a0283e"; // --color-primary-red
+const MEDIAN_COLOR = "#2d4a47"; // --color-primary-green-light
+
 const MeasuredDot = (props: {
   cx?: number;
   cy?: number;
@@ -51,11 +59,20 @@ const MeasuredDot = (props: {
         width={size * 2}
         height={size * 2}
         transform={`rotate(45 ${cx} ${cy})`}
-        fill="#a0283e"
+        fill={CONSULTATION_COLOR}
       />
     );
   }
-  return <circle cx={cx} cy={cy} r={4} fill="#a8c4a0" stroke="#a0283e" strokeWidth={1} />;
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={4}
+      fill={HOME_COLOR}
+      stroke={CONSULTATION_COLOR}
+      strokeWidth={1}
+    />
+  );
 };
 
 const WeightTooltip = ({
@@ -67,7 +84,19 @@ const WeightTooltip = ({
 }) => {
   if (!active || !payload?.length) return null;
   const point = payload[0].payload;
-  if (point.measured == null) return null;
+  // Points de fond (tous les 14 jours, sans pesée réelle) : on affiche au moins
+  // la médiane OMS à cet âge plutôt que rien.
+  if (point.measured == null) {
+    if (point.p50 == null) return null;
+    return (
+      <div className="rounded-lg border bg-card px-3 py-2 text-sm shadow-sm">
+        <p>{Math.round(point.ageDays / 30)} mois</p>
+        <p className="text-muted-foreground">
+          Médiane (P50) : {(point.p50 / 1000).toFixed(2)} kg
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="rounded-lg border bg-card px-3 py-2 text-sm shadow-sm">
       <p>{Math.round(point.ageDays / 30)} mois</p>
@@ -145,7 +174,7 @@ const buildChartData = (
   );
 };
 
-export { buildChartData, MeasuredDot, WeightTooltip };
+export { buildChartData, WeightTooltip };
 
 export const WeightChart = ({
   measurements,
@@ -242,7 +271,7 @@ export const WeightChart = ({
           <Line
             dataKey="p50"
             className="who-median-line"
-            stroke="#6b7280"
+            stroke={MEDIAN_COLOR}
             strokeWidth={1.5}
             strokeDasharray="4 4"
             dot={false}
@@ -252,9 +281,10 @@ export const WeightChart = ({
           />
           <Line
             dataKey="measured"
-            stroke="#a0283e"
+            stroke={CONSULTATION_COLOR}
             strokeWidth={2}
             dot={<MeasuredDot />}
+            activeDot={<MeasuredDot />}
             connectNulls
             name="Poids de l'enfant"
             isAnimationActive={false}
@@ -264,13 +294,27 @@ export const WeightChart = ({
       <div className="flex justify-center gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <svg width="10" height="10" aria-hidden="true">
-            <circle cx="5" cy="5" r="4" fill="#a8c4a0" stroke="#a0283e" strokeWidth="1" />
+            <circle
+              cx="5"
+              cy="5"
+              r="4"
+              fill={HOME_COLOR}
+              stroke={CONSULTATION_COLOR}
+              strokeWidth="1"
+            />
           </svg>
           Pesée à domicile
         </span>
         <span className="flex items-center gap-1.5">
           <svg width="10" height="10" aria-hidden="true">
-            <rect x="1" y="1" width="8" height="8" transform="rotate(45 5 5)" fill="#a0283e" />
+            <rect
+              x="1"
+              y="1"
+              width="8"
+              height="8"
+              transform="rotate(45 5 5)"
+              fill={CONSULTATION_COLOR}
+            />
           </svg>
           Pesée en consultation
         </span>
