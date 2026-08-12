@@ -4,10 +4,14 @@ import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { crmNoteSchema, crmTagSchema } from "@/validations/crm";
 import { weightMeasurementSchema } from "@/validations/children";
+import {
+  consultationNoteFieldsSchema,
+  type ConsultationNoteFieldsInput,
+} from "@/validations/consultation-notes";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/types";
-import type { Child, WeightMeasurement } from "@/types/database";
+import type { Child, WeightMeasurement, ConsultationNote } from "@/types/database";
 
 const requireConsultant = async () => {
   const user = await getSessionUser();
@@ -473,6 +477,169 @@ export const getFamilyDossierForContact = async (
   }
 
   return { children, measurementsByChild };
+};
+
+// ─── Fiche de consultation ──────────────────────────────────
+
+/**
+ * Vérifie que le booking appartient bien à la consultante courante et
+ * retourne sa fiche (client_id, consultant_id) — jamais un paramètre
+ * "déjà vérifié" fourni par l'appelant, comme pour hasClientRelationship.
+ */
+const getOwnedBooking = async (
+  supabase: ReturnType<typeof createAdminClient>,
+  consultantId: string,
+  bookingId: string,
+): Promise<{ id: string; client_id: string; consultant_id: string } | null> => {
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select("id, client_id, consultant_id")
+    .eq("id", bookingId)
+    .single();
+
+  if (!booking || booking.consultant_id !== consultantId) return null;
+  return booking;
+};
+
+export const getConsultationNoteForBooking = async (
+  bookingId: string,
+): Promise<ConsultationNote | null> => {
+  const user = await requireConsultant();
+  const supabase = createAdminClient();
+
+  const booking = await getOwnedBooking(supabase, user.id, bookingId);
+  if (!booking) return null;
+
+  const { data } = await supabase
+    .from("consultation_notes")
+    .select("*")
+    .eq("booking_id", bookingId)
+    .single();
+
+  return (data as ConsultationNote | null) ?? null;
+};
+
+export const upsertConsultationNote = async (
+  bookingId: string,
+  fields: unknown,
+): Promise<ActionResult<{ id: string }>> => {
+  const user = await requireConsultant();
+  const supabase = createAdminClient();
+
+  const booking = await getOwnedBooking(supabase, user.id, bookingId);
+  if (!booking) {
+    return { success: false, error: "Aucune relation avec ce rendez-vous" };
+  }
+
+  const parsed = consultationNoteFieldsSchema.safeParse(fields);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message };
+  }
+
+  const { data: note, error } = await supabase
+    .from("consultation_notes")
+    .upsert(
+      {
+        booking_id: bookingId,
+        client_id: booking.client_id,
+        consultant_id: user.id,
+        ...(parsed.data as ConsultationNoteFieldsInput),
+      },
+      { onConflict: "booking_id" },
+    )
+    .select("id")
+    .single();
+
+  if (error || !note) {
+    return { success: false, error: "Erreur lors de l'enregistrement" };
+  }
+
+  revalidatePath(`/espace-consultante/reservations/${bookingId}`);
+  return { success: true, data: note };
+};
+
+export const publishConsultationNote = async (
+  bookingId: string,
+): Promise<ActionResult> => {
+  const user = await requireConsultant();
+  const supabase = createAdminClient();
+
+  const booking = await getOwnedBooking(supabase, user.id, bookingId);
+  if (!booking) {
+    return { success: false, error: "Aucune relation avec ce rendez-vous" };
+  }
+
+  const { data: note } = await supabase
+    .from("consultation_notes")
+    .select("motif, observation, conclusion")
+    .eq("booking_id", bookingId)
+    .single();
+
+  if (!note || !note.motif.trim() || !note.observation.trim() || !note.conclusion.trim()) {
+    return {
+      success: false,
+      error: "Le motif, l'observation et la conclusion doivent être renseignés avant publication",
+    };
+  }
+
+  const { error } = await supabase
+    .from("consultation_notes")
+    .update({ status: "published", published_at: new Date().toISOString() })
+    .eq("booking_id", bookingId);
+
+  if (error) {
+    return { success: false, error: "Erreur lors de la publication" };
+  }
+
+  revalidatePath(`/espace-consultante/reservations/${bookingId}`);
+  return { success: true };
+};
+
+export const unpublishConsultationNote = async (
+  bookingId: string,
+): Promise<ActionResult> => {
+  const user = await requireConsultant();
+  const supabase = createAdminClient();
+
+  const booking = await getOwnedBooking(supabase, user.id, bookingId);
+  if (!booking) {
+    return { success: false, error: "Aucune relation avec ce rendez-vous" };
+  }
+
+  const { error } = await supabase
+    .from("consultation_notes")
+    .update({ status: "draft" })
+    .eq("booking_id", bookingId);
+
+  if (error) {
+    return { success: false, error: "Erreur lors de la mise à jour" };
+  }
+
+  revalidatePath(`/espace-consultante/reservations/${bookingId}`);
+  return { success: true };
+};
+
+/**
+ * Panneau "consultations précédentes" du dossier famille : une seule
+ * vérification de relation consultante/client, comme getFamilyDossierForContact.
+ */
+export const getConsultationNotesForFamilyDossier = async (
+  clientId: string,
+): Promise<ConsultationNote[]> => {
+  const user = await requireConsultant();
+  const supabase = createAdminClient();
+
+  if (!(await hasClientRelationship(supabase, user.id, clientId))) {
+    return [];
+  }
+
+  const { data } = await supabase
+    .from("consultation_notes")
+    .select("*")
+    .eq("client_id", clientId)
+    .order("created_at", { ascending: false });
+
+  return (data as ConsultationNote[] | null) ?? [];
 };
 
 export const deleteChildAsConsultant = async (

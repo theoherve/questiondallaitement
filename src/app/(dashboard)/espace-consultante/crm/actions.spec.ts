@@ -24,6 +24,11 @@ const {
   mockDeleteResult,
   deleteCalls,
   bookingsNotCalls,
+  mockBookingSingleData,
+  mockConsultationNoteSingleData,
+  mockConsultationNotesListData,
+  upsertCalls,
+  updateCalls,
 } = vi.hoisted(() => ({
   mockBookingsData: { data: [] as unknown[] },
   mockAccompagnementsData: { data: [] as { id: string }[] },
@@ -41,6 +46,15 @@ const {
   mockDeleteResult: { error: null as unknown },
   deleteCalls: [] as { table: string }[],
   bookingsNotCalls: [] as { column: string; operator: string; value: unknown }[],
+  mockBookingSingleData: {
+    data: null as { id: string; client_id: string; consultant_id: string } | null,
+  },
+  mockConsultationNoteSingleData: {
+    data: null as Record<string, unknown> | null,
+  },
+  mockConsultationNotesListData: { data: [] as unknown[] },
+  upsertCalls: [] as { table: string; data: unknown; onConflict?: string }[],
+  updateCalls: [] as { table: string; data: unknown }[],
 }));
 
 /** Objet à la fois attendable (await) et chaînable, comme un query builder. */
@@ -55,14 +69,16 @@ vi.mock("@/lib/supabase/admin", () => ({
       if (table === "bookings") {
         return {
           select: () => ({
-            eq: () => ({
-              eq: () => ({
-                not: (column: string, operator: string, value: unknown) => {
-                  bookingsNotCalls.push({ column, operator, value });
-                  return { limit: () => Promise.resolve(mockBookingsData) };
-                },
+            eq: () =>
+              thenableWith(mockBookingsData, {
+                eq: () => ({
+                  not: (column: string, operator: string, value: unknown) => {
+                    bookingsNotCalls.push({ column, operator, value });
+                    return { limit: () => Promise.resolve(mockBookingsData) };
+                  },
+                }),
+                single: () => Promise.resolve(mockBookingSingleData),
               }),
-            }),
           }),
         };
       }
@@ -127,6 +143,30 @@ vi.mock("@/lib/supabase/admin", () => ({
           },
         };
       }
+      if (table === "consultation_notes") {
+        return {
+          select: () => ({
+            eq: () =>
+              thenableWith(mockConsultationNotesListData, {
+                single: () => Promise.resolve(mockConsultationNoteSingleData),
+                order: () => Promise.resolve(mockConsultationNotesListData),
+              }),
+          }),
+          upsert: (data: unknown, options?: { onConflict?: string }) => {
+            upsertCalls.push({ table, data, onConflict: options?.onConflict });
+            return {
+              select: () => ({
+                single: () =>
+                  Promise.resolve({ data: { id: "note-1" }, error: null }),
+              }),
+            };
+          },
+          update: (data: unknown) => {
+            updateCalls.push({ table, data });
+            return { eq: () => Promise.resolve({ error: null }) };
+          },
+        };
+      }
       return {
         insert: (data: unknown) => {
           insertCalls.push({ table, data });
@@ -148,6 +188,11 @@ import {
   addWeightMeasurementAsConsultant,
   deleteChildAsConsultant,
   deleteWeightMeasurementAsConsultant,
+  getConsultationNoteForBooking,
+  upsertConsultationNote,
+  publishConsultationNote,
+  unpublishConsultationNote,
+  getConsultationNotesForFamilyDossier,
 } from "./actions";
 
 /** Remet à zéro l'ensemble des réponses simulées entre deux tests. */
@@ -164,6 +209,11 @@ const resetMocks = () => {
   mockMeasurementSingleData.data = null;
   mockMeasurementsData.data = [];
   mockDeleteResult.error = null;
+  mockBookingSingleData.data = null;
+  mockConsultationNoteSingleData.data = null;
+  mockConsultationNotesListData.data = [];
+  upsertCalls.length = 0;
+  updateCalls.length = 0;
 };
 
 const asConsultant = () =>
@@ -467,5 +517,247 @@ describe("deleteWeightMeasurementAsConsultant", () => {
 
     expect(result.success).toBe(true);
     expect(deleteCalls).toEqual([{ table: "weight_measurements" }]);
+  });
+});
+
+describe("getConsultationNoteForBooking", () => {
+  beforeEach(resetMocks);
+
+  it("retourne null si le booking n'appartient pas à la consultante", async () => {
+    asConsultant();
+    mockBookingSingleData.data = {
+      id: "booking-1",
+      client_id: "client-1",
+      consultant_id: "autre-consultante",
+    };
+
+    const result = await getConsultationNoteForBooking("booking-1");
+
+    expect(result).toBeNull();
+  });
+
+  it("retourne null si aucune fiche n'existe encore pour ce booking", async () => {
+    asConsultant();
+    mockBookingSingleData.data = {
+      id: "booking-1",
+      client_id: "client-1",
+      consultant_id: "consultant-1",
+    };
+    mockConsultationNoteSingleData.data = null;
+
+    const result = await getConsultationNoteForBooking("booking-1");
+
+    expect(result).toBeNull();
+  });
+
+  it("retourne la fiche quand le booking appartient à la consultante", async () => {
+    asConsultant();
+    mockBookingSingleData.data = {
+      id: "booking-1",
+      client_id: "client-1",
+      consultant_id: "consultant-1",
+    };
+    mockConsultationNoteSingleData.data = {
+      id: "note-1",
+      booking_id: "booking-1",
+      status: "draft",
+    };
+
+    const result = await getConsultationNoteForBooking("booking-1");
+
+    expect(result).toMatchObject({ id: "note-1", status: "draft" });
+  });
+});
+
+describe("upsertConsultationNote", () => {
+  beforeEach(resetMocks);
+
+  const validFields = {
+    child_id: null,
+    motif: "Douleur à la tétée",
+    antecedents_medicaux: false,
+    antecedents_medicaux_detail: null,
+    antecedents_chirurgicaux: false,
+    antecedents_chirurgicaux_detail: null,
+    allergies: false,
+    allergies_detail: null,
+    traitements_en_cours: false,
+    traitements_en_cours_detail: null,
+    observation: "",
+    conclusion: "",
+    notes_internes: null,
+  };
+
+  it("refuse si le booking n'appartient pas à la consultante", async () => {
+    asConsultant();
+    mockBookingSingleData.data = {
+      id: "booking-1",
+      client_id: "client-1",
+      consultant_id: "autre-consultante",
+    };
+
+    const result = await upsertConsultationNote("booking-1", validFields);
+
+    expect(result.success).toBe(false);
+    expect(upsertCalls).toHaveLength(0);
+  });
+
+  it("upsert sur booking_id quand le booking appartient à la consultante", async () => {
+    asConsultant();
+    mockBookingSingleData.data = {
+      id: "booking-1",
+      client_id: "client-1",
+      consultant_id: "consultant-1",
+    };
+
+    const result = await upsertConsultationNote("booking-1", validFields);
+
+    expect(result.success).toBe(true);
+    expect(upsertCalls.at(-1)).toMatchObject({
+      table: "consultation_notes",
+      data: {
+        booking_id: "booking-1",
+        client_id: "client-1",
+        consultant_id: "consultant-1",
+        motif: "Douleur à la tétée",
+      },
+      onConflict: "booking_id",
+    });
+  });
+
+  it("rejette une entrée invalide avant tout accès base", async () => {
+    asConsultant();
+    mockBookingSingleData.data = {
+      id: "booking-1",
+      client_id: "client-1",
+      consultant_id: "consultant-1",
+    };
+
+    const result = await upsertConsultationNote("booking-1", {
+      ...validFields,
+      child_id: "pas-un-uuid",
+    });
+
+    expect(result.success).toBe(false);
+    expect(upsertCalls).toHaveLength(0);
+  });
+});
+
+describe("publishConsultationNote", () => {
+  beforeEach(resetMocks);
+
+  it("refuse si le booking n'appartient pas à la consultante", async () => {
+    asConsultant();
+    mockBookingSingleData.data = {
+      id: "booking-1",
+      client_id: "client-1",
+      consultant_id: "autre-consultante",
+    };
+
+    const result = await publishConsultationNote("booking-1");
+
+    expect(result.success).toBe(false);
+    expect(updateCalls).toHaveLength(0);
+  });
+
+  it("refuse si motif, observation ou conclusion est vide", async () => {
+    asConsultant();
+    mockBookingSingleData.data = {
+      id: "booking-1",
+      client_id: "client-1",
+      consultant_id: "consultant-1",
+    };
+    mockConsultationNoteSingleData.data = {
+      id: "note-1",
+      motif: "Douleur",
+      observation: "",
+      conclusion: "À revoir",
+    };
+
+    const result = await publishConsultationNote("booking-1");
+
+    expect(result.success).toBe(false);
+    expect(updateCalls).toHaveLength(0);
+  });
+
+  it("publie la fiche quand tous les champs obligatoires sont remplis", async () => {
+    asConsultant();
+    mockBookingSingleData.data = {
+      id: "booking-1",
+      client_id: "client-1",
+      consultant_id: "consultant-1",
+    };
+    mockConsultationNoteSingleData.data = {
+      id: "note-1",
+      motif: "Douleur",
+      observation: "Observation détaillée",
+      conclusion: "À revoir",
+    };
+
+    const result = await publishConsultationNote("booking-1");
+
+    expect(result.success).toBe(true);
+    expect(updateCalls.at(-1)).toMatchObject({
+      table: "consultation_notes",
+      data: { status: "published" },
+    });
+  });
+});
+
+describe("unpublishConsultationNote", () => {
+  beforeEach(resetMocks);
+
+  it("refuse si le booking n'appartient pas à la consultante", async () => {
+    asConsultant();
+    mockBookingSingleData.data = {
+      id: "booking-1",
+      client_id: "client-1",
+      consultant_id: "autre-consultante",
+    };
+
+    const result = await unpublishConsultationNote("booking-1");
+
+    expect(result.success).toBe(false);
+    expect(updateCalls).toHaveLength(0);
+  });
+
+  it("repasse la fiche en brouillon", async () => {
+    asConsultant();
+    mockBookingSingleData.data = {
+      id: "booking-1",
+      client_id: "client-1",
+      consultant_id: "consultant-1",
+    };
+
+    const result = await unpublishConsultationNote("booking-1");
+
+    expect(result.success).toBe(true);
+    expect(updateCalls.at(-1)).toMatchObject({
+      table: "consultation_notes",
+      data: { status: "draft" },
+    });
+  });
+});
+
+describe("getConsultationNotesForFamilyDossier", () => {
+  beforeEach(resetMocks);
+
+  it("ne renvoie rien si le consultant n'a aucune relation avec ce client", async () => {
+    asConsultant();
+    mockConsultationNotesListData.data = [{ id: "note-1" }];
+
+    const result = await getConsultationNotesForFamilyDossier("client-1");
+
+    expect(result).toEqual([]);
+  });
+
+  it("retourne les fiches du client quand une relation existe", async () => {
+    asConsultant();
+    mockBookingsData.data = [{ id: "booking-1" }];
+    mockConsultationNotesListData.data = [{ id: "note-1" }];
+
+    const result = await getConsultationNotesForFamilyDossier("client-1");
+
+    expect(result).toEqual([{ id: "note-1" }]);
   });
 });
