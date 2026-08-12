@@ -853,24 +853,6 @@ export const updateNote = async (
   return { success: true };
 };
 
-export const deleteNote = async (noteId: string): Promise<ActionResult> => {
-  const user = await requireConsultant();
-  const supabase = createAdminClient();
-
-  const { error } = await supabase
-    .from("crm_notes")
-    .delete()
-    .eq("id", noteId)
-    .eq("consultant_id", user.id);
-
-  if (error) {
-    return { success: false, error: "Erreur lors de la suppression" };
-  }
-
-  revalidatePath("/espace-consultante/crm");
-  return { success: true };
-};
-
 // ─── Tags CRUD ──────────────────────────────────────────────
 
 export const getTags = async (): Promise<

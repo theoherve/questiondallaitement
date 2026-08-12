@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Pencil, Trash2, Loader2, X, Check } from "lucide-react";
-import { createNote, updateNote, deleteNote } from "../actions";
+import { Plus, Pencil, Loader2, X, Check } from "lucide-react";
+import { createNote, updateNote } from "../actions";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -51,17 +51,6 @@ export const NotesEditor = ({
       if (result.success) {
         toast.success("Note modifiée");
         setEditingId(null);
-      } else {
-        toast.error(result.error);
-      }
-    });
-  };
-
-  const handleDelete = (noteId: string) => {
-    startTransition(async () => {
-      const result = await deleteNote(noteId);
-      if (result.success) {
-        toast.success("Note supprimée");
       } else {
         toast.error(result.error);
       }
@@ -158,15 +147,6 @@ export const NotesEditor = ({
                       onClick={() => startEdit(note)}
                     >
                       <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive"
-                      onClick={() => handleDelete(note.id)}
-                      disabled={isPending}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </div>
