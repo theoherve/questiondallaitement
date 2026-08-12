@@ -261,6 +261,18 @@ describe("getChildrenForContact", () => {
 
     expect(result).toEqual([{ id: "child-1", first_name: "Léa" }]);
   });
+
+  it("accepte un résultat de relation déjà vérifié, sans requêter à nouveau les réservations", async () => {
+    asConsultant();
+    mockChildrenData.data = [{ id: "child-1", first_name: "Léa" }];
+    // mockBookingsData reste vide : si le code revérifiait la relation lui-même,
+    // il ne trouverait aucune réservation et renverrait [].
+    mockBookingsData.data = [];
+
+    const result = await getChildrenForContact("client-1", true);
+
+    expect(result).toEqual([{ id: "child-1", first_name: "Léa" }]);
+  });
 });
 
 describe("getWeightMeasurementsForContact", () => {
@@ -294,6 +306,17 @@ describe("getWeightMeasurementsForContact", () => {
       ],
       "child-2": [],
     });
+  });
+
+  it("accepte un résultat de relation déjà vérifié, sans requêter à nouveau les réservations", async () => {
+    asConsultant();
+    mockChildrenData.data = [{ id: "child-1" }];
+    mockMeasurementsData.data = [{ id: "m1", child_id: "child-1" }];
+    mockBookingsData.data = [];
+
+    const result = await getWeightMeasurementsForContact("client-1", true);
+
+    expect(result).toEqual({ "child-1": [{ id: "m1", child_id: "child-1" }] });
   });
 });
 

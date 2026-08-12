@@ -424,13 +424,30 @@ const hasClientRelationship = async (
   return !!enrollmentLink && enrollmentLink.length > 0;
 };
 
+/**
+ * Vérifie une seule fois la relation consultante/client pour un chargement de
+ * page qui va ensuite appeler plusieurs fonctions qui en ont besoin
+ * (`getChildrenForContact`, `getWeightMeasurementsForContact`), pour éviter de
+ * la revérifier une fois par fonction.
+ */
+export const hasVerifiedClientRelationship = async (
+  clientId: string,
+): Promise<boolean> => {
+  const user = await requireConsultant();
+  const supabase = createAdminClient();
+  return hasClientRelationship(supabase, user.id, clientId);
+};
+
 export const getChildrenForContact = async (
   clientId: string,
+  hasRelationship?: boolean,
 ): Promise<Child[]> => {
   const user = await requireConsultant();
   const supabase = createAdminClient();
 
-  if (!(await hasClientRelationship(supabase, user.id, clientId))) {
+  const verified =
+    hasRelationship ?? (await hasClientRelationship(supabase, user.id, clientId));
+  if (!verified) {
     return [];
   }
 
@@ -450,11 +467,14 @@ export const getChildrenForContact = async (
  */
 export const getWeightMeasurementsForContact = async (
   clientId: string,
+  hasRelationship?: boolean,
 ): Promise<Record<string, WeightMeasurement[]>> => {
   const user = await requireConsultant();
   const supabase = createAdminClient();
 
-  if (!(await hasClientRelationship(supabase, user.id, clientId))) {
+  const verified =
+    hasRelationship ?? (await hasClientRelationship(supabase, user.id, clientId));
+  if (!verified) {
     return {};
   }
 
