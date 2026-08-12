@@ -10,7 +10,6 @@ const requireAdmin = async () => {
   const user = await getSessionUser();
   if (!user || !user.roles.includes("admin")) {
     redirect("/connexion");
-    throw new Error("unauthorized");
   }
   return user;
 };
@@ -73,17 +72,16 @@ export const issueGiftCardManually = async (input: {
   const admin = await requireAdmin();
   const supabase = createAdminClient();
 
-  // Site solo-praticienne : une seule consultante active. On récupère la
-  // liste (pas de filtre serveur pour rester sur les mêmes primitives que
-  // `listGiftCards`) et on choisit la consultante active, ou à défaut la
-  // première trouvée / l'admin courant·e si elle est aussi consultante.
-  const { data: consultants } = await supabase
+  // Site solo-praticienne : une seule consultante active.
+  const { data: consultant } = await supabase
     .from("consultants")
-    .select("id, is_active")
-    .order("created_at", { ascending: true });
+    .select("id")
+    .eq("is_active", true)
+    .maybeSingle();
 
-  const activeConsultant = (consultants ?? []).find((c) => c.is_active);
-  const consultantId = activeConsultant?.id ?? consultants?.[0]?.id ?? admin.id;
+  if (!consultant) {
+    return { success: false, error: "Praticienne introuvable." };
+  }
 
   const issuedAt = new Date();
   const expiresAt = new Date(issuedAt);
@@ -94,7 +92,7 @@ export const issueGiftCardManually = async (input: {
     type: input.type,
     initial_amount_cents: input.type === "amount" ? input.amountCents : null,
     consultation_type_id: input.type === "service" ? input.consultationTypeId : null,
-    consultant_id: consultantId,
+    consultant_id: consultant.id,
     buyer_name: input.buyerName,
     buyer_email: input.buyerEmail,
     beneficiary_name: input.beneficiaryName ?? null,
