@@ -308,6 +308,10 @@ describe("deleteWeightMeasurement", () => {
     deleteCalls.length = 0;
     responses.weightMeasurementSingle = { data: null, error: null };
     responses.weightDelete = { error: null };
+    responses.childOwnershipSingle = {
+      data: { id: "child-1", birth_date: "2025-01-10" },
+      error: null,
+    };
   });
 
   it("supprime une pesée dans la fenêtre de 24h", async () => {
@@ -352,6 +356,31 @@ describe("deleteWeightMeasurement", () => {
     expect(result.error).toBe(
       "Cette pesée a été saisie par votre consultante, vous ne pouvez pas la supprimer.",
     );
+    expect(deleteCalls).toHaveLength(0);
+  });
+
+  it("répond « introuvable » pour une pesée qui existe mais appartient à une autre famille", async () => {
+    mockGetSupabaseAndUser.mockResolvedValue({
+      user: { id: "client-1" },
+      supabase: {},
+    });
+    responses.weightMeasurementSingle = {
+      data: {
+        id: "m1",
+        child_id: "child-other",
+        recorded_by: "other-consultant",
+        created_at: new Date().toISOString(),
+      },
+      error: null,
+    };
+    // L'enfant n'appartient pas à cet utilisateur : la vérification de
+    // propriété ne remonte rien.
+    responses.childOwnershipSingle = { data: null, error: null };
+
+    const result = await deleteWeightMeasurement("m1");
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Pesée introuvable");
     expect(deleteCalls).toHaveLength(0);
   });
 
