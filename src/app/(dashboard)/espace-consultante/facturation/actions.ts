@@ -7,6 +7,7 @@ import { buildCorrectionContent } from "@/lib/invoicing/correction";
 import { buildManualInvoiceContent } from "@/lib/invoicing/manual-invoice";
 import { buildInvoicesCsv, type InvoiceExportRow } from "@/lib/invoicing/csv-export";
 import { redeemGiftCard } from "@/lib/gift-cards/redeem";
+import { lookupGiftCard } from "@/lib/gift-cards/balance";
 import type { ActionResult } from "@/types";
 
 const INVOICE_FIELDS =
@@ -242,14 +243,27 @@ export const createManualInvoice = async (input: {
   const created = invoice as { id: string };
 
   if (input.giftCardCode) {
-    const redemption = await redeemGiftCard(supabase, {
-      code: input.giftCardCode,
-      amountCents: input.ttcCents,
-      invoiceId: created.id,
-      recordedBy: user.id,
-    });
-    if (!redemption.ok) {
-      console.error("[createManualInvoice] carte cadeau", redemption.error);
+    const lookup = await lookupGiftCard(supabase, input.giftCardCode);
+    if (!lookup.ok) {
+      console.error("[createManualInvoice] carte cadeau", lookup.error);
+    } else {
+      // Le solde peut etre inferieur au total de la facture : on cappe au
+      // solde disponible plutot que de rejeter (voir §7.3 — solde restant
+      // suivi apres usage partiel), meme logique que checkGiftCardForBooking.
+      const amountToRedeem =
+        lookup.type === "amount"
+          ? Math.min(lookup.balanceCents!, input.ttcCents)
+          : input.ttcCents;
+
+      const redemption = await redeemGiftCard(supabase, {
+        code: input.giftCardCode,
+        amountCents: amountToRedeem,
+        invoiceId: created.id,
+        recordedBy: user.id,
+      });
+      if (!redemption.ok) {
+        console.error("[createManualInvoice] carte cadeau", redemption.error);
+      }
     }
   }
 
