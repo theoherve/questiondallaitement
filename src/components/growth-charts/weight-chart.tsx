@@ -25,6 +25,10 @@ type ChartPoint = {
   p50: number | null;
   p85: number | null;
   p97: number | null;
+  d15: number | null;
+  d50: number | null;
+  d85: number | null;
+  d97: number | null;
 };
 
 const ageDaysBetween = (birthDate: string, measuredAt: string): number =>
@@ -32,6 +36,24 @@ const ageDaysBetween = (birthDate: string, measuredAt: string): number =>
     (new Date(measuredAt).getTime() - new Date(birthDate).getTime()) /
       (24 * 60 * 60 * 1000),
   );
+
+const withDeltas = (
+  p3: number | null,
+  p15: number | null,
+  p50: number | null,
+  p85: number | null,
+  p97: number | null,
+) => ({
+  p3,
+  p15,
+  p50,
+  p85,
+  p97,
+  d15: p15 != null && p3 != null ? p15 - p3 : null,
+  d50: p50 != null && p15 != null ? p50 - p15 : null,
+  d85: p85 != null && p50 != null ? p85 - p50 : null,
+  d97: p97 != null && p85 != null ? p97 - p85 : null,
+});
 
 const buildChartData = (
   measurements: WeightMeasurement[],
@@ -44,11 +66,13 @@ const buildChartData = (
       ageDays,
       measured: m.weight_grams,
       source: m.source,
-      p3: getPercentileWeightGrams(ageDays, sex, 3),
-      p15: getPercentileWeightGrams(ageDays, sex, 15),
-      p50: getPercentileWeightGrams(ageDays, sex, 50),
-      p85: getPercentileWeightGrams(ageDays, sex, 85),
-      p97: getPercentileWeightGrams(ageDays, sex, 97),
+      ...withDeltas(
+        getPercentileWeightGrams(ageDays, sex, 3),
+        getPercentileWeightGrams(ageDays, sex, 15),
+        getPercentileWeightGrams(ageDays, sex, 50),
+        getPercentileWeightGrams(ageDays, sex, 85),
+        getPercentileWeightGrams(ageDays, sex, 97),
+      ),
     };
   });
 
@@ -60,11 +84,13 @@ const buildChartData = (
       ageDays,
       measured: null,
       source: null,
-      p3: getPercentileWeightGrams(ageDays, sex, 3),
-      p15: getPercentileWeightGrams(ageDays, sex, 15),
-      p50: getPercentileWeightGrams(ageDays, sex, 50),
-      p85: getPercentileWeightGrams(ageDays, sex, 85),
-      p97: getPercentileWeightGrams(ageDays, sex, 97),
+      ...withDeltas(
+        getPercentileWeightGrams(ageDays, sex, 3),
+        getPercentileWeightGrams(ageDays, sex, 15),
+        getPercentileWeightGrams(ageDays, sex, 50),
+        getPercentileWeightGrams(ageDays, sex, 85),
+        getPercentileWeightGrams(ageDays, sex, 97),
+      ),
     });
   }
 
@@ -72,6 +98,8 @@ const buildChartData = (
     (a, b) => a.ageDays - b.ageDays,
   );
 };
+
+export { buildChartData };
 
 export const WeightChart = ({
   measurements,
