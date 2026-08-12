@@ -30,6 +30,53 @@ type ChartPoint = {
   d97: number | null;
 };
 
+const SOURCE_LABEL: Record<"home" | "consultation", string> = {
+  home: "Domicile",
+  consultation: "Consultation",
+};
+
+const MeasuredDot = (props: {
+  cx?: number;
+  cy?: number;
+  payload?: ChartPoint;
+}) => {
+  const { cx, cy, payload } = props;
+  if (cx == null || cy == null || !payload?.source) return null;
+  if (payload.source === "consultation") {
+    const size = 5;
+    return (
+      <rect
+        x={cx - size}
+        y={cy - size}
+        width={size * 2}
+        height={size * 2}
+        transform={`rotate(45 ${cx} ${cy})`}
+        fill="#a0283e"
+      />
+    );
+  }
+  return <circle cx={cx} cy={cy} r={4} fill="#a8c4a0" stroke="#a0283e" strokeWidth={1} />;
+};
+
+const WeightTooltip = ({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { payload: ChartPoint }[];
+}) => {
+  if (!active || !payload?.length) return null;
+  const point = payload[0].payload;
+  if (point.measured == null) return null;
+  return (
+    <div className="rounded-lg border bg-card px-3 py-2 text-sm shadow-sm">
+      <p>{Math.round(point.ageDays / 30)} mois</p>
+      <p>{(point.measured / 1000).toFixed(2)} kg</p>
+      {point.source && <p className="text-muted-foreground">{SOURCE_LABEL[point.source]}</p>}
+    </div>
+  );
+};
+
 const ageDaysBetween = (birthDate: string, measuredAt: string): number =>
   Math.round(
     (new Date(measuredAt).getTime() - new Date(birthDate).getTime()) /
@@ -137,21 +184,7 @@ export const WeightChart = ({
             className="fill-muted-foreground"
             width={70}
           />
-          <Tooltip
-            labelFormatter={(label) =>
-              `${Math.round(Number(label) / 30)} mois`
-            }
-            formatter={(value, name) => [
-              `${(Number(value) / 1000).toFixed(2)} kg`,
-              String(name),
-            ]}
-            contentStyle={{
-              backgroundColor: "hsl(var(--card))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "0.5rem",
-              fontSize: "0.875rem",
-            }}
-          />
+          <Tooltip content={<WeightTooltip />} />
           <Area
             dataKey="p3"
             stackId="who"
@@ -221,13 +254,27 @@ export const WeightChart = ({
             dataKey="measured"
             stroke="#a0283e"
             strokeWidth={2}
-            dot={{ r: 4 }}
+            dot={<MeasuredDot />}
             connectNulls
             name="Poids de l'enfant"
             isAnimationActive={false}
           />
         </ComposedChart>
       </ResponsiveContainer>
+      <div className="flex justify-center gap-4 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <svg width="10" height="10" aria-hidden="true">
+            <circle cx="5" cy="5" r="4" fill="#a8c4a0" stroke="#a0283e" strokeWidth="1" />
+          </svg>
+          Pesée à domicile
+        </span>
+        <span className="flex items-center gap-1.5">
+          <svg width="10" height="10" aria-hidden="true">
+            <rect x="1" y="1" width="8" height="8" transform="rotate(45 5 5)" fill="#a0283e" />
+          </svg>
+          Pesée en consultation
+        </span>
+      </div>
       <p className="text-center text-xs text-muted-foreground">
         Ces courbes sont indicatives et ne remplacent pas un avis médical.
       </p>
