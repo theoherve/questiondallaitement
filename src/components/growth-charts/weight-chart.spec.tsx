@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { WeightChart } from "./weight-chart";
-import { buildChartData, WeightTooltip } from "./weight-chart";
+import { WeightChart, buildChartData, WeightTooltip } from "./weight-chart";
 
 // Polyfill ResizeObserver pour jsdom
 // ResizeObserver est utilisé par ResponsiveContainer de Recharts pour mesurer la taille
@@ -14,6 +13,12 @@ class ResizeObserverMock {
 vi.stubGlobal("ResizeObserver", ResizeObserverMock);
 
 // Forcer les dimensions du conteneur pour que ResponsiveContainer ait une taille non nulle
+const originalGetBoundingClientRect = Element.prototype.getBoundingClientRect;
+
+afterEach(() => {
+  Element.prototype.getBoundingClientRect = originalGetBoundingClientRect;
+});
+
 beforeEach(() => {
   // Mock getBoundingClientRect pour retourner des dimensions non nulles
   Element.prototype.getBoundingClientRect = vi.fn(() => ({
