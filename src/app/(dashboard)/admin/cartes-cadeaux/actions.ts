@@ -2,8 +2,12 @@
 
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { insertGiftCardWithUniqueCode } from "@/lib/gift-cards/code";
+import { sendGiftCardPurchaseEmails } from "@/lib/gift-cards/emails";
+import { findOrCreateGuestProfile } from "@/lib/auth/guest-profile";
+import { STANDARD_VAT_RATE } from "@/lib/invoicing/vat";
 import type { ActionResult } from "@/types";
 
 const requireAdmin = async () => {
@@ -14,15 +18,28 @@ const requireAdmin = async () => {
   return user;
 };
 
+/** Une utilisation de la carte, pour l'historique affiche dans la liste. */
+export type GiftCardRedemptionItem = {
+  amountCents: number;
+  redeemedAt: string;
+};
+
 export type GiftCardListItem = {
   id: string;
   code: string;
   type: "amount" | "service";
-  status: string;
+  /**
+   * Statut d'affichage, et non la valeur brute de l'enum. `expired` n'est
+   * jamais ecrit en base : il se deduit de `expires_at`. Sans ce calcul, une
+   * carte perimee restait affichee « active » a vie dans le back-office, alors
+   * que `redeem_gift_card()` la refuse deja.
+   */
+  status: "active" | "used" | "cancelled" | "expired";
   balanceCents: number | null;
   buyerName: string;
   issuedAt: string;
   expiresAt: string;
+  redemptions: GiftCardRedemptionItem[];
 };
 
 export const listGiftCards = async (): Promise<ActionResult<GiftCardListItem[]>> => {
@@ -32,7 +49,7 @@ export const listGiftCards = async (): Promise<ActionResult<GiftCardListItem[]>>
   const { data, error } = await supabase
     .from("gift_cards")
     .select(
-      "id, code, type, status, initial_amount_cents, buyer_name, issued_at, expires_at, gift_card_redemptions(amount_cents)",
+      "id, code, type, status, initial_amount_cents, buyer_name, issued_at, expires_at, gift_card_redemptions(amount_cents, redeemed_at)",
     )
     .order("issued_at", { ascending: false });
 
@@ -40,18 +57,30 @@ export const listGiftCards = async (): Promise<ActionResult<GiftCardListItem[]>>
     return { success: false, error: "Impossible de charger les cartes cadeaux." };
   }
 
+  const now = Date.now();
+
   const items: GiftCardListItem[] = data.map((row) => {
-    const redemptions = (row.gift_card_redemptions as { amount_cents: number }[] | null) ?? [];
+    const redemptions =
+      (row.gift_card_redemptions as
+        | { amount_cents: number; redeemed_at: string }[]
+        | null) ?? [];
     const used = redemptions.reduce((sum, r) => sum + r.amount_cents, 0);
+
     return {
       id: row.id,
       code: row.code,
       type: row.type,
-      status: row.status,
+      status:
+        row.status === "active" && new Date(row.expires_at).getTime() < now
+          ? "expired"
+          : row.status,
       balanceCents: row.type === "amount" ? row.initial_amount_cents - used : null,
       buyerName: row.buyer_name,
       issuedAt: row.issued_at,
       expiresAt: row.expires_at,
+      redemptions: redemptions
+        .map((r) => ({ amountCents: r.amount_cents, redeemedAt: r.redeemed_at }))
+        .sort((a, b) => a.redeemedAt.localeCompare(b.redeemedAt)),
     };
   });
 
@@ -105,5 +134,222 @@ export const issueGiftCardManually = async (input: {
     created_by_admin_id: admin.id,
   }));
 
-  return { success: true, data: { giftCardId: card.id, code: card.code } };
+  // Facture a 0 € (design §4) : une carte offerte en geste commercial reste une
+  // piece a tracer. Les deux effets qui suivent sont non bloquants — la carte
+  // existe et est utilisable ; une facture ou un email manquants se rattrapent
+  // a la main, alors qu'une carte non creee ne se rattrape pas.
+  const warnings: string[] = [];
+
+  const invoiceIssue = await emitZeroAmountInvoice(supabase, {
+    consultantId: consultant.id,
+    buyerName: input.buyerName,
+    buyerEmail: input.buyerEmail,
+    code: card.code,
+  });
+  if (invoiceIssue) warnings.push(invoiceIssue);
+
+  const consultantName = await resolveConsultantName(supabase, consultant.id);
+  const consultationPriceCents =
+    input.type === "service" && input.consultationTypeId
+      ? await getConsultationTypePrice(supabase, input.consultationTypeId)
+      : null;
+  const faceValueCents =
+    input.type === "amount" ? (input.amountCents ?? null) : consultationPriceCents;
+
+  try {
+    await sendGiftCardPurchaseEmails({
+      code: card.code,
+      typeLabel:
+        input.type === "amount" ? "Carte cadeau" : "Carte cadeau — prestation offerte",
+      amountLabel:
+        input.type === "amount" && input.amountCents != null
+          ? formatEuros(input.amountCents)
+          : null,
+      expiresAtLabel: new Date(card.expires_at).toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+      buyerName: input.buyerName,
+      buyerEmail: input.buyerEmail,
+      beneficiaryName: input.beneficiaryName ?? null,
+      beneficiaryEmail: input.beneficiaryEmail ?? null,
+      personalMessage: input.personalMessage ?? null,
+      deliveryMode: input.deliveryMode,
+      consultantName,
+    });
+  } catch (err) {
+    console.error("[issueGiftCardManually] envoi de la carte", err);
+    await supabase.from("audit_logs").insert({
+      user_id: admin.id,
+      action: "gift_card_delivery_failed",
+      entity_type: "gift_card",
+      entity_id: card.id,
+      metadata: {
+        code: card.code,
+        delivery_mode: input.deliveryMode,
+        error: err instanceof Error ? err.message : "Unknown error",
+      },
+    });
+    warnings.push("l'email de remise n'a pas pu être envoyé");
+  }
+
+  // Valeur nominale tracee, meme quand la facture est a 0 : sans elle, rien
+  // dans les journaux ne dit ce que le geste commercial a coute.
+  await supabase.from("audit_logs").insert({
+    user_id: admin.id,
+    action: "gift_card_issued_manually",
+    entity_type: "gift_card",
+    entity_id: card.id,
+    metadata: {
+      code: card.code,
+      type: input.type,
+      face_value_cents: faceValueCents,
+    },
+  });
+
+  revalidatePath("/admin/cartes-cadeaux");
+
+  return {
+    success: true,
+    data: { giftCardId: card.id, code: card.code },
+    ...(warnings.length > 0
+      ? { warning: `Carte créée, mais ${warnings.join(" et ")}.` }
+      : {}),
+  };
 };
+
+/**
+ * Emet la facture a 0 € qui trace l'emission manuelle.
+ *
+ * Appelle `create_manual_invoice` directement plutot que la server action
+ * `createManualInvoice` : celle-ci exige une relation cliente existante
+ * (`hasClientRelationship`), ce que la beneficiaire d'un geste commercial n'a
+ * justement pas encore. Le payload est le meme, a la numerotation pres, qui
+ * reste celle de la sequence partagee.
+ *
+ * Renvoie `undefined` en cas de succes, sinon le libelle de l'echec.
+ */
+const emitZeroAmountInvoice = async (
+  supabase: ReturnType<typeof createAdminClient>,
+  input: {
+    consultantId: string;
+    buyerName: string;
+    buyerEmail: string;
+    code: string;
+  },
+): Promise<string | undefined> => {
+  const { data: consultant } = await supabase
+    .from("consultants")
+    .select(
+      "billing_legal_name, billing_address, billing_siren, billing_vat_number, billing_legal_form, billing_iban, billing_bic",
+    )
+    .eq("id", input.consultantId)
+    .maybeSingle();
+
+  if (!consultant?.billing_legal_name) {
+    return "la facture n'a pas été émise (informations de facturation incomplètes)";
+  }
+
+  // Un `client_id` est obligatoire sur `invoices` : la beneficiaire d'un geste
+  // commercial n'a pas forcement de compte, on le cree en invitee comme le fait
+  // l'achat en ligne.
+  const guest = await findOrCreateGuestProfile(supabase, {
+    email: input.buyerEmail,
+    first_name: input.buyerName,
+    last_name: null,
+    phone: null,
+  });
+
+  if (!guest.success) {
+    return "la facture n'a pas été émise (profil bénéficiaire introuvable)";
+  }
+
+  const { error } = await supabase.rpc("create_manual_invoice", {
+    p_content: {
+      consultant_id: input.consultantId,
+      client_id: guest.id,
+      due_date: null,
+      currency: "eur",
+      vat_rate: STANDARD_VAT_RATE,
+      amount_ttc_cents: 0,
+      amount_ht_cents: 0,
+      amount_vat_cents: 0,
+      description: `Carte cadeau ${input.code} — émise à titre gracieux`,
+      client_name: input.buyerName,
+      client_email: input.buyerEmail,
+      issuer_legal_name: consultant.billing_legal_name,
+      issuer_address: consultant.billing_address,
+      issuer_siren: consultant.billing_siren,
+      issuer_vat_number: consultant.billing_vat_number,
+      issuer_legal_form: consultant.billing_legal_form,
+      issuer_iban: consultant.billing_iban,
+      issuer_bic: consultant.billing_bic,
+    },
+  });
+
+  if (error) {
+    console.error("[issueGiftCardManually] facture", error);
+    return "la facture n'a pas été émise";
+  }
+
+  return undefined;
+};
+
+const resolveConsultantName = async (
+  supabase: ReturnType<typeof createAdminClient>,
+  consultantId: string,
+): Promise<string> => {
+  const { data } = await supabase
+    .from("profiles")
+    .select("first_name, last_name")
+    .eq("id", consultantId)
+    .maybeSingle();
+
+  if (!data) return "";
+  return `${data.first_name ?? ""} ${data.last_name ?? ""}`.trim();
+};
+
+const getConsultationTypePrice = async (
+  supabase: ReturnType<typeof createAdminClient>,
+  consultationTypeId: string,
+): Promise<number | null> => {
+  const { data } = await supabase
+    .from("consultation_types")
+    .select("price_cents")
+    .eq("id", consultationTypeId)
+    .maybeSingle();
+  return data?.price_cents ?? null;
+};
+
+/** Types de consultation proposables a l'emission d'une carte « prestation ». */
+export const listConsultationTypesForGiftCards = async (): Promise<
+  ActionResult<{ id: string; title: string; priceCents: number }[]>
+> => {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("consultation_types")
+    .select("id, title, price_cents")
+    .eq("is_active", true)
+    .order("title");
+
+  if (error || !data) {
+    return { success: false, error: "Impossible de charger les prestations." };
+  }
+
+  return {
+    success: true,
+    data: data.map((row) => ({
+      id: row.id,
+      title: row.title,
+      priceCents: row.price_cents,
+    })),
+  };
+};
+
+const formatEuros = (cents: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
+    cents / 100,
+  );
