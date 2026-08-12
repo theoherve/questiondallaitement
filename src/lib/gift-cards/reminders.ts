@@ -72,10 +72,16 @@ export const sendGiftCardExpiryReminders = async (): Promise<number> => {
       continue;
     }
 
-    await supabase
+    const { error: updateError } = await supabase
       .from("gift_cards")
       .update({ reminder_sent_at: new Date().toISOString() })
       .eq("id", card.id);
+    if (updateError) {
+      console.error(
+        `[sendGiftCardExpiryReminders] marquage reminder_sent_at carte ${card.code}`,
+        updateError,
+      );
+    }
     sent++;
   }
 
