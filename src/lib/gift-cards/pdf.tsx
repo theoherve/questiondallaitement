@@ -1,4 +1,4 @@
-import { Document, Page, View, Text, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
+import { Document, Page, Text, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
 
 export type GiftCardPdfView = {
   code: string;
