@@ -7,6 +7,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
   upsertConsultationNote,
@@ -231,9 +242,26 @@ export const ConsultationNoteForm = ({
           Enregistrer
         </Button>
         {status === "draft" ? (
-          <Button onClick={handlePublish} disabled={isPending}>
-            Publier
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button disabled={isPending}>Publier</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Publier cette fiche ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  La patiente pourra voir cette fiche depuis son espace.
+                  Vérifiez son contenu avant de continuer.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction onClick={handlePublish}>
+                  Publier
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         ) : (
           <Button onClick={handleUnpublish} disabled={isPending} variant="outline">
             Repasser en brouillon
