@@ -41,6 +41,12 @@ export const childSchema = z
       .max(44, "Nombre de semaines invalide")
       .optional()
       .nullable(),
+    birth_weight_grams: z
+      .number()
+      .min(1, "Poids de naissance invalide")
+      .max(9999, "Poids de naissance invalide")
+      .optional()
+      .nullable(),
   })
   .refine(
     (data) => !data.is_premature || data.gestational_age_weeks != null,

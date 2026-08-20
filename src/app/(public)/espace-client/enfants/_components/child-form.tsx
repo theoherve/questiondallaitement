@@ -17,6 +17,7 @@ export const ChildForm = () => {
   const [sex, setSex] = useState<"female" | "male">("female");
   const [isPremature, setIsPremature] = useState(false);
   const [gestationalWeeks, setGestationalWeeks] = useState("");
+  const [birthWeightKg, setBirthWeightKg] = useState("");
 
   const handleSubmit = () => {
     startTransition(async () => {
@@ -28,6 +29,9 @@ export const ChildForm = () => {
         gestational_age_weeks: isPremature
           ? Number(gestationalWeeks)
           : undefined,
+        birth_weight_grams: birthWeightKg
+          ? Math.round(Number(birthWeightKg) * 1000)
+          : undefined,
       });
       if (result.success) {
         toast.success("Enfant ajouté");
@@ -35,6 +39,7 @@ export const ChildForm = () => {
         setBirthDate("");
         setIsPremature(false);
         setGestationalWeeks("");
+        setBirthWeightKg("");
         router.refresh();
       } else {
         toast.error(result.error ?? "Une erreur est survenue");
@@ -74,6 +79,17 @@ export const ChildForm = () => {
             <option value="female">Fille</option>
             <option value="male">Garçon</option>
           </select>
+        </div>
+        <div>
+          <Label htmlFor="child-birth-weight">Poids de naissance (kg, optionnel)</Label>
+          <Input
+            id="child-birth-weight"
+            type="number"
+            step="0.01"
+            min="0"
+            value={birthWeightKg}
+            onChange={(e) => setBirthWeightKg(e.target.value)}
+          />
         </div>
         <div className="flex items-center gap-2 pt-6">
           <Checkbox

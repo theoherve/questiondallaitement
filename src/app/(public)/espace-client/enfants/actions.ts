@@ -52,6 +52,7 @@ export const createChild = async (
       sex: parsed.data.sex,
       is_premature: parsed.data.is_premature,
       gestational_age_weeks: parsed.data.gestational_age_weeks ?? null,
+      birth_weight_grams: parsed.data.birth_weight_grams ?? null,
     })
     .select("id")
     .single();

@@ -60,6 +60,31 @@ describe("childSchema", () => {
   });
 });
 
+describe("childSchema — birth_weight_grams", () => {
+  const base = {
+    first_name: "Léo",
+    birth_date: "2026-01-01",
+    sex: "female" as const,
+    is_premature: false,
+    gestational_age_weeks: null,
+  };
+
+  it("accepte l'absence de poids de naissance", () => {
+    const result = childSchema.safeParse(base);
+    expect(result.success).toBe(true);
+  });
+
+  it("accepte un poids de naissance plausible", () => {
+    const result = childSchema.safeParse({ ...base, birth_weight_grams: 3200 });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejette un poids de naissance incohérent", () => {
+    const result = childSchema.safeParse({ ...base, birth_weight_grams: 15000 });
+    expect(result.success).toBe(false);
+  });
+});
+
 describe("weightMeasurementSchema", () => {
   it("accepte une pesée valide", () => {
     const result = weightMeasurementSchema.safeParse({
