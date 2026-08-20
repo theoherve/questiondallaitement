@@ -597,6 +597,30 @@ const LivresPage = () => {
           </ScrollReveal>
         </div>
       </section>
+
+      {/* ─── PRO / LIBRAIRIES ─── */}
+      <section className="bg-background-beige-dark section-padding">
+        <div className="mx-auto max-w-4xl text-center">
+          <ScrollReveal>
+            <h2 className="font-serif text-2xl font-bold text-primary-green lg:text-3xl">
+              Envie de les faire découvrir ou de les offrir ?
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-primary-green/70">
+              Ces livres sont disponibles en librairie et en ligne.
+            </p>
+            <p className="mx-auto mt-4 max-w-xl text-primary-green/70">
+              Pour une demande de dédicace, de mise en avant ou une commande
+              groupée, écrivez à{" "}
+              <a
+                href="mailto:carole.herve@questiondallaitement.com"
+                className="underline decoration-primary-red decoration-2 underline-offset-4 hover:text-primary-green"
+              >
+                carole.herve@questiondallaitement.com
+              </a>
+            </p>
+          </ScrollReveal>
+        </div>
+      </section>
     </>
   );
 };
