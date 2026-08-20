@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { CheckCircle } from "lucide-react";
 import { ScrollReveal } from "@/components/public/scroll-reveal";
 import { Section } from "./section";
@@ -53,6 +54,12 @@ export function SalesInstructor({
                 </li>
               ))}
             </ul>
+            <Link
+              href="/a-propos"
+              className="mt-4 inline-block text-sm text-primary-green underline-offset-2 hover:underline"
+            >
+              En savoir plus sur son parcours
+            </Link>
           </div>
         </div>
       </ScrollReveal>

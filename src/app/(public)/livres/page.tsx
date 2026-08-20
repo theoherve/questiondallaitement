@@ -565,7 +565,7 @@ const LivresPage = () => {
               {/* Video */}
               <div className="relative aspect-video w-full overflow-hidden shadow-xl">
                 <iframe
-                  src="https://www.youtube-nocookie.com/embed/K--8C6X-Qzg"
+                  src="https://www.youtube.com/embed/K--8C6X-Qzg"
                   title="L'allaitement pour les nuls sur la Maison des maternelles"
                   className="absolute inset-0 h-full w-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

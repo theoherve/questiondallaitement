@@ -70,6 +70,65 @@ describe("buildProgramChapters", () => {
   it("renvoie un tableau vide quand il n'y a aucune section", () => {
     expect(buildProgramChapters([])).toEqual([]);
   });
+
+  it("marque un chapitre ameliore si sa propre modif date de moins de 6 mois", () => {
+    const now = new Date("2026-08-20T00:00:00Z");
+    const [chapter] = buildProgramChapters(
+      [
+        {
+          id: "a",
+          title: "Chapitre a",
+          position: 1,
+          sales_hook: null,
+          content_updated_at: "2026-07-01T00:00:00Z",
+        },
+      ],
+      now
+    );
+    expect(chapter.recentlyImproved).toBe(true);
+  });
+
+  it("marque un chapitre ameliore si un de ses blocs a change recemment", () => {
+    const now = new Date("2026-08-20T00:00:00Z");
+    const [chapter] = buildProgramChapters(
+      [
+        {
+          id: "a",
+          title: "Chapitre a",
+          position: 1,
+          sales_hook: null,
+          content_updated_at: null,
+          accompagnement_blocks: [
+            { id: "a-0", type: "video", content_updated_at: "2026-08-01T00:00:00Z" },
+          ],
+        },
+      ],
+      now
+    );
+    expect(chapter.recentlyImproved).toBe(true);
+  });
+
+  it("ne marque pas un chapitre modifie il y a plus de 6 mois", () => {
+    const now = new Date("2026-08-20T00:00:00Z");
+    const [chapter] = buildProgramChapters(
+      [
+        {
+          id: "a",
+          title: "Chapitre a",
+          position: 1,
+          sales_hook: null,
+          content_updated_at: "2026-01-01T00:00:00Z",
+        },
+      ],
+      now
+    );
+    expect(chapter.recentlyImproved).toBe(false);
+  });
+
+  it("ne marque pas un chapitre jamais modifie (content_updated_at absent)", () => {
+    const [chapter] = buildProgramChapters([section("a", 1, ["video"])]);
+    expect(chapter.recentlyImproved).toBe(false);
+  });
 });
 
 describe("formatChapterCounts", () => {

@@ -10,6 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { isBookingEnabled } from "@/lib/settings/feature-flags/store";
 import {
   MODULE_ACCENTS,
   MODULE_ORDER,
@@ -18,6 +19,7 @@ import {
   sortByModuleOrder,
 } from "@/config/accompagnements";
 import { ctaLabelFor } from "@/config/accompagnement-cta";
+import { SalesBreadcrumb } from "../sales/sales-breadcrumb";
 import { SalesHero } from "../sales/sales-hero";
 import { SalesInstructor } from "../sales/sales-instructor";
 import { SalesTestimonials } from "../sales/sales-testimonials";
@@ -108,7 +110,7 @@ type ModuleSalesPageProps = {
   isEnrolled: boolean;
 };
 
-export function ModuleSalesPage({
+export async function ModuleSalesPage({
   accompagnement,
   sectionRows,
   catalogRows,
@@ -118,6 +120,8 @@ export function ModuleSalesPage({
   const content = MODULE_CONTENT[accompagnement.slug];
   // Garde-fou : la page appelante verifie deja `hasModuleSalesPage`.
   if (!content) return null;
+
+  const bookingEnabled = await isBookingEnabled();
 
   const priceLabel = formatPrice(
     accompagnement.price_cents,
@@ -173,6 +177,7 @@ export function ModuleSalesPage({
 
   return (
     <>
+      <SalesBreadcrumb productName={accompagnement.title} />
       <SalesSideCta
         ariaLabel={`Rejoindre ${accompagnement.title}`}
         priceLabel={priceLabel}
@@ -186,6 +191,7 @@ export function ModuleSalesPage({
         isEnrolled={isEnrolled}
         priceCents={accompagnement.price_cents}
         currency={accompagnement.currency}
+        bookingEnabled={bookingEnabled}
       />
       <SalesHero
         productName={accompagnement.title}

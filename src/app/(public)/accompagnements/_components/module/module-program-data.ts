@@ -16,13 +16,18 @@ export const BLOCK_TYPES = [
 ] as const;
 export type BlockType = (typeof BLOCK_TYPES)[number];
 
-export type BlockRow = { id: string; type: string };
+export type BlockRow = {
+  id: string;
+  type: string;
+  content_updated_at?: string | null;
+};
 
 export type SectionRow = {
   id: string;
   title: string;
   position: number;
   sales_hook: string | null;
+  content_updated_at?: string | null;
   accompagnement_blocks?: BlockRow[];
 };
 
@@ -33,6 +38,21 @@ export type ProgramChapter = {
   title: string;
   salesHook: string | null;
   counts: BlockCounts;
+  /** Vrai si le chapitre (ou un de ses blocs) a ete modifie il y a moins de 6 mois. */
+  recentlyImproved: boolean;
+};
+
+/** Fenetre d'affichage du badge "contenu ameliore", en mois. */
+export const CONTENT_IMPROVED_WINDOW_MONTHS = 6;
+
+const isWithinImprovedWindow = (
+  isoDate: string | null | undefined,
+  now: Date
+): boolean => {
+  if (!isoDate) return false;
+  const threshold = new Date(now);
+  threshold.setMonth(threshold.getMonth() - CONTENT_IMPROVED_WINDOW_MONTHS);
+  return new Date(isoDate) > threshold;
 };
 
 const emptyCounts = (): BlockCounts => ({
@@ -47,21 +67,32 @@ const isBlockType = (value: string): value is BlockType =>
   (BLOCK_TYPES as readonly string[]).includes(value);
 
 /** Trie les chapitres par `position` et compte leurs blocs par type. */
-export function buildProgramChapters(rows: SectionRow[]): ProgramChapter[] {
+export function buildProgramChapters(
+  rows: SectionRow[],
+  now: Date = new Date()
+): ProgramChapter[] {
   return [...rows]
     .sort((a, b) => a.position - b.position)
     .map((row) => {
       const counts = emptyCounts();
-      for (const block of row.accompagnement_blocks ?? []) {
+      const blocks = row.accompagnement_blocks ?? [];
+      for (const block of blocks) {
         // Un type inconnu (enum elargie en base avant le deploiement du front)
         // est ignore plutot que de faire planter la page.
         if (isBlockType(block.type)) counts[block.type] += 1;
       }
+      // Le chapitre est "ameliore" si sa propre accroche/titre ou l'un de ses
+      // blocs a change dans la fenetre : une section peut etre inchangee alors
+      // qu'un de ses blocs vient d'etre reecrit, et inversement.
+      const recentlyImproved =
+        isWithinImprovedWindow(row.content_updated_at, now) ||
+        blocks.some((b) => isWithinImprovedWindow(b.content_updated_at, now));
       return {
         id: row.id,
         title: row.title,
         salesHook: row.sales_hook,
         counts,
+        recentlyImproved,
       };
     });
 }

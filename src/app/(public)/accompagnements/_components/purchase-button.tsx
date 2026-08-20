@@ -65,11 +65,11 @@ export const PurchaseButton = ({
             tabIndex={0}
           >
             <ShoppingCart className="mr-2 h-4 w-4" />
-            {ctaLabel ?? "Se connecter pour acheter"}
+            {ctaLabel ?? "Créer mon compte et accéder au programme"}
           </a>
         </Button>
         <p className="text-center text-xs text-primary-green/60">
-          Accès immédiat après connexion
+          Accès immédiat après inscription
         </p>
       </div>
     );

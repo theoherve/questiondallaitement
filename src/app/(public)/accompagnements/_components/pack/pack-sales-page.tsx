@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import { isBookingEnabled } from "@/lib/settings/feature-flags/store";
 import { MODULE_ORDER, PACK_SLUG, formatPrice } from "@/config/accompagnements";
 import { ctaLabelFor } from "@/config/accompagnement-cta";
 import { buildModuleCards, type ModuleRow } from "./pack-modules-data";
 import { PACK_CONTENT } from "./pack-content";
+import { SalesBreadcrumb } from "../sales/sales-breadcrumb";
 import { SalesFaq } from "../sales/sales-faq";
 import { SalesHero } from "../sales/sales-hero";
 import { SalesInstructor } from "../sales/sales-instructor";
@@ -55,7 +57,7 @@ export async function fetchPackModuleRows(): Promise<ModuleRow[]> {
   return (data ?? []) as ModuleRow[];
 }
 
-export function PackSalesPage({
+export async function PackSalesPage({
   accompagnement,
   sectionsCount,
   lessonsCount,
@@ -63,6 +65,7 @@ export function PackSalesPage({
   isLoggedIn,
   isEnrolled,
 }: PackSalesPageProps) {
+  const bookingEnabled = await isBookingEnabled();
   const priceLabel = formatPrice(accompagnement.price_cents, accompagnement.currency);
   const modules = buildModuleCards(moduleRows);
 
@@ -95,6 +98,7 @@ export function PackSalesPage({
 
   return (
     <>
+      <SalesBreadcrumb productName={accompagnement.title} />
       <SalesSideCta
         ariaLabel="Rejoindre le pack"
         priceLabel={priceLabel}
@@ -113,6 +117,7 @@ export function PackSalesPage({
         isEnrolled={isEnrolled}
         priceCents={accompagnement.price_cents}
         currency={accompagnement.currency}
+        bookingEnabled={bookingEnabled}
       />
       <SalesHero
         productName={accompagnement.title}

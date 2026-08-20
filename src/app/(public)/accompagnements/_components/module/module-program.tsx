@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, HelpCircle, Video } from "lucide-react";
+import { FileText, HelpCircle, Sparkles, Video } from "lucide-react";
 import { Section } from "../sales/section";
 import {
   formatSingleCount,
@@ -55,9 +55,17 @@ export function ModuleProgram({
               {i + 1}
             </span>
             <div className="min-w-0 flex-1">
-              <h3 className="font-serif text-base font-semibold text-primary-green">
-                {chapter.title}
-              </h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-serif text-base font-semibold text-primary-green">
+                  {chapter.title}
+                </h3>
+                {chapter.recentlyImproved && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-accent-sage/15 px-2 py-0.5 text-[11px] font-medium text-accent-sage">
+                    <Sparkles className="h-3 w-3 shrink-0" aria-hidden />
+                    Contenu amélioré
+                  </span>
+                )}
+              </div>
               {chapter.salesHook && (
                 <p className="mt-1 text-sm text-primary-green/70">
                   {chapter.salesHook}

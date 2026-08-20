@@ -255,7 +255,11 @@ export const createSection = async (
   const supabase = createAdminClient();
   const { data: section, error } = await supabase
     .from("accompagnement_sections")
-    .insert({ accompagnement_id: accompagnementId, ...parsed.data })
+    .insert({
+      accompagnement_id: accompagnementId,
+      ...parsed.data,
+      content_updated_at: new Date().toISOString(),
+    })
     .select("id")
     .single();
 
@@ -284,7 +288,7 @@ export const updateSection = async (
   const supabase = createAdminClient();
   const { error } = await supabase
     .from("accompagnement_sections")
-    .update(parsed.data)
+    .update({ ...parsed.data, content_updated_at: new Date().toISOString() })
     .eq("id", id);
 
   if (error) {
@@ -357,6 +361,7 @@ export const createBlock = async (
       type,
       content: content as Record<string, unknown>,
       position,
+      content_updated_at: new Date().toISOString(),
     })
     .select("id")
     .single();
@@ -379,7 +384,10 @@ export const updateBlock = async (
 
   const { error } = await supabase
     .from("accompagnement_blocks")
-    .update({ content: content as Record<string, unknown> })
+    .update({
+      content: content as Record<string, unknown>,
+      content_updated_at: new Date().toISOString(),
+    })
     .eq("id", id);
 
   if (error) {
