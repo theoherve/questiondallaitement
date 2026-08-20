@@ -1,9 +1,11 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { CalendarDays, Clock, History, Sparkles } from "lucide-react";
+import { CalendarDays, Clock, History, Sparkles, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { FormationsList } from "./_components/formations-list";
+import { Button } from "@/components/ui/button";
 import {
   FORMATION_CATEGORY_CONFIG,
   type FormationCategory,
@@ -59,6 +61,8 @@ const FormationsProPage = async () => {
       badge,
       is_evergreen,
       training_providers!provider_id (
+        id,
+        slug,
         name,
         logo_url
       ),
@@ -91,7 +95,12 @@ const FormationsProPage = async () => {
 
   const all = (formations ?? []).map((e) => ({
     ...e,
-    provider: (e as Record<string, unknown>).training_providers as { name: string; logo_url: string | null } | null,
+    provider: (e as Record<string, unknown>).training_providers as {
+      id: string;
+      slug: string;
+      name: string;
+      logo_url: string | null;
+    } | null,
   }));
   const now = new Date().toISOString();
   // Les formations permanentes sortent des deux listes chronologiques : leur
@@ -111,10 +120,9 @@ const FormationsProPage = async () => {
             Ateliers, webinaires et formations
           </h1>
           <p className="mx-auto mt-3 max-w-3xl text-base leading-relaxed text-white/80">
-            Des sessions animées par Carole Hervé et son équipe de
-            consultantes IBCLC : ateliers et webinaires pour les mamans,
-            formations approfondies pour les professionnels de la
-            périnatalité
+            Des sessions animées par Carole Hervé et son équipe: ateliers et
+            webinaires pour les mamans, formations approfondies pour les
+            professionnels de la périnatalité
             <sup className="ml-0.5">*</sup>.
           </p>
           {/* L'astérisque renvoie au détail de chaque session : la liste des
@@ -189,6 +197,21 @@ const FormationsProPage = async () => {
           pastFormations={pastFormations}
           evergreenFormations={evergreenFormations}
         />
+
+        {/* CTA formation sur mesure — le catalogue ne couvre pas tous les
+            besoins, mieux vaut le dire que laisser une visiteuse repartir
+            bredouille. */}
+        <div className="mt-16 rounded-2xl border border-primary-green/10 bg-background-beige-dark/50 px-6 py-10 text-center sm:px-10">
+          <h2 className="font-serif text-xl font-semibold text-primary-green sm:text-2xl">
+            Besoin d&apos;une formation à la carte ?
+          </h2>
+          <Button asChild className="mt-6 bg-primary-red hover:bg-primary-red-dark">
+            <Link href="/contact">
+              <Mail className="mr-2 h-4 w-4" />
+              Écrivez-moi
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

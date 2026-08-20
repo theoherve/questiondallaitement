@@ -26,7 +26,7 @@ const TYPE_CONFIG: Record<
   string,
   { label: string; variant: "default" | "secondary" | "outline" }
 > = {
-  online: { label: "En ligne", variant: "secondary" },
+  online: { label: "En visio (Zoom)", variant: "secondary" },
   in_person: { label: "Présentiel", variant: "default" },
   hybrid: { label: "Hybride", variant: "outline" },
 };

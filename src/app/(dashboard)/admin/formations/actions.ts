@@ -193,6 +193,86 @@ export const updateFormation = async (
   return { success: true };
 };
 
+// ─── Duplicate Formation ─────────────────────────────────────────
+
+const slugify = (text: string): string =>
+  text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+/** Slug libre : ajoute -2, -3… tant qu'une formation porte deja le meme. */
+const findAvailableSlug = async (base: string): Promise<string> => {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("formations")
+    .select("slug")
+    .like("slug", `${base}%`);
+
+  const taken = new Set((data ?? []).map((row) => row.slug));
+  if (!taken.has(base)) return base;
+
+  let suffix = 2;
+  while (taken.has(`${base}-${suffix}`)) suffix += 1;
+  return `${base}-${suffix}`;
+};
+
+/**
+ * Duplique une formation : contenu, programme, tarifs et classement sont
+ * recopies.
+ *
+ * La copie part en brouillon : les dates de l'original sont recopiees telles
+ * quelles, mais elles ne conviennent presque jamais a une nouvelle session —
+ * la laisser publiee par erreur enverrait la mauvaise date en ligne.
+ */
+export const duplicateFormation = async (
+  id: string,
+  newTitle?: string,
+): Promise<ActionResult<{ id: string }>> => {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { data: source, error: sourceError } = await supabase
+    .from("formations")
+    .select(
+      `title, description, summary_html, objectives_html, program_html,
+       audience_html, highlights, thumbnail_url, type, starts_at, ends_at,
+       show_time, location, max_participants, price_cents,
+       discounted_price_cents, currency, show_price, provider_id,
+       external_url, consultant_id, category, audience_group, badge,
+       partner_promo_codes, is_evergreen`,
+    )
+    .eq("id", id)
+    .single();
+
+  if (sourceError || !source) {
+    return { success: false, error: "Formation introuvable" };
+  }
+
+  const title = newTitle?.trim() || `${source.title} (copie)`;
+  const slug = await findAvailableSlug(slugify(title));
+
+  const { data: copy, error: insertError } = await supabase
+    .from("formations")
+    .insert({
+      ...source,
+      title,
+      slug,
+      is_published: false,
+    })
+    .select("id")
+    .single();
+
+  if (insertError || !copy) {
+    return { success: false, error: "Erreur lors de la duplication" };
+  }
+
+  revalidatePath("/admin/formations");
+  return { success: true, data: copy };
+};
+
 // ─── Toggle Publish ─────────────────────────────────────────
 
 export const toggleFormationPublish = async (

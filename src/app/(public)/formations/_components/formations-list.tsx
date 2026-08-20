@@ -42,6 +42,7 @@ import {
 } from "@/config/formation-audience";
 import { matchesAudienceFilter } from "@/lib/formations/audience";
 import { matchesFormationSearch } from "@/lib/formations/search";
+import { matchesProviderFilter, type ProviderFilter } from "@/lib/formations/providers";
 import { FormationSearch } from "./formation-search";
 
 /* ------------------------------------------------------------------ */
@@ -69,7 +70,7 @@ export type FormationData = {
   /** Codes de reduction de l'organisme, annonces sur la carte. */
   partner_promo_codes: string[] | null;
   discounted_price_cents: number | null;
-  provider: { name: string; logo_url: string | null } | null;
+  provider: { id: string; slug: string; name: string; logo_url: string | null } | null;
   category: string;
   audience_group: FormationAudienceGroup;
   badge: string | null;
@@ -93,7 +94,7 @@ const WHEN_FILTERS: { value: WhenFilter; label: string }[] = [
 /* ------------------------------------------------------------------ */
 
 const FORMATION_TYPE_LABELS: Record<string, { label: string; icon: typeof Video }> = {
-  online: { label: "En ligne", icon: Video },
+  online: { label: "En visio (Zoom)", icon: Video },
   in_person: { label: "Présentiel", icon: MapPin },
   hybrid: { label: "Hybride", icon: Users },
 };
@@ -155,6 +156,7 @@ export const FormationsList = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>("all");
+  const [providerFilter, setProviderFilter] = useState<ProviderFilter>("all");
   // Par defaut, sessions a venir et formations permanentes s'affichent
   // ensemble : le toggle ne sert qu'a restreindre a l'une ou l'autre.
   const [whenFilter, setWhenFilter] = useState<WhenFilter>("all");
@@ -203,6 +205,19 @@ export const FormationsList = ({
     return CATEGORY_FILTERS.filter((f) => f.value === "all" || cats.has(f.value));
   }, [allFormations]);
 
+  // Organismes distincts presents dans les formations. Masque comme le
+  // filtre Categorie s'il n'y a rien a departager : en dessous de deux
+  // organismes, filtrer ne servirait a rien.
+  const availableProviders = useMemo(() => {
+    const providers = new Map<string, string>();
+    for (const f of allFormations) {
+      if (f.provider) providers.set(f.provider.id, f.provider.name);
+    }
+    return Array.from(providers, ([id, name]) => ({ id, name })).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+  }, [allFormations]);
+
   // Sessions concernees par le toggle « Quand » + le toggle audience, pour que
   // le compteur affiche sur chaque pastille de type corresponde a ce qui sera
   // reellement visible en cliquant dessus (les sessions passees ne suivent pas
@@ -224,12 +239,13 @@ export const FormationsList = ({
       result = result.filter((e) => e.category === activeCategory);
     }
     result = result.filter((e) => matchesAudienceFilter(e.audience_group, audienceFilter));
+    result = result.filter((e) => matchesProviderFilter(e.provider?.id ?? null, providerFilter));
     if (selectedDate) {
       const day = format(selectedDate, "yyyy-MM-dd");
       result = result.filter((e) => parisDayKey(e.starts_at) === day);
     }
     return result.filter((e) => matchesFormationSearch(e.title, searchQuery));
-  }, [upcomingFormations, activeCategory, audienceFilter, selectedDate, searchQuery]);
+  }, [upcomingFormations, activeCategory, audienceFilter, providerFilter, selectedDate, searchQuery]);
 
   const filteredPast = useMemo(() => {
     let result = pastFormations;
@@ -237,12 +253,13 @@ export const FormationsList = ({
       result = result.filter((e) => e.category === activeCategory);
     }
     result = result.filter((e) => matchesAudienceFilter(e.audience_group, audienceFilter));
+    result = result.filter((e) => matchesProviderFilter(e.provider?.id ?? null, providerFilter));
     if (selectedDate) {
       const day = format(selectedDate, "yyyy-MM-dd");
       result = result.filter((e) => parisDayKey(e.starts_at) === day);
     }
     return result.filter((e) => matchesFormationSearch(e.title, searchQuery));
-  }, [pastFormations, activeCategory, audienceFilter, selectedDate, searchQuery]);
+  }, [pastFormations, activeCategory, audienceFilter, providerFilter, selectedDate, searchQuery]);
 
   // Les formations sans date ignorent le filtre calendaire : elles ne tombent
   // aucun jour en particulier, les retirer parce qu'une date est selectionnee
@@ -253,8 +270,9 @@ export const FormationsList = ({
       result = result.filter((e) => e.category === activeCategory);
     }
     result = result.filter((e) => matchesAudienceFilter(e.audience_group, audienceFilter));
+    result = result.filter((e) => matchesProviderFilter(e.provider?.id ?? null, providerFilter));
     return result.filter((e) => matchesFormationSearch(e.title, searchQuery));
-  }, [evergreenFormations, activeCategory, audienceFilter, searchQuery]);
+  }, [evergreenFormations, activeCategory, audienceFilter, providerFilter, searchQuery]);
 
   // Progressive disclosure
   const visibleUpcoming = showAllUpcoming ? filteredUpcoming : filteredUpcoming.slice(0, INITIAL_VISIBLE);
@@ -275,6 +293,7 @@ export const FormationsList = ({
   const clearFilters = useCallback(() => {
     setSearchQuery("");
     setActiveCategory("all");
+    setProviderFilter("all");
     setWhenFilter("all");
     setSelectedDate(undefined);
     setShowAllUpcoming(false);
@@ -285,6 +304,7 @@ export const FormationsList = ({
   const hasActiveFilters =
     searchQuery.trim() !== "" ||
     activeCategory !== "all" ||
+    providerFilter !== "all" ||
     whenFilter !== "all" ||
     audienceFilter !== "all" ||
     selectedDate !== undefined;
@@ -402,6 +422,34 @@ export const FormationsList = ({
           </div>
         )}
 
+        {/* Filtre Organisme : masque comme Categorie s'il n'y a rien a
+            departager. Une formation sans organisme (Carole en direct) n'est
+            jamais masquee par ce filtre, cf. matchesProviderFilter. */}
+        {availableProviders.length > 1 && (
+          <div className="mb-6">
+            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-primary-green/50">
+              <GraduationCap className="h-4 w-4 text-primary-green/50" />
+              Organisme
+            </label>
+            <select
+              value={providerFilter}
+              onChange={(e) => {
+                setProviderFilter(e.target.value);
+                setShowAllUpcoming(false);
+                setShowAllPast(false);
+              }}
+              className="w-full rounded-lg border border-primary-green/15 bg-white px-3 py-2 text-sm text-primary-green shadow-sm"
+            >
+              <option value="all">Tous les organismes</option>
+              {availableProviders.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Calendar */}
         <div className="rounded-xl border border-primary-green/10 bg-white p-1 shadow-sm">
           <Calendar
@@ -495,6 +543,16 @@ export const FormationsList = ({
                 onClick={() => setActiveCategory("all")}
               >
                 {CATEGORY_FILTERS.find((c) => c.value === activeCategory)?.label}
+                <X className="h-3 w-3" />
+              </Badge>
+            )}
+            {providerFilter !== "all" && (
+              <Badge
+                variant="secondary"
+                className="gap-1.5 bg-primary-green/10 text-primary-green cursor-pointer hover:bg-primary-green/20"
+                onClick={() => setProviderFilter("all")}
+              >
+                {availableProviders.find((p) => p.id === providerFilter)?.name}
                 <X className="h-3 w-3" />
               </Badge>
             )}

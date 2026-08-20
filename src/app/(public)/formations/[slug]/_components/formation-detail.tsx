@@ -168,7 +168,7 @@ export const FormationDetail = ({
 
   const typeLabel =
     formation.type === "online"
-      ? "En ligne"
+      ? "En visio (Zoom)"
       : formation.type === "in_person"
         ? "Présentiel"
         : "Hybride";
@@ -322,7 +322,7 @@ export const FormationDetail = ({
                         description: formation.description ?? undefined,
                         location:
                           formation.type === "online"
-                            ? "En ligne"
+                            ? "En visio (Zoom)"
                             : (formation.location ?? undefined),
                         startsAt: formation.starts_at,
                         endsAt: formation.ends_at,
@@ -401,7 +401,7 @@ export const FormationDetail = ({
             {formation.objectives_html && (
               <div>
                 <SectionHeading icon={Target}>
-                  Ce que vous saurez faire
+                  Les compétences que vous développerez
                 </SectionHeading>
                 <div
                   className={`mt-5 max-w-none ${PROSE_OBJECTIVES}`}

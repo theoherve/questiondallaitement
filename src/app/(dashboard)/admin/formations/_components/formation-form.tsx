@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileUpload } from "@/components/ui/file-upload";
 import { FormationContentFields } from "./formation-content-fields";
 import { FormationHighlightsField } from "./formation-highlights-field";
+import { DuplicateFormationButton } from "./duplicate-formation-button";
 import { FORMATION_HIGHLIGHT_KEYS } from "@/config/formation-highlights";
 import {
   FORMATION_CATEGORIES,
@@ -359,6 +360,12 @@ export const FormationForm = ({
               </Link>
             </Button>
           )}
+          {mode === "edit" && formation && (
+            <DuplicateFormationButton
+              formationId={formation.id}
+              formationTitle={formation.title}
+            />
+          )}
           {mode === "edit" && (
             <Button
               type="button"
@@ -558,7 +565,7 @@ export const FormationForm = ({
                     }))
                   }
                 >
-                  <option value="online">En ligne</option>
+                  <option value="online">En visio (Zoom)</option>
                   <option value="in_person">Présentiel</option>
                   <option value="hybrid">Hybride</option>
                 </select>

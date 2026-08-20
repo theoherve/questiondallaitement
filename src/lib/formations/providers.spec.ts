@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { slugifyProviderName } from "./providers";
+import { slugifyProviderName, matchesProviderFilter } from "./providers";
 
 describe("slugifyProviderName", () => {
   it("derive un slug d'un nom d'organisme", () => {
@@ -22,5 +22,24 @@ describe("slugifyProviderName", () => {
 
   it("rend une chaine vide quand le nom n'a aucun caractere utile", () => {
     expect(slugifyProviderName("!!!")).toBe("");
+  });
+});
+
+describe("matchesProviderFilter", () => {
+  it("laisse tout passer sur le filtre 'all'", () => {
+    expect(matchesProviderFilter("provider-1", "all")).toBe(true);
+    expect(matchesProviderFilter(null, "all")).toBe(true);
+  });
+
+  it("une formation sans organisme reste visible quel que soit le filtre", () => {
+    expect(matchesProviderFilter(null, "provider-1")).toBe(true);
+  });
+
+  it("filtre une formation dont l'organisme ne correspond pas au filtre", () => {
+    expect(matchesProviderFilter("provider-1", "provider-2")).toBe(false);
+  });
+
+  it("garde une formation dont l'organisme correspond au filtre", () => {
+    expect(matchesProviderFilter("provider-1", "provider-1")).toBe(true);
   });
 });

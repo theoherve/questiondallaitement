@@ -30,7 +30,7 @@ const STATUS_MAP: Record<
 };
 
 const TYPE_MAP: Record<string, string> = {
-  online: "En ligne",
+  online: "En visio (Zoom)",
   in_person: "Présentiel",
   hybrid: "Hybride",
 };

@@ -12,3 +12,20 @@ export const slugifyProviderName = (name: string): string =>
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+
+/** Filtre public "Organisme" sur /formations : "all" ou l'id d'un organisme. */
+export type ProviderFilter = "all" | string;
+
+/**
+ * Une formation sans organisme (organisee directement par Carole) reste
+ * toujours visible, quel que soit l'organisme selectionne : ce filtre ne
+ * restreint que les formations qui EN ONT un.
+ */
+export const matchesProviderFilter = (
+  providerId: string | null,
+  filter: ProviderFilter,
+): boolean => {
+  if (filter === "all") return true;
+  if (providerId === null) return true;
+  return providerId === filter;
+};

@@ -203,7 +203,7 @@ export const RecurringFormationFormDialog = ({ consultants, definition }: Props)
                   setType(e.target.value as "online" | "in_person" | "hybrid")
                 }
               >
-                <option value="online">En ligne</option>
+                <option value="online">En visio (Zoom)</option>
                 <option value="in_person">Présentiel</option>
                 <option value="hybrid">Hybride</option>
               </select>

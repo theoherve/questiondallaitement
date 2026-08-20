@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Pencil, Eye, MapPin, Video, Users } from "lucide-react";
+import { Plus, Pencil, Eye, MapPin, Video, Users, ArrowUp, ArrowDown } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -27,7 +27,7 @@ const TYPE_CONFIG: Record<
   string,
   { label: string; variant: "default" | "secondary" | "outline" }
 > = {
-  online: { label: "En ligne", variant: "secondary" },
+  online: { label: "En visio (Zoom)", variant: "secondary" },
   in_person: { label: "Présentiel", variant: "default" },
   hybrid: { label: "Hybride", variant: "outline" },
 };
@@ -53,6 +53,7 @@ type Props = {
     published?: string;
     consultant?: string;
     q?: string;
+    sort?: string;
   }>;
 };
 
@@ -62,6 +63,11 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
 
   const params = await searchParams;
   const supabase = createAdminClient();
+
+  // Par defaut la plus tardive (le plus loin dans le futur) est en tete :
+  // c'est le comportement historique. `sort=asc` l'inverse pour mettre la
+  // plus proche (a venir ou recente) en tete.
+  const sortAscending = params.sort === "asc";
 
   let query = supabase
     .from("formations")
@@ -90,7 +96,7 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
       )
     `,
     )
-    .order("starts_at", { ascending: false });
+    .order("starts_at", { ascending: sortAscending });
 
   if (params.type && params.type !== "all") {
     query = query.eq("type", params.type);
@@ -152,6 +158,16 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
     profiles: { first_name: string | null; last_name: string | null } | null;
   };
 
+  const toggledSortHref = (() => {
+    const query = new URLSearchParams();
+    if (params.type) query.set("type", params.type);
+    if (params.published) query.set("published", params.published);
+    if (params.consultant) query.set("consultant", params.consultant);
+    if (params.q) query.set("q", params.q);
+    query.set("sort", sortAscending ? "desc" : "asc");
+    return `/admin/formations?${query.toString()}`;
+  })();
+
   const rows = (formationsResult.data ?? []) as unknown as FormationRow[];
   const consultantOptions =
     (consultantsResult.data ?? []) as unknown as ConsultantOption[];
@@ -205,7 +221,7 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
                 defaultValue={params.type || "all"}
               >
                 <option value="all">Tous</option>
-                <option value="online">En ligne</option>
+                <option value="online">En visio (Zoom)</option>
                 <option value="in_person">Présentiel</option>
                 <option value="hybrid">Hybride</option>
               </select>
@@ -266,7 +282,24 @@ const AdminFormationsPage = async ({ searchParams }: Props) => {
               <TableRow>
                 <TableHead className="w-[30%]">Titre</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>
+                  <Link
+                    href={toggledSortHref}
+                    className="inline-flex items-center gap-1 hover:text-primary-green"
+                    title={
+                      sortAscending
+                        ? "Trier de la plus tardive à la plus proche"
+                        : "Trier de la plus proche à la plus tardive"
+                    }
+                  >
+                    Date
+                    {sortAscending ? (
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    ) : (
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    )}
+                  </Link>
+                </TableHead>
                 <TableHead>Consultante</TableHead>
                 <TableHead>Prix</TableHead>
                 <TableHead>Inscrits</TableHead>
