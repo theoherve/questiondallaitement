@@ -60,6 +60,14 @@ describe("computeWeightAlerts — non-reprise à J14", () => {
     ]);
     expect(alerts.map((a) => a.rule)).not.toContain("no_regain_j14");
   });
+
+  it("ne redéclenche PAS no_regain_j14 lors d'une rechute après un regain à J14+ (règle définitivement close)", () => {
+    const alerts = computeWeightAlerts(baseChild, [
+      m("m1", "2026-01-21", 3250), // J20 : poids de naissance retrouvé, règle close
+      m("m2", "2026-03-02", 3100), // J60 : redescend sous le poids de naissance
+    ]);
+    expect(alerts.map((a) => a.rule)).not.toContain("no_regain_j14");
+  });
 });
 
 describe("computeWeightAlerts — cassure de courbe", () => {
@@ -75,6 +83,14 @@ describe("computeWeightAlerts — cassure de courbe", () => {
     const alerts = computeWeightAlerts(baseChild, [
       m("m1", "2026-02-01", 4900),
       m("m2", "2026-03-01", 5300),
+    ]);
+    expect(alerts.map((a) => a.rule)).not.toContain("curve_break");
+  });
+
+  it("ne déclenche PAS curve_break sur une REMONTÉE de 2 couloirs ou plus (l'enfant récupère)", () => {
+    const alerts = computeWeightAlerts(baseChild, [
+      m("m1", "2026-02-01", 4800), // proche P15 à 31 jours
+      m("m2", "2026-03-01", 5500), // proche P85 à 59 jours : remontée de 2 couloirs
     ]);
     expect(alerts.map((a) => a.rule)).not.toContain("curve_break");
   });

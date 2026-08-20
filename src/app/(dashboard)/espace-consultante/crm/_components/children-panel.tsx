@@ -21,13 +21,37 @@ import { Trash2 } from "lucide-react";
 import { differenceInMonths, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { WeightChart } from "@/components/growth-charts/weight-chart";
-import { computeWeightAlerts } from "@/lib/growth-charts/weight-alerts";
+import {
+  computeWeightAlerts,
+  type WeightAlert,
+} from "@/lib/growth-charts/weight-alerts";
 import {
   addWeightMeasurementAsConsultant,
   deleteChildAsConsultant,
   deleteWeightMeasurementAsConsultant,
 } from "../actions";
 import type { Child, WeightMeasurement } from "@/types/database";
+
+// Ne garde qu'une alerte par règle (la plus récente selon la date de la
+// mesure déclenchante) : évite d'empiler N lignes identiques quand une même
+// règle se déclenche sur plusieurs mesures de l'historique.
+const dedupeAlertsByRule = (
+  alerts: WeightAlert[],
+  measurementDateById: Map<string, string>,
+): WeightAlert[] => {
+  const latestByRule = new Map<string, WeightAlert>();
+  for (const a of alerts) {
+    const date = measurementDateById.get(a.measurementId) ?? "";
+    const existing = latestByRule.get(a.rule);
+    const existingDate = existing
+      ? measurementDateById.get(existing.measurementId) ?? ""
+      : null;
+    if (!existing || date.localeCompare(existingDate ?? "") > 0) {
+      latestByRule.set(a.rule, a);
+    }
+  }
+  return alerts.filter((a) => latestByRule.get(a.rule) === a);
+};
 
 export const ChildrenPanel = ({
   childrenList,
@@ -56,8 +80,14 @@ export const ChildrenPanel = ({
   const selectedMeasurements = selectedChild
     ? (measurementsByChild[selectedChild.id] ?? [])
     : [];
+  const measurementDateById = new Map(
+    selectedMeasurements.map((m) => [m.id, m.measured_at]),
+  );
   const selectedAlerts = selectedChild
-    ? computeWeightAlerts(selectedChild, selectedMeasurements)
+    ? dedupeAlertsByRule(
+        computeWeightAlerts(selectedChild, selectedMeasurements),
+        measurementDateById,
+      )
     : [];
 
   const handleAddMeasurement = () => {
@@ -161,18 +191,26 @@ export const ChildrenPanel = ({
         <>
           {selectedAlerts.length > 0 && (
             <div className="space-y-2 rounded-md border border-amber-300 bg-amber-50 p-3">
-              {selectedAlerts.map((a) => (
-                <p
-                  key={`${a.rule}-${a.measurementId}`}
-                  className={
-                    a.level === "alerte"
-                      ? "text-sm font-medium text-red-700"
-                      : "text-sm font-medium text-amber-700"
-                  }
-                >
-                  {a.message}
-                </p>
-              ))}
+              {selectedAlerts.map((a) => {
+                const measurementDate = measurementDateById.get(
+                  a.measurementId,
+                );
+                return (
+                  <p
+                    key={`${a.rule}-${a.measurementId}`}
+                    className={
+                      a.level === "alerte"
+                        ? "text-sm font-medium text-red-700"
+                        : "text-sm font-medium text-amber-700"
+                    }
+                  >
+                    {measurementDate
+                      ? `Le ${format(new Date(measurementDate), "dd/MM/yyyy", { locale: fr })} — `
+                      : ""}
+                    {a.message}
+                  </p>
+                );
+              })}
               <p className="text-xs text-muted-foreground">
                 Aide à la décision — reste soumise à l&apos;appréciation clinique
                 de la praticienne IBCLC.

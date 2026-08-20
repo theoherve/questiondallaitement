@@ -67,6 +67,9 @@ export const computeWeightAlerts = (
 
   if (child.birth_weight_grams != null) {
     const birthWeight = child.birth_weight_grams;
+    const hasEverRegainedByJ14 = sorted.some(
+      (m) => ageInDaysReal(m) >= 14 && m.weight_grams >= birthWeight,
+    );
     for (const m of sorted) {
       const age = ageInDaysReal(m);
       const lossRatio = (birthWeight - m.weight_grams) / birthWeight;
@@ -77,7 +80,7 @@ export const computeWeightAlerts = (
       if (lossRatio >= 0.1) {
         alerts.push(alert("loss_alert", "alerte", m.id));
       }
-      if (age >= 14 && m.weight_grams < birthWeight) {
+      if (!hasEverRegainedByJ14 && age >= 14 && m.weight_grams < birthWeight) {
         alerts.push(alert("no_regain_j14", "vigilance", m.id));
       }
     }
@@ -89,8 +92,10 @@ export const computeWeightAlerts = (
     const prevBand = getPercentileBandForWeight(prevAge, child.sex, sorted[i - 1].weight_grams);
     const currBand = getPercentileBandForWeight(currAge, child.sex, sorted[i].weight_grams);
     if (prevBand !== null && currBand !== null) {
-      const gap = Math.abs(WHO_PERCENTILES.indexOf(currBand) - WHO_PERCENTILES.indexOf(prevBand));
-      if (gap >= 2) {
+      const prevIndex = WHO_PERCENTILES.indexOf(prevBand);
+      const currIndex = WHO_PERCENTILES.indexOf(currBand);
+      const drop = prevIndex - currIndex;
+      if (drop >= 2) {
         alerts.push(alert("curve_break", "alerte", sorted[i].id));
       }
     }

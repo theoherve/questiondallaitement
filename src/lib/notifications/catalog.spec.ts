@@ -106,6 +106,10 @@ describe("NOTIFICATION_CATALOG", () => {
       expect(def.preferenceKey).toBe("systeme");
       expect(def.title(data)).toBeTruthy();
       expect(def.body?.(data)).toContain("Léo");
+      expect(def.body?.(data)).toContain("Message de test");
+      expect(def.body?.(data)).toContain(
+        "reste soumise à l'appréciation clinique de la praticienne IBCLC",
+      );
       expect(def.href?.(data)).toBe("/espace-consultante/crm/client-1");
     }
   });

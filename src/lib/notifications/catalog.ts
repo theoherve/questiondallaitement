@@ -413,7 +413,8 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
     preferenceKey: "systeme",
     channels: ["in_app"],
     title: () => "Vigilance — courbe de poids",
-    body: (d) => `${d.childName} — ${d.message}`,
+    body: (d) =>
+      `${d.childName} — ${d.message} Aide à la décision — reste soumise à l'appréciation clinique de la praticienne IBCLC.`,
     href: (d) => `/espace-consultante/crm/${d.clientId}`,
   },
   weight_alert_alert: {
@@ -422,7 +423,8 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
     preferenceKey: "systeme",
     channels: ["in_app"],
     title: () => "Alerte — courbe de poids",
-    body: (d) => `${d.childName} — ${d.message}`,
+    body: (d) =>
+      `${d.childName} — ${d.message} Aide à la décision — reste soumise à l'appréciation clinique de la praticienne IBCLC.`,
     href: (d) => `/espace-consultante/crm/${d.clientId}`,
   },
 };
