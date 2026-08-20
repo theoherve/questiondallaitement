@@ -6,16 +6,16 @@ BEGIN;
 
 -- ─── Blog categories ──────────────────────────────────────────
 INSERT INTO blog_categories (name, slug, position)
-VALUES ('Accueillir bébé', 'accueillir-bebe', 1)
+VALUES ('Enceinte', 'accueillir-bebe', 1)
 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, position = EXCLUDED.position;
 INSERT INTO blog_categories (name, slug, position)
 VALUES ('Douleurs', 'douleurs', 2)
 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, position = EXCLUDED.position;
 INSERT INTO blog_categories (name, slug, position)
-VALUES ('Augmenter la lactation', 'augmenter-la-lactation', 3)
+VALUES ('Lactation', 'augmenter-la-lactation', 3)
 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, position = EXCLUDED.position;
 INSERT INTO blog_categories (name, slug, position)
-VALUES ('Équilibre allaitement - vie active', 'equilibre-allaitement-vie-active', 4)
+VALUES ('Travail', 'equilibre-allaitement-vie-active', 4)
 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, position = EXCLUDED.position;
 INSERT INTO blog_categories (name, slug, position)
 VALUES ('Diversification', 'diversification', 5)
@@ -24,13 +24,13 @@ INSERT INTO blog_categories (name, slug, position)
 VALUES ('Sevrage', 'sevrage', 6)
 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, position = EXCLUDED.position;
 INSERT INTO blog_categories (name, slug, position)
-VALUES ('Sommeil du tout petit', 'sommeil-du-tout-petit', 7)
+VALUES ('Sommeil', 'sommeil-du-tout-petit', 7)
 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, position = EXCLUDED.position;
 INSERT INTO blog_categories (name, slug, position)
 VALUES ('Consultante en lactation', 'consultante-en-lactation', 8)
 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, position = EXCLUDED.position;
 INSERT INTO blog_categories (name, slug, position)
-VALUES ('Allaitement bambin', 'allaitement-bambin', 9)
+VALUES ('Bambin', 'allaitement-bambin', 9)
 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, position = EXCLUDED.position;
 INSERT INTO blog_categories (name, slug, position)
 VALUES ('Formation', 'formation', 10)

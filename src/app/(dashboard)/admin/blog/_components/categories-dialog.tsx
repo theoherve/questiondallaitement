@@ -124,14 +124,14 @@ export const CategoriesDialog = ({ categories }: Props) => {
           Catégories
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Gérer les catégories</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Category list */}
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
             {categories.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
                 Aucune catégorie

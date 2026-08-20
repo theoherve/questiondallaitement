@@ -13,9 +13,9 @@ export type PressArticle = {
 
 export const PRESS_CATEGORIES: PressCategory[] = [
   { id: "all", label: "Tout" },
-  { id: "accueillir-bebe", label: "Accueillir bébé" },
+  { id: "accueillir-bebe", label: "Enceinte" },
   { id: "douleurs-resolues", label: "Douleurs résolues" },
-  { id: "augmenter-lactation", label: "Augmenter la lactation" },
+  { id: "augmenter-lactation", label: "Lactation" },
   { id: "sante", label: "Santé" },
   { id: "equilibre-vie-active", label: "Vie active" },
   { id: "sexualite-couple", label: "Sexualité & couple" },
