@@ -12,6 +12,9 @@ vi.mock("next/navigation", () => ({
     throw new Error(`NEXT_REDIRECT:${path}`);
   },
 }));
+vi.mock("@/lib/growth-charts/weight-alerts-notify", () => ({
+  notifyWeightAlerts: vi.fn().mockResolvedValue([]),
+}));
 
 const {
   mockBookingsData,
@@ -500,6 +503,24 @@ describe("addWeightMeasurementAsConsultant", () => {
         consultant_id: "consultant-1",
       },
     });
+  });
+
+  it("appelle notifyWeightAlerts avec l'enfant complet et l'historique de pesées après insertion", async () => {
+    const { notifyWeightAlerts } = await import(
+      "@/lib/growth-charts/weight-alerts-notify"
+    );
+    mockChildSingleData.data = {
+      id: validInput.child_id,
+      client_id: "client-9",
+      birth_date: "2025-01-01",
+    };
+    mockBookingsData.data = [{ id: "booking-1" }];
+
+    await addWeightMeasurementAsConsultant(validInput);
+
+    expect(notifyWeightAlerts).toHaveBeenCalled();
+    const [childArg] = vi.mocked(notifyWeightAlerts).mock.calls[0];
+    expect(childArg).toMatchObject({ id: validInput.child_id });
   });
 });
 

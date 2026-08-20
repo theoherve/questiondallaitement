@@ -6,6 +6,7 @@ import { childSchema, weightMeasurementSchema } from "@/validations/children";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/types";
 import type { Child, WeightMeasurement } from "@/types/database";
+import { notifyWeightAlerts } from "@/lib/growth-charts/weight-alerts-notify";
 
 export const listMyChildren = async (): Promise<Child[]> => {
   const { user } = await getSupabaseAndUser();
@@ -123,7 +124,9 @@ export const addWeightMeasurement = async (
   const supabase = createAdminClient();
   const { data: child } = await supabase
     .from("children")
-    .select("id, birth_date")
+    .select(
+      "id, client_id, birth_date, sex, is_premature, gestational_age_weeks, birth_weight_grams, first_name",
+    )
     .eq("id", parsed.data.child_id)
     .eq("client_id", user.id)
     .single();
@@ -154,6 +157,12 @@ export const addWeightMeasurement = async (
   if (error || !measurement) {
     return { success: false, error: "Erreur lors de l'ajout de la pesée" };
   }
+
+  const { data: allMeasurements } = await supabase
+    .from("weight_measurements")
+    .select("id, measured_at, weight_grams")
+    .eq("child_id", parsed.data.child_id);
+  await notifyWeightAlerts(child, allMeasurements ?? []);
 
   revalidatePath(`/espace-client/enfants/${parsed.data.child_id}`);
   return { success: true, data: measurement };

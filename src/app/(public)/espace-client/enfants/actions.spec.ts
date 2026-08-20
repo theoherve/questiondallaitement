@@ -32,10 +32,28 @@ const { mockGetSupabaseAndUser, insertCalls, deleteCalls, responses } =
       },
       weightDelete: { error: null } as { error: unknown },
       childOwnershipSingle: {
-        data: { id: "child-1", birth_date: "2025-01-10" },
+        data: {
+          id: "child-1",
+          client_id: "client-1",
+          birth_date: "2025-01-10",
+          sex: "female",
+          is_premature: false,
+          gestational_age_weeks: null,
+          birth_weight_grams: 3200,
+          first_name: "Léa",
+        },
         error: null,
       } as {
-        data: { id: string; birth_date: string } | null;
+        data: {
+          id: string;
+          client_id?: string;
+          birth_date: string;
+          sex?: string;
+          is_premature?: boolean;
+          gestational_age_weeks?: number | null;
+          birth_weight_grams?: number | null;
+          first_name?: string;
+        } | null;
         error: unknown;
       },
       weightInsertSingle: {
@@ -49,6 +67,9 @@ vi.mock("@/lib/supabase/server-auth", () => ({
   getSupabaseAndUser: mockGetSupabaseAndUser,
 }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("@/lib/growth-charts/weight-alerts-notify", () => ({
+  notifyWeightAlerts: vi.fn().mockResolvedValue([]),
+}));
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
     from: (table: string) => {
@@ -253,7 +274,16 @@ describe("addWeightMeasurement", () => {
     insertCalls.length = 0;
     deleteCalls.length = 0;
     responses.childOwnershipSingle = {
-      data: { id: "child-1", birth_date: "2025-01-10" },
+      data: {
+        id: "child-1",
+        client_id: "client-1",
+        birth_date: "2025-01-10",
+        sex: "female",
+        is_premature: false,
+        gestational_age_weeks: null,
+        birth_weight_grams: 3200,
+        first_name: "Léa",
+      },
       error: null,
     };
     responses.weightInsertSingle = { data: { id: "measure-1" }, error: null };
@@ -271,6 +301,18 @@ describe("addWeightMeasurement", () => {
       table: "weight_measurements",
       data: { source: "home", recorded_by: "client-1" },
     });
+  });
+
+  it("appelle notifyWeightAlerts avec l'enfant complet et l'historique de pesées après insertion", async () => {
+    const { notifyWeightAlerts } = await import(
+      "@/lib/growth-charts/weight-alerts-notify"
+    );
+
+    await addWeightMeasurement(validInput);
+
+    expect(notifyWeightAlerts).toHaveBeenCalled();
+    const [childArg] = vi.mocked(notifyWeightAlerts).mock.calls[0];
+    expect(childArg).toMatchObject({ id: "child-1" });
   });
 
   it("refuse une pesée antérieure à la date de naissance de l'enfant", async () => {
