@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { getPercentileWeightGrams, WHO_PERCENTILES } from "./who-weight-for-age";
+import {
+  getPercentileWeightGrams,
+  getZScoreForWeight,
+  getPercentileBandForWeight,
+  WHO_PERCENTILES,
+} from "./who-weight-for-age";
 import whoData from "./who-weight-for-age.json";
 
 describe("getPercentileWeightGrams", () => {
@@ -33,5 +38,31 @@ describe("getPercentileWeightGrams", () => {
     expect(dayThree).not.toBeNull();
     expect(dayThree as number).toBeGreaterThan(dayZero as number);
     expect(dayThree as number).toBeLessThan(daySeven as number);
+  });
+});
+
+describe("getZScoreForWeight", () => {
+  it("retrouve le z-score attendu pour un poids exactement au P50", () => {
+    const weightAtP50 = getPercentileWeightGrams(30, "female", 50) as number;
+    const z = getZScoreForWeight(30, "female", weightAtP50);
+    expect(z).not.toBeNull();
+    expect(z as number).toBeCloseTo(0, 1);
+  });
+
+  it("retourne null hors de la plage de données", () => {
+    expect(getZScoreForWeight(10000, "female", 5000)).toBeNull();
+  });
+});
+
+describe("getPercentileBandForWeight", () => {
+  it("retrouve le couloir exact en aller-retour avec getPercentileWeightGrams", () => {
+    for (const p of WHO_PERCENTILES) {
+      const weight = getPercentileWeightGrams(60, "male", p) as number;
+      expect(getPercentileBandForWeight(60, "male", weight)).toBe(p);
+    }
+  });
+
+  it("retourne null hors de la plage de données", () => {
+    expect(getPercentileBandForWeight(-1, "male", 3000)).toBeNull();
   });
 });

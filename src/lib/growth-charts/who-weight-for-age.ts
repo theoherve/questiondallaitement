@@ -6,7 +6,7 @@ export type WhoPercentile = (typeof WHO_PERCENTILES)[number];
 type LmsRow = { ageDays: number; L: number; M: number; S: number };
 
 // Quantiles normaux standard correspondant à chaque percentile utilisé.
-const Z_SCORES: Record<WhoPercentile, number> = {
+export const Z_SCORES: Record<WhoPercentile, number> = {
   3: -1.8808,
   15: -1.0364,
   50: 0,
@@ -45,6 +45,44 @@ const interpolateLms = (a: LmsRow, b: LmsRow, ageDays: number): LmsRow => {
  */
 const lmsToWeightKg = (lms: LmsRow, z: number): number =>
   lms.L === 0 ? lms.M * Math.exp(lms.S * z) : lms.M * Math.pow(1 + lms.L * lms.S * z, 1 / lms.L);
+
+const zScoreFromLmsWeight = (lms: LmsRow, weightKg: number): number =>
+  lms.L === 0
+    ? Math.log(weightKg / lms.M) / lms.S
+    : (Math.pow(weightKg / lms.M, lms.L) - 1) / (lms.L * lms.S);
+
+export const getZScoreForWeight = (
+  ageInDays: number,
+  sex: "female" | "male",
+  weightGrams: number,
+): number | null => {
+  const rows = whoData[sex] as LmsRow[];
+  const surrounding = findSurroundingRows(rows, ageInDays);
+  if (!surrounding) return null;
+
+  const lms = interpolateLms(surrounding[0], surrounding[1], ageInDays);
+  return zScoreFromLmsWeight(lms, weightGrams / 1000);
+};
+
+export const getPercentileBandForWeight = (
+  ageInDays: number,
+  sex: "female" | "male",
+  weightGrams: number,
+): WhoPercentile | null => {
+  const z = getZScoreForWeight(ageInDays, sex, weightGrams);
+  if (z === null) return null;
+
+  let closest: WhoPercentile = WHO_PERCENTILES[0];
+  let closestDiff = Infinity;
+  for (const p of WHO_PERCENTILES) {
+    const diff = Math.abs(Z_SCORES[p] - z);
+    if (diff < closestDiff) {
+      closestDiff = diff;
+      closest = p;
+    }
+  }
+  return closest;
+};
 
 export const getPercentileWeightGrams = (
   ageInDays: number,
