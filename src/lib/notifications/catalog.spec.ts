@@ -90,6 +90,25 @@ describe("NOTIFICATION_CATALOG", () => {
       }
     }
   });
+
+  it("weight_alert_vigilance et weight_alert_alert sont in_app seulement, catégorie système", () => {
+    const data = {
+      childId: "child-1",
+      childName: "Léo",
+      clientId: "client-1",
+      message: "Message de test",
+    };
+
+    for (const key of ["weight_alert_vigilance", "weight_alert_alert"] as const) {
+      const def = NOTIFICATION_CATALOG[key];
+      expect(def.channels).toEqual(["in_app"]);
+      expect(def.category).toBe("system");
+      expect(def.preferenceKey).toBe("systeme");
+      expect(def.title(data)).toBeTruthy();
+      expect(def.body?.(data)).toContain("Léo");
+      expect(def.href?.(data)).toBe("/espace-consultante/crm/client-1");
+    }
+  });
 });
 
 describe("les événements marketing", () => {

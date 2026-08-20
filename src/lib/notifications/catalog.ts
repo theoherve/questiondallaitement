@@ -407,4 +407,22 @@ export const NOTIFICATION_CATALOG: NotificationCatalog = {
         }),
       }),
   },
+  weight_alert_vigilance: {
+    key: "weight_alert_vigilance",
+    category: "system",
+    preferenceKey: "systeme",
+    channels: ["in_app"],
+    title: () => "Vigilance — courbe de poids",
+    body: (d) => `${d.childName} — ${d.message}`,
+    href: (d) => `/espace-consultante/crm/${d.clientId}`,
+  },
+  weight_alert_alert: {
+    key: "weight_alert_alert",
+    category: "system",
+    preferenceKey: "systeme",
+    channels: ["in_app"],
+    title: () => "Alerte — courbe de poids",
+    body: (d) => `${d.childName} — ${d.message}`,
+    href: (d) => `/espace-consultante/crm/${d.clientId}`,
+  },
 };

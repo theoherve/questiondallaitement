@@ -109,6 +109,18 @@ export type NotificationDataMap = {
     highlights: string[];
     unsubscribe_url?: string;
   };
+  weight_alert_vigilance: {
+    childId: string;
+    childName: string;
+    clientId: string;
+    message: string;
+  };
+  weight_alert_alert: {
+    childId: string;
+    childName: string;
+    clientId: string;
+    message: string;
+  };
 };
 
 export type NotificationEvent = keyof NotificationDataMap;
