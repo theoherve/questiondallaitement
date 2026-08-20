@@ -45,3 +45,37 @@ export const saveMemoUrl = async (url: string): Promise<ActionResult> => {
   revalidatePath("/admin/marketing/newsletter");
   return { success: true };
 };
+
+/**
+ * Active ou coupe l'annonce hebdomadaire du blog (cron du lundi).
+ *
+ * Upsert plutot que update : contrairement au memo, cette cle n'est pas
+ * pre-remplie par une migration — l'absence de ligne vaut "actif par defaut"
+ * cote lecture (`runNewsletterBlogDigest`), donc la premiere ecriture doit
+ * pouvoir creer la ligne.
+ */
+export const setNewsletterDigestEnabled = async (
+  enabled: boolean,
+): Promise<ActionResult> => {
+  const user = await getSessionUser();
+  if (!user || !user.roles.includes("admin")) {
+    return { success: false, error: "Non autorisé" };
+  }
+
+  const { error } = await createAdminClient().from("platform_settings").upsert(
+    {
+      key: "newsletter_weekly_digest_enabled",
+      value: { enabled },
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "key" },
+  );
+
+  if (error) {
+    console.error("[newsletter] statut de l'annonce hebdomadaire non enregistré", error);
+    return { success: false, error: "Enregistrement impossible" };
+  }
+
+  revalidatePath("/admin/marketing/newsletter");
+  return { success: true };
+};

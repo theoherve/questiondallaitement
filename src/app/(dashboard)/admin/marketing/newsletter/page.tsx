@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { getMemoUrl } from "@/lib/newsletter/welcome-email";
 import { MemoUpload } from "./_components/memo-upload";
+import { WeeklyDigestStatus } from "./_components/weekly-digest-status";
 
 export const metadata: Metadata = {
   title: "Newsletter",
@@ -48,7 +49,7 @@ const NewsletterSubscribersPage = async () => {
 
   const supabase = createAdminClient();
 
-  const [subscribersRes, viewsRes, memoUrl] = await Promise.all([
+  const [subscribersRes, viewsRes, memoUrl, digestSettingsRes] = await Promise.all([
     supabase
       .from("newsletter_subscribers")
       .select("*")
@@ -59,10 +60,38 @@ const NewsletterSubscribersPage = async () => {
       .select("source", { count: "exact" })
       .eq("type", "page_view"),
     getMemoUrl(),
+    supabase
+      .from("platform_settings")
+      .select("key, value")
+      .in("key", [
+        "newsletter_weekly_digest_enabled",
+        "newsletter_weekly_digest_last_sent",
+      ]),
   ]);
 
   const subscribers = (subscribersRes.data ?? []) as Subscriber[];
   const pageViews = viewsRes.count ?? 0;
+
+  const digestSettings = digestSettingsRes.data ?? [];
+  const digestEnabled =
+    (
+      digestSettings.find((r) => r.key === "newsletter_weekly_digest_enabled")
+        ?.value as { enabled?: boolean } | undefined
+    )?.enabled ?? true;
+  const lastSent =
+    (digestSettings.find((r) => r.key === "newsletter_weekly_digest_last_sent")
+      ?.value as
+      | {
+          week: string;
+          sent_at: string;
+          subscriber_count: number;
+          post_count: number;
+          post_titles: string[];
+        }
+      | undefined) ?? null;
+  const lastSentLabel = lastSent
+    ? format(new Date(lastSent.sent_at), "d MMMM yyyy", { locale: fr })
+    : null;
 
   const active = subscribers.filter((s) => !s.unsubscribed_at);
   const pendingSync = subscribers.filter(
@@ -108,6 +137,16 @@ const NewsletterSubscribersPage = async () => {
       <Card>
         <CardContent className="pt-6">
           <MemoUpload currentUrl={memoUrl} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <WeeklyDigestStatus
+            initialEnabled={digestEnabled}
+            lastSent={lastSent}
+            lastSentLabel={lastSentLabel}
+          />
         </CardContent>
       </Card>
 

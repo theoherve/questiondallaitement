@@ -598,6 +598,102 @@ export const sendFreeformMessage = async (
   });
 };
 
+/**
+ * Annonce hebdomadaire, envoyee le lundi aux abonnees de la newsletter
+ * publique (`newsletter_subscribers`), pour le ou les articles publies dans
+ * les 7 jours precedents.
+ *
+ * Distincte de `sendBlogPostToClients` : celle-ci part immediatement a chaque
+ * publication, vers les clientes ayant un compte. Celle-ci part une fois par
+ * semaine, vers une liste d'abonnees externe au compte client.
+ */
+const escapeHtmlText = (value: string): string =>
+  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/**
+ * Une carte par article publie dans la semaine. Construit en code, pas dans le
+ * template edite en admin : le nombre d'articles varie d'une semaine a
+ * l'autre, ce qu'un simple remplacement de `{{variable}}` ne peut pas
+ * exprimer — comme `buildZoomBlock` ou `buildMemoBlock` pour les autres
+ * templates.
+ */
+export const buildNewsletterPostsBlock = (
+  posts: { title: string; excerpt: string | null; url: string; thumbnail_url: string | null }[],
+): string => {
+  const serif = "Georgia, 'Times New Roman', serif";
+
+  const cards = posts
+    .map((post, index) => {
+      const thumbnail = post.thumbnail_url
+        ? `<img src="${post.thumbnail_url}" alt="" width="552" style="display:block;width:100%;max-width:552px;height:auto;border-radius:8px;margin:0 0 16px 0;" />`
+        : "";
+      const excerpt = post.excerpt
+        ? `<p style="margin:0 0 16px 0;color:#5a6b69;">${escapeHtmlText(post.excerpt)}</p>`
+        : "";
+      const divider =
+        index > 0
+          ? `<tr><td style="padding:32px 0 0 0;border-top:1px solid #e8ddd9;"></td></tr>`
+          : "";
+
+      return `
+        ${divider}
+        <tr><td style="padding:${index > 0 ? "24px" : "0"} 0 0 0;">
+          ${thumbnail}
+          <h2 style="margin:0 0 12px 0;font-family:${serif};font-size:22px;line-height:28px;color:#203634;">
+            <a href="${post.url}" style="color:#203634;text-decoration:none;">${escapeHtmlText(post.title)}</a>
+          </h2>
+          ${excerpt}
+          <a href="${post.url}" style="color:#a0283e;font-weight:600;text-decoration:none;">Lire l'article &rarr;</a>
+        </td></tr>
+      `;
+    })
+    .join("");
+
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">${cards}</table>`;
+};
+
+export const sendNewsletterBlogDigest = async (
+  subscriberEmail: string,
+  variables: {
+    first_name: string;
+    posts: { title: string; excerpt: string | null; url: string; thumbnail_url: string | null }[];
+    unsubscribe_url: string;
+  },
+) => {
+  const { posts } = variables;
+  const postsBlock = buildNewsletterPostsBlock(posts);
+  const unsubscribeLink = buildUnsubscribeLink(variables.unsubscribe_url);
+
+  const template = await getTemplate("newsletter_blog_digest");
+  if (template) {
+    const { subject, html } = await renderTemplateRow(template, {
+      first_name: variables.first_name,
+      posts_block: postsBlock,
+      unsubscribe_link: unsubscribeLink,
+    });
+    await sendTransactionalEmail({ to: subscriberEmail, subject, html });
+    return;
+  }
+
+  const serif = "Georgia, 'Times New Roman', serif";
+  const subject =
+    posts.length === 1
+      ? `Nouvel article : ${posts[0].title}`
+      : `${posts.length} nouveaux articles cette semaine sur le blog`;
+
+  await sendTransactionalEmail({
+    to: subscriberEmail,
+    subject,
+    html: `
+      <p style="margin:0 0 4px 0;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#a0283e;">Cette semaine sur le blog</p>
+      <h1 style="margin:0 0 16px 0;font-family:${serif};font-size:28px;line-height:34px;color:#203634;">Bonjour ${escapeHtmlText(variables.first_name)},</h1>
+      <p style="margin:0 0 28px 0;color:#5a6b69;">Chaque lundi, le ou les nouveaux articles publiés sur le blog la semaine passée.</p>
+      ${postsBlock}
+      <p style="margin:32px 0 0 0;font-size:12px;color:#888;">${unsubscribeLink}</p>
+    `,
+  });
+};
+
 /** Recapitulatif interne. Pas de lien de desinscription : categorie systeme. */
 export const sendAdminDigest = async (
   adminEmail: string,

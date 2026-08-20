@@ -14,6 +14,7 @@ import {
   runReviewRequests,
   runWeeklyDigest,
   runAdminDigest,
+  runNewsletterBlogDigest,
 } from "@/lib/notifications/jobs";
 import { sendGiftCardExpiryReminders } from "@/lib/gift-cards/reminders";
 
@@ -276,6 +277,11 @@ export const GET = async (request: Request) => {
     ["review_requests_sent", runReviewRequests, "Demandes d'avis"],
     ["weekly_digests_sent", runWeeklyDigest, "Resume hebdomadaire"],
     ["admin_digests_sent", runAdminDigest, "Recapitulatif administration"],
+    [
+      "newsletter_blog_digests_sent",
+      runNewsletterBlogDigest,
+      "Annonce hebdomadaire du blog",
+    ],
     [
       "gift_card_expiry_reminders_sent",
       sendGiftCardExpiryReminders,

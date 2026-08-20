@@ -2,23 +2,10 @@ import { subDays } from "date-fns";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notify } from "@/lib/notifications/notify";
 import { resolveAudience } from "@/lib/notifications/audience";
+import { isoWeek } from "@/lib/date/iso-week";
 
 /** Nombre de titres repris dans le corps. Au-delà, ce n'est plus un résumé. */
 const MAX_HIGHLIGHTS = 5;
-
-/** Numéro de semaine ISO, pour une clé de déduplication stable. */
-const isoWeek = (date: Date): string => {
-  const d = new Date(
-    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
-  );
-  const day = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const week = Math.ceil(
-    ((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7,
-  );
-  return `${d.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
-};
 
 /**
  * Résumé hebdomadaire des notifications non lues de la semaine écoulée.
