@@ -114,6 +114,7 @@ export type Child = {
   sex: "female" | "male";
   is_premature: boolean;
   gestational_age_weeks: number | null;
+  birth_weight_grams: number | null;
   created_at: string;
   updated_at: string;
 };
