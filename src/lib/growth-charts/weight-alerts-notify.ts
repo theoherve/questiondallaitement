@@ -21,10 +21,10 @@ export const notifyWeightAlerts = async (
   child: ChildForNotification,
   measurements: WeightAlertMeasurement[],
 ): Promise<WeightAlert[]> => {
-  const alerts = computeWeightAlerts(child, measurements);
-  if (alerts.length === 0) return alerts;
-
   try {
+    const alerts = computeWeightAlerts(child, measurements);
+    if (alerts.length === 0) return alerts;
+
     const recipients = await getRoleRecipients("consultant");
     for (const alert of alerts) {
       const event = alert.level === "alerte" ? "weight_alert_alert" : "weight_alert_vigilance";
@@ -40,9 +40,10 @@ export const notifyWeightAlerts = async (
         { dedupeId: `${child.id}:${alert.rule}:${alert.measurementId}` },
       );
     }
+
+    return alerts;
   } catch (error) {
     console.error("notifyWeightAlerts a échoué :", error);
+    return [];
   }
-
-  return alerts;
 };

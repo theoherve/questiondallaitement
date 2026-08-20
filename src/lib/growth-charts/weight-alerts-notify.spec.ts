@@ -1,11 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { notifyWeightAlerts } from "./weight-alerts-notify";
 import { notify, getRoleRecipients } from "@/lib/notifications";
+import { computeWeightAlerts } from "./weight-alerts";
 
 vi.mock("@/lib/notifications", () => ({
   notify: vi.fn(),
   getRoleRecipients: vi.fn(),
 }));
+
+vi.mock("./weight-alerts", async () => {
+  const actual = await vi.importActual<typeof import("./weight-alerts")>(
+    "./weight-alerts",
+  );
+  return { ...actual, computeWeightAlerts: vi.fn(actual.computeWeightAlerts) };
+});
 
 const child = {
   id: "child-1",
@@ -19,6 +27,7 @@ const child = {
 };
 
 beforeEach(() => {
+  vi.clearAllMocks();
   vi.mocked(getRoleRecipients).mockResolvedValue([
     { userId: "consultant-1", email: "carole@example.com" },
   ]);
@@ -50,5 +59,18 @@ describe("notifyWeightAlerts", () => {
       },
       { dedupeId: "child-1:loss_vigilance:m1" },
     );
+  });
+
+  it("résout avec un tableau vide et ne lève pas si le calcul des alertes échoue", async () => {
+    vi.mocked(computeWeightAlerts).mockImplementationOnce(() => {
+      throw new Error("boom");
+    });
+
+    const alerts = await notifyWeightAlerts(child, [
+      { id: "m1", measured_at: "2026-01-05", weight_grams: 2900 },
+    ]);
+
+    expect(alerts).toEqual([]);
+    expect(notify).not.toHaveBeenCalled();
   });
 });
