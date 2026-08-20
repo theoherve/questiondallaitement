@@ -535,6 +535,48 @@ const LivresPage = () => {
         </div>
       </div>
 
+      {/* ─── MAISON DES MATERNELLES ─── */}
+      <section className="section-padding">
+        <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-16">
+          <ScrollReveal>
+            <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+              {/* Text */}
+              <div>
+                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary-red/20 bg-primary-red/5 px-4 py-1.5">
+                  <BookOpen
+                    className="h-3.5 w-3.5 text-primary-red"
+                    aria-hidden
+                  />
+                  <p className="font-sans text-xs font-medium uppercase tracking-widest text-primary-red">
+                    La Maison des maternelles
+                  </p>
+                </div>
+                <h2 className="font-serif text-3xl font-bold text-primary-green lg:text-4xl">
+                  &laquo;&nbsp;L&apos;allaitement pour les nuls&nbsp;&raquo;
+                  mis à l&apos;honneur sur le plateau
+                </h2>
+                <p className="mt-6 leading-relaxed text-primary-green/70 lg:text-lg">
+                  Réécoutez la session de questions-réponses sur le plateau de
+                  la Maison des maternelles qui a accompagné la sortie du
+                  livre en décembre 2024.
+                </p>
+              </div>
+
+              {/* Video */}
+              <div className="relative aspect-video w-full overflow-hidden shadow-xl">
+                <iframe
+                  src="https://www.youtube-nocookie.com/embed/K--8C6X-Qzg"
+                  title="L'allaitement pour les nuls sur la Maison des maternelles"
+                  className="absolute inset-0 h-full w-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
       {/* ─── CTA FINAL — full width ─── */}
       <section className="bg-primary-green section-padding">
         <div className="mx-auto max-w-4xl text-center">
