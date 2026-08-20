@@ -21,6 +21,7 @@ import { Trash2 } from "lucide-react";
 import { differenceInMonths, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { WeightChart } from "@/components/growth-charts/weight-chart";
+import { computeWeightAlerts } from "@/lib/growth-charts/weight-alerts";
 import {
   addWeightMeasurementAsConsultant,
   deleteChildAsConsultant,
@@ -54,6 +55,9 @@ export const ChildrenPanel = ({
   const selectedChild = childrenList.find((c) => c.id === selectedChildId);
   const selectedMeasurements = selectedChild
     ? (measurementsByChild[selectedChild.id] ?? [])
+    : [];
+  const selectedAlerts = selectedChild
+    ? computeWeightAlerts(selectedChild, selectedMeasurements)
     : [];
 
   const handleAddMeasurement = () => {
@@ -155,6 +159,26 @@ export const ChildrenPanel = ({
 
       {selectedChild && (
         <>
+          {selectedAlerts.length > 0 && (
+            <div className="space-y-2 rounded-md border border-amber-300 bg-amber-50 p-3">
+              {selectedAlerts.map((a) => (
+                <p
+                  key={`${a.rule}-${a.measurementId}`}
+                  className={
+                    a.level === "alerte"
+                      ? "text-sm font-medium text-red-700"
+                      : "text-sm font-medium text-amber-700"
+                  }
+                >
+                  {a.message}
+                </p>
+              ))}
+              <p className="text-xs text-muted-foreground">
+                Aide à la décision — reste soumise à l&apos;appréciation clinique
+                de la praticienne IBCLC.
+              </p>
+            </div>
+          )}
           <WeightChart
             measurements={selectedMeasurements}
             birthDate={selectedChild.birth_date}
