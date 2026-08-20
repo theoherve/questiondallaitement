@@ -45,6 +45,7 @@ export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
   },
   outcomes: {
     title: "Ce qui devient possible",
+    subtitle: "Ce que change une prise du sein corrigée, dès les premières semaines.",
     items: [
       "Vous mettez votre bébé au sein sans appréhension, parce que vous savez ce que vous regardez.",
       "La douleur diminue, puis disparaît, et vous savez pourquoi.",
@@ -56,6 +57,7 @@ export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
   },
   fit: {
     title: "Est-ce le bon module pour vous ?",
+    subtitle: "Pour les six premières semaines, pas pour un allaitement déjà installé.",
     forYouTitle: "Oui, si",
     forYou: [
       "Vous êtes enceinte du dernier trimestre ou votre bébé a moins de deux mois.",

@@ -182,13 +182,14 @@ export function PackHowItWorks() {
 
 /* ------------------------------------------------------------- For who */
 export function PackForWho() {
-  const { title, scenarios } = PACK_CONTENT.forWho;
+  const { title, subtitle, scenarios } = PACK_CONTENT.forWho;
   return (
     <Section className="bg-background-beige">
       <ScrollReveal className="mx-auto max-w-3xl text-center">
         <h2 className="font-serif text-3xl font-bold text-primary-green sm:text-4xl">
           {title}
         </h2>
+        {subtitle && <p className="mt-4 text-lg text-primary-green/70">{subtitle}</p>}
       </ScrollReveal>
       <div className="mx-auto mt-10 grid max-w-3xl gap-3">
         {scenarios.map((s, i) => (

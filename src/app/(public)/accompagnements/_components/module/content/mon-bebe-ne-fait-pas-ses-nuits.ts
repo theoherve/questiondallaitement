@@ -46,6 +46,8 @@ export const MON_BEBE_NE_FAIT_PAS_SES_NUITS: ModuleContent = {
   },
   outcomes: {
     title: "Ce qui devient possible",
+    subtitle:
+      "Ce que change la compréhension des mécanismes du sommeil de votre enfant.",
     items: [
       "Vous savez ce qui est normal à l'âge de votre enfant et vous cessez de vous comparer.",
       "L'endormissement s'allège parce que vous en avez identifié les freins.",
@@ -57,6 +59,7 @@ export const MON_BEBE_NE_FAIT_PAS_SES_NUITS: ModuleContent = {
   },
   fit: {
     title: "Est-ce le bon module pour vous ?",
+    subtitle: "Un accompagnement complet du sommeil, pas une méthode d'entraînement.",
     forYouTitle: "Oui, si",
     forYou: [
       "Les nuits de votre enfant vous épuisent, quel que soit son âge.",

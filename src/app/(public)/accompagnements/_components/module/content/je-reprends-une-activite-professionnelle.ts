@@ -48,6 +48,7 @@ export const JE_REPRENDS_UNE_ACTIVITE_PROFESSIONNELLE: ModuleContent = {
   },
   outcomes: {
     title: "Ce qui devient possible",
+    subtitle: "Ce que change un plan de tirage préparé, plutôt qu'improvisé la veille.",
     items: [
       "Vous reprenez avec un stock suffisant et un plan clair.",
       "Le tirage devient une routine de quelques minutes, pas une épreuve.",
@@ -59,6 +60,7 @@ export const JE_REPRENDS_UNE_ACTIVITE_PROFESSIONNELLE: ModuleContent = {
   },
   fit: {
     title: "Est-ce le bon module pour vous ?",
+    subtitle: "Pour préparer une reprise à venir, pas pour un sevrage déjà décidé.",
     forYouTitle: "Oui, si",
     forYou: [
       "Vous reprenez dans les semaines ou les mois qui viennent.",

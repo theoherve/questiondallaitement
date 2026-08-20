@@ -34,10 +34,14 @@ export type ModuleContent = {
   };
   outcomes: {
     title: string;
+    /** Ligne de bénéfice sous le titre de section, un cran au-dessus des items. */
+    subtitle?: string;
     items: string[];
   };
   fit: {
     title: string;
+    /** Ligne de bénéfice sous le titre de section. */
+    subtitle?: string;
     forYouTitle: string;
     forYou: string[];
     notForYouTitle: string;

@@ -46,6 +46,7 @@ export const JE_SOUHAITE_SEVRER_MON_BEBE: ModuleContent = {
   },
   outcomes: {
     title: "Ce qui devient possible",
+    subtitle: "Ce que change un sevrage préparé, pour vos seins comme pour votre bébé.",
     items: [
       "Vous savez exactement quelle tétée retirer, et quand.",
       "Vos seins ne vous font pas mal pendant la décroissance.",
@@ -57,6 +58,8 @@ export const JE_SOUHAITE_SEVRER_MON_BEBE: ModuleContent = {
   },
   fit: {
     title: "Est-ce le bon module pour vous ?",
+    subtitle:
+      "Pour une décision de sevrage prise ou en réflexion, pas pour la poursuite de l'allaitement.",
     forYouTitle: "Oui, si",
     forYou: [
       "Vous avez décidé d'arrêter, quelle que soit la raison.",

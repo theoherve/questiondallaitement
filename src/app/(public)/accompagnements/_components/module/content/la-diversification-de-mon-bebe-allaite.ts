@@ -47,6 +47,8 @@ export const LA_DIVERSIFICATION_DE_MON_BEBE_ALLAITE: ModuleContent = {
   },
   outcomes: {
     title: "Ce qui devient possible",
+    subtitle:
+      "Ce qui devient plus simple une fois la diversification comprise, pas subie.",
     items: [
       "Vous savez quand commencer, en observant votre bébé plutôt que le calendrier.",
       "Les repas deviennent un moment de découverte, pas un combat.",
@@ -58,6 +60,7 @@ export const LA_DIVERSIFICATION_DE_MON_BEBE_ALLAITE: ModuleContent = {
   },
   fit: {
     title: "Est-ce le bon module pour vous ?",
+    subtitle: "Pour diversifier en poursuivant l'allaitement, pas pour l'arrêter.",
     forYouTitle: "Oui, si",
     forYou: [
       "Votre bébé approche ou dépasse quatre à six mois.",

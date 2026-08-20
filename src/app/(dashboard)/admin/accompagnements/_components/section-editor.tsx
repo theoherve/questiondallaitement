@@ -49,7 +49,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { SortableBlock } from "./sortable-block";
-import { BlockEditor } from "./block-editor";
+import { BlockEditor, type SiblingSection } from "./block-editor";
 import {
   updateSection,
   deleteSection,
@@ -77,6 +77,8 @@ type SectionData = {
 type SectionEditorProps = {
   section: SectionData;
   accompagnementId: string;
+  /** Toutes les sections de l'accompagnement, pour le menu "Deplacer vers...". */
+  allSections: SiblingSection[];
 };
 
 const BLOCK_TYPES = [
@@ -110,7 +112,9 @@ const DEFAULT_CONTENT: Record<string, Record<string, unknown>> = {
 export const SectionEditor = ({
   section,
   accompagnementId,
+  allSections,
 }: SectionEditorProps) => {
+  const otherSections = allSections.filter((s) => s.id !== section.id);
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(section.title);
@@ -368,6 +372,7 @@ export const SectionEditor = ({
                   <BlockEditor
                     block={block}
                     accompagnementId={accompagnementId}
+                    otherSections={otherSections}
                   />
                 </SortableBlock>
               ))}

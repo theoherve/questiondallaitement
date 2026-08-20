@@ -651,6 +651,10 @@ export const AccompagnementEditor = ({
                   <SectionEditor
                     section={section}
                     accompagnementId={accompagnement.id}
+                    allSections={orderedSections.map((s) => ({
+                      id: s.id,
+                      title: s.title,
+                    }))}
                   />
                 </SortableSection>
               ))}

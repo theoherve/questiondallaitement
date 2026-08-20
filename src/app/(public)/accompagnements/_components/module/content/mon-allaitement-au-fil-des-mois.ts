@@ -48,6 +48,7 @@ export const MON_ALLAITEMENT_AU_FIL_DES_MOIS: ModuleContent = {
   },
   outcomes: {
     title: "Ce qui devient possible",
+    subtitle: "Ce que change le fait de savoir lire son allaitement, mois après mois.",
     items: [
       "Vous savez si votre production baisse vraiment, et quoi faire le cas échéant.",
       "Les tétées agitées ne vous inquiètent plus, vous en connaissez les causes.",
@@ -59,6 +60,7 @@ export const MON_ALLAITEMENT_AU_FIL_DES_MOIS: ModuleContent = {
   },
   fit: {
     title: "Est-ce le bon module pour vous ?",
+    subtitle: "Pour un allaitement déjà installé, pas pour les tout premiers jours.",
     forYouTitle: "Oui, si",
     forYou: [
       "Votre bébé a plus de deux mois et votre allaitement est installé.",

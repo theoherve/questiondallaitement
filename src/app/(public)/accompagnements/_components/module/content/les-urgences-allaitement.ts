@@ -25,6 +25,7 @@ export const LES_URGENCES_ALLAITEMENT: ModuleContent = {
   },
   outcomes: {
     title: "Ce qui devient possible",
+    subtitle: "Ce que change la bonne conduite à tenir, tout de suite.",
     items: [
       "Vous savez quoi faire dans l'heure qui vient.",
       "La douleur diminue parce que vous traitez la cause, pas le symptôme.",
@@ -36,6 +37,7 @@ export const LES_URGENCES_ALLAITEMENT: ModuleContent = {
   },
   fit: {
     title: "Est-ce le bon module pour vous ?",
+    subtitle: "Pour une douleur ou un symptôme précis, là, maintenant.",
     forYouTitle: "Oui, si",
     forYou: [
       "Vous avez mal maintenant et vous cherchez la conduite à tenir.",

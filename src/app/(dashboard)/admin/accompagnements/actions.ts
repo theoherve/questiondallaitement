@@ -417,6 +417,48 @@ export const deleteBlock = async (
   return { success: true };
 };
 
+/**
+ * Deplace un bloc vers une autre section du meme accompagnement, en fin de
+ * liste. Aucune contrainte DB ne garantit que les deux sections appartiennent
+ * au meme accompagnement (`section_id` reference juste `accompagnement_sections`),
+ * donc c'est verifie ici avant l'update.
+ */
+export const moveBlockToSection = async (
+  blockId: string,
+  targetSectionId: string,
+  accompagnementId: string,
+): Promise<ActionResult> => {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { data: targetSection, error: targetError } = await supabase
+    .from("accompagnement_sections")
+    .select("accompagnement_id")
+    .eq("id", targetSectionId)
+    .single();
+
+  if (targetError || !targetSection || targetSection.accompagnement_id !== accompagnementId) {
+    return { success: false, error: "Section de destination introuvable" };
+  }
+
+  const { count } = await supabase
+    .from("accompagnement_blocks")
+    .select("id", { count: "exact", head: true })
+    .eq("section_id", targetSectionId);
+
+  const { error } = await supabase
+    .from("accompagnement_blocks")
+    .update({ section_id: targetSectionId, position: count ?? 0 })
+    .eq("id", blockId);
+
+  if (error) {
+    return { success: false, error: "Erreur lors du déplacement" };
+  }
+
+  revalidatePath(`/admin/accompagnements/${accompagnementId}/edit`);
+  return { success: true };
+};
+
 export const reorderBlocks = async (
   sectionId: string,
   accompagnementId: string,

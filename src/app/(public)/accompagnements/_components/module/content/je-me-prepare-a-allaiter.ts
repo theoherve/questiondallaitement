@@ -46,6 +46,7 @@ export const JE_ME_PREPARE_A_ALLAITER: ModuleContent = {
   },
   outcomes: {
     title: "Ce qui devient possible",
+    subtitle: "Ce que change une préparation faite avant la naissance, pas après.",
     items: [
       "Vous arrivez à la maternité avec un plan, pas avec des espoirs.",
       "Vous savez formuler ce que vous voulez à l'équipe soignante.",
@@ -57,6 +58,7 @@ export const JE_ME_PREPARE_A_ALLAITER: ModuleContent = {
   },
   fit: {
     title: "Est-ce le bon module pour vous ?",
+    subtitle: "Pensé pour la grossesse, pas pour une difficulté déjà installée.",
     forYouTitle: "Oui, si",
     forYou: [
       "Vous êtes enceinte, quel que soit le terme.",

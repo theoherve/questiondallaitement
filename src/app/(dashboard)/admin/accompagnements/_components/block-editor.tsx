@@ -17,9 +17,15 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { FileUpload } from "@/components/ui/file-upload";
 import { WysiwygEditor } from "@/components/editor/wysiwyg-editor";
-import { updateBlock, deleteBlock } from "../actions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { updateBlock, deleteBlock, moveBlockToSection } from "../actions";
 import { toast } from "sonner";
-import { Save, Trash2, Plus, X } from "lucide-react";
+import { Save, Trash2, Plus, X, FolderInput } from "lucide-react";
 import { randomUUID } from "@/lib/utils-client";
 
 type BlockData = {
@@ -29,9 +35,14 @@ type BlockData = {
   position: number;
 };
 
+/** Section soeur pour le menu "Deplacer vers...". */
+export type SiblingSection = { id: string; title: string };
+
 type BlockEditorProps = {
   block: BlockData;
   accompagnementId: string;
+  /** Sections soeurs (section courante exclue) proposees dans "Deplacer vers...". */
+  otherSections: SiblingSection[];
 };
 
 const BLOCK_TYPE_LABELS: Record<string, string> = {
@@ -42,10 +53,15 @@ const BLOCK_TYPE_LABELS: Record<string, string> = {
   download: "Pièce jointe",
 };
 
-export const BlockEditor = ({ block, accompagnementId }: BlockEditorProps) => {
+export const BlockEditor = ({
+  block,
+  accompagnementId,
+  otherSections,
+}: BlockEditorProps) => {
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
   const [content, setContent] = useState(block.content);
 
   const handleSave = async () => {
@@ -64,6 +80,23 @@ export const BlockEditor = ({ block, accompagnementId }: BlockEditorProps) => {
     const result = await deleteBlock(block.id, accompagnementId);
     if (result.success) {
       toast.success("Bloc supprimé");
+      router.refresh();
+    } else {
+      toast.error(result.error ?? "Erreur");
+    }
+  };
+
+  const handleMove = async (targetSectionId: string) => {
+    setIsMoving(true);
+    const result = await moveBlockToSection(
+      block.id,
+      targetSectionId,
+      accompagnementId
+    );
+    setIsMoving(false);
+
+    if (result.success) {
+      toast.success("Bloc déplacé");
       router.refresh();
     } else {
       toast.error(result.error ?? "Erreur");
@@ -91,6 +124,28 @@ export const BlockEditor = ({ block, accompagnementId }: BlockEditorProps) => {
           </span>
         </button>
         <div className="flex items-center gap-1">
+          {otherSections.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  disabled={isMoving}
+                  aria-label="Déplacer vers une autre section"
+                >
+                  <FolderInput className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {otherSections.map((s) => (
+                  <DropdownMenuItem key={s.id} onClick={() => handleMove(s.id)}>
+                    Déplacer vers « {s.title} »
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <Button
             size="icon"
             variant="ghost"

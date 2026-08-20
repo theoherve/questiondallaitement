@@ -70,6 +70,8 @@ export const PACK_CONTENT = {
   },
   forWho: {
     title: "Ce qui devient possible",
+    subtitle:
+      "Ce que change un accompagnement complet, étape par étape, sur toute la durée de votre allaitement.",
     scenarios: [
       "Vous cessez de compter les grammes pris chaque jour.",
       "Vous savez pourquoi votre bébé pleure, et quoi faire, sans avoir à deviner.",
