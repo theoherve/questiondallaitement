@@ -14,7 +14,7 @@ export const generateRecurringFormations = async (): Promise<{
   let generated = 0;
 
   const { data: definitions } = await supabase
-    .from("CDEFEvent")
+    .from("recurring_formation_definitions")
     .select("*")
     .eq("is_active", true);
 
@@ -83,6 +83,7 @@ export const generateRecurringFormations = async (): Promise<{
         slug,
         description: def.description,
         type: def.type,
+        category: def.category,
         location: def.location,
         starts_at: startsAt.toISOString(),
         ends_at: endsAt.toISOString(),
@@ -108,7 +109,7 @@ export const generateRecurringFormations = async (): Promise<{
     // Update last_generated_until
     if (lastGenerated) {
       await supabase
-        .from("CDEFEvent")
+        .from("recurring_formation_definitions")
         .update({
           last_generated_until: format(lastGenerated, "yyyy-MM-dd"),
         })

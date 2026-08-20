@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,9 +11,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { createRecurringDefinition } from "../../actions";
+import {
+  createRecurringDefinition,
+  updateRecurringDefinition,
+} from "../../actions";
+import {
+  FORMATION_CATEGORIES,
+  FORMATION_CATEGORY_CONFIG,
+  type FormationCategory,
+} from "@/config/formation-categories";
+import type { RecurringFormationDefinition } from "@/lib/admin-workflows/types";
 
 const DAYS = [
   "Dimanche",
@@ -34,34 +44,51 @@ const WEEK_POSITIONS = [
 
 type Props = {
   consultants: { id: string; name: string }[];
+  /** Presente : le dialogue modifie cette definition plutot que d'en creer une. */
+  definition?: RecurringFormationDefinition;
 };
 
 const slugify = (str: string): string =>
   str
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
-export const RecurringFormationFormDialog = ({ consultants }: Props) => {
+export const RecurringFormationFormDialog = ({ consultants, definition }: Props) => {
+  const isEditing = definition != null;
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
-  const [title, setTitle] = useState("");
-  const [slugPrefix, setSlugPrefix] = useState("");
-  const [description, setDescription] = useState("");
-  const [consultantId, setConsultantId] = useState(consultants[0]?.id ?? "");
-  const [type, setType] = useState<"online" | "in_person" | "hybrid">(
-    "online",
+  const [title, setTitle] = useState(definition?.title ?? "");
+  const [slugPrefix, setSlugPrefix] = useState(definition?.slug_prefix ?? "");
+  const [description, setDescription] = useState(definition?.description ?? "");
+  const [consultantId, setConsultantId] = useState(
+    definition?.consultant_id ?? consultants[0]?.id ?? "",
   );
-  const [durationMinutes, setDurationMinutes] = useState(60);
-  const [timeOfDay, setTimeOfDay] = useState("19:00");
-  const [frequency, setFrequency] = useState<"monthly" | "weekly">("monthly");
-  const [dayOfWeek, setDayOfWeek] = useState(3);
-  const [weekOfMonth, setWeekOfMonth] = useState(1);
-  const [maxParticipants, setMaxParticipants] = useState<number | null>(null);
-  const [priceCents, setPriceCents] = useState(0);
+  const [type, setType] = useState<"online" | "in_person" | "hybrid">(
+    definition?.type ?? "online",
+  );
+  const [category, setCategory] = useState<FormationCategory>(
+    definition?.category ?? "atelier_mensuel",
+  );
+  const [durationMinutes, setDurationMinutes] = useState(
+    definition?.duration_minutes ?? 60,
+  );
+  const [timeOfDay, setTimeOfDay] = useState(definition?.time_of_day.slice(0, 5) ?? "19:00");
+  const [frequency, setFrequency] = useState<"monthly" | "weekly">(
+    definition?.recurrence_rule.frequency ?? "monthly",
+  );
+  const [dayOfWeek, setDayOfWeek] = useState(definition?.recurrence_rule.day_of_week ?? 3);
+  const [weekOfMonth, setWeekOfMonth] = useState(
+    definition?.recurrence_rule.week_of_month ?? 1,
+  );
+  const [maxParticipants, setMaxParticipants] = useState<number | null>(
+    definition?.max_participants ?? null,
+  );
+  const [priceCents, setPriceCents] = useState(definition?.price_cents ?? 0);
 
   const handleSubmit = () => {
     const data = {
@@ -70,6 +97,7 @@ export const RecurringFormationFormDialog = ({ consultants }: Props) => {
       description: description || null,
       consultant_id: consultantId,
       type,
+      category,
       duration_minutes: durationMinutes,
       time_of_day: timeOfDay,
       recurrence_rule: {
@@ -83,10 +111,14 @@ export const RecurringFormationFormDialog = ({ consultants }: Props) => {
     };
 
     startTransition(async () => {
-      const result = await createRecurringDefinition(data);
+      const result = isEditing
+        ? await updateRecurringDefinition(definition.id, data)
+        : await createRecurringDefinition(data);
+
       if (result.success) {
-        toast.success("Définition créée");
+        toast.success(isEditing ? "Définition mise à jour" : "Définition créée");
         setOpen(false);
+        router.refresh();
       } else {
         toast.error(result.error ?? "Erreur");
       }
@@ -96,14 +128,22 @@ export const RecurringFormationFormDialog = ({ consultants }: Props) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-primary-red hover:bg-primary-red-dark">
-          <Plus className="mr-2 h-4 w-4" />
-          Nouvelle définition
-        </Button>
+        {isEditing ? (
+          <Button variant="ghost" size="icon" aria-label="Modifier">
+            <Pencil className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button className="bg-primary-red hover:bg-primary-red-dark">
+            <Plus className="mr-2 h-4 w-4" />
+            Nouvelle définition
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Nouvelle formation récurrente</DialogTitle>
+          <DialogTitle>
+            {isEditing ? "Modifier la formation récurrente" : "Nouvelle formation récurrente"}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -112,7 +152,7 @@ export const RecurringFormationFormDialog = ({ consultants }: Props) => {
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
-                setSlugPrefix(slugify(e.target.value));
+                if (!isEditing) setSlugPrefix(slugify(e.target.value));
               }}
               placeholder="Atelier mensuel"
             />
@@ -170,16 +210,32 @@ export const RecurringFormationFormDialog = ({ consultants }: Props) => {
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">
-                Durée (min)
+                Catégorie
               </label>
-              <Input
-                type="number"
-                value={durationMinutes}
-                onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                min={15}
-                max={480}
-              />
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={category}
+                onChange={(e) => setCategory(e.target.value as FormationCategory)}
+              >
+                {FORMATION_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {FORMATION_CATEGORY_CONFIG[c].label}
+                  </option>
+                ))}
+              </select>
             </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              Durée (min)
+            </label>
+            <Input
+              type="number"
+              value={durationMinutes}
+              onChange={(e) => setDurationMinutes(Number(e.target.value))}
+              min={15}
+              max={480}
+            />
           </div>
 
           {/* Recurrence rule */}
@@ -277,7 +333,13 @@ export const RecurringFormationFormDialog = ({ consultants }: Props) => {
             disabled={isPending || !title || !consultantId}
             className="w-full"
           >
-            {isPending ? "Création..." : "Créer"}
+            {isPending
+              ? isEditing
+                ? "Mise à jour..."
+                : "Création..."
+              : isEditing
+                ? "Mettre à jour"
+                : "Créer"}
           </Button>
         </div>
       </DialogContent>

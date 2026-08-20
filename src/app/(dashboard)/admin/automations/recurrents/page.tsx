@@ -18,6 +18,8 @@ import { getRecurringDefinitions, getConsultants } from "../actions";
 import { describeRecurrence } from "@/lib/admin-workflows/recurrence";
 import type { RecurrenceRule } from "@/lib/admin-workflows/types";
 import { RecurringFormationFormDialog } from "./_components/recurring-formation-form-dialog";
+import { DeleteRecurringDefinitionButton } from "./_components/delete-recurring-definition-button";
+import { resolveFormationCategory } from "@/config/formation-categories";
 
 export const metadata: Metadata = {
   title: "Formations récurrentes - Automations",
@@ -55,19 +57,21 @@ const AdminRecurrentsPage = async () => {
           <Table className="w-full table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[35%]">Titre</TableHead>
-                <TableHead>Récurrence</TableHead>
-                <TableHead>Heure</TableHead>
-                <TableHead>Consultante</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Statut</TableHead>
+                <TableHead className="w-[22%]">Titre</TableHead>
+                <TableHead className="w-[18%]">Récurrence</TableHead>
+                <TableHead className="w-[8%]">Heure</TableHead>
+                <TableHead className="w-[14%]">Consultante</TableHead>
+                <TableHead className="w-[10%]">Type</TableHead>
+                <TableHead className="w-[13%]">Catégorie</TableHead>
+                <TableHead className="w-[8%]">Statut</TableHead>
+                <TableHead className="w-[7%] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {definitions.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={8}
                     className="py-8 text-center text-muted-foreground"
                   >
                     Aucune définition. Créez-en une pour générer des formations
@@ -83,7 +87,7 @@ const AdminRecurrentsPage = async () => {
                         {def.slug_prefix}
                       </p>
                     </TableCell>
-                    <TableCell className="text-sm">
+                    <TableCell className="text-sm whitespace-normal">
                       {describeRecurrence(
                         def.recurrence_rule as RecurrenceRule,
                       )}
@@ -91,11 +95,16 @@ const AdminRecurrentsPage = async () => {
                     <TableCell className="text-sm">
                       {def.time_of_day.slice(0, 5)}
                     </TableCell>
-                    <TableCell className="text-sm">
+                    <TableCell className="truncate text-sm">
                       {consultantMap.get(def.consultant_id) ?? "-"}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{def.type}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={resolveFormationCategory(def.category).color}>
+                        {resolveFormationCategory(def.category).label}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       {def.is_active ? (
@@ -103,6 +112,15 @@ const AdminRecurrentsPage = async () => {
                       ) : (
                         <Badge variant="secondary">Inactif</Badge>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        <RecurringFormationFormDialog
+                          consultants={consultants}
+                          definition={def}
+                        />
+                        <DeleteRecurringDefinitionButton id={def.id} title={def.title} />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

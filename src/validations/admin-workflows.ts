@@ -3,6 +3,7 @@ import {
   ADMIN_WORKFLOW_TRIGGER_TYPES,
   ADMIN_WORKFLOW_ACTION_TYPES,
 } from "@/lib/admin-workflows/types";
+import { FORMATION_CATEGORIES } from "@/config/formation-categories";
 
 // ─── Labels ─────────────────────────────────────────────────
 
@@ -41,6 +42,7 @@ export const recurringFormationDefinitionSchema = z.object({
   description: z.string().nullable().optional(),
   consultant_id: z.string().uuid(),
   type: z.enum(["online", "in_person", "hybrid"]).default("online"),
+  category: z.enum(FORMATION_CATEGORIES).default("formation"),
   location: z.string().nullable().optional(),
   duration_minutes: z.number().int().min(15).max(480).default(60),
   time_of_day: z.string().regex(/^\d{2}:\d{2}$/, "Format HH:MM requis"),

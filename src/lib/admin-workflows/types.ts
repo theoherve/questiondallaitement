@@ -1,3 +1,5 @@
+import type { FormationCategory } from "@/config/formation-categories";
+
 // ─── Trigger Types ──────────────────────────────────────────
 
 export const ADMIN_WORKFLOW_TRIGGER_TYPES = [
@@ -151,6 +153,7 @@ export type RecurringFormationDefinition = {
   description: string | null;
   consultant_id: string;
   type: "online" | "in_person" | "hybrid";
+  category: FormationCategory;
   location: string | null;
   duration_minutes: number;
   time_of_day: string;

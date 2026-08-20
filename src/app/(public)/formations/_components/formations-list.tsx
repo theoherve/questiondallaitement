@@ -41,6 +41,8 @@ import {
   type FormationAudienceGroup,
 } from "@/config/formation-audience";
 import { matchesAudienceFilter } from "@/lib/formations/audience";
+import { matchesFormationSearch } from "@/lib/formations/search";
+import { FormationSearch } from "./formation-search";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -151,10 +153,11 @@ export const FormationsList = ({
   /** Formations sans date, presentees a part du calendrier. */
   evergreenFormations: FormationData[];
 }) => {
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>("all");
-  // Par defaut, seules les sessions a venir s'affichent : les formations
-  // permanentes n'ont pas a passer devant l'agenda a chaque visite.
-  const [whenFilter, setWhenFilter] = useState<WhenFilter>("upcoming");
+  // Par defaut, sessions a venir et formations permanentes s'affichent
+  // ensemble : le toggle ne sert qu'a restreindre a l'une ou l'autre.
+  const [whenFilter, setWhenFilter] = useState<WhenFilter>("all");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
   const [showPast, setShowPast] = useState(false);
@@ -190,13 +193,31 @@ export const FormationsList = ({
   }, [upcomingFormations]);
 
   // Determine which categories actually have formations
+  const allFormations = useMemo(
+    () => [...upcomingFormations, ...pastFormations, ...evergreenFormations],
+    [upcomingFormations, pastFormations, evergreenFormations],
+  );
+
   const availableCategories = useMemo(() => {
-    const allFormations = [...upcomingFormations, ...pastFormations, ...evergreenFormations];
     const cats = new Set(allFormations.map((e) => e.category));
     return CATEGORY_FILTERS.filter((f) => f.value === "all" || cats.has(f.value));
-  }, [upcomingFormations, pastFormations, evergreenFormations]);
+  }, [allFormations]);
 
-  // Filter formations by category + selected date
+  // Sessions concernees par le toggle « Quand » + le toggle audience, pour que
+  // le compteur affiche sur chaque pastille de type corresponde a ce qui sera
+  // reellement visible en cliquant dessus (les sessions passees ne suivent pas
+  // le toggle « Quand », elles restent dans leur propre section repliable).
+  const categoryCountPool = useMemo(() => {
+    const pool =
+      whenFilter === "upcoming"
+        ? upcomingFormations
+        : whenFilter === "evergreen"
+          ? evergreenFormations
+          : [...upcomingFormations, ...evergreenFormations];
+    return pool.filter((e) => matchesAudienceFilter(e.audience_group, audienceFilter));
+  }, [upcomingFormations, evergreenFormations, whenFilter, audienceFilter]);
+
+  // Filter formations by category + selected date + recherche
   const filteredUpcoming = useMemo(() => {
     let result = upcomingFormations;
     if (activeCategory !== "all") {
@@ -207,8 +228,8 @@ export const FormationsList = ({
       const day = format(selectedDate, "yyyy-MM-dd");
       result = result.filter((e) => parisDayKey(e.starts_at) === day);
     }
-    return result;
-  }, [upcomingFormations, activeCategory, audienceFilter, selectedDate]);
+    return result.filter((e) => matchesFormationSearch(e.title, searchQuery));
+  }, [upcomingFormations, activeCategory, audienceFilter, selectedDate, searchQuery]);
 
   const filteredPast = useMemo(() => {
     let result = pastFormations;
@@ -220,8 +241,8 @@ export const FormationsList = ({
       const day = format(selectedDate, "yyyy-MM-dd");
       result = result.filter((e) => parisDayKey(e.starts_at) === day);
     }
-    return result;
-  }, [pastFormations, activeCategory, audienceFilter, selectedDate]);
+    return result.filter((e) => matchesFormationSearch(e.title, searchQuery));
+  }, [pastFormations, activeCategory, audienceFilter, selectedDate, searchQuery]);
 
   // Les formations sans date ignorent le filtre calendaire : elles ne tombent
   // aucun jour en particulier, les retirer parce qu'une date est selectionnee
@@ -231,8 +252,9 @@ export const FormationsList = ({
     if (activeCategory !== "all") {
       result = result.filter((e) => e.category === activeCategory);
     }
-    return result.filter((e) => matchesAudienceFilter(e.audience_group, audienceFilter));
-  }, [evergreenFormations, activeCategory, audienceFilter]);
+    result = result.filter((e) => matchesAudienceFilter(e.audience_group, audienceFilter));
+    return result.filter((e) => matchesFormationSearch(e.title, searchQuery));
+  }, [evergreenFormations, activeCategory, audienceFilter, searchQuery]);
 
   // Progressive disclosure
   const visibleUpcoming = showAllUpcoming ? filteredUpcoming : filteredUpcoming.slice(0, INITIAL_VISIBLE);
@@ -251,15 +273,21 @@ export const FormationsList = ({
   }, []);
 
   const clearFilters = useCallback(() => {
+    setSearchQuery("");
     setActiveCategory("all");
-    setWhenFilter("upcoming");
+    setWhenFilter("all");
     setSelectedDate(undefined);
     setShowAllUpcoming(false);
     setShowAllPast(false);
-  }, []);
+    handleAudienceChange("all");
+  }, [handleAudienceChange]);
 
   const hasActiveFilters =
-    activeCategory !== "all" || whenFilter !== "upcoming" || selectedDate !== undefined;
+    searchQuery.trim() !== "" ||
+    activeCategory !== "all" ||
+    whenFilter !== "all" ||
+    audienceFilter !== "all" ||
+    selectedDate !== undefined;
 
   // Le filtre « Quand » decide QUELLE section s'affiche, pas seulement son
   // contenu : « a venir » masque entierement le bloc permanent, et
@@ -273,6 +301,12 @@ export const FormationsList = ({
       {/* Left sidebar: Calendar + Filters (sticky on desktop)         */}
       {/* ============================================================ */}
       <aside className="w-full shrink-0 lg:sticky lg:top-24 lg:w-70 lg:self-start">
+        <FormationSearch
+          formations={allFormations}
+          value={searchQuery}
+          onChange={setSearchQuery}
+        />
+
         {/* Toggle « Quand » : decide quelle section (a venir / permanente)
             s'affiche. Par defaut, seule « A venir » est active. */}
         <div className="mb-6">
@@ -334,15 +368,10 @@ export const FormationsList = ({
             <div className="flex flex-wrap gap-2">
               {availableCategories.map((cat) => {
                 const isActive = activeCategory === cat.value;
-                const all = [
-                  ...upcomingFormations,
-                  ...pastFormations,
-                  ...evergreenFormations,
-                ];
                 const count =
                   cat.value === "all"
-                    ? all.length
-                    : all.filter((e) => e.category === cat.value).length;
+                    ? categoryCountPool.length
+                    : categoryCountPool.filter((e) => e.category === cat.value).length;
 
                 return (
                   <button
@@ -419,6 +448,36 @@ export const FormationsList = ({
         {hasActiveFilters && (
           <div className="mb-6 flex flex-wrap items-center gap-2">
             <span className="text-sm text-primary-green/50">Filtres actifs :</span>
+            {searchQuery.trim() !== "" && (
+              <Badge
+                variant="secondary"
+                className="gap-1.5 bg-primary-green/10 text-primary-green cursor-pointer hover:bg-primary-green/20"
+                onClick={() => setSearchQuery("")}
+              >
+                « {searchQuery.trim()} »
+                <X className="h-3 w-3" />
+              </Badge>
+            )}
+            {whenFilter !== "all" && (
+              <Badge
+                variant="secondary"
+                className="gap-1.5 bg-primary-green/10 text-primary-green cursor-pointer hover:bg-primary-green/20"
+                onClick={() => setWhenFilter("all")}
+              >
+                {WHEN_FILTERS.find((f) => f.value === whenFilter)?.label}
+                <X className="h-3 w-3" />
+              </Badge>
+            )}
+            {audienceFilter !== "all" && (
+              <Badge
+                variant="secondary"
+                className="gap-1.5 bg-primary-green/10 text-primary-green cursor-pointer hover:bg-primary-green/20"
+                onClick={() => handleAudienceChange("all")}
+              >
+                {AUDIENCE_FILTERS.find((f) => f.value === audienceFilter)?.label}
+                <X className="h-3 w-3" />
+              </Badge>
+            )}
             {selectedDate && (
               <Badge
                 variant="secondary"
@@ -448,45 +507,12 @@ export const FormationsList = ({
           </div>
         )}
 
-        {/* Formations sans date — masquees par defaut (whenFilter =
-            "upcoming") pour ne pas passer devant l'agenda a chaque visite. */}
-        {showEvergreenSection && (
-          filteredEvergreen.length > 0 ? (
-            <section className="mb-14">
-              <div className="mb-6 flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary-green" />
-                <h2 className="font-serif text-xl font-semibold text-primary-green">
-                  Disponibles à tout moment
-                </h2>
-                <span className="text-sm text-primary-green/40">
-                  ({filteredEvergreen.length})
-                </span>
-              </div>
-              <div className="grid gap-6 sm:grid-cols-2">
-                {filteredEvergreen.map((formation) => (
-                  <FormationCard key={formation.id} formation={formation} />
-                ))}
-              </div>
-            </section>
-          ) : !showUpcomingSection ? (
-            <div className="py-12 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-background-beige-dark">
-                <Sparkles className="h-8 w-8 text-primary-green/30" />
-              </div>
-              <h2 className="mt-4 font-serif text-lg font-semibold text-primary-green">
-                Aucune formation disponible à tout moment
-              </h2>
-              <p className="mt-1 text-sm text-primary-green/50">
-                Essayez d&apos;ajuster vos filtres ou consultez les sessions à
-                venir.
-              </p>
-            </div>
-          ) : null
-        )}
-
-        {/* Upcoming formations */}
+        {/* Sessions a venir affichees en premier : contrairement aux
+            formations permanentes, elles sont datees et perimables — les
+            releguer sous le bloc "a tout moment" les ferait manquer si on ne
+            scrolle pas. */}
         {showUpcomingSection && (filteredUpcoming.length > 0 ? (
-          <section>
+          <section className={showEvergreenSection ? "mb-14" : undefined}>
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CalendarDays className="h-5 w-5 text-primary-green" />
@@ -530,7 +556,7 @@ export const FormationsList = ({
               </div>
             )}
           </section>
-        ) : (
+        ) : !showEvergreenSection || filteredEvergreen.length === 0 ? (
           <div className="py-12 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-background-beige-dark">
               <CalendarDays className="h-8 w-8 text-primary-green/30" />
@@ -556,7 +582,43 @@ export const FormationsList = ({
               </Button>
             )}
           </div>
-        ))}
+        ) : null)}
+
+        {/* Formations sans date — masquees seulement si le toggle "Quand"
+            restreint explicitement aux sessions a venir. */}
+        {showEvergreenSection && (
+          filteredEvergreen.length > 0 ? (
+            <section className="mb-14">
+              <div className="mb-6 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary-green" />
+                <h2 className="font-serif text-xl font-semibold text-primary-green">
+                  Disponibles à tout moment
+                </h2>
+                <span className="text-sm text-primary-green/40">
+                  ({filteredEvergreen.length})
+                </span>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2">
+                {filteredEvergreen.map((formation) => (
+                  <FormationCard key={formation.id} formation={formation} />
+                ))}
+              </div>
+            </section>
+          ) : !showUpcomingSection ? (
+            <div className="py-12 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-background-beige-dark">
+                <Sparkles className="h-8 w-8 text-primary-green/30" />
+              </div>
+              <h2 className="mt-4 font-serif text-lg font-semibold text-primary-green">
+                Aucune formation disponible à tout moment
+              </h2>
+              <p className="mt-1 text-sm text-primary-green/50">
+                Essayez d&apos;ajuster vos filtres ou consultez les sessions à
+                venir.
+              </p>
+            </div>
+          ) : null
+        )}
 
         {/* Past formations — collapsible */}
         {filteredPast.length > 0 && (
@@ -674,7 +736,7 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
             </div>
             <div className="absolute left-4 top-4 flex flex-wrap items-center gap-2">
               <Badge className={`${categoryColor} text-xs`}>{categoryLabel}</Badge>
-              <Badge className="bg-white/15 text-white border-0 text-xs backdrop-blur-sm">
+              <Badge className="bg-black/45 text-white border border-white/30 text-xs backdrop-blur-sm">
                 <TypeIcon className="mr-1 h-3 w-3" />
                 {typeInfo.label}
               </Badge>
@@ -699,7 +761,7 @@ const FormationCard = ({ formation }: { formation: FormationData }) => {
           <div className="bg-primary-green p-5">
             <div className="flex flex-wrap items-center gap-2">
               <Badge className={`${categoryColor} text-xs`}>{categoryLabel}</Badge>
-              <Badge className="bg-white/15 text-white border-0 text-xs">
+              <Badge className="bg-white/90 text-primary-green border-0 text-xs">
                 <TypeIcon className="mr-1 h-3 w-3" />
                 {typeInfo.label}
               </Badge>
