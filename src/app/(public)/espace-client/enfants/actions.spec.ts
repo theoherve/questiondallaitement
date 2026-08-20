@@ -60,6 +60,18 @@ const { mockGetSupabaseAndUser, insertCalls, deleteCalls, responses } =
         data: { id: "measure-1" },
         error: null,
       } as { data: { id: string } | null; error: unknown },
+      weightMeasurementsList: {
+        data: [
+          { id: "measure-0", measured_at: "2025-01-15", weight_grams: 3500 },
+          { id: "measure-1", measured_at: "2025-02-01", weight_grams: 4200 },
+        ],
+        error: null,
+      } as {
+        data:
+          | { id: string; measured_at: string; weight_grams: number }[]
+          | null;
+        error: unknown;
+      },
     },
   }));
 
@@ -125,9 +137,17 @@ vi.mock("@/lib/supabase/admin", () => ({
             };
           },
           select: () => ({
-            eq: () => ({
-              single: () => Promise.resolve(responses.weightMeasurementSingle),
-            }),
+            eq: () => {
+              // Chemin double usage : `.eq(...).single()` (lookup par id, cf.
+              // deleteWeightMeasurement) et `.eq(...)` seul, awaité directement,
+              // pour récupérer l'historique complet (cf. notifyWeightAlerts).
+              const listPromise = Promise.resolve(
+                responses.weightMeasurementsList,
+              );
+              return Object.assign(listPromise, {
+                single: () => Promise.resolve(responses.weightMeasurementSingle),
+              });
+            },
           }),
           delete: () => {
             deleteCalls.push({ table });
@@ -287,6 +307,13 @@ describe("addWeightMeasurement", () => {
       error: null,
     };
     responses.weightInsertSingle = { data: { id: "measure-1" }, error: null };
+    responses.weightMeasurementsList = {
+      data: [
+        { id: "measure-0", measured_at: "2025-01-15", weight_grams: 3500 },
+        { id: "measure-1", measured_at: "2025-02-01", weight_grams: 4200 },
+      ],
+      error: null,
+    };
     mockGetSupabaseAndUser.mockResolvedValue({
       user: { id: "client-1" },
       supabase: {},
@@ -311,8 +338,23 @@ describe("addWeightMeasurement", () => {
     await addWeightMeasurement(validInput);
 
     expect(notifyWeightAlerts).toHaveBeenCalled();
-    const [childArg] = vi.mocked(notifyWeightAlerts).mock.calls[0];
-    expect(childArg).toMatchObject({ id: "child-1" });
+    const [childArg, measurementsArg] = vi.mocked(notifyWeightAlerts).mock
+      .calls[0];
+    expect(childArg).toEqual({
+      id: "child-1",
+      client_id: "client-1",
+      birth_date: "2025-01-10",
+      sex: "female",
+      is_premature: false,
+      gestational_age_weeks: null,
+      birth_weight_grams: 3200,
+      first_name: "Léa",
+    });
+    // L'historique complet doit être transmis, pas seulement la pesée du jour.
+    expect(measurementsArg).toEqual([
+      { id: "measure-0", measured_at: "2025-01-15", weight_grams: 3500 },
+      { id: "measure-1", measured_at: "2025-02-01", weight_grams: 4200 },
+    ]);
   });
 
   it("refuse une pesée antérieure à la date de naissance de l'enfant", async () => {

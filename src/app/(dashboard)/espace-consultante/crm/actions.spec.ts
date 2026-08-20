@@ -38,13 +38,23 @@ const {
   mockNoteOwnershipSingleData,
   mockNoteHistoryListData,
   noteOwnershipEqCalls,
+  mockMeasurementsEqListData,
 } = vi.hoisted(() => ({
   mockBookingsData: { data: [] as unknown[] },
   mockAccompagnementsData: { data: [] as { id: string }[] },
   mockEnrollmentsData: { data: [] as unknown[] },
   mockChildrenData: { data: [] as unknown[] },
   mockChildSingleData: {
-    data: null as { id: string; client_id: string; birth_date?: string } | null,
+    data: null as {
+      id: string;
+      client_id: string;
+      birth_date?: string;
+      sex?: string;
+      is_premature?: boolean;
+      gestational_age_weeks?: number | null;
+      birth_weight_grams?: number | null;
+      first_name?: string;
+    } | null,
   },
   mockMeasurementSingleData: {
     data: null as
@@ -72,6 +82,9 @@ const {
   mockNoteOwnershipSingleData: { data: null as { id: string } | null },
   mockNoteHistoryListData: { data: [] as unknown[] },
   noteOwnershipEqCalls: [] as { column: string; value: unknown }[],
+  // Historique complet des pesées renvoyé par `.eq("child_id", …)` awaité
+  // directement (sans `.single()`), consommé par `notifyWeightAlerts`.
+  mockMeasurementsEqListData: { data: [] as unknown[] },
 }));
 
 /** Objet à la fois attendable (await) et chaînable, comme un query builder. */
@@ -143,9 +156,13 @@ vi.mock("@/lib/supabase/admin", () => ({
       if (table === "weight_measurements") {
         return {
           select: () => ({
-            eq: () => ({
-              single: () => Promise.resolve(mockMeasurementSingleData),
-            }),
+            eq: () =>
+              // Chemin double usage : `.eq(...).single()` (lookup par id) et
+              // `.eq(...)` seul, awaité directement, pour l'historique complet
+              // transmis à `notifyWeightAlerts`.
+              thenableWith(mockMeasurementsEqListData, {
+                single: () => Promise.resolve(mockMeasurementSingleData),
+              }),
             in: () => ({
               order: () => Promise.resolve(mockMeasurementsData),
             }),
@@ -287,6 +304,7 @@ const resetMocks = () => {
   mockNoteOwnershipSingleData.data = null;
   mockNoteHistoryListData.data = [];
   noteOwnershipEqCalls.length = 0;
+  mockMeasurementsEqListData.data = [];
 };
 
 const asConsultant = () =>
@@ -513,14 +531,38 @@ describe("addWeightMeasurementAsConsultant", () => {
       id: validInput.child_id,
       client_id: "client-9",
       birth_date: "2025-01-01",
+      sex: "male",
+      is_premature: true,
+      gestational_age_weeks: 34,
+      birth_weight_grams: 2100,
+      first_name: "Noah",
     };
     mockBookingsData.data = [{ id: "booking-1" }];
+    mockMeasurementsEqListData.data = [
+      { id: "measurement-0", measured_at: "2026-07-01", weight_grams: 3300 },
+      { id: "measurement-1", measured_at: "2026-08-01", weight_grams: 3500 },
+    ];
 
     await addWeightMeasurementAsConsultant(validInput);
 
     expect(notifyWeightAlerts).toHaveBeenCalled();
-    const [childArg] = vi.mocked(notifyWeightAlerts).mock.calls[0];
-    expect(childArg).toMatchObject({ id: validInput.child_id });
+    const [childArg, measurementsArg] = vi.mocked(notifyWeightAlerts).mock
+      .calls[0];
+    expect(childArg).toEqual({
+      id: validInput.child_id,
+      client_id: "client-9",
+      birth_date: "2025-01-01",
+      sex: "male",
+      is_premature: true,
+      gestational_age_weeks: 34,
+      birth_weight_grams: 2100,
+      first_name: "Noah",
+    });
+    // L'historique complet doit être transmis, pas seulement la pesée du jour.
+    expect(measurementsArg).toEqual([
+      { id: "measurement-0", measured_at: "2026-07-01", weight_grams: 3300 },
+      { id: "measurement-1", measured_at: "2026-08-01", weight_grams: 3500 },
+    ]);
   });
 });
 
