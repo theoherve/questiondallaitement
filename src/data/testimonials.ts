@@ -51,8 +51,10 @@ export type Testimonial =
  * cinq avis sur 327. Les autres restent en `direct` faute de lien vérifiable :
  * le badge Google ne se pose que sur un avis qu'on peut prouver.
  *
- * `topics` est vide partout pour l'instant. Ces avis parlent des consultations,
- * pas des modules en ligne ; les rattacher à un module serait une invention.
+ * `topics` est vide pour les avis ci-dessous : ils parlent des consultations,
+ * pas des modules en ligne, et les y rattacher serait une invention. Les avis
+ * qui suivent (Marie-Cécile, Justine, Marie, Lucia) portent explicitement sur
+ * le pack et sont donc rattachés à `PACK_SLUG`.
  */
 export const TESTIMONIALS: readonly Testimonial[] = [
   {
@@ -127,6 +129,42 @@ export const TESTIMONIALS: readonly Testimonial[] = [
       "Elle a su m'accompagner quand j'ai rencontré des difficultés lors de mes allaitements (crevasses, engorgements, baisse de lactations, planning tirage pour ma reprise du travail) et m'a permis d'acquérir suffisamment de connaissances pour accompagner mes patientes lors de mes consultations.",
     topics: [],
     featured: true,
+    source: "direct",
+  },
+  {
+    id: "marie-cecile",
+    author: "Marie-Cécile",
+    detail: "Sage-femme",
+    quote:
+      "Hier une amie SF m'a demandé des conseils pour un bébé de 4 mois né au 93eP et actuellement au 49eP, avec un contexte de reprise du travail. J'ai passé du temps à reprendre tes ressources pour approfondir mes réponses. Je voulais encore une fois te remercier pour la qualité du contenu de ton pack et des mises à jour qui m'ont permis d'affiner encore mes connaissances et mon discours (en particulier le PPT sur le nombre d'or) et aussi de le structurer. Et comme à chaque fois, ça m'a donné envie de dire aux parents motivés d'y souscrire parce qu'il y a une réelle plus-value. Quelle somme de travail !",
+    topics: [PACK_SLUG],
+    source: "direct",
+  },
+  {
+    id: "justine",
+    author: "Justine",
+    detail: "2 allaitements réussis",
+    quote:
+      "Je voudrais vous dire que je suis carrément plus confiante en mon allaitement dès le départ, grâce à toutes les infos que je pioche dans vos packs vidéos. Merci pour ce que vous faites. Et si mon allaitement avec ma 1ère a duré 2 ans et demi, c'est grâce à vous. J'aimerais que vous fassiez le tour de toutes les maternités de France pour former les pros qui accompagnent les mamans.",
+    topics: [PACK_SLUG],
+    source: "direct",
+  },
+  {
+    id: "marie",
+    author: "Marie",
+    detail: "Consultante en lactation IBCLC",
+    quote:
+      "Je suis en train de visionner votre pack en tant que professionnelle sage-femme et consultante en lactation afin d'affiner encore mes prises en charge. Tout d'abord bravo pour vos contenus qui sont vraiment supers et faciles à écouter et à s'approprier. Une belle ressource pour les parents, venant assurément d'une belle personne.",
+    topics: [PACK_SLUG],
+    source: "direct",
+  },
+  {
+    id: "lucia",
+    author: "Lucia",
+    detail: "Relance de la lactation, allergie aux protéines de lait de vache",
+    quote:
+      "Je parcours le pack avec beaucoup d'intérêt et mets en place une nouvelle stimulation de la lactation avec le maternage et le tirage, depuis vendredi matin.",
+    topics: [PACK_SLUG],
     source: "direct",
   },
 ];

@@ -10,7 +10,7 @@ export const PACK_CONTENT = {
   hero: {
     eyebrow: "CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES",
     titleOverride:
-      "Et si allaiter ne rimait plus avec douleur, épuisement et doutes, mais avec une évidence tranquille ?",
+      "Et si allaiter devenait un geste maitrisé de la première tétée au sevrage ?",
     subtitle:
       "Imaginez une tétée sans boule au ventre. Un bébé apaisé, une prise de poids qui ne vous angoisse plus, des nuits qui redeviennent supportables. Ce n'est pas un idéal inaccessible, c'est ce que permettent les bons repères, au bon moment.",
     reassurances: [
@@ -23,20 +23,20 @@ export const PACK_CONTENT = {
   problem: {
     title: "Ce que vous vivez peut-être, là, maintenant",
     intro:
-      "Vous vous êtes préparée à accueillir votre bébé. Personne ne vous a vraiment préparée à l'allaitement.",
+      "Vous vous êtes préparée à accueillir votre bébé mais personne ne vous a vraiment préparée à la réalité de l'allaitement.",
     points: [
-      "Vos seins vous font mal à chaque mise au sein, et vous redoutez la tétée suivante plutôt que de l'attendre.",
-      "On vous a donné dix conseils différents : à la maternité, par votre entourage, sur internet. Et ils se contredisent tous.",
-      "Vous regardez la courbe de poids de votre bébé avec une boule au ventre, en redoutant le verdict du prochain rendez-vous.",
+      "Vos seins vous font mal à chaque tétée et vous appréhendez la suivante avec une boule au ventre.",
+      "Vous avez reçu dix conseils différents à la maternité, en ville, par votre entourage, sur internet et tous se contredisent.",
+      "Vous voyez la courbe de poids de votre bébé s'affaisser, vous ne comprenez pas ce que ça signifie, en redoutant le verdict du prochain rendez-vous.",
       "Vous êtes épuisée, seule à 3h du matin, sans personne à qui poser vos questions dans l'instant.",
       "Le retour au travail approche et vous n'avez aucun plan clair pour continuer d'allaiter.",
       "Vous avez l'impression que tout repose sur vous, en permanence, sans droit à l'erreur.",
     ],
   },
   promise: {
-    title: "Pourquoi les conseils habituels ne suffisent pas",
+    title: "Pourquoi les conseils génériques ne suffisent pas",
     paragraphs: [
-      "Si vous en êtes là, ce n'est pas un manque de volonté ni d'amour pour votre bébé. Les forums, les avis contradictoires de l'entourage et les injonctions reçues à la maternité (« patientez », « ça va passer », « donnez un biberon pour voir ») ne font qu'ajouter du doute au doute. Sans repères cliniques précis, on navigue à vue, et on s'épuise plus vite qu'on ne trouve de réponses.",
+      "Si vous en êtes là, ce n'est pas un manque de volonté ni d'amour pour votre bébé. Les forums, les avis contradictoires de l'entourage et les injonctions reçues à la maternité (« patientez », « ça va passer », « donnez un biberon pour voir ») ne font qu'ajouter du doute au doute. Sans repères précis, on navigue à vue, et on s'épuise plus vite qu'on ne trouve de réponses.",
       "Mon approche s'appuie sur l'observation clinique, la physiologie réelle de la lactation et les comportements innés du nourrisson, pas sur des dogmes ni des recettes universelles. Ce pack est la version structurée de ce que je transmets en consultation individuelle depuis plus de dix ans.",
     ],
     bullets: [
@@ -71,22 +71,25 @@ export const PACK_CONTENT = {
   forWho: {
     title: "Ce qui devient possible",
     scenarios: [
-      "La pesée de votre bébé n'est plus une source d'angoisse mais la confirmation que votre corps fait ce qu'il faut.",
+      "Vous cessez de compter les grammes pris chaque jour.",
       "Vous savez pourquoi votre bébé pleure, et quoi faire, sans avoir à deviner.",
       "Vos nuits redeviennent lisibles : vous comprenez les réveils au lieu de les subir.",
       "La reprise du travail est organisée, avec un plan de tirage et une lactation qui tient.",
       "La diversification puis, le jour venu, le sevrage se font à votre rythme et en sécurité.",
-      "Vous devenez une mère qui sait, plutôt qu'une mère qui devine.",
+      "Vous savez quoi faire parce que vous comprenez enfin ce qui se passe.",
+      "Vous installez votre bébé au sein sans appréhension.",
+      "Vous n'ouvrez plus cinq onglets Google à chaque doute.",
+      "Vous comprenez enfin votre bébé et votre allaitement, tout devient plus simple.",
+      "Vous profitez enfin de votre bébé au lieu d'analyser chaque tétée.",
     ],
   },
   instructor: {
-    title: "Pourquoi faire confiance à Carole",
+    title: "Pourquoi me faire confiance",
     fallbackName: "Votre consultante IBCLC",
     fallbackBio:
       "Consultante en lactation certifiée IBCLC depuis 2011, j'ai accompagné plus de 5 000 familles et j'aide aujourd'hui plus de 1 000 mères chaque année, avec une équipe de 7 consultantes IBCLC. Ce pack, c'est la synthèse de plus de dix ans de consultations individuelles, condensée pour être accessible à toute heure, même quand mon agenda de consultation est complet.",
     credentials: [
       "IBCLC depuis 2011",
-      "70 k+ familles accompagnées",
       "1 000+ mères accompagnées chaque année",
       "Une équipe de 7 consultantes IBCLC",
       "Autrice de 3 livres sur l'allaitement",
