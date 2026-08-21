@@ -19,7 +19,6 @@ import {
   hasModuleSalesPage,
 } from "../_components/module/module-sales-page";
 import type { SectionRow } from "../_components/module/module-program-data";
-import { SalesBreadcrumb } from "../_components/sales/sales-breadcrumb";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -210,9 +209,7 @@ const AccompagnementDetailPage = async ({ params }: Props) => {
   const longDescHtml = (accompagnement as Record<string, unknown>).long_description_html as string | null;
 
   return (
-    <div>
-      <SalesBreadcrumb productName={accompagnement.title} />
-      <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Badge
@@ -374,7 +371,6 @@ const AccompagnementDetailPage = async ({ params }: Props) => {
             </CardContent>
           </Card>
         </div>
-      </div>
       </div>
     </div>
   );

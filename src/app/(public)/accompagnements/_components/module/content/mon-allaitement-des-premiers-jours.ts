@@ -77,12 +77,20 @@ export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
     intro:
       "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
-  // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
   pricing: {
     title: "Donnez à votre allaitement le démarrage qu'il mérite",
-    subtitle: "Un accès unique au module complet, à vie.",
+    subtitle:
+      "Un accès unique au module complet, à vie. 75 €, soit moins de la moitié du prix d'une consultation individuelle, pour un accès illimité au module.",
   },
   faq: [
+    {
+      q: "Est-il vraiment possible de rattraper un allaitement mal démarré ?",
+      a: "Dans la grande majorité des cas, oui. La douleur et les débuts difficiles viennent le plus souvent d'une prise du sein perfectible, qui se corrige à tout moment une fois qu'on sait quoi regarder.",
+    },
+    {
+      q: "Ai-je besoin d'un rendez-vous individuel en plus ?",
+      a: "Pas systématiquement. Le module couvre les situations les plus fréquentes des premières semaines. Une consultation individuelle reste utile si votre bébé doit être examiné ou si votre situation ne rentre dans aucun des cas traités ici.",
+    },
     {
       q: "Mon bébé a déjà trois mois, est-ce encore utile ?",
       a: "Oui si vous avez encore mal ou si vous doutez de votre production : les repères des premières semaines restent valables. Si votre allaitement est installé et que vos questions portent sur la suite, « Mon allaitement au fil des mois » vous conviendra mieux.",

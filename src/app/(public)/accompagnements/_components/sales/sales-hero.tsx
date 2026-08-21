@@ -4,7 +4,7 @@ import { CheckCircle, type LucideIcon } from "lucide-react";
 /**
  * Hero d'une page de vente. Le fond reste `primary-green` meme pour un module :
  * les accents de MODULE_ACCENTS sont clairs, un texte blanc dessus serait
- * illisible. L'accent sert de halo d'ambiance et l'icone de badge.
+ * illisible. L'accent sert d'icone de badge.
  */
 export function SalesHero({
   productName,
@@ -15,7 +15,6 @@ export function SalesHero({
   ctaLabel,
   priceLabel,
   imageUrl,
-  accent,
   Icon,
 }: {
   /** Nom produit en base ; affiche sous le H1 quand celui-ci porte la promesse. */
@@ -27,22 +26,11 @@ export function SalesHero({
   ctaLabel: string;
   priceLabel: string;
   imageUrl: string | null;
-  /** Degrade d'ambiance du module ; absent pour le pack. */
-  accent?: { from: string; to: string };
   /** Icone du module affichee en badge ; absente pour le pack. */
   Icon?: LucideIcon;
 }) {
   return (
     <section className="relative overflow-hidden bg-primary-green">
-      {accent && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full opacity-20 blur-3xl"
-          style={{
-            backgroundImage: `linear-gradient(135deg, ${accent.from}, ${accent.to})`,
-          }}
-        />
-      )}
       <div
         className={`relative z-10 mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28 ${
           imageUrl ? "lg:pr-[calc(38%+2rem)]" : "text-center"

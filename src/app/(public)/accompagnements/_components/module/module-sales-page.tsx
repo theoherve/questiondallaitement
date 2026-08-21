@@ -19,7 +19,6 @@ import {
   sortByModuleOrder,
 } from "@/config/accompagnements";
 import { ctaLabelFor } from "@/config/accompagnement-cta";
-import { SalesBreadcrumb } from "../sales/sales-breadcrumb";
 import { SalesHero } from "../sales/sales-hero";
 import { SalesInstructor } from "../sales/sales-instructor";
 import { SalesTestimonials } from "../sales/sales-testimonials";
@@ -177,7 +176,6 @@ export async function ModuleSalesPage({
 
   return (
     <>
-      <SalesBreadcrumb productName={accompagnement.title} />
       <SalesSideCta
         ariaLabel={`Rejoindre ${accompagnement.title}`}
         priceLabel={priceLabel}
@@ -202,7 +200,6 @@ export async function ModuleSalesPage({
         ctaLabel={content.hero.ctaLabel}
         priceLabel={priceLabel}
         imageUrl={accompagnement.thumbnail_url}
-        accent={accent ? { from: accent.from, to: accent.to } : undefined}
         Icon={Icon}
       />
       <ModuleProofBar items={proofItems} />

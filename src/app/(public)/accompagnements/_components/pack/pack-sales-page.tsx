@@ -4,7 +4,6 @@ import { MODULE_ORDER, PACK_SLUG, formatPrice } from "@/config/accompagnements";
 import { ctaLabelFor } from "@/config/accompagnement-cta";
 import { buildModuleCards, type ModuleRow } from "./pack-modules-data";
 import { PACK_CONTENT } from "./pack-content";
-import { SalesBreadcrumb } from "../sales/sales-breadcrumb";
 import { SalesFaq } from "../sales/sales-faq";
 import { SalesHero } from "../sales/sales-hero";
 import { SalesInstructor } from "../sales/sales-instructor";
@@ -98,7 +97,6 @@ export async function PackSalesPage({
 
   return (
     <>
-      <SalesBreadcrumb productName={accompagnement.title} />
       <SalesSideCta
         ariaLabel="Rejoindre le pack"
         priceLabel={priceLabel}

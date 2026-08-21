@@ -54,7 +54,9 @@ export type Testimonial =
  * `topics` est vide pour les avis ci-dessous : ils parlent des consultations,
  * pas des modules en ligne, et les y rattacher serait une invention. Les avis
  * qui suivent (Marie-Cécile, Justine, Marie, Lucia) portent explicitement sur
- * le pack et sont donc rattachés à `PACK_SLUG`.
+ * le pack et sont donc rattachés à `PACK_SLUG`. Ceux d'après (Mélodie,
+ * Caroline, Jennifer, Sonia, Noella, Agathe, Federica) portent explicitement
+ * sur un module en ligne précis.
  */
 export const TESTIMONIALS: readonly Testimonial[] = [
   {
@@ -64,7 +66,7 @@ export const TESTIMONIALS: readonly Testimonial[] = [
     quote:
       "Il est très difficile de s'y retrouver dans la jungle des avis sur l'allaitement, souvent divergents, parfois contradictoires. Nous avions fini par perdre confiance. Carole a su prendre le temps de nous écouter, de remettre de la clarté, et surtout de nous redonner confiance avec beaucoup de douceur et de justesse.",
     rating: 5,
-    topics: [],
+    topics: ["mon-allaitement-des-premiers-jours"],
     featured: true,
     date: "2026-03-24",
     source: "google",
@@ -87,7 +89,7 @@ export const TESTIMONIALS: readonly Testimonial[] = [
     detail: "Accompagnée avant et après la naissance",
     quote:
       "Elle m'a accompagnée avec une écoute et une attention que je n'aurais jamais imaginé recevoir. Que ce soit avant la naissance ou pendant mon allaitement, elle a su être présente, rassurante et d'un soutien inestimable.",
-    topics: [],
+    topics: ["mon-allaitement-des-premiers-jours"],
     featured: true,
     source: "direct",
   },
@@ -183,6 +185,33 @@ export const TESTIMONIALS: readonly Testimonial[] = [
     quote:
       "Incroyable tous les progrès de mon fils ! On s'est tellement battus et voilà, 13 mois plus tard, on y est : des petites tétées qu'il réclame avec joie. Un grand merci pour votre accompagnement !",
     topics: ["mon-allaitement-au-fil-des-mois"],
+    source: "direct",
+  },
+  {
+    id: "jennifer",
+    author: "Jennifer",
+    detail: "Maman de Noah",
+    quote:
+      "Après des débuts difficiles, les conseils de Carole m'ont aidée à passer à l'allaitement exclusif. Son soutien lors des ateliers mensuels a été essentiel pour ne pas baisser les bras lors des moments de doute.",
+    topics: ["mon-allaitement-des-premiers-jours"],
+    source: "direct",
+  },
+  {
+    id: "agathe",
+    author: "Agathe",
+    detail: "Maman de Thaddée",
+    quote:
+      "Même si je n'ai pas réussi à allaiter plus de deux mois, je garde un souvenir merveilleux de mon passage dans l'espace cocooning. On a tellement besoin d'être prise en considération après l'accouchement !",
+    topics: ["mon-allaitement-des-premiers-jours"],
+    source: "direct",
+  },
+  {
+    id: "federica",
+    author: "Federica",
+    detail: "Long parcours de PMA",
+    quote:
+      "Pas d'engorgement, pas de crevasses ni de douleurs et un bébé qui prend plus de 50 grammes par jour depuis sa sortie de maternité ! Évidemment on prend les défis chaque jour quand ils arrivent, mais simplement un grand merci pour tout ce que vous apportez.",
+    topics: ["mon-allaitement-des-premiers-jours"],
     source: "direct",
   },
 ];
