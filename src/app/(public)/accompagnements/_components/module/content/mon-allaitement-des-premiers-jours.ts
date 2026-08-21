@@ -56,20 +56,20 @@ export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
     ],
   },
   fit: {
-    title: "Est-ce le bon module pour vous ?",
+    title: "Est-ce le bon accompagnement pour vous ?",
     subtitle: "Pour les six premières semaines, pas pour un allaitement déjà installé.",
     forYouTitle: "Oui, si",
     forYou: [
-      "Vous êtes enceinte du dernier trimestre ou votre bébé a moins de deux mois.",
-      "Vous avez mal et on vous a répondu que c'était normal.",
-      "Vous doutez de votre production de lait.",
-      "Vous voulez comprendre ce que vous faites, pas appliquer une recette.",
+      "Vous êtes à la maternité et vous avez l'impression que l'allaitement ne se passe pas comme vous l'espériez.",
+      "Vous avez mal pendant les tétées.",
+      "Votre bébé s'endort au sein, tète très souvent ou semble avoir du mal à prendre le sein.",
+      "Vous vous demandez si votre bébé boit suffisamment.",
     ],
     notForYouTitle: "Pas encore, si",
     notForYou: [
-      "Votre bébé a plus de six mois : « Mon allaitement au fil des mois » correspond mieux à votre étape.",
-      "Vous cherchez uniquement à soulager une crevasse ou une mastite installée : voyez « Les urgences allaitement ».",
-      "Votre situation demande un examen clinique de votre bébé : une consultation individuelle s'impose d'abord.",
+      "Vous avez déjà les repères dont vous avez besoin.",
+      "Vous êtes pleinement sereine avec votre allaitement.",
+      "Vous n'avez aucune question ni difficulté particulière.",
     ],
   },
   moment: {
