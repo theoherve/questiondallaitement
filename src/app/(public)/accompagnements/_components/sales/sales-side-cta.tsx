@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Clock, User } from "lucide-react";
+import { BookOpen, ChevronRight, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PurchaseButton } from "../purchase-button";
 
@@ -37,6 +37,8 @@ type Props = {
  * scroll apres le hero. Affichee sur desktop (lg+), masquee sur mobile/tablette
  * ou la section Tarif inline sert de CTA. Le bouton d'achat est le meme
  * composant que la section tarif (connexion / achat / acces si deja inscrite).
+ * Repliable via l'onglet fleche : la carte glisse hors champ en laissant
+ * l'onglet visible pour la rouvrir (cf. QS du 2026-08-21).
  */
 export function SalesSideCta({
   ariaLabel,
@@ -54,6 +56,7 @@ export function SalesSideCta({
   bookingEnabled,
 }: Props) {
   const [visible, setVisible] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 400);
@@ -74,11 +77,29 @@ export function SalesSideCta({
         aria-label={ariaLabel}
         className={cn(
           "fixed right-4 top-1/2 z-40 hidden w-60 -translate-y-1/2 transition-all duration-500 lg:block",
-          visible
-            ? "translate-x-0 opacity-100"
-            : "pointer-events-none translate-x-8 opacity-0"
+          !visible && "pointer-events-none opacity-0",
+          visible && "opacity-100",
+          collapsed
+            ? "translate-x-[calc(100%-1.75rem)]"
+            : visible
+              ? "translate-x-0"
+              : "translate-x-8"
         )}
       >
+        <button
+          type="button"
+          onClick={() => setCollapsed((c) => !c)}
+          aria-label={collapsed ? "Afficher le résumé" : "Masquer le résumé"}
+          className="absolute -left-7 top-1/2 flex h-14 w-7 -translate-y-1/2 items-center justify-center rounded-l-lg border border-primary-green/10 bg-white shadow-lg"
+        >
+          <ChevronRight
+            className={cn(
+              "h-4 w-4 text-primary-green/60 transition-transform duration-300",
+              collapsed && "rotate-180"
+            )}
+          />
+        </button>
+
         <div className="overflow-hidden rounded-2xl border border-primary-green/10 bg-white shadow-xl">
           {imageUrl && (
             <div className="relative aspect-4/3 w-full bg-background-beige-dark">

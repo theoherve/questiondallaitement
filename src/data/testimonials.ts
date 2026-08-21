@@ -107,7 +107,7 @@ export const TESTIMONIALS: readonly Testimonial[] = [
     detail: "Accompagnée pour deux de ses trois allaitements",
     quote:
       "Ses conseils m'ont permis de régler très rapidement les petits désagréments de mise en place et de vivre des allaitements sereins et épanouissants. Chaque femme allaitante devrait pouvoir avoir une conseillère comme Carole à ses côtés !",
-    topics: [],
+    topics: ["mon-allaitement-au-fil-des-mois"],
     featured: true,
     source: "direct",
   },
@@ -117,7 +117,7 @@ export const TESTIMONIALS: readonly Testimonial[] = [
     detail: "Accompagnée en allaitement",
     quote:
       "Carole est une pépite ! Non seulement elle est à l'écoute mais tellement bienveillante et disponible. J'ai été accompagnée plusieurs fois avant pour mon allaitement mais l'accompagnement avec Carole relève d'un tout autre niveau.",
-    topics: [],
+    topics: ["mon-allaitement-au-fil-des-mois"],
     featured: true,
     source: "direct",
   },
@@ -165,6 +165,24 @@ export const TESTIMONIALS: readonly Testimonial[] = [
     quote:
       "Je parcours le pack avec beaucoup d'intérêt et mets en place une nouvelle stimulation de la lactation avec le maternage et le tirage, depuis vendredi matin.",
     topics: [PACK_SLUG],
+    source: "direct",
+  },
+  {
+    id: "melodie",
+    author: "Mélodie",
+    detail: "Maman d'Opale, 6,5 mois",
+    quote:
+      "Au vu des galères du début, je n'osais pas y croire. Aujourd'hui, ma fille est exclusivement allaitée et en pleine santé. Merci pour ce soutien précieux qui m'a redonné confiance.",
+    topics: ["mon-allaitement-au-fil-des-mois"],
+    source: "direct",
+  },
+  {
+    id: "caroline",
+    author: "Caroline",
+    detail: "Maman de petit garçon, 13 mois",
+    quote:
+      "Incroyable tous les progrès de mon fils ! On s'est tellement battus et voilà, 13 mois plus tard, on y est : des petites tétées qu'il réclame avec joie. Un grand merci pour votre accompagnement !",
+    topics: ["mon-allaitement-au-fil-des-mois"],
     source: "direct",
   },
 ];

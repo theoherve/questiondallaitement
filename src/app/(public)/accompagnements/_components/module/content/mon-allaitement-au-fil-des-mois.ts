@@ -11,7 +11,7 @@ export const MON_ALLAITEMENT_AU_FIL_DES_MOIS: ModuleContent = {
   hero: {
     eyebrow: "CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES",
     titleOverride:
-      "Votre allaitement est lancé. Les questions, elles, ne s'arrêtent pas là.",
+      "Votre allaitement devient difficile après plusieurs mois ? Ce n'est ni un pic de croissance qui s'éternise, ni une fatalité.",
     subtitle:
       "Passé les premières semaines, on considère que ça roule. Sauf que la baisse de lait, les pics de croissance, les tétées agitées, les dents et le regard des autres arrivent maintenant, et que plus personne ne vous accompagne.",
     ctaLabel: "Je retrouve un allaitement apaisé",
@@ -80,7 +80,6 @@ export const MON_ALLAITEMENT_AU_FIL_DES_MOIS: ModuleContent = {
     intro:
       "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
-  // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
   pricing: {
     title: "Continuez votre allaitement avec les bonnes réponses",
     subtitle: "Un accès unique au module complet, à vie.",
