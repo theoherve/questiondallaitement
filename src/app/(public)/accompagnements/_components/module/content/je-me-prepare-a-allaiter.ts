@@ -9,9 +9,9 @@ export const JE_ME_PREPARE_A_ALLAITER: ModuleContent = {
   hero: {
     eyebrow: "CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES",
     titleOverride:
-      "Le meilleur moment pour apprendre à allaiter, c'est avant que votre bébé soit là.",
+      "Les premiers jours à la maternité peuvent être déstabilisants lorsque chaque personne semble donner un conseil différent.",
     subtitle:
-      "Vous préparez la chambre, la valise, la liste de naissance. Personne ne vous a dit que les trois heures les plus décisives de votre allaitement se joueraient juste après la naissance, et qu'on peut les préparer.",
+      "En vous préparant à l'avance, vous développez votre propre boussole. Vous reconnaissez une tétée efficace, vous comprenez les comportements normaux de votre bébé, vous distinguez une difficulté passagère d'un vrai signal d'alerte, et vous prenez vos décisions avec confiance, sans vous laisser déstabiliser par les avis contradictoires.",
     ctaLabel: "Je me prépare sereinement",
   },
   problem: {
@@ -28,10 +28,10 @@ export const JE_ME_PREPARE_A_ALLAITER: ModuleContent = {
     ],
   },
   promise: {
-    title: "L'allaitement n'est pas une loterie, c'est une compétence",
+    title: "Pourquoi les conseils habituels ne suffisent pas",
     paragraphs: [
-      "La physiologie de la lactation est prévisible, et ce qui la met en difficulté l'est tout autant. Ce qui distingue les démarrages faciles des démarrages douloureux tient à quelques gestes et à quelques décisions prises très tôt, souvent dans les premières heures.",
-      "Ce module transmet ce que j'explique aux futures mères en consultation prénatale : ce qui se joue à la naissance, ce qu'il faut savoir demander, et comment reconnaître dès le premier jour que tout se passe bien.",
+      "Entre les cours de préparation à la naissance qui abordent l'allaitement en quelques minutes, les forums contradictoires et l'entourage bien intentionné mais mal informé, il est difficile de distinguer ce qui est vraiment fondé de ce qui relève de la croyance populaire.",
+      "IBCLC depuis 2011, j'accompagne plus de 1 000 mères chaque année. J'ai moi-même connu un allaitement écourté avec mon premier enfant, faute des bonnes informations au bon moment. Je détaille dans cet accompagnement les stratégies qui ont aidé les milliers de mères que j'ai accompagnées avant vous, pour que les premiers jours deviennent un vrai point de départ, pas un pari.",
     ],
     bullets: [
       "Comprendre comment la lactation se met en place, et ce qui la freine.",
@@ -40,37 +40,38 @@ export const JE_ME_PREPARE_A_ALLAITER: ModuleContent = {
     ],
   },
   program: {
-    title: "Ce que contient le module",
+    title: "Ce que contient l'accompagnement",
     intro:
       "Des chapitres courts, à parcourir tranquillement pendant la grossesse, pendant que vous en avez encore le temps.",
   },
   outcomes: {
     title: "Ce qui devient possible",
-    subtitle: "Ce que change une préparation faite avant la naissance, pas après.",
+    subtitle:
+      "Vous ne contrôlez pas tout ce qui va arriver pendant l'accouchement, mais vous pouvez travailler sur votre capacité à revenir à un état de confiance plutôt que de rester dans l'anticipation anxieuse.",
     items: [
       "Vous arrivez à la maternité avec un plan, pas avec des espoirs.",
       "Vous savez formuler ce que vous voulez à l'équipe soignante.",
       "La première tétée n'est plus un moment que vous subissez.",
       "Vous reconnaissez une bonne prise du sein avant d'avoir mal.",
+      "Vous distinguez un vrai signal d'alerte d'une inquiétude sans fondement.",
       "Les remarques de l'entourage ne vous font plus douter.",
       "Vous économisez les nuits de recherche paniquée sur internet.",
     ],
   },
   fit: {
-    title: "Est-ce le bon module pour vous ?",
+    title: "Est-ce le bon accompagnement pour vous ?",
     subtitle: "Pensé pour la grossesse, pas pour une difficulté déjà installée.",
     forYouTitle: "Oui, si",
     forYou: [
-      "Vous êtes enceinte, quel que soit le terme.",
-      "C'est votre premier allaitement et vous partez de zéro.",
-      "Votre allaitement précédent s'est mal passé et vous voulez comprendre pourquoi.",
-      "Vous voulez décider en connaissance de cause, pas suivre des consignes.",
+      "Vous avez entendu beaucoup de choses sur l'allaitement et vous ne savez pas toujours quoi croire.",
+      "Vous voulez connaître les bons repères avant la naissance.",
+      "Vous souhaitez comprendre les premières tétées, le démarrage de la lactation et les besoins de votre nouveau-né.",
+      "Vous voulez éviter de vous retrouver démunie face aux premières difficultés.",
     ],
     notForYouTitle: "Pas encore, si",
     notForYou: [
-      "Votre bébé est né et vous avez déjà mal : voyez « Mon allaitement des premiers jours ».",
-      "Vous cherchez à résoudre une crevasse ou un engorgement en cours : voyez « Les urgences allaitement ».",
-      "Vous avez une pathologie mammaire connue qui demande un avis clinique individuel.",
+      "Vous cherchez simplement des recettes de tisanes.",
+      "Vous êtes déjà à la maternité et les premières tétées vous posent question : cet accompagnement est pensé pour vous préparer avant ces premiers jours.",
     ],
   },
   moment: {
@@ -78,10 +79,9 @@ export const JE_ME_PREPARE_A_ALLAITER: ModuleContent = {
     intro:
       "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
-  // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
   pricing: {
     title: "Préparez la seule chose que vous ferez dix fois par jour",
-    subtitle: "Un accès unique au module complet, à vie.",
+    subtitle: "Un accès unique à l'accompagnement complet, à vie.",
   },
   faq: [
     {
@@ -90,11 +90,11 @@ export const JE_ME_PREPARE_A_ALLAITER: ModuleContent = {
     },
     {
       q: "Je ne sais pas encore si je vais allaiter.",
-      a: "Le module aide justement à décider en connaissance de cause. Il explique ce que l'allaitement implique concrètement, sans injonction ni culpabilisation.",
+      a: "Cet accompagnement aide justement à décider en connaissance de cause. Il explique ce que l'allaitement implique concrètement, sans injonction ni culpabilisation.",
     },
     {
       q: "J'ai déjà allaité, ça m'apportera quelque chose ?",
-      a: "Oui. Chaque allaitement est différent, et ce qui s'est passé la première fois ne préjuge pas de la suivante. Le module aide aussi à comprendre ce qui a coincé la fois précédente.",
+      a: "Oui. Chaque allaitement est différent, et ce qui s'est passé la première fois ne préjuge pas de la suivante. Cet accompagnement aide aussi à comprendre ce qui a coincé la fois précédente.",
     },
   ],
   finalCta: {

@@ -181,7 +181,7 @@ const AccompagnementsPage = async () => {
             <li>
               Une douleur ou une urgence là, maintenant ,{" "}
               <Link
-                href="/accompagnements/les-urgences-allaitement"
+                href="/accompagnements/les-urgences-de-l-allaitement"
                 className="text-primary-red hover:underline"
               >
                 Les urgences de l&apos;allaitement

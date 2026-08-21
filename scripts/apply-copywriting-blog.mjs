@@ -49,7 +49,7 @@ const buildCta = ({ href, text, label }, imageUrl) => {
  * Jotform) sont laissés intacts : ce ne sont pas des liens morts.
  */
 const LINK_REWRITES = [
-  [/https:\/\/www\.caroleherve\.fr\/page-d-accompagnement\/les-urgences-de-allaitement/g, "/accompagnements/les-urgences-allaitement"],
+  [/https:\/\/www\.caroleherve\.fr\/page-d-accompagnement\/les-urgences-de-allaitement/g, "/accompagnements/les-urgences-de-l-allaitement"],
   [/https:\/\/www\.caroleherve\.fr\/page-d-accompagnement\//g, "/accompagnements/"],
   [/https:\/\/www\.caroleherve\.fr\/pack-essentiel-allaitement/g, "/accompagnements/pack-mon-allaitement-sur-mesure"],
   [/https:\/\/www\.caroleherve\.fr\/blog-newsletter/g, "/newsletter"],

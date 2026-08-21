@@ -5,9 +5,9 @@ import type { FaqItem } from "../../sales/sales-faq";
  * aucune fonction. Les chiffres (prix, chapitres, videos) viennent de la base,
  * jamais d'ici.
  *
- * Les sections optionnelles absentes ne sont pas rendues. C'est ce qui permet
- * a « les-urgences-allaitement » d'avoir un parcours court sans branche `if`
- * dans l'orchestrateur.
+ * Les sections optionnelles absentes ne sont pas rendues, ce qui permet à un
+ * module d'avoir un parcours plus court sans branche `if` dans
+ * l'orchestrateur (aucun module ne s'en sert actuellement).
  */
 export type ModuleContent = {
   hero: {

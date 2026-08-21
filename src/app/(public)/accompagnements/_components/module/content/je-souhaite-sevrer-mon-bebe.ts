@@ -10,7 +10,7 @@ export const JE_SOUHAITE_SEVRER_MON_BEBE: ModuleContent = {
   hero: {
     eyebrow: "CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES",
     titleOverride:
-      "Arrêter d'allaiter est une décision. Elle mérite d'être accompagnée, pas subie.",
+      "Sevrer en douceur, à votre rythme : la méthode d'une IBCLC qui respecte votre instinct et vous évite les complications courantes.",
     subtitle:
       "Que vous arrêtiez à trois semaines ou à trois ans, par choix ou par contrainte, le sevrage se prépare. Mal mené, il fait mal, aux seins comme au cœur. Bien mené, il se passe en douceur pour vous deux.",
     ctaLabel: "Je sèvre en douceur et en confiance",
@@ -31,7 +31,7 @@ export const JE_SOUHAITE_SEVRER_MON_BEBE: ModuleContent = {
     title: "Un sevrage réussi est un sevrage progressif et informé",
     paragraphs: [
       "Le sevrage est un processus physiologique. La lactation décroît selon des règles connues, et les brusquer expose à l'engorgement, à la mastite et à une chute hormonale difficile à traverser.",
-      "Ce module donne la méthode selon l'âge de votre bébé et selon votre délai, et il traite la part émotionnelle, la vôtre comme la sienne, que presque personne n'aborde.",
+      "Cet accompagnement donne la méthode selon l'âge de votre bébé et selon votre délai. Le sevrage n'est pas qu'une étape logistique : la chute hormonale qui l'accompagne peut réveiller tristesse, soulagement ou sentiment ambivalent, souvent les trois à la fois, et c'est normal. C'est ce vécu, le vôtre comme celui de votre bébé, que presque personne n'aborde.",
     ],
     bullets: [
       "Retirer les tétées dans un ordre et à un rythme qui protègent vos seins.",
@@ -40,7 +40,7 @@ export const JE_SOUHAITE_SEVRER_MON_BEBE: ModuleContent = {
     ],
   },
   program: {
-    title: "Ce que contient le module",
+    title: "Ce que contient l'accompagnement",
     intro:
       "Des chapitres qui couvrent la décision, la pratique, les émotions et les imprévus, y compris le cas du refus soudain.",
   },
@@ -57,21 +57,22 @@ export const JE_SOUHAITE_SEVRER_MON_BEBE: ModuleContent = {
     ],
   },
   fit: {
-    title: "Est-ce le bon module pour vous ?",
+    title: "Est-ce le bon accompagnement pour vous ?",
     subtitle:
       "Pour une décision de sevrage prise ou en réflexion, pas pour la poursuite de l'allaitement.",
     forYouTitle: "Oui, si",
     forYou: [
-      "Vous avez décidé d'arrêter, quelle que soit la raison.",
-      "Vous voulez arrêter progressivement et sans douleur.",
-      "Vous avez déjà essayé et votre bébé a refusé.",
-      "Vous hésitez encore et voulez comprendre ce que le sevrage implique.",
+      "Vous avez décidé de sevrer votre bébé et vous ne savez pas comment vous y prendre.",
+      "Vous souhaitez diminuer progressivement les tétées.",
+      "Vous voulez savoir comment gérer les changements pour votre bébé… et pour votre lactation.",
+      "Vous avez peur de douleurs, d'engorgements ou d'une baisse trop brutale de lait.",
+      "Vous voulez vivre cette transition sereinement, sans culpabilité.",
     ],
     notForYouTitle: "Pas encore, si",
     notForYou: [
-      "Vous voulez continuer et cherchez à résoudre une difficulté : d'autres modules y répondent mieux.",
-      "Vous êtes en pleine mastite ou abcès : traitez-le d'abord avec « Les urgences allaitement » ou une consultation.",
-      "Votre arrêt est imposé par un traitement médical en cours qui demande un avis individuel.",
+      "Vous cherchez une méthode radicale et applicable en 3 à 5 jours maximum.",
+      "Vous avez l'intention de « couper le cordon » tout net sans accompagner votre bébé dans la transition.",
+      "Vous souhaitez poursuivre l'allaitement sans modifier votre rythme actuel.",
     ],
   },
   moment: {
@@ -79,23 +80,22 @@ export const JE_SOUHAITE_SEVRER_MON_BEBE: ModuleContent = {
     intro:
       "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
-  // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
   pricing: {
     title: "Terminez votre allaitement comme vous l'avez commencé, accompagnée",
-    subtitle: "Un accès unique au module complet, à vie.",
+    subtitle: "Un accès unique à l'accompagnement complet, à vie.",
   },
   faq: [
     {
+      q: "Est-il normal de se sentir bouleversée émotionnellement pendant le sevrage ?",
+      a: "Oui, tout à fait. La chute hormonale qui suit l'arrêt des tétées peut provoquer tristesse, irritabilité ou un sentiment ambivalent, même quand le sevrage est un choix assumé. Cet accompagnement explique ce qui est attendu et jusqu'à quand.",
+    },
+    {
       q: "Je dois arrêter très vite, est-ce possible ?",
-      a: "Oui. Le module couvre les sevrages courts et les précautions à prendre pour limiter l'engorgement et le risque de mastite quand le délai est contraint.",
+      a: "Oui. Cet accompagnement couvre les sevrages courts et les précautions à prendre pour limiter l'engorgement et le risque de mastite quand le délai est contraint.",
     },
     {
       q: "Mon bébé refuse tout autre chose que le sein.",
-      a: "Le module traite le refus et les alternatives selon l'âge, du biberon au verre à bec jusqu'aux solides, avec le rythme de transition adapté.",
-    },
-    {
-      q: "Vais-je me sentir mal après ?",
-      a: "La chute hormonale du sevrage est réelle et fréquemment tue. Le module explique ce qui est attendu, combien de temps cela dure, et ce qui doit vous amener à consulter.",
+      a: "Cet accompagnement traite le refus et les alternatives selon l'âge, du biberon au verre à bec jusqu'aux solides, avec le rythme de transition adapté.",
     },
   ],
   finalCta: {

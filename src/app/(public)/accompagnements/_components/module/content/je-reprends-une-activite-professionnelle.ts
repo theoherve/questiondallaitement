@@ -33,7 +33,7 @@ export const JE_REPRENDS_UNE_ACTIVITE_PROFESSIONNELLE: ModuleContent = {
       "Ce n'est pas un problème de lactation, c'est un problème d'organisation",
     paragraphs: [
       "Une lactation installée ne s'arrête pas parce que vous reprenez le travail. Ce qui la met en difficulté, c'est un plan de tirage improvisé, un stock constitué trop tard et un mode de garde mal informé.",
-      "Ce module donne la méthode que je transmets en consultation avant chaque reprise : quand commencer, combien tirer, comment conserver, quoi dire au mode de garde et à l'employeur.",
+      "Cet accompagnement donne la méthode que je transmets en consultation avant chaque reprise : quand commencer, combien tirer, comment conserver, quoi dire au mode de garde et à l'employeur.",
     ],
     bullets: [
       "Construire un plan de tirage adapté à votre rythme de travail.",
@@ -42,7 +42,7 @@ export const JE_REPRENDS_UNE_ACTIVITE_PROFESSIONNELLE: ModuleContent = {
     ],
   },
   program: {
-    title: "Ce que contient le module",
+    title: "Ce que contient l'accompagnement",
     intro:
       "Des chapitres qui suivent l'ordre de préparation d'une reprise, du premier tirage aux imprévus du quotidien.",
   },
@@ -59,20 +59,22 @@ export const JE_REPRENDS_UNE_ACTIVITE_PROFESSIONNELLE: ModuleContent = {
     ],
   },
   fit: {
-    title: "Est-ce le bon module pour vous ?",
+    title: "Est-ce le bon accompagnement pour vous ?",
     subtitle: "Pour préparer une reprise à venir, pas pour un sevrage déjà décidé.",
     forYouTitle: "Oui, si",
     forYou: [
-      "Vous reprenez dans les semaines ou les mois qui viennent.",
-      "Vous voulez continuer à allaiter après la reprise.",
-      "Vous n'avez jamais tiré votre lait ou vos essais ont échoué.",
-      "Vous cherchez un plan concret, pas des encouragements.",
+      "Vous reprenez bientôt le travail et vous souhaitez continuer à allaiter.",
+      "Vous vous demandez comment organiser les tétées et les moments où vous serez séparée de votre bébé.",
+      "Vous voulez savoir comment tirer, conserver et transporter votre lait.",
+      "Vous ne savez pas combien de lait prévoir pour les journées de garde.",
+      "Vous vous demandez comment gérer les tirages au travail sans que cela devienne une contrainte impossible à tenir.",
+      "Vous voulez trouver une organisation réaliste, adaptée à votre travail, votre bébé et votre allaitement.",
     ],
     notForYouTitle: "Pas encore, si",
     notForYou: [
-      "Votre allaitement n'est pas encore installé et vous avez mal : commencez par « Mon allaitement des premiers jours ».",
-      "Vous avez décidé de sevrer à la reprise : « Je souhaite sevrer mon bébé » vous accompagnera mieux.",
-      "Votre bébé a plus de six mois et votre question porte d'abord sur les repas solides : voyez « La diversification de mon bébé allaité ».",
+      "Vous ne souhaitez pas poursuivre l'allaitement après votre reprise.",
+      "Vous êtes déjà parfaitement organisée et autonome avec vos tirages et votre conservation du lait.",
+      "Vous cherchez uniquement des informations sur le sevrage.",
     ],
   },
   moment: {
@@ -80,23 +82,22 @@ export const JE_REPRENDS_UNE_ACTIVITE_PROFESSIONNELLE: ModuleContent = {
     intro:
       "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
-  // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
   pricing: {
     title: "Reprenez le travail sans renoncer à votre allaitement",
-    subtitle: "Un accès unique au module complet, à vie.",
+    subtitle: "Un accès unique à l'accompagnement complet, à vie.",
   },
   faq: [
     {
       q: "Je reprends dans dix jours, est-ce trop tard ?",
-      a: "Non. Le module donne aussi la marche à suivre en délai court, avec ce qu'il faut prioriser quand il ne reste pas le temps de constituer un stock confortable.",
+      a: "Non. Cet accompagnement donne aussi la marche à suivre en délai court, avec ce qu'il faut prioriser quand il ne reste pas le temps de constituer un stock confortable.",
     },
     {
       q: "Mon bébé refuse le biberon.",
-      a: "C'est fréquent et ce n'est pas bloquant. Le module traite le refus, ses causes, et les alternatives au biberon selon l'âge de votre bébé.",
+      a: "C'est fréquent et ce n'est pas bloquant. Cet accompagnement traite le refus, ses causes, et les alternatives au biberon selon l'âge de votre bébé.",
     },
     {
       q: "Je travaille en horaires décalés ou sans pause dédiée.",
-      a: "Le module couvre les plans de tirage contraints et rappelle ce que la loi prévoit sur votre lieu de travail.",
+      a: "Cet accompagnement couvre les plans de tirage contraints et rappelle ce que la loi prévoit sur votre lieu de travail.",
     },
   ],
   finalCta: {

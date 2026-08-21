@@ -139,7 +139,7 @@ export const ACCOMPAGNEMENTS = [
       "Sommeil et allaitement sont souvent liés, rarement expliqués ensemble. Mon approche : comprendre avant d'agir, jamais l'inverse.",
   },
   {
-    slug: "les-urgences-allaitement",
+    slug: "les-urgences-de-l-allaitement",
     subtitle:
       "Crevasses, mastite, engorgement, canal bouché : les gestes précis pour soulager la douleur en quelques heures, avant que la situation ne s'aggrave.",
     lead: "Vous n'avez pas besoin d'un cours. Vous avez besoin d'un geste, maintenant.",

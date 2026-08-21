@@ -7,6 +7,7 @@
  */
 export const ACCOMPAGNEMENT_CTA_LABELS: Record<string, string> = {
   "je-me-prepare-a-allaiter": "Je me prépare sereinement",
+  "de-la-couveuse-au-sein": "Je protège mon projet d'allaitement",
   "mon-allaitement-des-premiers-jours": "Je pose des bases solides",
   "mon-allaitement-au-fil-des-mois": "Je retrouve un allaitement apaisé",
   "je-reprends-une-activite-professionnelle":
@@ -15,7 +16,7 @@ export const ACCOMPAGNEMENT_CTA_LABELS: Record<string, string> = {
   "je-souhaite-sevrer-mon-bebe": "Je sèvre en douceur et en confiance",
   "mon-bebe-ne-fait-pas-ses-nuits":
     "Je comprends ce qui empêche mon enfant de dormir",
-  "les-urgences-allaitement": "Je soulage la douleur maintenant",
+  "les-urgences-de-l-allaitement": "Je veux savoir quoi faire",
   "pack-mon-allaitement-sur-mesure": "Découvrir le Pack",
 };
 

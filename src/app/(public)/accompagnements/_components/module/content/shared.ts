@@ -14,12 +14,12 @@ export const SHARED_CONTENT = {
     title: "Comment se déroule l'accompagnement",
     steps: [
       {
-        title: "Vous rejoignez le module",
+        title: "Vous rejoignez l'accompagnement",
         text: "Paiement sécurisé (1×, 3× ou 4× sans frais), accès immédiat à l'ensemble du contenu.",
       },
       {
         title: "Vous avancez à votre rythme",
-        text: "Le module reste accessible à vie : vous y revenez selon votre besoin du moment, sans calendrier imposé.",
+        text: "L'accompagnement reste accessible à vie : vous y revenez selon votre besoin du moment, sans calendrier imposé.",
       },
       {
         title: "Vous appliquez, sereinement",
@@ -31,7 +31,7 @@ export const SHARED_CONTENT = {
     title: "Pourquoi faire confiance à Carole",
     fallbackName: "Votre consultante IBCLC",
     fallbackBio:
-      "Consultante en lactation certifiée IBCLC depuis 2011, j'ai accompagné plus de 5 000 familles et j'aide aujourd'hui plus de 1 000 mères chaque année, avec une équipe de 7 consultantes IBCLC. Ce module, c'est la synthèse de plus de dix ans de consultations individuelles, condensée pour être accessible à toute heure, même quand mon agenda de consultation est complet.",
+      "Consultante en lactation certifiée IBCLC depuis 2011, j'ai accompagné plus de 5 000 familles et j'aide aujourd'hui plus de 1 000 mères chaque année, avec une équipe de 7 consultantes IBCLC. Cet accompagnement, c'est la synthèse de plus de dix ans de consultations individuelles, condensée pour être accessible à toute heure, même quand mon agenda de consultation est complet.",
     credentials: [
       "IBCLC depuis 2011",
       "70 k+ familles accompagnées",
@@ -43,7 +43,7 @@ export const SHARED_CONTENT = {
   },
   pricing: {
     includes: [
-      "L'intégralité du module",
+      "L'intégralité de l'accompagnement",
       "Accès immédiat et illimité, à vie",
       "Mises à jour incluses",
       "Paiement en 1×, 3× ou 4× sans frais",
@@ -64,11 +64,11 @@ export const SHARED_CONTENT = {
       },
       {
         q: "Pendant combien de temps ai-je accès ?",
-        a: "À vie. Vous revenez sur le module autant de fois que vous le souhaitez, à votre rythme.",
+        a: "À vie. Vous revenez sur l'accompagnement autant de fois que vous le souhaitez, à votre rythme.",
       },
       {
         q: "Est-ce que ça remplace une consultation individuelle ?",
-        a: "Non. Le module couvre la grande majorité des situations avec des contenus clairs et fondés sur les preuves. Pour une situation spécifique, une consultation individuelle reste disponible en complément.",
+        a: "Non. Cet accompagnement couvre la grande majorité des situations avec des contenus clairs et fondés sur les preuves. Pour une situation spécifique, une consultation individuelle reste disponible en complément.",
       },
       {
         q: "Puis-je payer en plusieurs fois ?",

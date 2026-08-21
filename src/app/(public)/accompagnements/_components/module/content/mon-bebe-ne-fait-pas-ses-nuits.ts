@@ -9,9 +9,9 @@ export const MON_BEBE_NE_FAIT_PAS_SES_NUITS: ModuleContent = {
   hero: {
     eyebrow: "CONSULTANTE IBCLC DEPUIS 2011 · 6 000+ FAMILLES ACCOMPAGNÉES",
     titleOverride:
-      "Votre bébé ne dort pas comme on vous a dit qu'il devrait. Peut-être que c'est la consigne qui est fausse.",
+      "Le sommeil de votre bébé n'a pas à ressembler à ce qu'on vous impose. Voici ce qui est biologiquement normal, et ce qui ne l'est pas.",
     subtitle:
-      "Faire ses nuits n'est pas une compétence qui s'apprend à trois mois. Le sommeil du jeune enfant obéit à des mécanismes précis, et comprendre ces mécanismes change tout : ce que vous attendez, ce que vous mettez en place, et la culpabilité que vous portez.",
+      "« Alors, est-ce qu'il fait ses nuits ? » On vous assure qu'à six mois il devrait dormir huit heures d'affilée, et on pointe votre allaitement ou votre façon de le porter dès que ce n'est pas le cas. Faire ses nuits n'est pourtant pas une compétence qui s'apprend à trois mois : le sommeil du jeune enfant obéit à des mécanismes précis, et les comprendre change ce que vous attendez, ce que vous mettez en place, et la culpabilité que vous portez.",
     ctaLabel: "Je comprends ce qui empêche mon enfant de dormir",
   },
   problem: {
@@ -19,59 +19,61 @@ export const MON_BEBE_NE_FAIT_PAS_SES_NUITS: ModuleContent = {
     intro:
       "Deux réponses circulent, et aucune ne vous aide : laissez pleurer, ou prenez votre mal en patience.",
     points: [
-      "Votre enfant se réveille plusieurs fois par nuit et vous ne tenez plus.",
-      "On vous dit qu'à son âge il devrait dormir d'une traite, et vous vous demandez ce que vous ratez.",
-      "L'endormissement dure une heure et se termine souvent en pleurs.",
-      "On vous conseille de le laisser pleurer et cela vous est insupportable.",
-      "Vous ne savez pas si les tétées de nuit entretiennent le problème.",
-      "Votre couple et votre travail encaissent, et personne ne parle de vous.",
+      "« Mon bébé ne veut pas dormir. »",
+      "« Mon bébé ne fait pas ses nuits. »",
+      "« Mon bébé a besoin de téter constamment. »",
+      "« Mon bébé ne dort que si je le prends dans mes bras. »",
+      "Vous ne savez plus si le problème vient de l'allaitement, de l'âge de votre enfant, ou d'autre chose.",
+      "Vous êtes épuisée, à bout, et cet épuisement déborde sur votre couple, votre travail, votre patience.",
     ],
   },
   promise: {
-    title: "Le sommeil n'est pas une discipline, c'est une physiologie",
+    title: "Pourquoi les conseils habituels ne suffisent pas",
     paragraphs: [
-      "Les cycles de sommeil du jeune enfant, leur maturation, le rôle de l'alimentation, de la lumière et de l'environnement sont documentés. Les réveils nocturnes ne sont pas un dysfonctionnement à corriger, mais ils ont des causes sur lesquelles on peut agir.",
-      "Ce module est le plus complet du catalogue. Il reprend les besoins de l'enfant, l'endormissement, ce qui parasite le sommeil, les habitudes, et il consacre une partie entière au bien-être des parents, parce qu'une famille épuisée ne tient pas sur la seule compréhension.",
+      "« Laisser pleurer un bébé pour qu'il s'endorme, c'est confondre le silence de l'épuisement avec l'apaisement. » On vous suggère des méthodes de sommeil dures, rigides ou culpabilisantes, qui cherchent à empêcher les bébés de se comporter comme des bébés, avec un cerveau qui n'est pas câblé pour l'autorégulation émotionnelle.",
+      "Cet accompagnement est le plus complet du catalogue. Il reprend les besoins de l'enfant, l'endormissement, ce qui parasite le sommeil, les habitudes, et il consacre une partie entière au bien-être des parents, parce qu'une famille épuisée ne tient pas sur la seule compréhension.",
     ],
     bullets: [
-      "Comprendre les besoins réels de sommeil selon l'âge, et ce qui est attendu.",
-      "Identifier ce qui parasite concrètement les nuits de votre enfant.",
-      "Agir sur l'endormissement sans laisser pleurer.",
+      "Le sommeil n'est pas une compétence à apprendre, c'est un processus biologique en construction.",
+      "Dire qu'un bébé « ne fait pas ses nuits » sous prétexte qu'il se réveille à quatre mois relève d'une méconnaissance de la physiologie infantile.",
+      "Répondre aux pleurs la nuit ne le rend pas manipulateur : c'est le terreau de sa future autonomie.",
     ],
   },
   program: {
-    title: "Ce que contient le module",
+    title: "Ce que contient l'accompagnement",
     intro:
       "Le programme le plus complet du catalogue, du nourrisson au jeune enfant, avec une partie entière consacrée au sommeil des parents.",
   },
   outcomes: {
-    title: "Ce qui devient possible",
+    title: "Bénéfices concrets",
     subtitle:
       "Ce que change la compréhension des mécanismes du sommeil de votre enfant.",
     items: [
+      "Comprendre avant d'agir : vous saurez identifier précisément ce qui se cache derrière les réveils de votre enfant.",
+      "Protéger votre allaitement : vous apprendrez à gérer les tétées nocturnes sans compromettre votre lactation ni votre épuisement.",
+      "Apaiser votre foyer : vous retrouverez des nuits plus sereines et désamorcerez les tensions de couple liées à la fatigue.",
       "Vous savez ce qui est normal à l'âge de votre enfant et vous cessez de vous comparer.",
-      "L'endormissement s'allège parce que vous en avez identifié les freins.",
-      "Les réveils diminuent, et ceux qui restent ne vous effondrent plus.",
-      "Vous savez si l'alimentation joue un rôle dans son cas.",
       "Vous mettez en place un cadre qui vous convient, sans méthode imposée.",
-      "Vous récupérez, parce que le module traite aussi votre sommeil à vous.",
+      "Vous récupérez, parce que l'accompagnement traite aussi votre sommeil à vous.",
     ],
   },
   fit: {
-    title: "Est-ce le bon module pour vous ?",
+    title: "Est-ce le bon accompagnement pour vous ?",
     subtitle: "Un accompagnement complet du sommeil, pas une méthode d'entraînement.",
-    forYouTitle: "Oui, si",
+    forYouTitle: "C'est fait pour vous, si",
     forYou: [
-      "Les nuits de votre enfant vous épuisent, quel que soit son âge.",
-      "On vous a conseillé de le laisser pleurer et vous cherchez autre chose.",
-      "Vous voulez comprendre avant d'appliquer.",
-      "Vous cherchez un accompagnement complet, pas trois astuces.",
+      "Vous vous demandez si votre allaitement joue un rôle dans son sommeil.",
+      "Vous saturez des injonctions et des regards extérieurs sur le sommeil de votre bébé.",
+      "Vous enchaînez les réveils nocturnes et craignez que cela nuise à votre allaitement ou à votre équilibre familial.",
+      "Vous refusez les méthodes de sommeil « dures » (laisser pleurer) et cherchez une approche respectueuse de la biologie de votre enfant, mais vous ne savez plus comment tenir le coup.",
+      "Vous voulez comprendre pourquoi votre bébé se comporte ainsi avant d'agir.",
     ],
-    notForYouTitle: "Pas encore, si",
+    notForYouTitle: "Ce n'est pas pour vous, si",
     notForYou: [
-      "Votre bébé a moins de six semaines : ses réveils sont physiologiques et « Mon allaitement des premiers jours » répond mieux à vos questions.",
-      "Vous cherchez une méthode d'entraînement au sommeil par extinction : ce n'est pas l'approche de ce module.",
-      "Votre enfant présente des signes médicaux, apnées ou trouble respiratoire, qui relèvent d'un avis pédiatrique.",
+      "Vous cherchez une méthode miracle pour formater ou « dresser » votre enfant à dormir seul sans modifier votre approche.",
+      "Vous ne souhaitez pas consacrer du temps à identifier pourquoi le sommeil de votre enfant est perturbé.",
+      "Vous ne souhaitez pas reconnecter avec vos instincts et apprendre à mieux comprendre les besoins de votre bébé.",
+      "Vous ne souhaitez pas regarder le sommeil de votre bébé dans sa globalité : rythme, horloge biologique, régulation du système nerveux, nutrition, environnement.",
     ],
   },
   moment: {
@@ -79,23 +81,22 @@ export const MON_BEBE_NE_FAIT_PAS_SES_NUITS: ModuleContent = {
     intro:
       "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
-  // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
   pricing: {
     title: "Comprenez le sommeil de votre enfant, et retrouvez le vôtre",
-    subtitle: "Le module le plus complet du catalogue. Un accès unique, à vie.",
+    subtitle: "L'accompagnement le plus complet du catalogue. Un accès unique, à vie.",
   },
   faq: [
     {
-      q: "C'est le module le plus cher, pourquoi ?",
+      q: "C'est l'accompagnement le plus cher, pourquoi ?",
       a: "Parce que c'est de loin le plus vaste. Il couvre le sommeil de la naissance au jeune enfant, ses mécanismes, ses parasites, et le sommeil des parents, là où les autres modules traitent une étape précise de l'allaitement.",
     },
     {
       q: "Mon enfant a trois ans, est-ce encore pour moi ?",
-      a: "Oui. Le module va du nourrisson au jeune enfant, et les chapitres sur les habitudes de sommeil et l'endormissement concernent particulièrement cet âge.",
+      a: "Oui. Cet accompagnement va du nourrisson au jeune enfant, et les chapitres sur les habitudes de sommeil et l'endormissement concernent particulièrement cet âge.",
     },
     {
       q: "Est-ce une méthode d'entraînement au sommeil ?",
-      a: "Non. Aucune extinction, aucun laisser-pleurer. Le module explique les mécanismes et propose des leviers, à vous de choisir ceux qui conviennent à votre famille.",
+      a: "Non. Aucune extinction, aucun laisser-pleurer. Cet accompagnement explique les mécanismes et propose des leviers, à vous de choisir ceux qui conviennent à votre famille.",
     },
   ],
   finalCta: {

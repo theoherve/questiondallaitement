@@ -10,13 +10,14 @@ export const PACK_SLUG = "pack-mon-allaitement-sur-mesure";
 /** Ordre d'affichage souhaité des modules individuels (par slug). */
 export const MODULE_ORDER = [
   "je-me-prepare-a-allaiter",
+  "de-la-couveuse-au-sein",
   "mon-allaitement-des-premiers-jours",
   "mon-allaitement-au-fil-des-mois",
   "je-reprends-une-activite-professionnelle",
   "la-diversification-de-mon-bebe-allaite",
   "je-souhaite-sevrer-mon-bebe",
   "mon-bebe-ne-fait-pas-ses-nuits",
-  "les-urgences-allaitement",
+  "les-urgences-de-l-allaitement",
 ] as const;
 
 /** Trie une liste (par slug) selon MODULE_ORDER ; inconnus à la fin. */
@@ -51,7 +52,8 @@ export type ModuleAccent = {
     | "UtensilsCrossed"
     | "Leaf"
     | "Moon"
-    | "ShieldPlus";
+    | "ShieldPlus"
+    | "Thermometer";
 };
 
 export const MODULE_ACCENTS: Record<string, ModuleAccent> = {
@@ -59,6 +61,11 @@ export const MODULE_ACCENTS: Record<string, ModuleAccent> = {
     from: "var(--color-accent-sage)",
     to: "var(--color-accent-sage-soft)",
     iconKey: "Sprout",
+  },
+  "de-la-couveuse-au-sein": {
+    from: "var(--color-accent-peach)",
+    to: "var(--color-accent-peach-soft)",
+    iconKey: "Thermometer",
   },
   "mon-allaitement-des-premiers-jours": {
     from: "var(--color-accent-peach)",
@@ -90,7 +97,7 @@ export const MODULE_ACCENTS: Record<string, ModuleAccent> = {
     to: "var(--color-accent-sage-soft)",
     iconKey: "Moon",
   },
-  "les-urgences-allaitement": {
+  "les-urgences-de-l-allaitement": {
     from: "var(--color-primary-red-light)",
     to: "var(--color-accent-peach-soft)",
     iconKey: "ShieldPlus",

@@ -55,8 +55,15 @@ export type Testimonial =
  * pas des modules en ligne, et les y rattacher serait une invention. Les avis
  * qui suivent (Marie-Cécile, Justine, Marie, Lucia) portent explicitement sur
  * le pack et sont donc rattachés à `PACK_SLUG`. Ceux d'après (Mélodie,
- * Caroline, Jennifer, Sonia, Noella, Agathe, Federica) portent explicitement
- * sur un module en ligne précis.
+ * Caroline, Jennifer, Sonia, Noella, Agathe, Federica, Marine, Aurélia,
+ * Servane, Cécilia, Mélodie [melodie-2], Miora, Claire, Alexandra, Doriane,
+ * Mélanie, Jeanne, Justine [justine-2], Miora [miora-2], Élodie, Abida,
+ * Dounia, Teodora, Noémie, Astrid, Agnieszka, Clémence, Camille,
+ * Élodie [elodie-2], Sarah, Julie) portent explicitement sur un module en
+ * ligne précis. Mathilde et
+ * Claire ont été rattachées à un second module après coup, sans changer leur
+ * citation d'origine. Miora et Justine ont un second témoignage distinct
+ * (contexte et texte différents) sur un autre module, d'où le suffixe `-2`.
  */
 export const TESTIMONIALS: readonly Testimonial[] = [
   {
@@ -129,7 +136,7 @@ export const TESTIMONIALS: readonly Testimonial[] = [
     detail: "Professionnelle de santé, accompagnée puis formée",
     quote:
       "Elle a su m'accompagner quand j'ai rencontré des difficultés lors de mes allaitements (crevasses, engorgements, baisse de lactations, planning tirage pour ma reprise du travail) et m'a permis d'acquérir suffisamment de connaissances pour accompagner mes patientes lors de mes consultations.",
-    topics: [],
+    topics: ["je-reprends-une-activite-professionnelle"],
     featured: true,
     source: "direct",
   },
@@ -212,6 +219,231 @@ export const TESTIMONIALS: readonly Testimonial[] = [
     quote:
       "Pas d'engorgement, pas de crevasses ni de douleurs et un bébé qui prend plus de 50 grammes par jour depuis sa sortie de maternité ! Évidemment on prend les défis chaque jour quand ils arrivent, mais simplement un grand merci pour tout ce que vous apportez.",
     topics: ["mon-allaitement-des-premiers-jours"],
+    source: "direct",
+  },
+  {
+    id: "marine",
+    author: "Marine",
+    detail: "Maman de Diane",
+    quote:
+      "Grâce à l'accompagnement, j'ai déconstruit mes idées reçues. J'ai vécu un allaitement exclusif de six mois, une aventure qui m'a transformée et m'a permis de surmonter mes peurs. Sans cet accompagnement, je n'en serais pas là.",
+    topics: ["je-me-prepare-a-allaiter"],
+    source: "direct",
+  },
+  {
+    id: "aurelia",
+    author: "Aurélia",
+    detail: "Maman accompagnée",
+    quote:
+      "Plus qu'une conseillère, Carole a été un véritable soutien moral. Ses conseils sont fondés sur la science et adaptés à notre situation. Grâce à sa bienveillance, j'ai trouvé la force de persévérer.",
+    topics: ["je-me-prepare-a-allaiter"],
+    source: "direct",
+  },
+  {
+    id: "servane",
+    author: "Servane",
+    detail: "Maman accompagnée en consultation",
+    quote:
+      "Je suis sortie de votre cabinet confiante en mes capacités et reboostée à fond pour mon projet d'allaitement ! Toutes les mamans mériteraient d'avoir un accompagnement de cette qualité.",
+    topics: ["je-me-prepare-a-allaiter"],
+    source: "direct",
+  },
+  {
+    id: "cecilia",
+    author: "Cécilia",
+    detail: "Maman en télétravail",
+    quote:
+      "J'ai repris le travail à distance tout en maintenant mon allaitement exclusif pour Apolline. Les conseils d'organisation et le soutien reçus m'ont permis de réussir mon objectif sans stress.",
+    topics: ["je-reprends-une-activite-professionnelle"],
+    source: "direct",
+  },
+  {
+    id: "melodie-2",
+    author: "Mélodie",
+    detail: "Maman active",
+    quote:
+      "Nous avons réussi à gérer la reprise à la crèche : je tire ce qu'il faut pour le lendemain et elle profite des tétées matin et soir. Merci pour cette logistique rodée !",
+    topics: ["je-reprends-une-activite-professionnelle"],
+    source: "direct",
+  },
+  {
+    id: "miora",
+    author: "Miora",
+    detail: "Maman de bébé allaité",
+    quote:
+      "Grâce à l'accompagnement, j'ai pu introduire les solides la journée tout en continuant les tétées à volonté. La pédiatre a rassuré sur la prise de poids. Ce que vous faites est extra !",
+    topics: ["la-diversification-de-mon-bebe-allaite"],
+    source: "direct",
+  },
+  {
+    id: "claire",
+    author: "Claire",
+    detail: "Maman de Maël",
+    quote:
+      "Maël s'est peu à peu désintéressé du sein en prenant goût à la diversification, et je l'ai très bien vécu. Le sevrage a été facile et en douceur grâce à vos conseils.",
+    topics: ["la-diversification-de-mon-bebe-allaite", "je-souhaite-sevrer-mon-bebe"],
+    source: "direct",
+  },
+  {
+    id: "alexandra",
+    author: "Alexandra",
+    detail: "Maman de Pierre, 10 mois",
+    quote:
+      "Mon fils a dix mois et je l'allaite toujours matin et soir. Il est plus que bien portant depuis que vous avez détecté son frein de langue. Merci encore pour votre aide précieuse.",
+    topics: ["la-diversification-de-mon-bebe-allaite"],
+    source: "direct",
+  },
+  {
+    id: "doriane",
+    author: "Doriane",
+    detail: "Maman de tout-petit",
+    quote:
+      "Jamais je n'aurais pensé poursuivre aussi longtemps malgré les remarques de l'entourage. Le sevrage se fera naturellement d'ici ses trois ans, c'est un soulagement d'être guidée ainsi.",
+    topics: ["je-souhaite-sevrer-mon-bebe"],
+    source: "direct",
+  },
+  {
+    id: "melanie",
+    author: "Mélanie",
+    detail: "Maman suivie par Carole",
+    quote:
+      "J'ai pu aborder la transition sereinement grâce aux repères transmis. Savoir écouter le moment où l'enfant est prêt change tout pour vivre un sevrage sans pleurs.",
+    topics: ["je-souhaite-sevrer-mon-bebe"],
+    source: "direct",
+  },
+  {
+    id: "miora-2",
+    author: "Miora",
+    detail: "Bébé dort mieux, allaitement qui se poursuit",
+    quote:
+      "La pédiatre a validé les tétées de nuit et confirme que le poids est bon. L'essentiel est que le rythme fonctionne et respecte les besoins de l'enfant !",
+    topics: ["mon-bebe-ne-fait-pas-ses-nuits"],
+    source: "direct",
+  },
+  {
+    id: "jeanne",
+    author: "Jeanne",
+    detail: "Maman épuisée qui a retrouvé de l'énergie",
+    quote:
+      "Après des mois d'épuisement, l'accompagnement personnalisé a fait toute la différence. Nous avons appris à comprendre les besoins de notre bébé et à mettre en place des routines apaisantes.",
+    topics: ["mon-bebe-ne-fait-pas-ses-nuits"],
+    source: "direct",
+  },
+  {
+    id: "justine-2",
+    author: "Justine",
+    detail: "Maman de Léo",
+    quote:
+      "J'étais très heureuse de pouvoir faire la transition des nuits moi-même en douceur. Au bout de quelques semaines, les réveils se sont espacés et les nuits sont enfin apaisées.",
+    topics: ["mon-bebe-ne-fait-pas-ses-nuits"],
+    source: "direct",
+  },
+  {
+    id: "elodie",
+    author: "Élodie",
+    detail: "Peur de l'association sein/sommeil",
+    quote:
+      "Grâce à l'accompagnement de Carole, j'ai compris pourquoi mon bébé demande le sein pour dormir. Je sais répondre à ses besoins maintenant, protéger mes nuits et mon allaitement. Nous récupérons bien mieux tous les deux. Je retrouve l'énergie qui me manquait.",
+    topics: ["mon-bebe-ne-fait-pas-ses-nuits"],
+    source: "direct",
+  },
+  {
+    id: "abida",
+    author: "Abida",
+    detail: "A compris la biologie du sommeil",
+    quote:
+      "Je suis fière de ce chemin, et je vois tous les bienfaits pour Adam à tous les niveaux, c'est incroyable ! Un lien extraordinaire, une bonne santé, un développement du langage très avancé, une grande empathie et compréhension des émotions ! Alors oui je l'accompagne encore pour le sommeil, mais connaissant la biologie du sommeil de l'enfant, je sais bien que c'est normal à cet âge et qu'elle progresse à son rythme. Donc merci pour ton accompagnement, j'ai maintenant confiance en moi et en mon allaitement !",
+    topics: ["mon-bebe-ne-fait-pas-ses-nuits"],
+    source: "direct",
+  },
+  {
+    id: "dounia",
+    author: "Dounia",
+    detail: "Mieux dormir et poursuivre l'allaitement",
+    quote:
+      "J'avais fait appel à une coach du sommeil pour mon bébé de 7 mois qui enchaîne les réveils nocturnes (2 ou 3 sur une dizaine de réveils demandent une mise au sein), qui affirmait avec certitude qu'à 7 mois, il faut absolument faire un sevrage nocturne pour stopper ces réveils. Au fond de moi, je savais que c'était erroné. Merci de m'avoir rassurée.",
+    topics: ["mon-bebe-ne-fait-pas-ses-nuits"],
+    source: "direct",
+  },
+  {
+    id: "teodora",
+    author: "Teodora",
+    detail: "Maman d'Apolline, prématurée",
+    quote:
+      "Ça m'a beaucoup aidée de savoir qu'on avait déjà un peu de lait, et de me dire que c'est déjà bien vu d'où on part. Mara est passée de 15 % à 44 % sur les courbes en un mois et demi.",
+    topics: ["de-la-couveuse-au-sein"],
+    source: "direct",
+  },
+  {
+    id: "noemie",
+    author: "Noémie",
+    detail: "Maman de Sybille, prématurée",
+    quote:
+      "Grâce à l'accompagnement avant et après la naissance, j'ai réalisé mon objectif d'allaitement exclusif malgré la prématurité. Un soutien sans faille, même à distance, qui m'a permis de vivre des moments précieux.",
+    topics: ["de-la-couveuse-au-sein"],
+    source: "direct",
+  },
+  {
+    id: "astrid",
+    author: "Astrid",
+    detail: "Relance de la lactation après le retour à la maison",
+    quote:
+      "Le stress de l'allaitement s'estompe et nous respirons mieux. C'est important pour notre relation avec Mara, et je suis juste rassurée de la voir si souriante, je ne voulais pas que cette période la marque.",
+    topics: ["de-la-couveuse-au-sein"],
+    source: "direct",
+  },
+  {
+    id: "agnieszka",
+    author: "Agnieszka",
+    detail: "Maintien de l'allaitement au retour à la maison",
+    quote:
+      "Ça progresse, j'ai réussi à changer des choses, déjà je suis très contente, et j'ai les pédiatres qui suivent donc je me sens plus légitime.",
+    topics: ["de-la-couveuse-au-sein"],
+    source: "direct",
+  },
+  {
+    id: "clemence",
+    author: "Clémence",
+    detail: "Allaitement maintenu, bébé en néonatalogie",
+    quote:
+      "Bébé avec streptocoque B en néonat, sous oxygène pendant 3 jours. J3, on tente la première tétée en peau à peau et la magie s'est faite. Au bout de 30 minutes, le pédiatre coupe l'oxygène pour voir comment elle réagit. Une heure après, on retire tout le matériel. Merci de m'avoir aidée à tenir mon allaitement.",
+    topics: ["de-la-couveuse-au-sein"],
+    source: "direct",
+  },
+  {
+    id: "camille",
+    author: "Camille",
+    detail: "Maman de Léonie, 6 semaines",
+    quote:
+      "Plus de douleur depuis cette nuit ! Je n'ai pas voulu vous déranger Carole et je me suis rappelée que vous aviez enregistré en vidéo ce qu'il faut faire pour soigner une mastite. J'avais super mal au sein gauche et un gros placard rouge et je ne savais absolument pas quoi faire. On me disait de tirer et de jeter mon lait au risque d'infecter mon bébé. Plus je demandais de l'aide, plus j'étais perdue. J'ai appliqué vos conseils vidéo et ce matin, tout va mieux.",
+    topics: ["les-urgences-de-l-allaitement"],
+    source: "direct",
+  },
+  {
+    id: "elodie-2",
+    author: "Élodie",
+    detail: "Maman de Martin, 2 mois",
+    quote:
+      "J'ai acheté le module dans un grand moment de panique hier soir. Déjà entendre votre voix posée, ça fait du bien, et surtout, ça marche. Ce matin, j'ai à nouveau les seins souples et la couche de Martin était lourde comme avant.",
+    topics: ["les-urgences-de-l-allaitement"],
+    source: "direct",
+  },
+  {
+    id: "sarah",
+    author: "Sarah",
+    detail: "Maman de Louise, 3 semaines",
+    quote:
+      "Mes crevasses étaient devenues tellement douloureuses que j'appréhendais chaque tétée. J'avais tellement mal que je voyais des étoiles à chaque tétée. Mon mari me suppliait d'arrêter, ce que je ne voulais pas. Vos stratégies ont été miraculeuses. Je n'ai pas peur de le dire : je respire enfin.",
+    topics: ["les-urgences-de-l-allaitement"],
+    source: "direct",
+  },
+  {
+    id: "julie",
+    author: "Julie",
+    detail: "Maman de Noé, 8 mois",
+    quote:
+      "Mon problème est arrivé un dimanche soir, évidemment ! Même à 8 mois, on peut encore avoir des galères, c'est fou. Je me suis réveillée avec un sein hyper dur, et rien de ce que j'ai pu trouver sur le net n'a pu m'aider. Je me suis souvenue de vous et j'ai trouvé tout de suite dans vos vidéos la partie qui correspondait à ma situation. Le fait d'avoir une ressource fiable sous la main m'a énormément rassurée, je l'ai depuis gardée dans mes favoris.",
+    topics: ["les-urgences-de-l-allaitement"],
     source: "direct",
   },
 ];

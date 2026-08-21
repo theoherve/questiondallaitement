@@ -32,7 +32,7 @@ export const LA_DIVERSIFICATION_DE_MON_BEBE_ALLAITE: ModuleContent = {
     title: "La diversification suit votre bébé, pas un calendrier",
     paragraphs: [
       "Un bébé allaité arrive à la diversification avec une expérience gustative et une autorégulation que les repères standards ignorent. Les signes de maturité sont observables, ils ne se lisent pas sur un calendrier.",
-      "Ce module explique ce qui se passe réellement, ce que dit la recherche actuelle sur les allergènes et les textures, et comment introduire les aliments sans faire chuter votre lactation.",
+      "Cet accompagnement explique ce qui se passe réellement, ce que dit la recherche actuelle sur les allergènes et les textures, et comment introduire les aliments sans faire chuter votre lactation.",
     ],
     bullets: [
       "Reconnaître les vrais signes de maturité de votre bébé.",
@@ -41,7 +41,7 @@ export const LA_DIVERSIFICATION_DE_MON_BEBE_ALLAITE: ModuleContent = {
     ],
   },
   program: {
-    title: "Ce que contient le module",
+    title: "Ce que contient l'accompagnement",
     intro:
       "Des chapitres qui répondent dans l'ordre aux questions que tout le monde pose : pourquoi, quand, comment, et que faire quand ça coince.",
   },
@@ -59,20 +59,20 @@ export const LA_DIVERSIFICATION_DE_MON_BEBE_ALLAITE: ModuleContent = {
     ],
   },
   fit: {
-    title: "Est-ce le bon module pour vous ?",
+    title: "Est-ce le bon accompagnement pour vous ?",
     subtitle: "Pour diversifier en poursuivant l'allaitement, pas pour l'arrêter.",
     forYouTitle: "Oui, si",
     forYou: [
-      "Votre bébé approche ou dépasse quatre à six mois.",
-      "Vous voulez continuer à allaiter pendant la diversification.",
-      "Vous hésitez entre cuillère, morceaux et alimentation autonome.",
-      "Les allergènes vous inquiètent.",
+      "Votre bébé commence à s'intéresser à autre chose que votre lait et vous vous demandez par où commencer.",
+      "Vous voulez savoir comment introduire les aliments tout en poursuivant l'allaitement.",
+      "Vous vous demandez quelle place donner aux tétées au moment de la diversification.",
+      "Vous avez des questions sur les quantités, les textures, les repas ou les aliments à proposer.",
     ],
     notForYouTitle: "Pas encore, si",
     notForYou: [
-      "Votre bébé a moins de quatre mois : la diversification n'est pas encore le sujet.",
-      "Vous cherchez à sevrer complètement : voyez « Je souhaite sevrer mon bébé ».",
-      "Votre bébé a une allergie déjà diagnostiquée qui demande un suivi médical individuel.",
+      "Votre bébé est encore trop jeune pour commencer la diversification.",
+      "Vous recherchez un accompagnement médical personnalisé concernant une allergie ou une problématique alimentaire particulière.",
+      "Vous souhaitez uniquement arrêter l'allaitement.",
     ],
   },
   moment: {
@@ -80,23 +80,22 @@ export const LA_DIVERSIFICATION_DE_MON_BEBE_ALLAITE: ModuleContent = {
     intro:
       "Chaque accompagnement couvre une étape. Voici où celui-ci se situe.",
   },
-  // PLACEHOLDER — temoignages a remplacer par de vrais verbatims avant mise en ligne.
   pricing: {
     title: "Diversifiez sans mettre fin à votre allaitement",
-    subtitle: "Un accès unique au module complet, à vie.",
+    subtitle: "Un accès unique à l'accompagnement complet, à vie.",
   },
   faq: [
     {
       q: "Faut-il donner le sein avant ou après le repas ?",
-      a: "Cela dépend de l'âge et de l'appétit de votre bébé. Le module explique la logique derrière chaque cas de figure plutôt que d'imposer une règle unique.",
+      a: "Cela dépend de l'âge et de l'appétit de votre bébé. Cet accompagnement explique la logique derrière chaque cas de figure plutôt que d'imposer une règle unique.",
     },
     {
       q: "Mon bébé recrache tout.",
-      a: "C'est fréquent et normal au début. Le module explique ce que ce réflexe signifie, à quel moment il s'estompe, et ce qui doit vraiment alerter.",
+      a: "C'est fréquent et normal au début. Cet accompagnement explique ce que ce réflexe signifie, à quel moment il s'estompe, et ce qui doit vraiment alerter.",
     },
     {
       q: "Dois-je réduire les tétées quand il mange ?",
-      a: "Pas par principe. Le module détaille comment les deux coexistent et comment les quantités s'ajustent d'elles-mêmes au fil des mois.",
+      a: "Pas par principe. Cet accompagnement détaille comment les deux coexistent et comment les quantités s'ajustent d'elles-mêmes au fil des mois.",
     },
   ],
   finalCta: {

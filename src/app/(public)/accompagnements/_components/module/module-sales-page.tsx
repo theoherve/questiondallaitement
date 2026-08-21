@@ -7,6 +7,7 @@ import {
   Leaf,
   Moon,
   ShieldPlus,
+  Thermometer,
   type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -59,6 +60,7 @@ const MODULE_ICONS: Record<string, LucideIcon> = {
   Leaf,
   Moon,
   ShieldPlus,
+  Thermometer,
 };
 
 type CatalogRow = {

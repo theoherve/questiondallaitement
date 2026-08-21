@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 const FILTERS: { label: string; topic?: TestimonialTopic }[] = [
   { label: "Tous les avis" },
   { label: "Se préparer", topic: "je-me-prepare-a-allaiter" },
+  { label: "Prématurité", topic: "de-la-couveuse-au-sein" },
   { label: "Premiers jours", topic: "mon-allaitement-des-premiers-jours" },
   { label: "Au fil des mois", topic: "mon-allaitement-au-fil-des-mois" },
   {
@@ -25,7 +26,7 @@ const FILTERS: { label: string; topic?: TestimonialTopic }[] = [
   { label: "Diversification", topic: "la-diversification-de-mon-bebe-allaite" },
   { label: "Sevrage", topic: "je-souhaite-sevrer-mon-bebe" },
   { label: "Sommeil", topic: "mon-bebe-ne-fait-pas-ses-nuits" },
-  { label: "Urgences", topic: "les-urgences-allaitement" },
+  { label: "Urgences", topic: "les-urgences-de-l-allaitement" },
   { label: "Le pack", topic: PACK_SLUG },
 ];
 

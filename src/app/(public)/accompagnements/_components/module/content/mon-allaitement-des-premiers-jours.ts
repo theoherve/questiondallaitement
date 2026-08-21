@@ -11,7 +11,7 @@ export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
     titleOverride:
       "Les premières semaines décident souvent de tout votre allaitement. Vous n'avez pas à les traverser à l'aveugle.",
     subtitle:
-      "La maternité vous a laissée partir avec un bébé et dix conseils contradictoires. Ce module vous donne les repères cliniques des six premières semaines : la prise du sein, la douleur, la montée de lait, la prise de poids, les rythmes. Tout ce qui se joue maintenant.",
+      "La maternité vous a laissée partir avec un bébé et dix conseils contradictoires. Cet accompagnement vous donne les repères cliniques des six premières semaines : la prise du sein, la douleur, la montée de lait, la prise de poids, les rythmes. Tout ce qui se joue maintenant.",
     ctaLabel: "Je pose des bases solides",
   },
   problem: {
@@ -30,7 +30,7 @@ export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
     title: "Ce n'est pas un manque de volonté, c'est un manque de repères",
     paragraphs: [
       "La douleur n'est pas le prix à payer pour allaiter. Elle est un signal : dans la très grande majorité des cas, elle vient d'une prise du sein perfectible, et elle se corrige. Les conseils reçus à la maternité arrivent souvent trop vite, dans un couloir, sans que personne ne regarde vraiment une tétée.",
-      "Ce module s'appuie sur l'observation clinique, la physiologie de la lactation et les comportements innés du nouveau-né. C'est ce que je regarde en consultation, mis à plat, chapitre par chapitre, pour que vous puissiez l'observer chez vous.",
+      "Cet accompagnement s'appuie sur l'observation clinique, la physiologie de la lactation et les comportements innés du nouveau-né. C'est ce que je regarde en consultation, mis à plat, chapitre par chapitre, pour que vous puissiez l'observer chez vous.",
     ],
     bullets: [
       "Reconnaître une bonne prise du sein, et corriger celle qui fait mal.",
@@ -39,7 +39,7 @@ export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
     ],
   },
   program: {
-    title: "Ce que contient le module",
+    title: "Ce que contient l'accompagnement",
     intro:
       "Des chapitres qui suivent l'ordre réel des premières semaines, à consulter dans l'urgence ou à parcourir tranquillement.",
   },
@@ -80,7 +80,7 @@ export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
   pricing: {
     title: "Donnez à votre allaitement le démarrage qu'il mérite",
     subtitle:
-      "Un accès unique au module complet, à vie. 75 €, soit moins de la moitié du prix d'une consultation individuelle, pour un accès illimité au module.",
+      "Un accès unique à l'accompagnement complet, à vie. 75 €, soit moins de la moitié du prix d'une consultation individuelle, pour un accès illimité à l'accompagnement.",
   },
   faq: [
     {
@@ -89,7 +89,7 @@ export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
     },
     {
       q: "Ai-je besoin d'un rendez-vous individuel en plus ?",
-      a: "Pas systématiquement. Le module couvre les situations les plus fréquentes des premières semaines. Une consultation individuelle reste utile si votre bébé doit être examiné ou si votre situation ne rentre dans aucun des cas traités ici.",
+      a: "Pas systématiquement. Cet accompagnement couvre les situations les plus fréquentes des premières semaines. Une consultation individuelle reste utile si votre bébé doit être examiné ou si votre situation ne rentre dans aucun des cas traités ici.",
     },
     {
       q: "Mon bébé a déjà trois mois, est-ce encore utile ?",
@@ -100,7 +100,7 @@ export const MON_ALLAITEMENT_DES_PREMIERS_JOURS: ModuleContent = {
       a: "Non, c'est même le meilleur moment. Vous arrivez à la maternité en sachant ce que vous regardez, au lieu de découvrir en pleine fatigue.",
     },
     {
-      q: "J'allaite déjà en mixte, ce module peut-il m'aider ?",
+      q: "J'allaite déjà en mixte, cet accompagnement peut-il m'aider ?",
       a: "Oui. Il vous aide à comprendre ce qui a conduit aux compléments et ce qui reste possible pour votre allaitement, sans injonction.",
     },
   ],

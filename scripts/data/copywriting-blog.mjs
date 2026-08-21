@@ -54,8 +54,8 @@ export const CTA_TARGETS = {
     label: "Je comprends ses réveils",
   },
   urgences: {
-    href: "/accompagnements/les-urgences-allaitement",
-    formation: "les-urgences-allaitement",
+    href: "/accompagnements/les-urgences-de-l-allaitement",
+    formation: "les-urgences-de-l-allaitement",
     text: "Crevasses, mastite, engorgement : les bons gestes, immédiatement.",
     label: "Je soulage la douleur",
   },
